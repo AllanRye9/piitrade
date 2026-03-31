@@ -1,0 +1,29 @@
+# Version-control artefacts
+.git
+.gitignore
+
+# Docs
+*.md
+
+# Vercel-only entry point (not needed in the Docker image)
+api/
+vercel.json
+
+# Flutter platform-specific build dirs (not needed – web build is done in Stage 1)
+flutter/android/
+flutter/ios/
+flutter/test/
+flutter/.dart_tool/
+flutter/build/
+flutter/.flutter-plugins
+flutter/.flutter-plugins-dependencies
+
+# Python byte-code and caches
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Local environment files
+.env
+.env.*

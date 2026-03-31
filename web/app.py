@@ -13,8 +13,9 @@ from typing import Any
 
 import requests as _requests
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, url_for
 from flask_cors import CORS
+from werkzeug.security import safe_join
 
 app = Flask(__name__)
 # Allow cross-origin requests from the Flutter app.  Set ALLOWED_ORIGINS
@@ -27,6 +28,33 @@ _cors_origins: list[str] | str = (
     else "*"
 )
 CORS(app, origins=_cors_origins)
+
+# ─── Flutter web SPA ──────────────────────────────────────────────────────────
+# When the Docker image is built the compiled Flutter web output is copied into
+# web/static/flutter/.  These routes serve the SPA at /app so the Flutter web
+# app and the existing Flask web UI co-exist in the same container.
+_FLUTTER_WEB_DIR = os.path.join(os.path.dirname(__file__), "static", "flutter")
+
+
+@app.route("/app")
+@app.route("/app/")
+def flutter_app():
+    if not os.path.isdir(_FLUTTER_WEB_DIR):
+        return jsonify({"error": "Flutter web build not found"}), 404
+    return send_from_directory(_FLUTTER_WEB_DIR, "index.html")
+
+
+@app.route("/app/<path:path>")
+def flutter_app_static(path: str):
+    """Serve Flutter web static assets; fall back to index.html for SPA routing."""
+    if not os.path.isdir(_FLUTTER_WEB_DIR):
+        return jsonify({"error": "Flutter web build not found"}), 404
+    safe_path = safe_join(_FLUTTER_WEB_DIR, path)
+    if safe_path and os.path.isfile(safe_path):
+        return send_from_directory(_FLUTTER_WEB_DIR, path)
+    return send_from_directory(_FLUTTER_WEB_DIR, "index.html")
+
+
 
 # ─── Live rate fetching ────────────────────────────────────────────────────────
 # Fiat pairs  → Frankfurter API (ECB data – free, no key required)
