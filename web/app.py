@@ -430,6 +430,7 @@ _FOREX_NEWS: list[dict[str, Any]] = [
 ]
 
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
+_PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
 
 
 def _build_forex_history(pair: str) -> list[dict[str, Any]]:
@@ -550,11 +551,49 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
+    """Landing page: shows EUR/USD preview signal; prompts login/register for more."""
+    try:
+        pair = "EUR/USD"
+        live_rate = _fetch_live_rate(pair)
+        signal: dict[str, Any] = dict(_FOREX_SIGNALS[pair])
+        signal["pair"] = pair
+        prices = _get_prices_for_pair(pair, 30)
+        if live_rate is not None:
+            signal["entry_price"] = live_rate
+            signal["is_live"] = True
+            signal["data_source"] = "Frankfurter API (ECB)"
+        else:
+            signal["is_live"] = False
+            signal["data_source"] = "static (live feed unavailable)"
+        if prices:
+            direction, confidence = _compute_signal_from_prices(prices)
+            signal["direction"] = direction
+            signal["confidence"] = confidence
+            entry = live_rate if live_rate is not None else signal["entry_price"]
+            pip = 0.0001
+            dec = 4
+            tp_pips, sl_pips = _compute_tp_sl_pips(prices, pair)
+            if direction == "BUY":
+                signal["take_profit"] = round(entry + tp_pips * pip, dec)
+                signal["stop_loss"] = round(entry - sl_pips * pip, dec)
+            elif direction == "SELL":
+                signal["take_profit"] = round(entry - tp_pips * pip, dec)
+                signal["stop_loss"] = round(entry + sl_pips * pip, dec)
+            else:
+                signal["take_profit"] = round(entry + tp_pips * pip, dec)
+                signal["stop_loss"] = round(entry - sl_pips * pip, dec)
+        return templates.TemplateResponse(
+            request, "landing.html",
+            _ctx(request, signal=signal),
+        )
+    except Exception:
+        return JSONResponse({"error": "An internal error occurred."}, status_code=500)
 
 
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
+    if not _get_current_user(request):
+        return RedirectResponse(url="/login?next=/forex", status_code=status.HTTP_302_FOUND)
     try:
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
@@ -996,6 +1035,167 @@ async def forex_subscribe(request: Request):
     return JSONResponse({
         "success": True,
         "message": "Subscribed! You will receive alerts when new signals are generated.",
+    })
+
+
+def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
+    """Return price list for pair, falling back to static sequences when live API unavailable."""
+    hist = _fetch_historical_rates(pair, days)
+    if hist:
+        return list(hist.values())
+    # Fall back to static price sequence
+    base_price, pip, seq = _FOREX_HIST_SEQUENCES[pair]
+    price = base_price
+    prices: list[float] = [price]
+    for _pred, _actual, delta in seq:
+        price = round(price + delta * pip, 6)
+        prices.append(price)
+    return prices
+
+
+# ─── Volatile pairs API ────────────────────────────────────────────────────────
+
+def _compute_volatility(prices: list[float], window: int) -> float:
+    """Return percentage range (high-low / midpoint) for the last `window` prices."""
+    if len(prices) < 2:
+        return 0.0
+    subset = prices[-min(window, len(prices)):]
+    high = max(subset)
+    low = min(subset)
+    mid = (high + low) / 2.0 if (high + low) > 0 else 1.0
+    return round((high - low) / mid * 100, 4)
+
+
+@app.get("/api/forex/volatile")
+async def forex_volatile(timeframe: str = "24h"):
+    """Return pairs ranked by volatility for the requested timeframe (1h, 4h, 24h)."""
+    valid = {"1h", "4h", "24h"}
+    if timeframe not in valid:
+        return JSONResponse({"error": f"Invalid timeframe. Choose from: {', '.join(sorted(valid))}"}, status_code=400)
+
+    # Map timeframe to number of daily-sampled data points used as a proxy
+    window_map = {"1h": 2, "4h": 5, "24h": 10}
+    window = window_map[timeframe]
+
+    results: list[dict[str, Any]] = []
+    for pair in _SUPPORTED_PAIRS:
+        prices = _get_prices_for_pair(pair, 30)
+        vol = _compute_volatility(prices, window)
+        signal_info = _FOREX_SIGNALS[pair]
+        results.append({
+            "pair": pair,
+            "volatility_pct": vol,
+            "direction": signal_info["direction"],
+            "confidence": signal_info["confidence"],
+            "entry_price": signal_info["entry_price"],
+        })
+
+    results.sort(key=lambda x: x["volatility_pct"], reverse=True)
+    return JSONResponse({"timeframe": timeframe, "pairs": results})
+
+
+# ─── Trend reversal API ────────────────────────────────────────────────────────
+
+_EPSILON = 1e-12  # small value to prevent division by zero
+
+
+def _detect_reversal(prices: list[float]) -> dict[str, Any]:
+    """Simple reversal detection: look for recent direction change in momentum."""
+    if len(prices) < 10:
+        return {"reversal": "none", "strength": 0.0}
+    recent = prices[-5:]
+    prior = prices[-10:-5]
+    recent_trend = recent[-1] - recent[0]
+    prior_trend = prior[-1] - prior[0]
+    # Reversal if the two halves trend in opposite directions
+    if prior_trend > 0 and recent_trend < 0:
+        strength = round(abs(recent_trend) / (abs(prior_trend) + _EPSILON) * 100, 1)
+        return {"reversal": "bearish", "strength": min(strength, 100.0)}
+    if prior_trend < 0 and recent_trend > 0:
+        strength = round(abs(recent_trend) / (abs(prior_trend) + _EPSILON) * 100, 1)
+        return {"reversal": "bullish", "strength": min(strength, 100.0)}
+    return {"reversal": "none", "strength": 0.0}
+
+
+@app.get("/api/forex/reversals")
+async def forex_reversals():
+    """Return pairs with detected potential trend reversals."""
+    results: list[dict[str, Any]] = []
+    for pair in _SUPPORTED_PAIRS:
+        prices = _get_prices_for_pair(pair, 30)
+        rev = _detect_reversal(prices)
+        if rev["reversal"] == "none":
+            continue
+        signal_info = _FOREX_SIGNALS[pair]
+        results.append({
+            "pair": pair,
+            "reversal_type": rev["reversal"],
+            "strength": rev["strength"],
+            "direction": signal_info["direction"],
+            "confidence": signal_info["confidence"],
+            "entry_price": signal_info["entry_price"],
+        })
+    results.sort(key=lambda x: x["strength"], reverse=True)
+    return JSONResponse({"pairs": results})
+
+
+# ─── Subscription / payment page ─────────────────────────────────────────────
+
+# Crypto wallet addresses (configurable via env vars)
+_WALLETS = {
+    "solana": os.environ.get("WALLET_SOL", "SolanaWalletAddressHere"),
+    "litecoin": os.environ.get("WALLET_LTC", "LitecoinWalletAddressHere"),
+    "kaanch": os.environ.get("WALLET_KCH", "KaanchWalletAddressHere"),
+}
+
+# Subscription plans
+_PLANS = [
+    {"id": "monthly", "label": "Monthly",  "price_usd": 29,  "duration_days": 30},
+    {"id": "quarterly","label": "Quarterly","price_usd": 69,  "duration_days": 90},
+    {"id": "annual",   "label": "Annual",   "price_usd": 199, "duration_days": 365},
+]
+
+
+@app.get("/subscribe", response_class=HTMLResponse)
+async def subscribe_page(request: Request):
+    return templates.TemplateResponse(
+        request, "subscribe.html",
+        _ctx(request, wallets=_WALLETS, plans=_PLANS),
+    )
+
+
+@app.post("/api/forex/payment-confirm")
+async def payment_confirm(request: Request):
+    """Accept a payment confirmation with email, tx hash, and plan info."""
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+
+    email: str = data.get("email", "").strip().lower()
+    tx_hash: str = data.get("tx_hash", "").strip()
+    plan: str = data.get("plan", "").strip()
+
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
+    if not tx_hash:
+        return JSONResponse({"error": "Transaction hash is required"}, status_code=400)
+
+    # Store confirmation for admin review
+    _PAYMENT_CONFIRMATIONS.append({
+        "email": email,
+        "tx_hash": tx_hash,
+        "plan": plan,
+        "price_usd": data.get("price_usd"),
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "status": "pending",
+    })
+    return JSONResponse({
+        "success": True,
+        "message": (
+            "Payment confirmation received! Your subscription will be activated "
+            "within 1–2 hours after verification. Thank you!"
+        ),
     })
 
 

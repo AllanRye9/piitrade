@@ -191,7 +191,8 @@ function showToast(type, icon, title, msg, durationMs = 4000) {
 // ─── Tab Navigation ──────────────────────────────────────────────────────────
 const ALL_SECTIONS = [
   'section-signal', 'section-history', 'section-risk',
-  'section-technical', 'section-success', 'section-news', 'section-alerts',
+  'section-technical', 'section-volatile', 'section-reversal',
+  'section-success', 'section-news', 'section-alerts',
 ];
 
 // Sections belonging to each tab
@@ -199,6 +200,8 @@ const TAB_SECTIONS = {
   'section-signal':    ['section-signal', 'section-history'],
   'section-risk':      ['section-risk'],
   'section-technical': ['section-technical'],
+  'section-volatile':  ['section-volatile'],
+  'section-reversal':  ['section-reversal'],
   'section-success':   ['section-success'],
   'section-news':      ['section-news'],
   'section-alerts':    ['section-alerts'],
@@ -230,7 +233,16 @@ function activateTab(targetSection) {
 }
 
 document.querySelectorAll('.fx-tab').forEach(tab => {
-  tab.addEventListener('click', () => activateTab(tab.dataset.section));
+  tab.addEventListener('click', () => {
+    activateTab(tab.dataset.section);
+    // Lazy-load data for new tabs
+    if (tab.dataset.section === 'section-volatile' && !volatileLoaded) {
+      loadVolatilePairs(currentVolatileTf);
+    }
+    if (tab.dataset.section === 'section-reversal' && !reversalLoaded) {
+      loadReversalPairs();
+    }
+  });
 });
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
@@ -933,3 +945,136 @@ activateTab('section-signal');
 loadSignal(currentPair);
 loadNews();
 resetAutoRefresh();
+
+// ─── Volatile Pairs ───────────────────────────────────────────────────────────
+let currentVolatileTf = '1h';
+let volatileLoaded = false;
+
+/** Volatility percentage that maps to 100% bar width (anything above this is capped). */
+const MAX_VOLATILITY_FOR_SCALE = 3.0; // 3% range → 100% bar width
+
+function loadVolatilePairs(tf) {
+  const loadingEl = document.getElementById('volatile-loading');
+  const listEl    = document.getElementById('volatile-list');
+  if (!loadingEl || !listEl) return;
+
+  loadingEl.style.display = 'block';
+  listEl.style.display    = 'none';
+
+  fetch(`/api/forex/volatile?timeframe=${encodeURIComponent(tf)}`)
+    .then(r => r.json())
+    .then(data => {
+      volatileLoaded = true;
+      listEl.innerHTML = '';
+      if (!data.pairs || data.pairs.length === 0) {
+        listEl.innerHTML = '<div class="ta-loading">No volatile pairs found.</div>';
+        loadingEl.style.display = 'none';
+        listEl.style.display    = 'block';
+        return;
+      }
+      data.pairs.forEach((item, idx) => {
+        const dir   = item.direction;
+        const arrow = dir === 'BUY' ? '▲' : (dir === 'SELL' ? '▼' : '→');
+        const cls   = dir === 'BUY' ? 'buy' : (dir === 'SELL' ? 'sell' : 'hold');
+        const rank  = idx + 1;
+        const volBar = Math.min(100, (item.volatility_pct / MAX_VOLATILITY_FOR_SCALE) * 100); // scale MAX_VOLATILITY_FOR_SCALE% → 100%
+        const row = document.createElement('div');
+        row.className = 'volatile-row';
+        row.innerHTML = `
+          <span class="volatile-rank">#${rank}</span>
+          <span class="volatile-pair">${escapeHtml(item.pair)}</span>
+          <div class="volatile-bar-wrap" title="${item.volatility_pct}% range">
+            <div class="volatile-bar-fill ${cls}" style="width:${volBar}%"></div>
+          </div>
+          <span class="volatile-pct">${item.volatility_pct}%</span>
+          <span class="volatile-dir ${cls}">${arrow} ${dir}</span>
+          <span class="volatile-entry">${item.entry_price}</span>`;
+        listEl.appendChild(row);
+      });
+      loadingEl.style.display = 'none';
+      listEl.style.display    = 'block';
+    })
+    .catch(() => {
+      loadingEl.textContent   = '❌ Failed to load volatile pairs. Please retry.';
+      loadingEl.style.display = 'block';
+      listEl.style.display    = 'none';
+    });
+}
+
+// Timeframe filter buttons
+document.querySelectorAll('.volatile-tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.volatile-tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentVolatileTf = btn.dataset.tf;
+    volatileLoaded    = false;
+    loadVolatilePairs(currentVolatileTf);
+  });
+});
+
+const refreshVolatileBtn = document.getElementById('btn-refresh-volatile');
+if (refreshVolatileBtn) {
+  refreshVolatileBtn.addEventListener('click', () => {
+    volatileLoaded = false;
+    loadVolatilePairs(currentVolatileTf);
+  });
+}
+
+// ─── Trend Reversal Pairs ─────────────────────────────────────────────────────
+let reversalLoaded = false;
+
+function loadReversalPairs() {
+  const loadingEl = document.getElementById('reversal-loading');
+  const listEl    = document.getElementById('reversal-list');
+  if (!loadingEl || !listEl) return;
+
+  loadingEl.style.display = 'block';
+  listEl.style.display    = 'none';
+
+  fetch('/api/forex/reversals')
+    .then(r => r.json())
+    .then(data => {
+      reversalLoaded = true;
+      listEl.innerHTML = '';
+      if (!data.pairs || data.pairs.length === 0) {
+        listEl.innerHTML = '<div class="ta-loading">No reversal signals detected at this time.</div>';
+        loadingEl.style.display = 'none';
+        listEl.style.display    = 'block';
+        return;
+      }
+      data.pairs.forEach((item, idx) => {
+        const rev   = item.reversal_type;
+        const arrow = rev === 'bullish' ? '▲' : '▼';
+        const cls   = rev === 'bullish' ? 'buy' : 'sell';
+        const label = rev === 'bullish' ? 'Bullish Reversal' : 'Bearish Reversal';
+        const strengthBar = Math.min(100, item.strength);
+        const row = document.createElement('div');
+        row.className = 'volatile-row';
+        row.innerHTML = `
+          <span class="volatile-rank">#${idx + 1}</span>
+          <span class="volatile-pair">${escapeHtml(item.pair)}</span>
+          <div class="volatile-bar-wrap" title="Strength: ${item.strength}%">
+            <div class="volatile-bar-fill ${cls}" style="width:${strengthBar}%"></div>
+          </div>
+          <span class="volatile-pct">${item.strength}%</span>
+          <span class="volatile-dir ${cls}">${arrow} ${label}</span>
+          <span class="volatile-entry">${item.entry_price}</span>`;
+        listEl.appendChild(row);
+      });
+      loadingEl.style.display = 'none';
+      listEl.style.display    = 'block';
+    })
+    .catch(() => {
+      loadingEl.textContent   = '❌ Failed to load reversal signals. Please retry.';
+      loadingEl.style.display = 'block';
+      listEl.style.display    = 'none';
+    });
+}
+
+const refreshReversalBtn = document.getElementById('btn-refresh-reversal');
+if (refreshReversalBtn) {
+  refreshReversalBtn.addEventListener('click', () => {
+    reversalLoaded = false;
+    loadReversalPairs();
+  });
+}
