@@ -6,12 +6,20 @@ and pair history via a Flask API and server-rendered web UI.
 """
 
 import hashlib
+import logging
 import os
 from datetime import date, datetime, timedelta, timezone
 from threading import Lock
 from typing import Any
 
 import requests as _requests
+
+try:
+    import psycopg2
+    import psycopg2.extras
+    _PSYCOPG2_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _PSYCOPG2_AVAILABLE = False
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_cors import CORS
@@ -28,6 +36,56 @@ _cors_origins: list[str] | str = (
 )
 CORS(app, origins=_cors_origins)
 
+_logger = logging.getLogger(__name__)
+
+# ─── Database connection ───────────────────────────────────────────────────────
+# Set the PIIDB environment variable to a PostgreSQL connection string to enable
+# persistent storage (e.g. for subscribers).  When PIIDB is unset or unavailable
+# the application falls back to in-memory storage automatically.
+_PIIDB_URL = os.environ.get("PIIDB")
+_DB_LOCK = Lock()
+
+
+def _get_db_conn():
+    """Return a new psycopg2 connection using the PIIDB env variable.
+
+    Returns ``None`` when PIIDB is unset, psycopg2 is not installed, or the
+    connection attempt fails.
+    """
+    if not _PSYCOPG2_AVAILABLE or not _PIIDB_URL:
+        return None
+    try:
+        return psycopg2.connect(_PIIDB_URL)
+    except Exception as exc:  # pragma: no cover
+        _logger.warning("Could not connect to PIIDB: %s", exc)
+        return None
+
+
+def _init_db() -> None:
+    """Create the ``subscribers`` table if it does not already exist."""
+    conn = _get_db_conn()
+    if conn is None:
+        return
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS subscribers (
+                        id            SERIAL PRIMARY KEY,
+                        email         TEXT    NOT NULL UNIQUE,
+                        pairs         TEXT[]  NOT NULL DEFAULT '{}',
+                        subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                    """
+                )
+    except Exception as exc:  # pragma: no cover
+        _logger.warning("Could not initialise database schema: %s", exc)
+    finally:
+        conn.close()
+
+
+_init_db()
 
 # ─── Live rate fetching ────────────────────────────────────────────────────────
 # Fiat pairs  → Frankfurter API (ECB data – free, no key required)
@@ -571,7 +629,7 @@ _FOREX_NEWS: list[dict[str, Any]] = [
     },
 ]
 
-# In-memory email subscriber registry (resets on restart)
+# In-memory email subscriber registry – used as a fallback when PIIDB is unset
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
 
 
@@ -849,7 +907,12 @@ def forex_news():
 
 @app.route("/api/forex/subscribe", methods=["POST"])
 def forex_subscribe():
-    """Register an email address for signal alerts."""
+    """Register an email address for signal alerts.
+
+    Subscribers are persisted to the PostgreSQL database identified by the
+    ``PIIDB`` environment variable.  When PIIDB is unset the list is stored
+    in memory only and resets on each restart.
+    """
     data: dict[str, Any] = request.get_json(force=True) or {}
     email: str = data.get("email", "").strip().lower()
     pairs: list[str] = data.get("pairs", [])
@@ -864,6 +927,33 @@ def forex_subscribe():
     if not pairs:
         pairs = list(_SUPPORTED_PAIRS)
 
+    conn = _get_db_conn()
+    if conn is not None:
+        # Persistent path – use the PostgreSQL database
+        db_ok = False
+        try:
+            with conn:
+                with _DB_LOCK:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subscribers WHERE email = %s", (email,))
+                        if cur.fetchone():
+                            return jsonify({"success": True, "message": "You are already subscribed."})
+                        cur.execute(
+                            "INSERT INTO subscribers (email, pairs) VALUES (%s, %s)",
+                            (email, pairs),
+                        )
+                        db_ok = True
+        except Exception as exc:
+            _logger.warning("Database write failed, falling back to in-memory: %s", exc)
+        finally:
+            conn.close()
+        if db_ok:
+            return jsonify({
+                "success": True,
+                "message": "Subscribed! You will receive alerts when new signals are generated.",
+            })
+
+    # In-memory fallback (used when PIIDB is unset or a DB error occurred)
     if any(s["email"] == email for s in _FOREX_SUBSCRIBERS):
         return jsonify({"success": True, "message": "You are already subscribed."})
 
@@ -872,6 +962,7 @@ def forex_subscribe():
         "pairs": pairs,
         "subscribed_at": datetime.now(timezone.utc).isoformat(),
     })
+
     return jsonify({
         "success": True,
         "message": "Subscribed! You will receive alerts when new signals are generated.",
