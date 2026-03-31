@@ -9,7 +9,7 @@ services:
       - key: DEBUG
         value: "0"
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: "https://piitrade.onrender.com"
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_1

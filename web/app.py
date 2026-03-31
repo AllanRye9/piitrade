@@ -39,12 +39,15 @@ _SESSION_MAX_AGE = 86400  # 24 hours
 # Set the PIIDATA environment variable to enable persistent database storage.
 _PIIDATA = os.environ.get("PIIDATA", "")
 
-_raw_origins = os.environ.get("ALLOWED_ORIGINS", "*")
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://piitrade.onrender.com")
 _cors_origins: list[str] | str = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
     if _raw_origins != "*"
     else "*"
 )
+# When allow_origins is the wildcard "*", allow_credentials must be False
+# (CORS spec disallows credentialed requests with a wildcard origin).
+_cors_allow_credentials: bool = _cors_origins != "*"
 
 # ─── Security helpers ─────────────────────────────────────────────────────────
 _serializer = URLSafeTimedSerializer(_SECRET_KEY)
@@ -158,7 +161,9 @@ def _session_id(request: Request) -> str:
 # ─── Live rate fetching ────────────────────────────────────────────────────────
 _FRANKFURTER_BASE = "https://api.frankfurter.app"
 _YAHOO_FINANCE_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
-_GOLD_TICKER = "XAUUSD=X"
+_YAHOO_FINANCE_BASE_ALT = "https://query2.finance.yahoo.com/v8/finance/chart"
+_GOLD_TICKER = "GC=F"
+_METALS_LIVE_BASE = "https://metals.live/api/spot"
 _RATE_CACHE: dict[str, dict] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL_SECONDS = 300
@@ -171,6 +176,47 @@ _YF_HEADERS = {
 }
 
 
+def _fetch_gold_rate_yahoo(base_url: str) -> float | None:
+    """Fetch gold spot price from Yahoo Finance (returns USD per troy oz)."""
+    try:
+        resp = _requests.get(
+            f"{base_url}/{_GOLD_TICKER}",
+            params={"interval": "1d", "range": "1d"},
+            headers=_YF_HEADERS,
+            timeout=6,
+        )
+        resp.raise_for_status()
+        return float(
+            resp.json()["chart"]["result"][0]["meta"]["regularMarketPrice"]
+        )
+    except Exception:
+        return None
+
+
+def _fetch_gold_rate_metals_live() -> float | None:
+    """Fetch gold spot price from metals.live free API (USD per troy oz)."""
+    try:
+        resp = _requests.get(
+            f"{_METALS_LIVE_BASE}/gold",
+            headers={"Accept": "application/json"},
+            timeout=6,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        # metals.live returns [{"gold": <price_in_usd_per_troy_oz>, ...}]
+        record: dict | None = None
+        if isinstance(data, list) and data:
+            record = data[0]
+        elif isinstance(data, dict):
+            record = data
+        if record is not None and "gold" in record:
+            price = float(record["gold"])
+            return price if price > 0 else None
+    except Exception:
+        pass
+    return None
+
+
 def _fetch_gold_rate() -> float | None:
     cache_key = "rate:XAU/USD"
     now = datetime.now(timezone.utc).timestamp()
@@ -178,22 +224,15 @@ def _fetch_gold_rate() -> float | None:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["rate"]
-    try:
-        resp = _requests.get(
-            f"{_YAHOO_FINANCE_BASE}/{_GOLD_TICKER}",
-            params={"interval": "1d", "range": "1d"},
-            headers=_YF_HEADERS,
-            timeout=5,
-        )
-        resp.raise_for_status()
-        rate: float = float(
-            resp.json()["chart"]["result"][0]["meta"]["regularMarketPrice"]
-        )
+    rate = (
+        _fetch_gold_rate_yahoo(_YAHOO_FINANCE_BASE)
+        or _fetch_gold_rate_yahoo(_YAHOO_FINANCE_BASE_ALT)
+        or _fetch_gold_rate_metals_live()
+    )
+    if rate:
         with _CACHE_LOCK:
             _RATE_CACHE[cache_key] = {"rate": rate, "fetched_at": now}
-        return rate
-    except Exception:
-        return None
+    return rate
 
 
 def _fetch_gold_historical_rates(days: int = 30) -> dict[str, float]:
@@ -203,30 +242,32 @@ def _fetch_gold_historical_rates(days: int = 30) -> dict[str, float]:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["data"]
-    try:
-        resp = _requests.get(
-            f"{_YAHOO_FINANCE_BASE}/{_GOLD_TICKER}",
-            params={"interval": "1d", "range": "3mo"},
-            headers=_YF_HEADERS,
-            timeout=10,
-        )
-        resp.raise_for_status()
-        result = resp.json()["chart"]["result"][0]
-        timestamps: list[int] = result["timestamp"]
-        closes: list[float | None] = result["indicators"]["quote"][0]["close"]
-        rates: dict[str, float] = {}
-        for ts, close in zip(timestamps, closes):
-            if close is None:
-                continue
-            d = datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
-            rates[d] = round(float(close), 2)
-        sorted_rates = dict(sorted(rates.items()))
-        recent = dict(list(sorted_rates.items())[-days:])
-        with _CACHE_LOCK:
-            _RATE_CACHE[cache_key] = {"data": recent, "fetched_at": now}
-        return recent
-    except Exception:
-        return {}
+    for base_url in (_YAHOO_FINANCE_BASE, _YAHOO_FINANCE_BASE_ALT):
+        try:
+            resp = _requests.get(
+                f"{base_url}/{_GOLD_TICKER}",
+                params={"interval": "1d", "range": "3mo"},
+                headers=_YF_HEADERS,
+                timeout=10,
+            )
+            resp.raise_for_status()
+            result = resp.json()["chart"]["result"][0]
+            timestamps: list[int] = result["timestamp"]
+            closes: list[float | None] = result["indicators"]["quote"][0]["close"]
+            rates: dict[str, float] = {}
+            for ts, close in zip(timestamps, closes):
+                if close is None:
+                    continue
+                d = datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
+                rates[d] = round(float(close), 2)
+            sorted_rates = dict(sorted(rates.items()))
+            recent = dict(list(sorted_rates.items())[-days:])
+            with _CACHE_LOCK:
+                _RATE_CACHE[cache_key] = {"data": recent, "fetched_at": now}
+            return recent
+        except Exception:
+            continue
+    return {}
 
 
 def _fetch_live_rate(pair: str) -> float | None:
@@ -372,7 +413,7 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "GBP/JPY": {"direction": "SELL", "confidence": 67.5, "entry_price": 190.25, "take_profit": 188.90, "stop_loss": 191.20, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "GBP/CHF": {"direction": "SELL", "confidence": 58.9, "entry_price": 1.1456, "take_profit": 1.1390, "stop_loss": 1.1500, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "AUD/JPY": {"direction": "HOLD", "confidence": 51.4, "entry_price": 98.65,  "take_profit": 99.30,  "stop_loss": 98.10,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "XAU/USD": {"direction": "BUY",  "confidence": 71.4, "entry_price": 3120.00,"take_profit": 3180.00,"stop_loss": 3085.00, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XAU/USD": {"direction": "BUY",  "confidence": 71.4, "entry_price": 3300.00,"take_profit": 3365.00,"stop_loss": 3263.00, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
 }
 
 _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]] = {
@@ -417,7 +458,7 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "GBP/JPY": (189.40, 0.01,   _gen_seq("GBP/JPY")),
     "GBP/CHF": (1.1410, 0.0001, _gen_seq("GBP/CHF")),
     "AUD/JPY": (98.20,  0.01,   _gen_seq("AUD/JPY")),
-    "XAU/USD": (3120.00, 1.0,   _gen_seq("XAU/USD")),
+    "XAU/USD": (3300.00, 1.0,   _gen_seq("XAU/USD")),
 }
 
 _FOREX_NEWS: list[dict[str, Any]] = [
@@ -528,7 +569,7 @@ app.add_middleware(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins if isinstance(_cors_origins, list) else ["*"],
-    allow_credentials=True,
+    allow_credentials=_cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
