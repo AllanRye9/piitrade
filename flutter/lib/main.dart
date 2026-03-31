@@ -7,34 +7,29 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final serverUrl = prefs.getString('server_url') ?? 'http://localhost:5000';
-  final voiceLocale = prefs.getString('voice_locale') ?? 'en_US';
-  runApp(YotApp(initialServerUrl: serverUrl, initialVoiceLocale: voiceLocale));
+  runApp(PiiTradeApp(initialServerUrl: serverUrl));
 }
 
-class YotApp extends StatefulWidget {
+class PiiTradeApp extends StatefulWidget {
   final String initialServerUrl;
-  final String initialVoiceLocale;
 
-  const YotApp({
+  const PiiTradeApp({
     super.key,
     required this.initialServerUrl,
-    required this.initialVoiceLocale,
   });
 
   @override
-  State<YotApp> createState() => _YotAppState();
+  State<PiiTradeApp> createState() => _PiiTradeAppState();
 }
 
-class _YotAppState extends State<YotApp> {
+class _PiiTradeAppState extends State<PiiTradeApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   late String _serverUrl;
-  late String _voiceLocale;
 
   @override
   void initState() {
     super.initState();
     _serverUrl = widget.initialServerUrl;
-    _voiceLocale = widget.initialVoiceLocale;
   }
 
   void _updateServerUrl(String url) {
@@ -46,7 +41,6 @@ class _YotAppState extends State<YotApp> {
     if (mounted) {
       setState(() {
         _serverUrl = prefs.getString('server_url') ?? _serverUrl;
-        _voiceLocale = prefs.getString('voice_locale') ?? _voiceLocale;
       });
     }
   }
@@ -234,7 +228,7 @@ class _SplashScreenState extends State<_SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 48),
-                // Loading dots
+                // Loading indicator
                 SizedBox(
                   width: 44,
                   height: 44,
