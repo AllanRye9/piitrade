@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account Recovery – PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="stylesheet" href="/static/css/auth.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📈</text></svg>"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<header class="fx-header">
+  <div class="brand">
+    <span>📈</span>
+    <a href="/forex" style="color:inherit;text-decoration:none">PiiTrade AI Forex</a>
+  </div>
+  <nav class="fx-nav">
+    <a href="/auth/login">Sign in</a>
+    <a href="/auth/register">Register</a>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
+<main class="auth-main">
+  <div class="auth-card">
+    <div class="auth-logo">🔑</div>
+    <h1 class="auth-title">Account recovery</h1>
+    <p class="auth-subtitle">Enter your email to receive a password reset token</p>
+
+    {% if error %}
+    <div class="auth-alert auth-alert-error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+    <div class="auth-alert auth-alert-success">{{ success }}</div>
+    {% else %}
+    <form class="auth-form" method="post" action="/auth/recover" novalidate>
+      <div class="auth-field">
+        <label class="auth-label" for="email">Email address</label>
+        <input
+          id="email" name="email" type="email"
+          class="auth-input" autocomplete="email"
+          placeholder="you@example.com" required
+        />
+      </div>
+
+      <button type="submit" class="auth-btn">Send Reset Token</button>
+    </form>
+    {% endif %}
+
+    <p class="auth-footer">
+      Remembered your password?
+      <a href="/auth/login" class="auth-link">Sign in</a>
+    </p>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="stylesheet" href="/static/css/admin.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🛡️</text></svg>"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<header class="fx-header">
+  <div class="brand">
+    <span>🛡️</span>
+    <span>PiiTrade Admin Dashboard</span>
+  </div>
+  <nav class="fx-nav">
+    <span class="admin-badge">admin: {{ admin.username }}</span>
+    <a href="/forex">📈 Hub</a>
+    <a href="/auth/logout" class="btn-outline">Sign Out</a>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
+<main class="adm-main">
+
+  <!-- ── Stat Cards ── -->
+  <section class="adm-stats-grid">
+    <div class="adm-stat-card">
+      <div class="adm-stat-icon">👥</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value">{{ stats.total_users }}</div>
+        <div class="adm-stat-label">Total Users</div>
+      </div>
+    </div>
+    <div class="adm-stat-card">
+      <div class="adm-stat-icon">🛡️</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value">{{ stats.admin_count }}</div>
+        <div class="adm-stat-label">Admins</div>
+      </div>
+    </div>
+    <div class="adm-stat-card">
+      <div class="adm-stat-icon">🔔</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value">{{ stats.subscribers }}</div>
+        <div class="adm-stat-label">Subscribers</div>
+      </div>
+    </div>
+    <div class="adm-stat-card">
+      <div class="adm-stat-icon">📊</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value">{{ stats.supported_pairs }}</div>
+        <div class="adm-stat-label">Trading Pairs</div>
+      </div>
+    </div>
+    <div class="adm-stat-card">
+      <div class="adm-stat-icon">⚡</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value">{{ stats.cached_rates }}</div>
+        <div class="adm-stat-label">Cached Rates</div>
+      </div>
+    </div>
+    <div class="adm-stat-card adm-stat-time">
+      <div class="adm-stat-icon">🕐</div>
+      <div class="adm-stat-body">
+        <div class="adm-stat-value" style="font-size:0.9rem">{{ stats.server_time }}</div>
+        <div class="adm-stat-label">Server Time (UTC)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Supported Pairs ── -->
+  <section class="adm-section">
+    <div class="adm-section-title">📈 Supported Trading Pairs</div>
+    <div class="adm-pairs-grid">
+      {% for p in pairs %}
+      <span class="adm-pair-badge">{{ p }}</span>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Users Table ── -->
+  <section class="adm-section">
+    <div class="adm-section-title">👥 Registered Users</div>
+    {% if users %}
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Registered</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="adm-user-name">
+              {{ u.username }}
+              {% if u.role == 'admin' %}
+              <span class="adm-role-badge adm-role-admin">admin</span>
+              {% endif %}
+            </td>
+            <td>{{ u.email }}</td>
+            <td>
+              <span class="adm-role-badge {% if u.role == 'admin' %}adm-role-admin{% else %}adm-role-user{% endif %}">
+                {{ u.role }}
+              </span>
+            </td>
+            <td class="adm-date">{{ u.created_at[:19].replace('T', ' ') if u.created_at else '–' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="adm-empty">No registered users yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- ── Subscribers Table ── -->
+  <section class="adm-section">
+    <div class="adm-section-title">🔔 Signal Subscribers ({{ subscribers | length }})</div>
+    {% if subscribers %}
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Pairs</th>
+            <th>Subscribed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subscribers %}
+          <tr>
+            <td>{{ s.email }}</td>
+            <td class="adm-pairs-cell">
+              {% for p in s.pairs[:5] %}
+              <span class="adm-pair-badge-sm">{{ p }}</span>
+              {% endfor %}
+              {% if s.pairs | length > 5 %}
+              <span class="adm-pair-badge-sm adm-more">+{{ s.pairs | length - 5 }} more</span>
+              {% endif %}
+            </td>
+            <td class="adm-date">{{ s.subscribed_at[:19].replace('T', ' ') if s.subscribed_at else '–' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="adm-empty">No subscribers yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- ── API Reference ── -->
+  <section class="adm-section">
+    <div class="adm-section-title">🔌 API Endpoints</div>
+    <div class="adm-api-grid">
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/forex/signals?pair=EUR/USD</code>
+        <span class="adm-api-desc">Live signal + 30-day history</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/forex/technical?pair=EUR/USD</code>
+        <span class="adm-api-desc">Technical analysis (S/R, FVG, BOS)</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/forex/pairs</code>
+        <span class="adm-api-desc">List of supported pairs</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/forex/news</code>
+        <span class="adm-api-desc">News sentiment feed</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method post">POST</span>
+        <code>/api/forex/subscribe</code>
+        <span class="adm-api-desc">Subscribe for signal alerts</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method post">POST</span>
+        <code>/api/auth/register</code>
+        <span class="adm-api-desc">Register (Flutter / mobile)</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method post">POST</span>
+        <code>/api/auth/login</code>
+        <span class="adm-api-desc">Login – returns JWT</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/health</code>
+        <span class="adm-api-desc">Health check</span>
+      </div>
+      <div class="adm-api-item">
+        <span class="adm-method get">GET</span>
+        <code>/api/docs</code>
+        <span class="adm-api-desc">Interactive Swagger UI docs</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

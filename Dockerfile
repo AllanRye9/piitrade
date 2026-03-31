@@ -1,18 +1,19 @@
-# ── Python Flask web application ───────────────────────────────────────────────
+# ── Python FastAPI web application ─────────────────────────────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install Python dependencies (gunicorn added for production serving)
+# Install Python dependencies
 COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Flask application
+# Copy FastAPI application
 COPY web/ web/
 
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 10000
 
-# Shell form so ${PORT:-5000} is expanded at container start-up by the shell
-CMD gunicorn --bind "0.0.0.0:${PORT:-5000}" --workers 2 "web.app:app"
+# Use uvicorn with gunicorn worker manager for production
+CMD gunicorn --bind "0.0.0.0:${PORT:-8000}" --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker "web.app:app"

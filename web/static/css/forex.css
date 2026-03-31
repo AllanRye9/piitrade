@@ -97,6 +97,16 @@ a:hover { text-decoration: underline; }
 .btn-sound:hover { border-color: var(--accent); color: var(--accent); }
 .btn-sound.muted { color: var(--text2); opacity: 0.4; }
 
+/* ── Nav user badge ── */
+.fx-nav-user {
+  font-size: 0.82rem;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
 /* ── Tab Navigation ── */
 .fx-tabs {
   background: var(--surface);

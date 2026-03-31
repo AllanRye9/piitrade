@@ -1,0 +1,152 @@
+/* ───────────────────────────────────────────────────────
+   PiiTrade – Auth & Shared Form Styles
+   ─────────────────────────────────────────────────────── */
+
+/* ── Auth page layout ── */
+.auth-main {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+/* ── Auth card ── */
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Logo / icon ── */
+.auth-logo {
+  font-size: 2.4rem;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* ── Title & subtitle ── */
+.auth-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 0.88rem;
+  color: var(--text2);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* ── Alert banners ── */
+.auth-alert {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.auth-alert-error {
+  background: rgba(248, 81, 73, 0.12);
+  border: 1px solid rgba(248, 81, 73, 0.35);
+  color: #f85149;
+}
+
+.auth-alert-success {
+  background: rgba(63, 185, 80, 0.12);
+  border: 1px solid rgba(63, 185, 80, 0.35);
+  color: #3fb950;
+}
+
+/* ── Form ── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.auth-label {
+  font-size: 0.85rem;
+  color: var(--text2);
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auth-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.auth-input::placeholder { color: var(--text2); opacity: 0.6; }
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.auth-hint {
+  font-size: 0.78rem;
+  color: var(--text2);
+  opacity: 0.7;
+}
+
+/* ── Submit button ── */
+.auth-btn {
+  background: var(--accent);
+  color: #0d1117;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-family: inherit;
+  border: none;
+  border-radius: var(--radius);
+  padding: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s, transform 0.1s;
+  width: 100%;
+}
+
+.auth-btn:hover { background: #79b8ff; }
+.auth-btn:active { transform: scale(0.98); }
+
+/* ── Footer / links ── */
+.auth-footer {
+  font-size: 0.88rem;
+  color: var(--text2);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.auth-link { color: var(--accent); }
+.auth-link:hover { text-decoration: underline; }
+
+.auth-link-inline {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 400;
+}
+.auth-link-inline:hover { text-decoration: underline; }
