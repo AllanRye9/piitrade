@@ -20,3 +20,5 @@ services:
         sync: false
       - key: ADMIN_P2
         sync: false
+      - key: PIIDATA
+        sync: false

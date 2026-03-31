@@ -35,6 +35,10 @@ _ADMIN_2 = os.environ.get("ADMIN_2", "")
 _ADMIN_P2 = os.environ.get("ADMIN_P2", "")
 _SESSION_MAX_AGE = 86400  # 24 hours
 
+# Database connection URL (e.g. postgresql://user:pass@host/dbname).
+# Set the PIIDATA environment variable to enable persistent database storage.
+_PIIDATA = os.environ.get("PIIDATA", "")
+
 _raw_origins = os.environ.get("ALLOWED_ORIGINS", "*")
 _cors_origins: list[str] | str = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
