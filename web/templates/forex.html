@@ -35,6 +35,8 @@
   <button class="fx-tab active" role="tab" aria-selected="true"  data-section="section-signal">📊 Signal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-risk">📐 Risk Calc</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-technical">🔍 Technical</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-volatile">🔥 Volatile</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-reversal">🔄 Reversal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-success">🏆 Success Rates</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-news">📰 News</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-alerts">🔔 Alerts</button>
@@ -285,7 +287,35 @@
     </div>
   </section>
 
-  <!-- 5. Success Rate Tracking ─────────────────────────────────────────────── -->
+  <!-- 5. Volatile Pairs Scanner ──────────────────────────────────────────── -->
+  <section id="section-volatile">
+    <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      Pairs ranked by price range movement over the selected timeframe. Higher volatility can signal trading opportunities but also greater risk.
+    </p>
+    <div class="volatile-filter-bar">
+      <span style="color:var(--text2);font-size:.85rem">Timeframe:</span>
+      <button class="volatile-tf-btn active" data-tf="1h">1 Hour</button>
+      <button class="volatile-tf-btn" data-tf="4h">4 Hours</button>
+      <button class="volatile-tf-btn" data-tf="24h">24 Hours</button>
+      <button id="btn-refresh-volatile" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
+    </div>
+    <div id="volatile-loading" class="ta-loading">Loading volatile pairs…</div>
+    <div id="volatile-list" class="volatile-list" style="display:none"></div>
+  </section>
+
+  <!-- 6. Trend Reversal Pairs ─────────────────────────────────────────────── -->
+  <section id="section-reversal">
+    <div class="fx-section-title">🔄 Potential Trend Reversal Pairs</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      Pairs where the AI model has detected a recent momentum shift, suggesting a potential change in trend direction.
+    </p>
+    <button id="btn-refresh-reversal" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
+    <div id="reversal-loading" class="ta-loading">Loading reversal signals…</div>
+    <div id="reversal-list" class="volatile-list" style="display:none"></div>
+  </section>
+
+  <!-- 7. Success Rate Tracking ─────────────────────────────────────────────── -->
   <section id="section-success">
     <div class="fx-section-title">🏆 Pair Success Rates</div>
     <div class="success-intro">
