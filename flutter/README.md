@@ -1,16 +1,18 @@
-# Yot-Presentation Mobile 📱
+# PiiTrade Mobile 📱
 
-Flutter mobile app for [Yot-Presentation](../) — voice-controlled presentations on **Android** and **iOS**.
+Flutter mobile app for [PiiTrade](../) — AI Forex Signal Hub for **Android** and **iOS**.
+
+> **Note:** This Flutter app is an **independent mobile service**. It is not part of the Docker deployment. Only the web application (`web/`) is deployed via Docker.
 
 ---
 
 ## Features
 
-- 🎤 **Voice commands** — say "next", "previous", "go to 5", "last slide" (8 languages, auto-detected)
-- 📤 **File upload** — upload PDF, Word, Excel, images, or text directly from your phone
-- 📂 **File manager** — list and open presentations already on the server
-- 🖼️ **Slide viewer** — pinch-to-zoom for image slides; scrollable text for text slides
-- 🔗 **Configurable server** — point the app at any Yot-Presentation Flask backend
+- 📈 **Live forex signals** — AI/ML-backed buy/sell signals for major forex pairs and XAU/USD
+- 📊 **Technical analysis** — RSI, MACD, Bollinger Bands and trend indicators
+- 📰 **News sentiment** — market sentiment from live news headlines
+- 📉 **Pair history** — historical rate charts for all supported pairs
+- ⚙️ **Configurable server** — point the app at any PiiTrade Flask backend
 
 ---
 
@@ -18,8 +20,8 @@ Flutter mobile app for [Yot-Presentation](../) — voice-controlled presentation
 
 | Tool | Version |
 |------|---------|
-| Flutter SDK | ≥ 3.10 |
-| Dart SDK | ≥ 3.0 |
+| Flutter SDK | ≥ 3.22 |
+| Dart SDK | ≥ 3.4 |
 | Android | API 21+ (Android 5) |
 | iOS | 12.0+ |
 
@@ -27,13 +29,15 @@ Flutter mobile app for [Yot-Presentation](../) — voice-controlled presentation
 
 ## Quick Start
 
-### 1 — Start the Flask server
+### 1 — Start the PiiTrade web server
 
 ```bash
-# From the repository root
-docker-compose up
-# or
-cd web && pip install -r ../requirements.txt && python app.py
+# From the repository root (Docker)
+docker build -t piitrade .
+docker run -p 5000:5000 piitrade
+
+# or run locally
+cd web && pip install -r requirements.txt && python app.py
 ```
 
 ### 2 — Install the Flutter app
@@ -46,10 +50,10 @@ flutter run            # on a connected device / emulator
 
 ### 3 — Configure the server URL
 
-Open the ⚙️ **Settings** screen inside the app and enter the IP address of
+Open the ⚙️ **Settings** screen inside the app and enter the address of
 the machine running the Flask server, e.g. `http://192.168.1.100:5000`.
 
-> **Tip:** Make sure your phone and the server are on the same Wi-Fi network.
+> **Tip:** Make sure your phone and the server are on the same network (or use the deployed URL).
 
 ---
 
@@ -58,44 +62,20 @@ the machine running the Flask server, e.g. `http://192.168.1.100:5000`.
 ```
 flutter/
 ├── lib/
-│   ├── main.dart                  # App entry point
+│   ├── main.dart                  # App entry point & splash screen
 │   ├── screens/
-│   │   ├── upload_screen.dart     # File upload & file list
-│   │   ├── presentation_screen.dart  # Slide viewer + voice control
+│   │   ├── forex_screen.dart      # Live signals, rates & pair history
 │   │   └── settings_screen.dart   # Server URL configuration
 │   ├── services/
-│   │   ├── api_service.dart       # HTTP client for the Flask API
-│   │   └── voice_service.dart     # Wrapper around speech_to_text
-│   ├── models/
-│   │   ├── slide.dart             # Slide data model
-│   │   └── presentation_file.dart # PresentationFile data model
-│   └── widgets/
-│       ├── slide_view.dart        # Image / text slide renderer
-│       └── voice_button.dart      # Animated microphone FAB
+│   │   └── api_service.dart       # HTTP client for the PiiTrade Flask API
+│   └── models/                    # Data models
 ├── android/                       # Android project files
 ├── ios/                           # iOS project files
 ├── test/
-│   └── widget_test.dart           # Unit tests for models & services
+│   └── widget_test.dart           # Widget tests
 ├── pubspec.yaml                   # Flutter dependencies
 └── analysis_options.yaml          # Lint rules
 ```
-
----
-
-## Voice Commands
-
-The app sends your transcript to the `/api/command` endpoint on the Flask
-server, which matches it against the same 72+ pattern variations as the web
-app.  Supported languages: English, Spanish, French, German, Italian,
-Portuguese, Chinese, Japanese.
-
-| What you say | Action |
-|---|---|
-| "next", "forward", "siguiente" | Next slide |
-| "back", "previous", "précédent" | Previous slide |
-| "go to 5", "slide 5", "salta a 5" | Jump to slide 5 |
-| "first", "beginning" | First slide |
-| "last", "end", "final" | Last slide |
 
 ---
 
@@ -121,3 +101,12 @@ flutter build apk --release
 ```bash
 flutter build ios --release
 ```
+
+---
+
+## Deployment Note
+
+The Flutter app is **not** included in the Docker image. It is developed and
+distributed independently as an Android/iOS application. The Docker image only
+contains the Python/Flask web application.
+

@@ -1,11 +1,4 @@
-# ── Stage 1: Build Flutter web app ────────────────────────────────────────────
-FROM ghcr.io/cirruslabs/flutter:stable AS flutter-build
-
-WORKDIR /flutter
-COPY flutter/ .
-RUN flutter build web --release
-
-# ── Stage 2: Python Flask application ─────────────────────────────────────────
+# ── Python Flask web application ───────────────────────────────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -16,9 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Flask application
 COPY web/ web/
-
-# Embed the Flutter web build as Flask static files served at /app
-COPY --from=flutter-build /flutter/build/web web/static/flutter/
 
 ENV PYTHONUNBUFFERED=1
 
