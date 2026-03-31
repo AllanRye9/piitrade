@@ -980,16 +980,20 @@ function loadVolatilePairs(tf) {
         const volBar = Math.min(100, (item.volatility_pct / MAX_VOLATILITY_FOR_SCALE) * 100); // scale MAX_VOLATILITY_FOR_SCALE% → 100%
         const row = document.createElement('div');
         row.className = 'volatile-row';
+        row.style.animationDelay = `${idx * 60}ms`;
         row.innerHTML = `
           <span class="volatile-rank">#${rank}</span>
           <span class="volatile-pair">${escapeHtml(item.pair)}</span>
           <div class="volatile-bar-wrap" title="${item.volatility_pct}% range">
-            <div class="volatile-bar-fill ${cls}" style="width:${volBar}%"></div>
+            <div class="volatile-bar-fill ${cls}" style="width:0"></div>
           </div>
           <span class="volatile-pct">${item.volatility_pct}%</span>
           <span class="volatile-dir ${cls}">${arrow} ${dir}</span>
           <span class="volatile-entry">${item.entry_price}</span>`;
         listEl.appendChild(row);
+        // Animate bar width after a staggered delay so the grow is visible
+        const fill = row.querySelector('.volatile-bar-fill');
+        setTimeout(() => { fill.style.width = volBar + '%'; }, 80 + idx * 60);
       });
       loadingEl.style.display = 'none';
       listEl.style.display    = 'block';
@@ -1050,16 +1054,19 @@ function loadReversalPairs() {
         const strengthBar = Math.min(100, item.strength);
         const row = document.createElement('div');
         row.className = 'volatile-row';
+        row.style.animationDelay = `${idx * 60}ms`;
         row.innerHTML = `
           <span class="volatile-rank">#${idx + 1}</span>
           <span class="volatile-pair">${escapeHtml(item.pair)}</span>
           <div class="volatile-bar-wrap" title="Strength: ${item.strength}%">
-            <div class="volatile-bar-fill ${cls}" style="width:${strengthBar}%"></div>
+            <div class="volatile-bar-fill ${cls}" style="width:0"></div>
           </div>
           <span class="volatile-pct">${item.strength}%</span>
           <span class="volatile-dir ${cls}">${arrow} ${label}</span>
           <span class="volatile-entry">${item.entry_price}</span>`;
         listEl.appendChild(row);
+        const fill = row.querySelector('.volatile-bar-fill');
+        setTimeout(() => { fill.style.width = strengthBar + '%'; }, 80 + idx * 60);
       });
       loadingEl.style.display = 'none';
       listEl.style.display    = 'block';

@@ -604,14 +604,6 @@ async def forex_hub(request: Request):
         return JSONResponse({"error": "An internal error occurred."}, status_code=500)
 
 
-@app.get("/forex/methodology", response_class=HTMLResponse)
-async def forex_methodology(request: Request):
-    try:
-        return templates.TemplateResponse(request, "methodology.html", _ctx(request))
-    except Exception:
-        return JSONResponse({"error": "An internal error occurred."}, status_code=500)
-
-
 # ─── Auth routes ──────────────────────────────────────────────────────────────
 
 @app.get("/login", response_class=HTMLResponse)
