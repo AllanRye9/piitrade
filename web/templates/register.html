@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📈</text></svg>"/>
+</head>
+<body>
+
+<header class="fx-header">
+  <div class="brand">
+    <span>📈</span>
+    <span class="brand-title">PiiTrade</span>
+    <span class="brand-sub">AI Forex Signal Hub</span>
+  </div>
+  <nav class="fx-nav">
+    <a href="/forex">Dashboard</a>
+    <a href="/login" class="btn-outline">Login</a>
+  </nav>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-icon">📝</span>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join PiiTrade to track your signals</p>
+    </div>
+
+    {% if error %}
+    <div class="auth-alert auth-alert-error" role="alert">⚠️ {{ error }}</div>
+    {% endif %}
+    {% if success %}
+    <div class="auth-alert auth-alert-success" role="alert">✅ {{ success }}</div>
+    {% endif %}
+
+    {% if not success %}
+    <form method="post" action="/register" class="auth-form" autocomplete="on">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input
+          class="form-input"
+          type="text"
+          id="username"
+          name="username"
+          placeholder="3–32 characters, letters/numbers/-/_"
+          required
+          autocomplete="username"
+          minlength="3"
+          maxlength="32"
+          pattern="[A-Za-z0-9_\-]+"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input
+          class="form-input"
+          type="email"
+          id="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="At least 8 characters"
+          required
+          autocomplete="new-password"
+          minlength="8"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Confirm Password</label>
+        <input
+          class="form-input"
+          type="password"
+          id="confirm_password"
+          name="confirm_password"
+          placeholder="Repeat your password"
+          required
+          autocomplete="new-password"
+          minlength="8"
+        />
+      </div>
+
+      <button type="submit" class="btn-auth-submit">Create Account</button>
+    </form>
+    {% endif %}
+
+    <div class="auth-footer">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
