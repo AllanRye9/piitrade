@@ -3,10 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/forex_screen.dart';
 import 'screens/settings_screen.dart';
 
+/// The PIIDATA environment variable can be set at build time via
+/// `--dart-define=PIIDATA=https://your-backend.example.com` to specify
+/// the default backend server URL (database connection endpoint).
+const _kPiiDataUrl = String.fromEnvironment('PIIDATA');
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  final serverUrl = prefs.getString('server_url') ?? 'http://localhost:5000';
+  final serverUrl = prefs.getString('server_url') ??
+      (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'http://localhost:5000');
   runApp(PiiTradeApp(initialServerUrl: serverUrl));
 }
 
@@ -40,7 +46,8 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _serverUrl = prefs.getString('server_url') ?? _serverUrl;
+        _serverUrl = prefs.getString('server_url') ??
+            (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : _serverUrl);
       });
     }
   }
