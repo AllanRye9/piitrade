@@ -6,7 +6,17 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: FLASK_DEBUG
+      - key: DEBUG
         value: "0"
       - key: ALLOWED_ORIGINS
         value: "*"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_1
+        sync: false
+      - key: ADMIN_P1
+        sync: false
+      - key: ADMIN_2
+        sync: false
+      - key: ADMIN_P2
+        sync: false

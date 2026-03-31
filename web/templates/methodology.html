@@ -79,11 +79,19 @@
 <header class="fx-header">
   <div class="brand">
     <span>📈</span>
-    <span>AI Forex Signal Hub</span>
+    <span class="brand-title">PiiTrade</span>
+    <span class="brand-sub">AI Forex Signal Hub</span>
   </div>
   <nav class="fx-nav">
     <a href="/forex">Dashboard</a>
-    <a href="/" class="btn-outline">← Yot-Presentation</a>
+    {% if current_user %}
+      {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
+      <span class="nav-user">👤 {{ current_user }}</span>
+      <a href="/logout" class="btn-outline">Logout</a>
+    {% else %}
+      <a href="/login" class="btn-outline">Login</a>
+      <a href="/register" class="btn-primary">Register</a>
+    {% endif %}
   </nav>
 </header>
 

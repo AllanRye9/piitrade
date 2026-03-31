@@ -1,8 +1,8 @@
 """
-Vercel serverless entrypoint for PiiTrade – AI Forex Signal Hub.
+Vercel / ASGI entrypoint for PiiTrade – AI Forex Signal Hub.
 
-This module re-exports the Flask ``app`` object from ``web/app.py`` so that
-Vercel's Python runtime can use it as a WSGI handler.
+This module re-exports the FastAPI ``app`` object from ``web/app.py`` so that
+Vercel's Python runtime can use it as an ASGI handler.
 """
 
 import sys
@@ -14,21 +14,17 @@ if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
 try:
-    from web.app import app  # noqa: E402 -- WSGI handler for Vercel
+    from web.app import app  # noqa: E402 -- ASGI handler for Vercel
 except Exception as _import_error:
-    # Fallback WSGI app that reports the import error instead of crashing
-    # with an opaque 500. This makes diagnostics much easier.
-    import json as _json
+    from fastapi import FastAPI
+    from fastapi.responses import JSONResponse
 
     _error_message = str(_import_error)
+    app = FastAPI()
 
-    def app(environ, start_response):  # type: ignore[misc]
-        body = _json.dumps({"error": "Failed to load application: " + _error_message}).encode()
-        start_response(
-            "500 Internal Server Error",
-            [
-                ("Content-Type", "application/json"),
-                ("Content-Length", str(len(body))),
-            ],
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    async def _error_handler(path: str = ""):
+        return JSONResponse(
+            {"error": "Application failed to start. Check deployment logs."},
+            status_code=500,
         )
-        return [body]

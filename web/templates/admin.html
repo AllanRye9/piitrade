@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚙️</text></svg>"/>
+</head>
+<body class="admin-body">
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<header class="fx-header">
+  <div class="brand">
+    <span>⚙️</span>
+    <span class="brand-title">PiiTrade</span>
+    <span class="brand-sub">Admin Dashboard</span>
+  </div>
+  <nav class="fx-nav">
+    <a href="/forex">📈 Signal Hub</a>
+    <span class="nav-user nav-admin-badge">🛡️ {{ current_user }}</span>
+    <a href="/logout" class="btn-outline">Logout</a>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════════ ADMIN LAYOUT ════════════════════════════ -->
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <nav class="admin-sidenav">
+      <a href="#section-overview" class="sidenav-item active" onclick="showSection('section-overview', this)">
+        <span>📊</span><span>Overview</span>
+      </a>
+      <a href="#section-users" class="sidenav-item" onclick="showSection('section-users', this)">
+        <span>👥</span><span>Users</span>
+      </a>
+      <a href="#section-subscribers" class="sidenav-item" onclick="showSection('section-subscribers', this)">
+        <span>📬</span><span>Subscribers</span>
+      </a>
+      <a href="#section-cache" class="sidenav-item" onclick="showSection('section-cache', this)">
+        <span>💾</span><span>Cache</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="admin-main" id="admin-main">
+
+    <!-- ── Overview ─────────────────────────────────────────────────────── -->
+    <section id="section-overview" class="admin-section">
+      <h2 class="admin-section-title">📊 Platform Overview</h2>
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="stat-users">{{ users|length }}</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">🛡️</div>
+          <div class="stat-value" id="stat-admins">{{ users | selectattr('role','eq','admin') | list | length }}</div>
+          <div class="stat-label">Admin Accounts</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📬</div>
+          <div class="stat-value" id="stat-subs">{{ subscribers|length }}</div>
+          <div class="stat-label">Subscribers</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">{{ total_pairs }}</div>
+          <div class="stat-label">Forex Pairs</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">💾</div>
+          <div class="stat-value" id="stat-cache">{{ cache_info|length }}</div>
+          <div class="stat-label">Cache Entries</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-fresh">{{ cache_info | selectattr('fresh') | list | length }}</div>
+          <div class="stat-label">Fresh Cache Items</div>
+        </div>
+      </div>
+
+      <div class="admin-info-row">
+        <div class="admin-info-card">
+          <h3 class="admin-info-title">🖥️ System Health</h3>
+          <table class="admin-table">
+            <tbody>
+              <tr><td class="td-label">Framework</td><td>FastAPI (ASGI)</td></tr>
+              <tr><td class="td-label">Cache TTL</td><td>300 seconds</td></tr>
+              <tr><td class="td-label">Active Pair Feeds</td><td>Frankfurter API + Yahoo Finance</td></tr>
+              <tr><td class="td-label">Signal Model</td><td>LightGBM v2.3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Users ─────────────────────────────────────────────────────────── -->
+    <section id="section-users" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">👥 User Management</h2>
+        <span class="admin-badge">{{ users|length }} users</span>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            {% for user in users %}
+            <tr id="user-row-{{ user.username }}">
+              <td><strong>{{ user.username }}</strong></td>
+              <td>{{ user.email }}</td>
+              <td>
+                {% if user.role == 'admin' %}
+                <span class="role-badge role-admin">🛡️ Admin</span>
+                {% else %}
+                <span class="role-badge role-user">👤 User</span>
+                {% endif %}
+              </td>
+              <td class="td-date">{{ user.created_at[:10] }}</td>
+              <td>
+                {% if user.role != 'admin' %}
+                <button
+                  class="btn-danger-sm"
+                  onclick="deleteUser('{{ user.username }}')"
+                  title="Delete user">🗑️ Delete</button>
+                {% else %}
+                <span class="td-muted">Protected</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="td-empty">No users registered yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Subscribers ────────────────────────────────────────────────────── -->
+    <section id="section-subscribers" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">📬 Signal Subscribers</h2>
+        <span class="admin-badge">{{ subscribers|length }} subscribers</span>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Pairs</th>
+              <th>Subscribed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="subs-tbody">
+            {% for sub in subscribers %}
+            <tr id="sub-row-{{ loop.index }}">
+              <td>{{ sub.email }}</td>
+              <td class="td-pairs">
+                {% for p in sub.pairs[:5] %}
+                <span class="pair-chip">{{ p }}</span>
+                {% endfor %}
+                {% if sub.pairs|length > 5 %}
+                <span class="pair-chip pair-chip-more">+{{ sub.pairs|length - 5 }} more</span>
+                {% endif %}
+              </td>
+              <td class="td-date">{{ sub.subscribed_at[:10] }}</td>
+              <td>
+                <button
+                  class="btn-danger-sm"
+                  onclick="deleteSubscriber('{{ sub.email }}')"
+                  title="Remove subscriber">🗑️ Remove</button>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="td-empty">No subscribers yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Cache ──────────────────────────────────────────────────────────── -->
+    <section id="section-cache" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">💾 Rate Cache Status</h2>
+        <span class="admin-badge">{{ cache_info|length }} entries</span>
+      </div>
+      {% if cache_info %}
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>Cache Key</th>
+              <th>Age (seconds)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in cache_info %}
+            <tr>
+              <td><code>{{ entry.key }}</code></td>
+              <td>{{ entry.age_seconds }}s</td>
+              <td>
+                {% if entry.fresh %}
+                <span class="status-fresh">✅ Fresh</span>
+                {% else %}
+                <span class="status-stale">⏰ Stale</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="td-empty" style="padding:24px;text-align:center">No cached rates yet. Visit the signal hub to populate the cache.</div>
+      {% endif %}
+    </section>
+
+  </main>
+</div><!-- /admin-layout -->
+
+<div id="admin-toast" class="admin-toast" role="status" aria-live="polite"></div>
+
+<script>
+  /* Section navigation */
+  function showSection(id, link) {
+    document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.sidenav-item').forEach(a => a.classList.remove('active'));
+    document.getElementById(id).style.display = 'block';
+    if (link) link.classList.add('active');
+  }
+
+  /* Toast helper */
+  function showToast(msg, type) {
+    const t = document.getElementById('admin-toast');
+    t.textContent = msg;
+    t.className = 'admin-toast show ' + (type || '');
+    setTimeout(() => t.className = 'admin-toast', 3000);
+  }
+
+  /* Delete user */
+  async function deleteUser(username) {
+    if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+    try {
+      const r = await fetch(`/api/admin/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+      const d = await r.json();
+      if (d.success) {
+        document.getElementById(`user-row-${username}`)?.remove();
+        showToast(d.message, 'success');
+        // Update stat
+        const el = document.getElementById('stat-users');
+        if (el) el.textContent = parseInt(el.textContent) - 1;
+      } else {
+        showToast(d.error || 'Failed to delete user.', 'error');
+      }
+    } catch(e) {
+      showToast('Request failed: ' + e.message, 'error');
+    }
+  }
+
+  /* Delete subscriber */
+  async function deleteSubscriber(email) {
+    if (!confirm(`Remove subscriber "${email}"?`)) return;
+    try {
+      const r = await fetch(`/api/admin/subscribers/${encodeURIComponent(email)}`, { method: 'DELETE' });
+      const d = await r.json();
+      if (d.success) {
+        // Remove all rows for this email
+        document.querySelectorAll('#subs-tbody tr').forEach(row => {
+          if (row.querySelector('td')?.textContent.trim() === email) row.remove();
+        });
+        showToast(d.message, 'success');
+        const el = document.getElementById('stat-subs');
+        if (el) el.textContent = parseInt(el.textContent) - 1;
+      } else {
+        showToast(d.error || 'Failed to remove subscriber.', 'error');
+      }
+    } catch(e) {
+      showToast('Request failed: ' + e.message, 'error');
+    }
+  }
+
+  /* Sidebar hash navigation */
+  (function() {
+    const map = {
+      '#section-overview': 0,
+      '#section-users': 1,
+      '#section-subscribers': 2,
+      '#section-cache': 3,
+    };
+    const hash = window.location.hash;
+    const idx = map[hash];
+    if (idx !== undefined) {
+      const links = document.querySelectorAll('.sidenav-item');
+      if (links[idx]) showSection(hash.slice(1), links[idx]);
+    }
+  })();
+</script>
+
+</body>
+</html>

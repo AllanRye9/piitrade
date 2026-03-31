@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📈</text></svg>"/>
+</head>
+<body>
+
+<header class="fx-header">
+  <div class="brand">
+    <span>📈</span>
+    <span class="brand-title">PiiTrade</span>
+    <span class="brand-sub">AI Forex Signal Hub</span>
+  </div>
+  <nav class="fx-nav">
+    <a href="/forex">Dashboard</a>
+    <a href="/register" class="btn-primary">Register</a>
+  </nav>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-icon">🔐</span>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to your PiiTrade account</p>
+    </div>
+
+    {% if error %}
+    <div class="auth-alert auth-alert-error" role="alert">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login" class="auth-form" autocomplete="on">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input
+          class="form-input"
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+          required
+          autocomplete="username"
+          maxlength="32"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">
+          Password
+          <a href="/recovery" class="form-label-link">Forgot password?</a>
+        </label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button type="submit" class="btn-auth-submit">Sign In</button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="/register">Create one</a>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
