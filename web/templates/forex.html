@@ -18,7 +18,6 @@
   </div>
   <nav class="fx-nav">
     <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds" aria-pressed="true">🔔</button>
-    <a href="/forex/methodology">Methodology</a>
     {% if current_user %}
       {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
       <span class="nav-user">👤 {{ current_user }}</span>
@@ -340,13 +339,7 @@
         The pipeline uses a <strong>LightGBM</strong> gradient-boosted tree model trained
         on features including RSI, MACD, exponential moving averages (EMA-20/50),
         news sentiment scores, CPI delta, and PMI readings. Training data is stored in
-        Google Sheets and the Colab notebook runs on Google's free GPU runtime.
-        Predictions are written back to the Predictions sheet and displayed here in real time.
-      </p>
-      <p>
-        All tools used are free-tier: Google Sheets · Google Colab · Zapier ·
-        Twelve Data · NewsAPI · Google Data Studio.
-        See the <a href="/forex/methodology">Methodology page</a> for full details.
+        Google Sheets and predictions are displayed here in real time.
       </p>
       <div class="fx-disclaimer">
         ⚠️ <strong>Disclaimer:</strong> For educational purposes only. Not financial advice.
@@ -371,8 +364,7 @@
     <div class="fx-subscribe">
       <p>
         Receive an email the moment a new AI signal is generated for your chosen
-        currency pairs. Alerts are delivered via Twilio SendGrid (free tier) and
-        triggered automatically by Zapier when the Predictions sheet is updated.
+        currency pairs. Alerts are triggered automatically when new predictions are published.
       </p>
       <form class="subscribe-form" id="subscribe-form" novalidate>
         <div class="email-row">
@@ -406,6 +398,16 @@
   </section>
 
 </main>
+
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+<footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+  <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+    <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+    <a href="/subscribe" style="color:var(--text2);text-decoration:none">Subscribe</a>
+    <a href="/logout" style="color:var(--text2);text-decoration:none">Logout</a>
+  </div>
+  <div>© 2024 PiiTrade · AI Forex Signal Hub · All signals are for educational purposes only and do not constitute financial advice.</div>
+</footer>
 
 <script src="/static/js/forex.js"></script>
 </body>

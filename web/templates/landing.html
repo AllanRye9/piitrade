@@ -10,48 +10,48 @@
     /* ── Landing-specific overrides ── */
     .landing-hero {
       text-align: center;
-      padding: 56px 24px 32px;
+      padding: 28px 24px 16px;
     }
     .landing-hero h1 {
-      font-size: 2.4rem;
+      font-size: 2rem;
       font-weight: 700;
       color: var(--text);
-      margin: 0 0 12px;
+      margin: 0 0 8px;
     }
     .landing-hero p {
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: var(--text2);
-      max-width: 560px;
-      margin: 0 auto 32px;
-      line-height: 1.6;
+      max-width: 540px;
+      margin: 0 auto 20px;
+      line-height: 1.5;
     }
     .landing-cta-row {
       display: flex;
-      gap: 14px;
+      gap: 10px;
       justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 48px;
+      margin-bottom: 28px;
     }
     .landing-cta-row .btn-primary {
-      font-size: 1rem;
-      padding: 12px 28px;
+      font-size: .95rem;
+      padding: 10px 22px;
       text-decoration: none;
     }
     .landing-cta-row .btn-outline {
-      font-size: 1rem;
-      padding: 12px 28px;
+      font-size: .95rem;
+      padding: 10px 22px;
       text-decoration: none;
     }
     .landing-preview {
-      max-width: 540px;
-      margin: 0 auto 20px;
+      max-width: 520px;
+      margin: 0 auto 14px;
     }
     .preview-label {
       font-size: .8rem;
       color: var(--text2);
       text-transform: uppercase;
       letter-spacing: .08em;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .preview-blur-wrap {
       position: relative;
@@ -65,91 +65,112 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      padding-bottom: 28px;
+      padding-bottom: 20px;
       z-index: 2;
     }
     .preview-blur-overlay p {
       color: var(--text2);
       font-size: .9rem;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
     }
     .landing-features {
-      max-width: 900px;
-      margin: 0 auto 56px;
-      padding: 0 24px;
+      max-width: 880px;
+      margin: 0 auto 32px;
+      padding: 0 20px;
     }
     .landing-features h2 {
       text-align: center;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       color: var(--text);
-      margin-bottom: 28px;
+      margin-bottom: 18px;
     }
     .feature-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
     }
     .feature-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 22px 18px;
+      padding: 16px 14px;
       text-align: center;
     }
     .feature-card .feat-icon {
-      font-size: 2rem;
-      margin-bottom: 10px;
+      font-size: 1.6rem;
+      margin-bottom: 6px;
     }
     .feature-card h3 {
-      font-size: 1rem;
+      font-size: .95rem;
       color: var(--text);
-      margin: 0 0 8px;
+      margin: 0 0 5px;
     }
     .feature-card p {
-      font-size: .85rem;
+      font-size: .82rem;
       color: var(--text2);
       margin: 0;
-      line-height: 1.5;
+      line-height: 1.4;
     }
     .landing-subscribe-banner {
       background: linear-gradient(135deg, #6C63FF22, #6C63FF11);
       border: 1px solid var(--accent);
       border-radius: 14px;
-      max-width: 600px;
-      margin: 0 auto 56px;
-      padding: 32px 28px;
+      max-width: 580px;
+      margin: 0 auto 32px;
+      padding: 22px 24px;
       text-align: center;
     }
     .landing-subscribe-banner h2 {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       color: var(--text);
-      margin: 0 0 10px;
+      margin: 0 0 8px;
     }
     .landing-subscribe-banner p {
       color: var(--text2);
-      font-size: .9rem;
-      margin: 0 0 20px;
-      line-height: 1.55;
+      font-size: .88rem;
+      margin: 0 0 14px;
+      line-height: 1.45;
     }
     .landing-subscribe-banner .btn-primary {
       text-decoration: none;
-      font-size: .95rem;
-      padding: 11px 26px;
+      font-size: .9rem;
+      padding: 10px 22px;
     }
     .crypto-chips {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
-      margin-top: 14px;
+      margin-top: 10px;
       flex-wrap: wrap;
     }
     .crypto-chip {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 5px 14px;
-      font-size: .8rem;
+      padding: 4px 12px;
+      font-size: .78rem;
       color: var(--text2);
+    }
+    /* ── Footer ── */
+    .landing-footer {
+      text-align: center;
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text2);
+      font-size: .8rem;
+      line-height: 1.7;
+    }
+    .landing-footer a {
+      color: var(--text2);
+      text-decoration: none;
+    }
+    .landing-footer a:hover { color: var(--text); }
+    .footer-links {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
     }
   </style>
 </head>
@@ -163,14 +184,13 @@
     <span class="brand-sub">AI Forex Signal Hub</span>
   </div>
   <nav class="fx-nav">
-    <a href="/forex/methodology">Methodology</a>
     {% if current_user %}
       {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
       <a href="/forex" class="btn-primary">Dashboard</a>
       <a href="/logout" class="btn-outline">Logout</a>
     {% else %}
       <a href="/login" class="btn-outline">Login</a>
-      <a href="/register" class="btn-primary">Register Free</a>
+      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>
@@ -183,7 +203,7 @@
     10+ years of price data, news sentiment, and macroeconomic indicators.
   </p>
   <div class="landing-cta-row">
-    <a href="/register" class="btn-primary">🚀 Get Started Free</a>
+    <a href="/register" class="btn-primary">🚀 Get Started</a>
     <a href="/login" class="btn-outline">Login to Dashboard</a>
   </div>
 </div>
@@ -235,7 +255,7 @@
     <!-- Blur overlay prompting sign-up -->
     <div class="preview-blur-overlay">
       <p>🔒 Register to unlock all 15 currency pairs &amp; full dashboard</p>
-      <a href="/register" class="btn-primary">Register – It's Free</a>
+      <a href="/register" class="btn-primary">Register Now</a>
     </div>
   </div>
 </div>
@@ -291,6 +311,16 @@
     <span class="crypto-chip">⬡ Kaanch (KCH)</span>
   </div>
 </div>
+
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+<footer class="landing-footer">
+  <div class="footer-links">
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+    <a href="/subscribe">Subscribe</a>
+  </div>
+  <div>© 2024 PiiTrade · AI Forex Signal Hub · All signals are for educational purposes only and do not constitute financial advice.</div>
+</footer>
 
 </body>
 </html>
