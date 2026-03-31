@@ -1,5 +1,5 @@
 """
-Vercel serverless entrypoint for Yot-Presentation.
+Vercel serverless entrypoint for PiiTrade – AI Forex Signal Hub.
 
 This module re-exports the Flask ``app`` object from ``web/app.py`` so that
 Vercel's Python runtime can use it as a WSGI handler.

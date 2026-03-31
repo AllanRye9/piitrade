@@ -1,5 +1,5 @@
-name: yot_presentation
-description: Yot-Presentation mobile app — voice-controlled presentations on Android & iOS.
+name: piitrade
+description: PiiTrade – AI & ML backed forex signal hub for Android & iOS.
 version: 1.0.0+1
 
 environment:
@@ -10,29 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # HTTP client for the Yot-Presentation Flask API
+  # HTTP client for the PiiTrade Forex API
   http: ^1.2.1
-
-  # File picker for uploading documents/images
-  file_picker: ^8.0.3
-
-  # Speech-to-text for voice commands
-  speech_to_text: ^6.6.2
 
   # Shared preferences for persisting server URL / settings
   shared_preferences: ^2.2.3
-
-  # flutter_svg for rendering SVG icons
-  flutter_svg: ^2.0.10+1
-
-  # photo_view for full-screen slide zoom/pan
-  photo_view: ^0.14.0
-
-  # cached_network_image for slide thumbnails
-  cached_network_image: ^3.3.1
-
-  # Permission handling (microphone on Android/iOS)
-  permission_handler: ^11.3.1
 
   # Cupertino icons (default Flutter icon pack)
   cupertino_icons: ^1.0.6
