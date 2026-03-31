@@ -9,14 +9,8 @@
 api/
 vercel.json
 
-# Flutter platform-specific build dirs (not needed – web build is done in Stage 1)
-flutter/android/
-flutter/ios/
-flutter/test/
-flutter/.dart_tool/
-flutter/build/
-flutter/.flutter-plugins
-flutter/.flutter-plugins-dependencies
+# Flutter is an independent mobile app service – not part of the Docker deployment
+flutter/
 
 # Python byte-code and caches
 **/__pycache__/
