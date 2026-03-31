@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Methodology – AI Forex Signal Hub</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📈</text></svg>"/>
+  <style>
+    /* Methodology-page extras */
+    .method-body { max-width: 800px; margin: 0 auto; padding: 24px 16px 64px; }
+    .method-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .method-section h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .method-section p, .method-section li {
+      font-size: 0.9rem;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+    .method-section ul { padding-left: 20px; margin-top: 8px; }
+    .method-section li { margin-bottom: 6px; }
+    .tool-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .tool-table th, .tool-table td {
+      text-align: left;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .tool-table th { color: var(--text2); font-weight: 600; background: var(--surface2); }
+    .tool-table td { color: var(--text); }
+    .tool-table tr:last-child td { border-bottom: none; }
+    .free-badge {
+      background: rgba(63,185,80,0.15);
+      color: var(--buy-color);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .code-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.82rem;
+      color: var(--accent);
+      overflow-x: auto;
+      margin-top: 10px;
+      white-space: pre;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text2);
+      font-size: 0.88rem;
+      margin: 20px 0 8px;
+    }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<header class="fx-header">
+  <div class="brand">
+    <span>📈</span>
+    <span>AI Forex Signal Hub</span>
+  </div>
+  <nav class="fx-nav">
+    <a href="/forex">Dashboard</a>
+    <a href="/" class="btn-outline">← Yot-Presentation</a>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════════ CONTENT ═════════════════════════════════ -->
+<div class="method-body">
+  <a href="/forex" class="back-link">← Back to Signal Dashboard</a>
+
+  <h1 style="font-size:1.5rem;font-weight:700;margin:16px 0 24px;color:var(--text)">
+    Methodology &amp; Transparency
+  </h1>
+
+  <!-- Overview -->
+  <div class="method-section">
+    <h2>🔍 Overview</h2>
+    <p>
+      The AI Forex Signal Hub uses a fully automated, no-cost machine-learning pipeline
+      to generate daily buy/sell/hold signals for three major forex pairs.
+      All components run within their respective free-tier limits and are designed
+      to be transparent and reproducible.
+    </p>
+    <p style="margin-top:10px">
+      Signals are generated once per day after the New York session closes
+      (approx. 21:00 UTC) and are published to a central Google Sheet, which
+      this site reads via the Sheets API.
+    </p>
+  </div>
+
+  <!-- Data Sources -->
+  <div class="method-section">
+    <h2>📡 Data Sources</h2>
+    <ul>
+      <li>
+        <strong>Historical OHLCV prices:</strong> Twelve Data API (free tier – 800 API calls/day)
+        and Yahoo Finance via the <code>yfinance</code> Python library.
+        10+ years of daily candles are stored in the Google Sheet
+        <em>Training_Data</em> tab.
+      </li>
+      <li>
+        <strong>News sentiment:</strong> NewsAPI.org (free tier – 100 requests/day).
+        Article titles and descriptions are scraped for the pairs' base currencies
+        and scored using a simple VADER-based polarity model.
+        Results are stored in the <em>News_Sentiment</em> tab.
+      </li>
+      <li>
+        <strong>Economic indicators:</strong> CPI delta, PMI, and interest-rate
+        differentials are collected monthly via Zapier webhooks from freely available
+        government statistical agencies (BLS, ONS, Eurostat, BoJ).
+      </li>
+    </ul>
+  </div>
+
+  <!-- ML Model -->
+  <div class="method-section">
+    <h2>🤖 Machine Learning Model</h2>
+    <p>
+      The model is a <strong>LightGBM gradient-boosted tree classifier</strong>
+      trained to predict the next-day direction (BUY / SELL / HOLD) for each pair.
+      Features include:
+    </p>
+    <ul>
+      <li>RSI-14, MACD (12/26/9), EMA-20, EMA-50, Bollinger Band width</li>
+      <li>Daily return, 5-day / 20-day momentum</li>
+      <li>Aggregated news sentiment score (rolling 3-day)</li>
+      <li>CPI delta, PMI, yield spread (base vs. quote currency)</li>
+    </ul>
+    <p style="margin-top:10px">
+      The model is retrained <strong>weekly</strong> using a Google Colab notebook
+      (free GPU runtime). The notebook reads the <em>Training_Data</em> sheet,
+      trains LightGBM with 5-fold time-series cross-validation, and writes the
+      latest predictions to the <em>Predictions</em> sheet.
+    </p>
+    <div class="code-block">
+# Simplified training snippet (Google Colab)
+import lightgbm as lgb
+from sklearn.model_selection import TimeSeriesSplit
+
+model = lgb.LGBMClassifier(
+    n_estimators=400, learning_rate=0.05,
+    num_leaves=31, class_weight='balanced'
+)
+tscv = TimeSeriesSplit(n_splits=5)
+# ... fit, evaluate, write predictions to Google Sheets
+    </div>
+    <p style="margin-top:12px">
+      Alternatively, <strong>Obviously AI</strong> or <strong>Akkio</strong>
+      (both free-tier) can be connected directly to the Google Sheet to train
+      and output predictions without writing any code.
+    </p>
+  </div>
+
+  <!-- Automation Pipeline -->
+  <div class="method-section">
+    <h2>⚙️ Automation Pipeline</h2>
+    <p>
+      The end-to-end pipeline is orchestrated with <strong>Zapier</strong>
+      (free tier – 100 tasks/month):
+    </p>
+    <ul>
+      <li>
+        <strong>Step 1 – Data collection:</strong> Daily Zapier schedule triggers
+        a webhook that calls Yahoo Finance / Twelve Data and appends new rows
+        to <em>Training_Data</em>.
+      </li>
+      <li>
+        <strong>Step 2 – News scraping:</strong> Zapier RSS / NewsAPI zap appends
+        the latest headlines with sentiment scores to <em>News_Sentiment</em>.
+      </li>
+      <li>
+        <strong>Step 3 – Model inference:</strong> The Colab notebook (scheduled
+        weekly via Google Cloud Scheduler free tier) retrains and publishes
+        predictions to <em>Predictions</em>.
+      </li>
+      <li>
+        <strong>Step 4 – Alert dispatch:</strong> A Zapier "New Row" trigger on
+        <em>Predictions</em> fires a Twilio SendGrid email (free – 100 emails/day)
+        to all subscribers.
+      </li>
+    </ul>
+  </div>
+
+  <!-- Free Tools -->
+  <div class="method-section">
+    <h2>🛠️ Free Tools Used</h2>
+    <table class="tool-table">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Role</th>
+          <th>Free Limit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Google Sheets <span class="free-badge">FREE</span></td>
+          <td>Central data store (Training_Data, Predictions, News_Sentiment)</td>
+          <td>15 GB Drive storage</td>
+        </tr>
+        <tr>
+          <td>Google Colab <span class="free-badge">FREE</span></td>
+          <td>Model training notebook (LightGBM)</td>
+          <td>Free GPU runtime (~12 hrs/day)</td>
+        </tr>
+        <tr>
+          <td>Zapier <span class="free-badge">FREE</span></td>
+          <td>Data collection, sheet updates, alert dispatch</td>
+          <td>100 tasks/month</td>
+        </tr>
+        <tr>
+          <td>Twelve Data <span class="free-badge">FREE</span></td>
+          <td>Real-time and historical OHLCV price data</td>
+          <td>800 API calls/day</td>
+        </tr>
+        <tr>
+          <td>NewsAPI.org <span class="free-badge">FREE</span></td>
+          <td>Forex news headlines for sentiment scoring</td>
+          <td>100 requests/day</td>
+        </tr>
+        <tr>
+          <td>Google Data Studio <span class="free-badge">FREE</span></td>
+          <td>Historical accuracy charts connected to Predictions sheet</td>
+          <td>Unlimited reports</td>
+        </tr>
+        <tr>
+          <td>Twilio SendGrid <span class="free-badge">FREE</span></td>
+          <td>Email alert delivery</td>
+          <td>100 emails/day</td>
+        </tr>
+        <tr>
+          <td>Obviously AI / Akkio <span class="free-badge">FREE</span></td>
+          <td>Alternative no-code ML training (Google Sheets connector)</td>
+          <td>Free tier available</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Limitations -->
+  <div class="method-section">
+    <h2>⚠️ Limitations &amp; Black-Box Notice</h2>
+    <p>
+      LightGBM is an inherently black-box model: while feature importances
+      can be inspected, it does not provide human-readable reasoning for
+      individual predictions. The confidence score is derived from the
+      model's predicted class probability, not a rigorous uncertainty estimate.
+    </p>
+    <p style="margin-top:8px">
+      Forex markets are influenced by events that cannot be captured in
+      historical price data or news sentiment alone (e.g. geopolitical shocks,
+      central bank surprises). The model may underperform during high-volatility
+      or news-driven regimes.
+    </p>
+    <div class="fx-disclaimer" style="margin-top:14px">
+      ⚠️ <strong>Disclaimer:</strong> All signals are for educational purposes only
+      and do not constitute financial advice. Past model accuracy does not guarantee
+      future performance. Use at your own risk.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

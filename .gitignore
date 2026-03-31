@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+# Un-ignore the Flutter app's lib/ directory (the rule above is for Python venvs)
+!flutter/lib/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Training Data (keep structure, ignore data)
+training_data/*.db
+training_data/*.jsonl
+training_data/fallback_cache.json
+training_data/archives/
+training_data/exports/
+
+# Temporary files
+*.tmp
+.tmp/
+
+# Web app – uploaded files and generated caches
+web/uploads/
+web/.env
+
+# Web app – runtime data directory (ML learning DB, etc.)
+web/data/
+
+# Flutter / Dart build artefacts
+flutter/.dart_tool/
+flutter/build/
+flutter/.flutter-plugins
+flutter/.flutter-plugins-dependencies
+flutter/.packages
+flutter/android/.gradle/
+flutter/android/local.properties
+flutter/ios/Pods/
+flutter/ios/.symlinks/
+flutter/ios/*.xcworkspace
