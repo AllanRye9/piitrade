@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 const _kIsLoggedIn = 'is_logged_in';
 const _kUsername = 'auth_username';
-
-// Default demo credentials shown on the login screen.
-const _kDefaultUser = 'trader';
-const _kDefaultPass = 'piitrade';
+const _kServerUrl = 'server_url';
+const _kPiiDataUrl = String.fromEnvironment('PIIDATA');
 
 /// Persists the authenticated session so the app skips login on next launch.
 Future<void> saveLoginSession(String username) async {
@@ -30,12 +29,19 @@ Future<bool> isLoggedIn() async {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Full-screen login form. Validates credentials and calls [onLoginSuccess]
-/// when the user is authenticated successfully.
+/// Full-screen login form. Authenticates against the PiiTrade backend API
+/// and calls [onLoginSuccess] on a successful sign-in.
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
+  final VoidCallback? onRegisterTap;
+  final VoidCallback? onForgotPasswordTap;
 
-  const LoginScreen({super.key, required this.onLoginSuccess});
+  const LoginScreen({
+    super.key,
+    required this.onLoginSuccess,
+    this.onRegisterTap,
+    this.onForgotPasswordTap,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -72,6 +78,12 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  Future<String> _getServerUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kServerUrl) ??
+        (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.onrender.com');
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
@@ -79,23 +91,25 @@ class _LoginScreenState extends State<LoginScreen>
       _error = null;
     });
 
-    // Simulate a short network round-trip for visual feedback.
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final user = _userCtrl.text.trim();
-    final pass = _passCtrl.text;
-
-    final ok = user == _kDefaultUser && pass == _kDefaultPass;
-
-    if (!mounted) return;
-
-    if (ok) {
+    try {
+      final serverUrl = await _getServerUrl();
+      final api = ApiService(serverUrl);
+      final user = _userCtrl.text.trim();
+      await api.login(username: user, password: _passCtrl.text);
+      if (!mounted) return;
       await saveLoginSession(user);
       widget.onLoginSuccess();
-    } else {
+    } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Invalid username or password.';
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Unable to connect. Check your network or server URL.';
       });
     }
   }
@@ -140,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 6),
                     const Center(
                       child: Text(
-                        'Sign in to access live signals',
+                        'Sign in to your PiiTrade account',
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,
@@ -210,6 +224,32 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             const SizedBox(height: 16),
 
+                            // Password label row with "Forgot password?" link
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Password',
+                                  style: TextStyle(
+                                    color: textMuted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (widget.onForgotPasswordTap != null)
+                                  GestureDetector(
+                                    onTap: widget.onForgotPasswordTap,
+                                    child: const Text(
+                                      'Forgot password?',
+                                      style: TextStyle(
+                                        color: primary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+
                             // Password
                             TextFormField(
                               controller: _passCtrl,
@@ -219,9 +259,6 @@ class _LoginScreenState extends State<LoginScreen>
                               onFieldSubmitted: (_) => _submit(),
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'Password',
-                                labelStyle:
-                                    const TextStyle(color: textMuted),
                                 hintText: 'Enter your password',
                                 hintStyle:
                                     const TextStyle(color: textMuted),
@@ -339,28 +376,24 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
 
-                    // ── Demo credentials hint ─────────────────────────────
+                    // ── Register link ─────────────────────────────────────
                     const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        border:
-                            Border.all(color: primary.withValues(alpha: 0.25)),
-                      ),
-                      child: const Row(
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.info_outline,
-                              color: Color(0xFF6C63FF), size: 16),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Demo — username: trader  ·  password: piitrade',
+                          const Text(
+                            "Don't have an account? ",
+                            style: TextStyle(color: textMuted, fontSize: 14),
+                          ),
+                          GestureDetector(
+                            onTap: widget.onRegisterTap,
+                            child: const Text(
+                              'Create one',
                               style: TextStyle(
-                                color: Color(0xFF8b949e),
-                                fontSize: 12,
+                                color: primary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),

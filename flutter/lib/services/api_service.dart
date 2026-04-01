@@ -66,6 +66,81 @@ class ApiService {
     return body;
   }
 
+  // ── Auth ──────────────────────────────────────────────────────────────
+
+  /// Authenticates [username] / [password] against the backend.
+  /// Returns the user profile map on success.
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) return body;
+    throw ApiException(body['error'] ?? 'HTTP ${response.statusCode}');
+  }
+
+  /// Registers a new account. Throws [ApiException] on failure.
+  Future<void> register({
+    required String username,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'email': email,
+        'password': password,
+        'confirm_password': confirmPassword,
+      }),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) return;
+    throw ApiException(body['error'] ?? 'HTTP ${response.statusCode}');
+  }
+
+  /// Requests a password-recovery token for [username].
+  /// Returns the token string.
+  Future<String> requestRecovery({required String username}) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/auth/recovery/request'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username}),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      return body['token'] as String? ?? '';
+    }
+    throw ApiException(body['error'] ?? 'HTTP ${response.statusCode}');
+  }
+
+  /// Resets the password using the provided recovery [token].
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/auth/recovery/reset'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'token': token,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
+      }),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) return;
+    throw ApiException(body['error'] ?? 'HTTP ${response.statusCode}');
+  }
+
   // ── helpers ───────────────────────────────────────────────────────────
 
   void _assertOk(http.Response response) {

@@ -1160,6 +1160,222 @@ async def recovery_reset(
     )
 
 
+# ─── Mobile / Flutter JSON auth API ──────────────────────────────────────────
+# These endpoints accept and return JSON so the Flutter mobile app can
+# authenticate against the same backend user store without CSRF tokens or
+# session cookies.  Rate-limiting is applied the same way as the HTML routes.
+
+@app.post("/api/auth/login")
+async def api_auth_login(request: Request):
+    """Authenticate a user and return their profile on success.
+
+    Body: ``{"username": "...", "password": "..."}``
+    """
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body."}, status_code=400)
+
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip, max_requests=10, window=60):
+        return JSONResponse(
+            {"error": "Too many login attempts. Please wait a minute."},
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+
+    if not username or not password:
+        return JSONResponse(
+            {"error": "Username and password are required."},
+            status_code=400,
+        )
+
+    result = _find_user_by_identifier(username)
+    if result:
+        matched_username, user = result
+        if _hash_password(password, user["salt"]) == user["password_hash"]:
+            return JSONResponse({
+                "success": True,
+                "username": matched_username,
+                "role": user.get("role", "user"),
+                "subscription_status": user.get("subscription_status", "inactive"),
+            })
+
+    return JSONResponse(
+        {"error": "Invalid username or password."},
+        status_code=status.HTTP_401_UNAUTHORIZED,
+    )
+
+
+@app.post("/api/auth/register")
+async def api_auth_register(request: Request):
+    """Register a new user account.
+
+    Body: ``{"username": "...", "email": "...", "password": "...", "confirm_password": "..."}``
+    """
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body."}, status_code=400)
+
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip, max_requests=5, window=60):
+        return JSONResponse(
+            {"error": "Too many registration attempts. Please wait."},
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    username = str(data.get("username", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
+    confirm_password = str(data.get("confirm_password", ""))
+
+    if len(username) < 3 or len(username) > 32:
+        return JSONResponse(
+            {"error": "Username must be between 3 and 32 characters."},
+            status_code=400,
+        )
+    if not all(c.isalnum() or c in "_-" for c in username):
+        return JSONResponse(
+            {"error": "Username may only contain letters, numbers, hyphens and underscores."},
+            status_code=400,
+        )
+    if "@" not in email or "." not in email.split("@")[-1]:
+        return JSONResponse(
+            {"error": "Please provide a valid email address."},
+            status_code=400,
+        )
+    if len(password) < 8:
+        return JSONResponse(
+            {"error": "Password must be at least 8 characters."},
+            status_code=400,
+        )
+    if password != confirm_password:
+        return JSONResponse({"error": "Passwords do not match."}, status_code=400)
+
+    with _USERS_LOCK:
+        if username in _USERS:
+            return JSONResponse(
+                {"error": "Username is already taken."},
+                status_code=409,
+            )
+        if any(u["email"] == email for u in _USERS.values()):
+            return JSONResponse(
+                {"error": "An account with this email already exists."},
+                status_code=409,
+            )
+        salt = _make_salt()
+        _USERS[username] = {
+            "email": email,
+            "password_hash": _hash_password(password, salt),
+            "salt": salt,
+            "role": "user",
+            "recovery_token": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "subscription_status": "inactive",
+            "plan": None,
+            "subscription_start": None,
+            "subscription_end": None,
+            "customer_id": None,
+        }
+
+    return JSONResponse({"success": True, "message": "Account created! You can now log in."})
+
+
+@app.post("/api/auth/recovery/request")
+async def api_auth_recovery_request(request: Request):
+    """Generate a recovery token for the given username.
+
+    Body: ``{"username": "..."}``
+
+    A token is always returned (even for non-existent users) to prevent
+    user enumeration.
+    """
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body."}, status_code=400)
+
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip, max_requests=5, window=300):
+        return JSONResponse(
+            {"error": "Too many recovery attempts. Please wait 5 minutes."},
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    username = str(data.get("username", "")).strip()
+    if not username:
+        return JSONResponse({"error": "Username is required."}, status_code=400)
+
+    with _USERS_LOCK:
+        user = _USERS.get(username)
+
+    # Always generate a token to prevent user enumeration.
+    # For non-existent users, use a random nonce so the token cannot be
+    # replayed (a known username like "__nonexistent__" would be predictable).
+    token = _generate_recovery_token(username if user else secrets.token_hex(16))
+    if user:
+        with _USERS_LOCK:
+            _USERS[username]["recovery_token"] = token
+
+    return JSONResponse({
+        "success": True,
+        "token": token,
+        "message": "Recovery code generated. Use it within 30 minutes to reset your password.",
+    })
+
+
+@app.post("/api/auth/recovery/reset")
+async def api_auth_recovery_reset(request: Request):
+    """Reset password using a previously generated recovery token.
+
+    Body: ``{"token": "...", "new_password": "...", "confirm_password": "..."}``
+    """
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body."}, status_code=400)
+
+    token = str(data.get("token", "")).strip()
+    new_password = str(data.get("new_password", ""))
+    confirm_password = str(data.get("confirm_password", ""))
+
+    if not token:
+        return JSONResponse({"error": "Recovery token is required."}, status_code=400)
+    if len(new_password) < 8:
+        return JSONResponse(
+            {"error": "Password must be at least 8 characters."},
+            status_code=400,
+        )
+    if new_password != confirm_password:
+        return JSONResponse({"error": "Passwords do not match."}, status_code=400)
+
+    username = _verify_recovery_token(token)
+    if not username:
+        return JSONResponse(
+            {"error": "Invalid or expired recovery code."},
+            status_code=400,
+        )
+
+    with _USERS_LOCK:
+        user = _USERS.get(username)
+        if not user:
+            return JSONResponse({"error": "Account not found."}, status_code=404)
+        if user.get("recovery_token") != token:
+            return JSONResponse(
+                {"error": "Recovery code already used or invalid."},
+                status_code=400,
+            )
+        new_salt = _make_salt()
+        _USERS[username]["password_hash"] = _hash_password(new_password, new_salt)
+        _USERS[username]["salt"] = new_salt
+        _USERS[username]["recovery_token"] = None
+
+    return JSONResponse({"success": True, "message": "Password reset successfully! You can now log in."})
+
+
 # ─── Admin dashboard ──────────────────────────────────────────────────────────
 
 @app.get("/const", response_class=HTMLResponse)
