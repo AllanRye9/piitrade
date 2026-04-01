@@ -73,7 +73,7 @@ _ADMIN_P2 = os.environ.get("ADMIN_P2", "")
 # USER_NAME / ADMIN_PASS provide a simpler single-admin credential alternative
 _USER_NAME = os.environ.get("USER_NAME", "")
 _ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
-_SESSION_MAX_AGE = 7 * 86400  # 7 days – reduces re-login friction
+_SESSION_MAX_AGE = 365 * 86400  # 365 days – user stays logged in until explicit logout
 
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
 # Set the PIIDATA environment variable to enable persistent database storage.
