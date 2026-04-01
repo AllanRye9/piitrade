@@ -13,7 +13,7 @@ from threading import Lock
 from typing import Any, Optional
 
 import requests as _requests
-from fastapi import FastAPI, Form, Request, status
+from fastapi import FastAPI, Form, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -737,6 +737,32 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
         "csrf_token": _generate_csrf_token(_session_id(request)),
         **extra,
     }
+
+
+# ─── Error handlers ───────────────────────────────────────────────────────────
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Return a user-friendly HTML 404 page instead of FastAPI's default JSON response."""
+    return templates.TemplateResponse(
+        request, "404.html",
+        _ctx(request),
+        status_code=404,
+    )
+
+
+# ─── Favicon ──────────────────────────────────────────────────────────────────
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serve favicon from the static directory; avoid 404 log noise."""
+    from fastapi.responses import FileResponse
+    favicon_path = _STATIC_DIR / "favicon.ico"
+    if favicon_path.exists():
+        return FileResponse(favicon_path)
+    # Fall back to an inline SVG data-URL redirect so browsers don't 404-loop
+    from fastapi.responses import Response
+    return Response(status_code=204)
 
 
 # ─── Page routes ──────────────────────────────────────────────────────────────

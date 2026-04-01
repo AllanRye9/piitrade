@@ -14,5 +14,6 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 10000
 
-# Use gunicorn with uvicorn worker for production ASGI serving
-CMD gunicorn -k uvicorn.workers.UvicornWorker --bind "0.0.0.0:${PORT:-8000}" --workers 2 "web.app:app"
+# Use gunicorn with uvicorn worker for production ASGI serving.
+# exec replaces the shell so gunicorn receives OS signals (SIGTERM/SIGINT) directly.
+CMD ["sh", "-c", "exec gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 2 web.app:app"]

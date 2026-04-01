@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404 – Page Not Found · PiiTrade</title>
+  <link rel="stylesheet" href="/static/css/forex.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
+  <style>
+    .error-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .error-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 10px;
+    }
+    .error-desc {
+      font-size: 1rem;
+      color: var(--text2);
+      max-width: 440px;
+      margin: 0 auto 28px;
+      line-height: 1.5;
+    }
+    .error-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<header class="fx-header">
+  <div class="brand">
+    <span>📊</span>
+    <span class="brand-title">PiiTrade</span>
+    <span class="brand-sub">AI Forex Signal Hub</span>
+  </div>
+  <nav class="fx-nav">
+    {% if current_user %}
+      <a href="/forex" class="btn-primary">Dashboard</a>
+      <a href="/logout" class="btn-outline">Logout</a>
+    {% else %}
+      <a href="/login" class="btn-outline">Login</a>
+      <a href="/register" class="btn-primary">Register</a>
+    {% endif %}
+  </nav>
+</header>
+
+<div class="error-page">
+  <div class="error-code">404</div>
+  <h1 class="error-title">Page Not Found</h1>
+  <p class="error-desc">
+    The page you are looking for doesn't exist or has been moved.
+    Head back to the home page or use the navigation above.
+  </p>
+  <div class="error-actions">
+    <a href="/" class="btn-primary">🏠 Home</a>
+    {% if current_user %}
+      <a href="/forex" class="btn-outline">📊 Dashboard</a>
+    {% else %}
+      <a href="/login" class="btn-outline">🔑 Login</a>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>
