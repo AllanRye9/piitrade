@@ -439,12 +439,20 @@ function formatPrice(price, pair) {
 }
 
 // ─── Accuracy Chart ───────────────────────────────────────────────────────────
+let _chartRafId = null; // animation frame handle
+
+/** Ease-out cubic: accelerates quickly then decelerates smoothly. */
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
 function drawChart(history) {
   if (!chartCanvas || !history || history.length === 0) return;
 
-  const dpr    = window.devicePixelRatio || 1;
-  const W      = chartCanvas.offsetWidth  || 860;
-  const H      = 220;
+  // Cancel any in-progress animation before starting a new one
+  if (_chartRafId) { cancelAnimationFrame(_chartRafId); _chartRafId = null; }
+
+  const dpr = window.devicePixelRatio || 1;
+  const W   = chartCanvas.offsetWidth || 860;
+  const H   = 400; // Increased height for better visibility
   chartCanvas.width  = W * dpr;
   chartCanvas.height = H * dpr;
   chartCanvas.style.height = H + 'px';
@@ -452,78 +460,202 @@ function drawChart(history) {
   const ctx = chartCanvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const PAD = { top: 18, right: 18, bottom: 46, left: 58 };
-  const cw  = W - PAD.left - PAD.right;
-  const ch  = H - PAD.top  - PAD.bottom;
+  // Extra top/bottom padding to accommodate signal pin icons
+  const PAD    = { top: 42, right: 20, bottom: 52, left: 62 };
+  const cw     = W - PAD.left - PAD.right;
+  const ch     = H - PAD.top  - PAD.bottom;
+  const n      = history.length;
+  const dec    = history[0] && history[0].entry > 10 ? 2 : 4;
+  const DOT_R  = 4.5; // radius of correctness dots
 
-  // Collect all prices
-  const prices = history.flatMap(h => [h.entry, h.exit]);
-  const minP   = Math.min(...prices);
-  const maxP   = Math.max(...prices);
-  const range  = maxP - minP || 1;
+  const allPrices = history.flatMap(h => [h.entry, h.exit]);
+  const minP  = Math.min(...allPrices);
+  const maxP  = Math.max(...allPrices);
+  const range = (maxP - minP) || 1;
 
-  const xOf = i => PAD.left + (i / (history.length - 1)) * cw;
+  const xOf = i => PAD.left + (n > 1 ? (i / (n - 1)) * cw : cw / 2);
   const yOf = p => PAD.top + ch - ((p - minP) / range) * ch;
 
-  // ── Background grid ──
-  ctx.strokeStyle = 'rgba(48,54,61,0.7)';
-  ctx.lineWidth   = 1;
-  const gridLines = 4;
-  for (let g = 0; g <= gridLines; g++) {
-    const y = PAD.top + (g / gridLines) * ch;
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cw, y); ctx.stroke();
-    const price = maxP - (g / gridLines) * range;
-    const decimals = history[0] && history[0].entry > 10 ? 2 : 4;
-    ctx.fillStyle   = 'rgba(139,148,158,0.85)';
-    ctx.font        = `11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.textAlign   = 'right';
-    ctx.fillText(price.toFixed(decimals), PAD.left - 6, y + 4);
+  // ── Static background: grid, axes, date labels ──
+  function drawBackground() {
+    ctx.clearRect(0, 0, W, H);
+    const gridCount = 5;
+    for (let g = 0; g <= gridCount; g++) {
+      const gy = PAD.top + (g / gridCount) * ch;
+      ctx.strokeStyle = 'rgba(48,54,61,0.7)';
+      ctx.lineWidth   = 1;
+      ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cw, gy); ctx.stroke();
+      const price = maxP - (g / gridCount) * range;
+      ctx.fillStyle    = 'rgba(139,148,158,0.85)';
+      ctx.font         = '11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+      ctx.textAlign    = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(price.toFixed(dec), PAD.left - 6, gy);
+    }
+    // Axis lines
+    ctx.strokeStyle = 'rgba(48,54,61,0.9)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + ch + 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD.left - 4, PAD.top + ch); ctx.lineTo(PAD.left + cw, PAD.top + ch); ctx.stroke();
+    // X-axis date labels
+    ctx.fillStyle    = 'rgba(139,148,158,0.85)';
+    ctx.font         = '10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const step = Math.ceil(n / 6);
+    history.forEach((h, i) => {
+      if (i % step !== 0 && i !== n - 1) return;
+      ctx.fillText(h.day.slice(5), xOf(i), H - PAD.bottom + 16);
+    });
   }
 
-  // ── Price line (exit prices) ──
-  ctx.beginPath();
-  ctx.strokeStyle = '#58a6ff';
-  ctx.lineWidth   = 2;
-  ctx.lineJoin    = 'round';
-  history.forEach((h, i) => {
-    const x = xOf(i);
-    const y = yOf(h.exit);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  // ── Prediction dots ──
-  history.forEach((h, i) => {
-    const x = xOf(i);
-    const y = yOf(h.exit);
+  // ── Animated price line (exit prices) ──
+  function drawPriceLine(progress) {
+    if (n < 2) return;
+    const progIdx = progress * (n - 1);
     ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-    ctx.fillStyle   = h.correct ? '#3fb950' : '#f85149';
-    ctx.strokeStyle = 'var(--bg, #0d1117)';
-    ctx.lineWidth   = 1.5;
-    ctx.fill();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = 'round';
+    const limit = Math.floor(progIdx);
+    for (let i = 0; i <= limit && i < n; i++) {
+      const x = xOf(i), y = yOf(history[i].exit);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    // Interpolate the partial final segment
+    if (limit < n - 1) {
+      const frac = progIdx - limit;
+      const x0 = xOf(limit),     y0 = yOf(history[limit].exit);
+      const x1 = xOf(limit + 1), y1 = yOf(history[limit + 1].exit);
+      ctx.lineTo(x0 + (x1 - x0) * frac, y0 + (y1 - y0) * frac);
+    }
     ctx.stroke();
-  });
+  }
 
-  // ── X-axis date labels (every ~5 entries) ──
-  ctx.fillStyle = 'rgba(139,148,158,0.85)';
-  ctx.font      = `10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'center';
-  const step    = Math.ceil(history.length / 6);
-  history.forEach((h, i) => {
-    if (i % step !== 0 && i !== history.length - 1) return;
-    const x    = xOf(i);
-    const day  = h.day.slice(5);   // MM-DD
-    ctx.fillText(day, x, H - PAD.bottom + 16);
-  });
+  // ── Signal pin icon (thumbtack style) at the entry price ──
+  function drawSignalPin(x, tipY, direction) {
+    const isBuy  = direction === 'BUY';
+    const isSell = direction === 'SELL';
+    if (!isBuy && !isSell) return;
 
-  // ── Axis lines ──
-  ctx.strokeStyle = 'rgba(48,54,61,0.9)';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + ch + 6); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(PAD.left - 4, PAD.top + ch); ctx.lineTo(PAD.left + cw, PAD.top + ch); ctx.stroke();
+    const color    = isBuy ? '#3fb950' : '#f85149';
+    const stemLen  = 18;
+    const headR    = 6;
+    const arrowHW  = 5; // half-width of arrowhead
+    const arrowH   = 7; // height of arrowhead
+
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    if (isBuy) {
+      // Pin above entry: arrowhead points DOWN at tipY, head circle above
+      const headY = tipY - stemLen - headR;
+      // Arrowhead (points down to tipY)
+      ctx.beginPath();
+      ctx.moveTo(x - arrowHW, tipY - arrowH);
+      ctx.lineTo(x + arrowHW, tipY - arrowH);
+      ctx.lineTo(x, tipY);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      // Stem
+      ctx.beginPath();
+      ctx.moveTo(x, tipY - arrowH);
+      ctx.lineTo(x, headY + headR);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+      // Head circle
+      ctx.beginPath();
+      ctx.arc(x, headY, headR, 0, Math.PI * 2);
+      ctx.fillStyle   = color;
+      ctx.strokeStyle = 'rgba(13,17,23,0.5)';
+      ctx.lineWidth   = 1;
+      ctx.fill();
+      ctx.stroke();
+      // Label
+      ctx.fillStyle    = '#fff';
+      ctx.font         = 'bold 7px sans-serif';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('B', x, headY);
+    } else {
+      // Pin below entry: arrowhead points UP at tipY, head circle below
+      const headY = tipY + stemLen + headR;
+      // Arrowhead (points up to tipY)
+      ctx.beginPath();
+      ctx.moveTo(x - arrowHW, tipY + arrowH);
+      ctx.lineTo(x + arrowHW, tipY + arrowH);
+      ctx.lineTo(x, tipY);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      // Stem
+      ctx.beginPath();
+      ctx.moveTo(x, tipY + arrowH);
+      ctx.lineTo(x, headY - headR);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+      // Head circle
+      ctx.beginPath();
+      ctx.arc(x, headY, headR, 0, Math.PI * 2);
+      ctx.fillStyle   = color;
+      ctx.strokeStyle = 'rgba(13,17,23,0.5)';
+      ctx.lineWidth   = 1;
+      ctx.fill();
+      ctx.stroke();
+      // Label
+      ctx.fillStyle    = '#fff';
+      ctx.font         = 'bold 7px sans-serif';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('S', x, headY);
+    }
+
+    ctx.restore();
+  }
+
+  // ── Dots (correctness) and signal pins revealed progressively ──
+  function drawSignalsAndDots(progress) {
+    const upTo = Math.floor(progress * (n - 1));
+    history.forEach((h, i) => {
+      if (i > upTo) return;
+      const x      = xOf(i);
+      const entryY = yOf(h.entry);
+      const exitY  = yOf(h.exit);
+      // Signal pin at entry price
+      drawSignalPin(x, entryY, h.predicted);
+      // Correctness dot at exit price
+      ctx.beginPath();
+      ctx.arc(x, exitY, DOT_R, 0, Math.PI * 2);
+      ctx.fillStyle   = h.correct ? '#3fb950' : '#f85149';
+      ctx.strokeStyle = 'rgba(13,17,23,0.7)';
+      ctx.lineWidth   = 1.5;
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+
+  // ── Animation loop (ease-out cubic, 1400 ms) ──
+  const DURATION = 1400;
+  let startTime = null;
+
+  function animate(ts) {
+    if (!startTime) startTime = ts;
+    const t    = Math.min((ts - startTime) / DURATION, 1);
+    const ease = easeOutCubic(t);
+    drawBackground();
+    drawPriceLine(ease);
+    drawSignalsAndDots(ease);
+    if (t < 1) {
+      _chartRafId = requestAnimationFrame(animate);
+    } else {
+      _chartRafId = null;
+    }
+  }
+
+  _chartRafId = requestAnimationFrame(animate);
 }
 
 // ─── Risk Management Calculator ───────────────────────────────────────────────

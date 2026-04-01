@@ -565,6 +565,9 @@ a:hover { text-decoration: underline; }
 .legend-dot.correct   { background: var(--buy-color); }
 .legend-dot.incorrect { background: var(--sell-color); }
 .legend-line          { width: 20px; height: 2px; background: var(--accent); }
+.legend-pin           { width: 0; height: 0; flex-shrink: 0; }
+.legend-pin.buy       { border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 10px solid var(--buy-color); }
+.legend-pin.sell      { border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 10px solid var(--sell-color); }
 
 /* ── AI Explanation ── */
 .fx-explanation {
