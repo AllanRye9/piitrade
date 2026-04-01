@@ -57,6 +57,9 @@ training_data/exports/
 web/uploads/
 web/.env
 
+# Web app – secret key file (auto-generated at runtime, must not be committed)
+web/.secret_key
+
 # Web app – runtime data directory (ML learning DB, etc.)
 web/data/
 

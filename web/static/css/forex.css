@@ -22,18 +22,30 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Page-load fade-in ── */
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 html, body {
   min-height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
+  animation: page-fade-in 0.4s ease both;
 }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* ── Header / Nav ── */
+@keyframes header-slide-down {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .fx-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -45,6 +57,7 @@ a:hover { text-decoration: underline; }
   position: sticky;
   top: 0;
   z-index: 100;
+  animation: header-slide-down 0.4s cubic-bezier(.22,1,.36,1) both;
 }
 
 .fx-header .brand {
@@ -1229,6 +1242,12 @@ a:hover { text-decoration: underline; }
   padding: 32px 16px;
 }
 
+/* Page-load entrance animation for the auth card */
+@keyframes auth-card-enter {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
 .auth-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1237,6 +1256,7 @@ a:hover { text-decoration: underline; }
   padding: 36px 32px;
   width: 100%;
   max-width: 420px;
+  animation: auth-card-enter 0.45s cubic-bezier(.22,1,.36,1) both;
 }
 
 .auth-header {
