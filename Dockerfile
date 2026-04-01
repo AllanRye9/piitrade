@@ -15,4 +15,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 10000
 
 # Use gunicorn with uvicorn worker for production ASGI serving
-CMD gunicorn -k uvicorn.workers.UvicornWorker --bind "0.0.0.0:${PORT:-8000}" --workers 2 "web.app:app"
+CMD gunicorn -k uvicorn.workers.UvicornWorker --bind "0.0.0.0:${PORT:-8000}" --workers 1 "web.app:app"

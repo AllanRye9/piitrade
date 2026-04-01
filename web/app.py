@@ -77,6 +77,8 @@ _ADMIN_P2 = os.environ.get("ADMIN_P2", "")
 _USER_NAME = os.environ.get("USER_NAME", "")
 _ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
 _SESSION_MAX_AGE = 365 * 86400  # 365 days – user stays logged in until explicit logout
+# Enable secure (HTTPS-only) session cookies when running behind TLS (default on Render).
+_SESSION_HTTPS_ONLY = os.environ.get("SESSION_HTTPS_ONLY", "1") != "0"
 
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
 # Set the PIIDATA environment variable to enable persistent database storage.
@@ -827,7 +829,7 @@ app.add_middleware(
     secret_key=_SECRET_KEY,
     max_age=_SESSION_MAX_AGE,
     same_site="lax",
-    https_only=False,
+    https_only=_SESSION_HTTPS_ONLY,
 )
 app.add_middleware(
     CORSMiddleware,
