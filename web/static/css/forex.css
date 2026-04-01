@@ -22,6 +22,44 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── PIITRADE Loading Overlay ── */
+@keyframes piitrade-pulse {
+  0%, 100% { opacity: 1; letter-spacing: 0.18em; }
+  50%       { opacity: 0.6; letter-spacing: 0.28em; }
+}
+
+@keyframes piitrade-fade-out {
+  from { opacity: 1; visibility: visible; }
+  to   { opacity: 0; visibility: hidden; }
+}
+
+.piitrade-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease;
+}
+
+.piitrade-loading-overlay.hidden {
+  animation: piitrade-fade-out 0.4s ease forwards;
+  pointer-events: none;
+}
+
+.piitrade-loader-text {
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.18em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+  animation: piitrade-pulse 1.2s ease-in-out infinite;
+  text-transform: uppercase;
+  user-select: none;
+}
+
 /* ── Page-load fade-in ── */
 @keyframes page-fade-in {
   from { opacity: 0; }

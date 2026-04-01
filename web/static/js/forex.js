@@ -616,16 +616,13 @@ function drawChart(history) {
     ctx.restore();
   }
 
-  // ── Dots (correctness) and signal pins revealed progressively ──
+  // ── Correctness dots revealed progressively ──
   function drawSignalsAndDots(progress) {
     const upTo = Math.floor(progress * (n - 1));
     history.forEach((h, i) => {
       if (i > upTo) return;
       const x      = xOf(i);
-      const entryY = yOf(h.entry);
       const exitY  = yOf(h.exit);
-      // Signal pin at entry price
-      drawSignalPin(x, entryY, h.predicted);
       // Correctness dot at exit price
       ctx.beginPath();
       ctx.arc(x, exitY, DOT_R, 0, Math.PI * 2);
@@ -912,7 +909,7 @@ function updateSuccessRateCard(pair, data) {
     </div>`;
 }
 
-/** Fetch success rates for all pairs sequentially (rate-limit friendly). */
+/** Fetch success rates for all pairs in small parallel batches (rate-limit friendly). */
 async function loadAllPairSuccessRates() {
   const btn = document.getElementById('btn-load-all-pairs');
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Loading…'; }
@@ -933,9 +930,11 @@ async function loadAllPairSuccessRates() {
     }
   });
 
-  // Fetch in small batches to avoid hammering the API
-  for (const pair of ALL_PAIRS) {
-    if (successRateCache[pair]) { continue; }
+  // Fetch in parallel batches of 3 to reduce total wait time while staying rate-limit friendly
+  const BATCH_SIZE = 3;
+  const pairsToLoad = ALL_PAIRS.filter(pair => !successRateCache[pair]);
+
+  async function fetchPair(pair) {
     try {
       const res = await fetch(`/api/forex/signals?pair=${encodeURIComponent(pair)}`);
       if (res.ok) {
@@ -943,8 +942,15 @@ async function loadAllPairSuccessRates() {
         updateSuccessRateCard(pair, data);
       }
     } catch { /* skip failed pair */ }
-    // Small delay between requests
-    await new Promise(r => setTimeout(r, PAIR_FETCH_DELAY_MS));
+  }
+
+  for (let i = 0; i < pairsToLoad.length; i += BATCH_SIZE) {
+    const batch = pairsToLoad.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(fetchPair));
+    // Brief pause between batches to avoid overwhelming the API
+    if (i + BATCH_SIZE < pairsToLoad.length) {
+      await new Promise(r => setTimeout(r, PAIR_FETCH_DELAY_MS));
+    }
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '⟳ Reload All Pairs'; }
@@ -1066,6 +1072,48 @@ window.addEventListener('resize', () => {
   }, 200);
 });
 
+// ─── Loading Overlay ──────────────────────────────────────────────────────────
+const loadingOverlay = document.getElementById('piitrade-loading-overlay');
+const loaderTextEl   = document.getElementById('piitrade-loader-text');
+const DOT_FRAMES = [
+  '.... PIITRADE ....',
+  ' ... PIITRADE ... ',
+  '  .. PIITRADE ..  ',
+  '   . PIITRADE .   ',
+];
+let loaderDotIdx    = 0;
+let loaderDotTimer  = null;
+let pendingLoads    = 0;
+
+function startLoaderDots() {
+  if (loaderDotTimer) return;
+  loaderDotTimer = setInterval(() => {
+    loaderDotIdx = (loaderDotIdx + 1) % DOT_FRAMES.length;
+    if (loaderTextEl) loaderTextEl.textContent = DOT_FRAMES[loaderDotIdx];
+  }, 300);
+}
+
+function stopLoaderDots() {
+  clearInterval(loaderDotTimer);
+  loaderDotTimer = null;
+}
+
+function showPageLoader() {
+  pendingLoads++;
+  if (loadingOverlay) {
+    loadingOverlay.classList.remove('hidden');
+    startLoaderDots();
+  }
+}
+
+function hidePageLoader() {
+  pendingLoads = Math.max(0, pendingLoads - 1);
+  if (pendingLoads === 0 && loadingOverlay) {
+    stopLoaderDots();
+    loadingOverlay.classList.add('hidden');
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 // Restore gamification state
 updateGameBar();
@@ -1074,8 +1122,10 @@ renderBadges();
 // Default tab: Signal
 activateTab('section-signal');
 
-loadSignal(currentPair);
-loadNews();
+// Show loading overlay while the initial signal + news load in parallel
+showPageLoader();
+Promise.all([loadSignal(currentPair), loadNews()])
+  .finally(() => hidePageLoader());
 resetAutoRefresh();
 
 // ─── Volatile Pairs ───────────────────────────────────────────────────────────
