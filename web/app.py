@@ -1312,7 +1312,10 @@ async def api_auth_recovery_request(request: Request):
     with _USERS_LOCK:
         user = _USERS.get(username)
 
-    token = _generate_recovery_token(username if user else "__nonexistent__")
+    # Always generate a token to prevent user enumeration.
+    # For non-existent users, use a random nonce so the token cannot be
+    # replayed (a known username like "__nonexistent__" would be predictable).
+    token = _generate_recovery_token(username if user else secrets.token_hex(16))
     if user:
         with _USERS_LOCK:
             _USERS[username]["recovery_token"] = token
@@ -1350,7 +1353,7 @@ async def api_auth_recovery_reset(request: Request):
         return JSONResponse({"error": "Passwords do not match."}, status_code=400)
 
     username = _verify_recovery_token(token)
-    if not username or username == "__nonexistent__":
+    if not username:
         return JSONResponse(
             {"error": "Invalid or expired recovery code."},
             status_code=400,
