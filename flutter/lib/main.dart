@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/forex_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/recovery_screen.dart';
 import 'screens/settings_screen.dart';
 
 /// The PIIDATA environment variable can be set at build time via
@@ -82,7 +84,7 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
     setState(() => _loggedIn = false);
     _navigatorKey.currentState?.pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginScreen(onLoginSuccess: _onLoginSuccess),
+        pageBuilder: (_, __, ___) => _buildLoginScreen(),
         transitionDuration: _kSplashFadeDuration,
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
@@ -91,6 +93,12 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
       ),
     );
   }
+
+  Widget _buildLoginScreen() => LoginScreen(
+        onLoginSuccess: _onLoginSuccess,
+        onRegisterTap: _navigateToRegister,
+        onForgotPasswordTap: _navigateToRecovery,
+      );
 
   void _openSettings() async {
     await _navigatorKey.currentState?.push(
@@ -102,6 +110,36 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
       ),
     );
     await _reloadPreferences();
+  }
+
+  void _navigateToRegister() {
+    _navigatorKey.currentState?.push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => RegisterScreen(
+          onLoginTap: () => _navigatorKey.currentState?.pop(),
+        ),
+        transitionDuration: _kSplashFadeDuration,
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToRecovery() {
+    _navigatorKey.currentState?.push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => RecoveryScreen(
+          onLoginTap: () => _navigatorKey.currentState?.pop(),
+        ),
+        transitionDuration: _kSplashFadeDuration,
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+          child: child,
+        ),
+      ),
+    );
   }
 
   @override
@@ -124,6 +162,8 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
         onSettingsTap: _openSettings,
         onLoginSuccess: _onLoginSuccess,
         onLogout: _logout,
+        onRegisterTap: _navigateToRegister,
+        onForgotPasswordTap: _navigateToRecovery,
       ),
     );
   }
@@ -140,6 +180,8 @@ class _SplashScreen extends StatefulWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onLoginSuccess;
   final Future<void> Function() onLogout;
+  final VoidCallback onRegisterTap;
+  final VoidCallback onForgotPasswordTap;
 
   const _SplashScreen({
     required this.serverUrl,
@@ -147,6 +189,8 @@ class _SplashScreen extends StatefulWidget {
     required this.onSettingsTap,
     required this.onLoginSuccess,
     required this.onLogout,
+    required this.onRegisterTap,
+    required this.onForgotPasswordTap,
   });
 
   @override
@@ -232,6 +276,8 @@ class _SplashScreenState extends State<_SplashScreen>
             ),
           );
         },
+        onRegisterTap: widget.onRegisterTap,
+        onForgotPasswordTap: widget.onForgotPasswordTap,
       );
 
   Widget _buildForexScreen() => ForexScreen(
