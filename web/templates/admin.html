@@ -35,6 +35,12 @@
       <a href="#section-users" class="sidenav-item" onclick="showSection('section-users', this)">
         <span>👥</span><span>Users</span>
       </a>
+      <a href="#section-subscriptions" class="sidenav-item" onclick="showSection('section-subscriptions', this)">
+        <span>💳</span><span>Subscriptions</span>
+      </a>
+      <a href="#section-payments" class="sidenav-item" onclick="showSection('section-payments', this)">
+        <span>📋</span><span>Payments</span>
+      </a>
       <a href="#section-subscribers" class="sidenav-item" onclick="showSection('section-subscribers', this)">
         <span>📬</span><span>Subscribers</span>
       </a>
@@ -62,9 +68,19 @@
           <div class="stat-label">Admin Accounts</div>
         </div>
         <div class="admin-stat-card">
+          <div class="stat-icon">💳</div>
+          <div class="stat-value">{{ users | selectattr('subscription_status','eq','active') | list | length }}</div>
+          <div class="stat-label">Active Subscriptions</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value">{{ payment_confirmations | selectattr('status','eq','pending') | list | length }}</div>
+          <div class="stat-label">Pending Payments</div>
+        </div>
+        <div class="admin-stat-card">
           <div class="stat-icon">📬</div>
           <div class="stat-value" id="stat-subs">{{ subscribers|length }}</div>
-          <div class="stat-label">Subscribers</div>
+          <div class="stat-label">Signal Subscribers</div>
         </div>
         <div class="admin-stat-card">
           <div class="stat-icon">📈</div>
@@ -111,6 +127,9 @@
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Subscription</th>
+              <th>Plan</th>
+              <th>Expires</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -127,9 +146,34 @@
                 <span class="role-badge role-user">👤 User</span>
                 {% endif %}
               </td>
-              <td class="td-date">{{ user.created_at[:10] }}</td>
               <td>
+                {% if user.role == 'admin' %}
+                <span class="role-badge role-admin">∞ Admin</span>
+                {% elif user.subscription_status == 'active' %}
+                <span style="color:#3fb950;font-weight:600">✅ Active</span>
+                {% else %}
+                <span style="color:#f85149;font-weight:600">❌ Inactive</span>
+                {% endif %}
+              </td>
+              <td>{{ user.plan or '—' }}</td>
+              <td class="td-date">{{ user.subscription_end or '—' }}</td>
+              <td class="td-date">{{ user.created_at[:10] }}</td>
+              <td style="display:flex;gap:6px;flex-wrap:wrap">
                 {% if user.role != 'admin' %}
+                <select id="plan-select-{{ user.username }}" class="risk-input" style="padding:4px 8px;font-size:.8rem;width:auto">
+                  {% for plan in plans %}
+                  <option value="{{ plan.id }}">{{ plan.label }}</option>
+                  {% endfor %}
+                </select>
+                <button
+                  class="btn-primary"
+                  style="padding:4px 10px;font-size:.8rem"
+                  onclick="setSubscription('{{ user.username }}', 'activate')"
+                  title="Activate subscription">✅ Activate</button>
+                <button
+                  class="btn-danger-sm"
+                  onclick="setSubscription('{{ user.username }}', 'deactivate')"
+                  title="Deactivate subscription">🚫 Deactivate</button>
                 <button
                   class="btn-danger-sm"
                   onclick="deleteUser('{{ user.username }}')"
@@ -140,7 +184,103 @@
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="td-empty">No users registered yet.</td></tr>
+            <tr><td colspan="8" class="td-empty">No users registered yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Subscriptions ──────────────────────────────────────────────────── -->
+    <section id="section-subscriptions" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">💳 Active Subscriptions</h2>
+        <span class="admin-badge">{{ users | selectattr('subscription_status','eq','active') | list | length }} active</span>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            {% if user.subscription_status == 'active' %}
+            <tr>
+              <td><strong>{{ user.username }}</strong></td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.plan or '—' }}</td>
+              <td class="td-date">—</td>
+              <td class="td-date">{{ user.subscription_end or '—' }}</td>
+              <td><span style="color:#3fb950;font-weight:600">✅ Active</span></td>
+            </tr>
+            {% endif %}
+            {% else %}
+            <tr><td colspan="6" class="td-empty">No active subscriptions yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Payment Confirmations ──────────────────────────────────────────── -->
+    <section id="section-payments" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">📋 Crypto Payment Confirmations</h2>
+        <span class="admin-badge">{{ payment_confirmations|length }} total</span>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>TX Hash</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="payments-tbody">
+            {% for pmt in payment_confirmations %}
+            <tr id="pmt-row-{{ loop.index0 }}">
+              <td>{{ pmt.email }}</td>
+              <td>{{ pmt.plan }}</td>
+              <td>{% if pmt.price_usd %}${{ pmt.price_usd }}{% else %}—{% endif %}</td>
+              <td style="font-family:monospace;font-size:.8rem;word-break:break-all">
+                {{ pmt.tx_hash[:20] }}{% if pmt.tx_hash|length > 20 %}…{% endif %}
+              </td>
+              <td class="td-date">{{ pmt.submitted_at[:10] }}</td>
+              <td>
+                {% if pmt.status == 'approved' %}
+                <span style="color:#3fb950;font-weight:600">✅ Approved</span>
+                {% elif pmt.status == 'pending' %}
+                <span style="color:#e3b341;font-weight:600">⏳ Pending</span>
+                {% else %}
+                <span style="color:#f85149;font-weight:600">❌ {{ pmt.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if pmt.status == 'pending' %}
+                <button
+                  class="btn-primary"
+                  style="padding:4px 10px;font-size:.8rem"
+                  onclick="approvePayment({{ loop.index0 }})"
+                  title="Approve and activate subscription">✅ Approve</button>
+                {% else %}
+                <span class="td-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="td-empty">No payment confirmations yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -271,6 +411,47 @@
     }
   }
 
+  /* Set subscription (activate/deactivate) */
+  async function setSubscription(username, action) {
+    const planSel = document.getElementById(`plan-select-${username}`);
+    const plan = planSel ? planSel.value : 'monthly';
+    const label = action === 'activate' ? 'activate' : 'deactivate';
+    if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} subscription for "${username}"?`)) return;
+    try {
+      const r = await fetch(`/api/admin/users/${encodeURIComponent(username)}/subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, plan }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        showToast(d.message, 'success');
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(d.error || 'Operation failed.', 'error');
+      }
+    } catch(e) {
+      showToast('Request failed: ' + e.message, 'error');
+    }
+  }
+
+  /* Approve crypto payment */
+  async function approvePayment(idx) {
+    if (!confirm('Approve this payment and activate the subscription?')) return;
+    try {
+      const r = await fetch(`/api/admin/payments/${idx}/approve`, { method: 'POST' });
+      const d = await r.json();
+      if (d.success) {
+        showToast(d.message, 'success');
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(d.error || 'Approval failed.', 'error');
+      }
+    } catch(e) {
+      showToast('Request failed: ' + e.message, 'error');
+    }
+  }
+
   /* Delete subscriber */
   async function deleteSubscriber(email) {
     if (!confirm(`Remove subscriber "${email}"?`)) return;
@@ -296,10 +477,12 @@
   /* Sidebar hash navigation */
   (function() {
     const map = {
-      '#section-overview': 0,
-      '#section-users': 1,
-      '#section-subscribers': 2,
-      '#section-cache': 3,
+      '#section-overview':      0,
+      '#section-users':         1,
+      '#section-subscriptions': 2,
+      '#section-payments':      3,
+      '#section-subscribers':   4,
+      '#section-cache':         5,
     };
     const hash = window.location.hash;
     const idx = map[hash];
