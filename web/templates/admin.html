@@ -216,7 +216,7 @@
               <td><strong>{{ user.username }}</strong></td>
               <td>{{ user.email }}</td>
               <td>{{ user.plan or '—' }}</td>
-              <td class="td-date">—</td>
+              <td class="td-date">{{ user.subscription_start or '—' }}</td>
               <td class="td-date">{{ user.subscription_end or '—' }}</td>
               <td><span style="color:#3fb950;font-weight:600">✅ Active</span></td>
             </tr>

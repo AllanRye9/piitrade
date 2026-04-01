@@ -1010,6 +1010,7 @@ async def admin_dashboard(request: Request):
                 "created_at": v["created_at"],
                 "subscription_status": v.get("subscription_status", "inactive"),
                 "plan": v.get("plan"),
+                "subscription_start": v.get("subscription_start"),
                 "subscription_end": v.get("subscription_end"),
             }
             for k, v in _USERS.items()
@@ -1126,10 +1127,12 @@ async def admin_approve_payment(request: Request, idx: int):
     confirmation = _PAYMENT_CONFIRMATIONS[idx]
     email = confirmation.get("email", "")
     plan_id = confirmation.get("plan", "").lower()
-    # Map legacy plan names to new ids
-    _plan_alias = {"monthly": "monthly", "quarterly": "yearly", "annual": "yearly",
-                   "weekly": "weekly", "yearly": "yearly"}
-    plan_id = _plan_alias.get(plan_id, "monthly")
+    # Map legacy plan names to new ids (quarterly/annual → yearly)
+    _plan_alias = {"quarterly": "yearly", "annual": "yearly"}
+    plan_id = _plan_alias.get(plan_id, plan_id) if plan_id in _plan_alias else plan_id
+    # Validate plan_id; fall back to monthly for unknown values
+    if not any(p["id"] == plan_id for p in _PLANS):
+        plan_id = "monthly"
     # Find the user by email
     with _USERS_LOCK:
         username = next((k for k, v in _USERS.items() if v.get("email") == email), None)
@@ -1476,8 +1479,8 @@ async def stripe_create_checkout(request: Request):
     try:
         session = _stripe.checkout.Session.create(**checkout_params)  # type: ignore[union-attr]
         return JSONResponse({"url": session.url})
-    except Exception as exc:
-        return JSONResponse({"error": f"Stripe error: {exc}"}, status_code=500)
+    except Exception:
+        return JSONResponse({"error": "Failed to create Stripe checkout session"}, status_code=500)
 
 
 @app.post("/api/stripe/webhook")
