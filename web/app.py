@@ -7,7 +7,10 @@ FastAPI application with auth, admin dashboard, and security hardening.
 import hashlib
 import os
 import secrets
+import smtplib
 from datetime import date, datetime, timedelta, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from threading import Lock
 from typing import Any, Optional
@@ -91,6 +94,14 @@ _STRIPE_AVAILABLE = _STRIPE_SDK_AVAILABLE and bool(_STRIPE_SECRET_KEY)
 if _STRIPE_AVAILABLE:
     _stripe.api_key = _STRIPE_SECRET_KEY  # type: ignore[union-attr]
 
+# ─── SMTP / email configuration ───────────────────────────────────────────────
+_SMTP_HOST = os.environ.get("SMTP_HOST", "")
+_SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+_SMTP_USER = os.environ.get("SMTP_USER", "")
+_SMTP_PASS = os.environ.get("SMTP_PASS", "")
+_SMTP_FROM = os.environ.get("SMTP_FROM", "") or _SMTP_USER
+_APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://piitrade.onrender.com")
+
 _raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://piitrade.onrender.com")
 _cors_origins: list[str] | str = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
@@ -144,6 +155,32 @@ def _verify_csrf_token(token: str, session_id: str) -> bool:
         return False
 
 
+# ─── Email helper ─────────────────────────────────────────────────────────────
+
+def _send_email(to: str, subject: str, html_body: str) -> bool:
+    """Send an HTML email via SMTP. Returns True on success.
+
+    Requires SMTP_HOST and SMTP_USER environment variables.  When not
+    configured the function is a silent no-op (returns False).
+    """
+    if not _SMTP_HOST or not _SMTP_USER:
+        return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = _SMTP_FROM
+        msg["To"] = to
+        msg.attach(MIMEText(html_body, "html"))
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=10) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(_SMTP_USER, _SMTP_PASS)
+            smtp.sendmail(_SMTP_FROM, [to], msg.as_string())
+        return True
+    except Exception:
+        return False
+
+
 # ─── In-memory user store ──────────────────────────────────────────────────────
 # username -> {email, password_hash, salt, role, recovery_token, created_at}
 _USERS: dict[str, dict[str, Any]] = {}
@@ -165,6 +202,26 @@ def _check_rate_limit(ip: str, max_requests: int = 10, window: int = 60) -> bool
         timestamps.append(now)
         _RATE_LIMIT[ip] = timestamps
         return True
+
+
+def _find_user_by_identifier(identifier: str) -> Optional[tuple[str, dict]]:
+    """Look up a user by username or email address.
+
+    The *identifier* is compared case-sensitively for usernames and
+    case-insensitively for email addresses.  Returns ``(username, user_dict)``
+    on success, or ``None`` when no match is found.
+    """
+    with _USERS_LOCK:
+        # 1. Exact username match
+        user = _USERS.get(identifier)
+        if user:
+            return identifier, dict(user)
+        # 2. Case-insensitive email match
+        identifier_lower = identifier.lower()
+        for uname, udata in _USERS.items():
+            if udata.get("email", "").lower() == identifier_lower:
+                return uname, dict(udata)
+    return None
 
 
 def _init_admin_users() -> None:
@@ -196,6 +253,52 @@ def _init_admin_users() -> None:
 
 
 _init_admin_users()
+
+
+# ─── Email templates ─────────────────────────────────────────────────────────
+
+def _email_purchase_html(plan_label: str, start_date: str, end_date: str) -> str:
+    """Return HTML body for a new purchase confirmation email."""
+    return f"""
+<html><body style="font-family:sans-serif;background:#0d1117;color:#c9d1d9;padding:32px">
+<div style="max-width:560px;margin:0 auto;background:#161b22;border-radius:12px;padding:32px;border:1px solid #30363d">
+  <h1 style="color:#58a6ff;margin-top:0">🎉 Welcome to PiiTrade!</h1>
+  <p>Your <strong>{plan_label}</strong> subscription is now active.</p>
+  <table style="width:100%;border-collapse:collapse;margin:20px 0">
+    <tr><td style="padding:8px 0;color:#8b949e">Plan</td>
+        <td style="padding:8px 0;font-weight:600">{plan_label}</td></tr>
+    <tr><td style="padding:8px 0;color:#8b949e">Start date</td>
+        <td style="padding:8px 0">{start_date}</td></tr>
+    <tr><td style="padding:8px 0;color:#8b949e">Renews / expires</td>
+        <td style="padding:8px 0">{end_date}</td></tr>
+  </table>
+  <p>You can view your subscription details and payment history on your
+     <a href="{_APP_BASE_URL}/profile" style="color:#58a6ff">profile page</a>.</p>
+  <hr style="border:none;border-top:1px solid #30363d;margin:24px 0"/>
+  <p style="font-size:.85rem;color:#8b949e">PiiTrade – AI Forex Signal Hub</p>
+</div>
+</body></html>"""
+
+
+def _email_renewal_html(plan_label: str, new_end_date: str) -> str:
+    """Return HTML body for a subscription renewal confirmation email."""
+    return f"""
+<html><body style="font-family:sans-serif;background:#0d1117;color:#c9d1d9;padding:32px">
+<div style="max-width:560px;margin:0 auto;background:#161b22;border-radius:12px;padding:32px;border:1px solid #30363d">
+  <h1 style="color:#3fb950;margin-top:0">🔄 Subscription Renewed</h1>
+  <p>Your <strong>{plan_label}</strong> subscription has been automatically renewed.</p>
+  <table style="width:100%;border-collapse:collapse;margin:20px 0">
+    <tr><td style="padding:8px 0;color:#8b949e">Plan</td>
+        <td style="padding:8px 0;font-weight:600">{plan_label}</td></tr>
+    <tr><td style="padding:8px 0;color:#8b949e">New expiry date</td>
+        <td style="padding:8px 0">{new_end_date}</td></tr>
+  </table>
+  <p>View your updated subscription on your
+     <a href="{_APP_BASE_URL}/profile" style="color:#58a6ff">profile page</a>.</p>
+  <hr style="border:none;border-top:1px solid #30363d;margin:24px 0"/>
+  <p style="font-size:.85rem;color:#8b949e">PiiTrade – AI Forex Signal Hub</p>
+</div>
+</body></html>"""
 
 
 # ─── Subscription helpers ─────────────────────────────────────────────────────
@@ -236,6 +339,9 @@ def _activate_subscription(username: str, plan_id: str, customer_id: Optional[st
 
 def _extend_subscription_by_customer(customer_id: str) -> None:
     """Extend subscription for the user with the given Stripe customer ID."""
+    user_email: str = ""
+    plan_label: str = ""
+    new_end_str: str = ""
     with _USERS_LOCK:
         for username, user in _USERS.items():
             if user.get("customer_id") == customer_id:
@@ -254,7 +360,17 @@ def _extend_subscription_by_customer(customer_id: str) -> None:
                 new_end = max(current_end, date.today()) + timedelta(days=plan["duration_days"])
                 _USERS[username]["subscription_status"] = "active"
                 _USERS[username]["subscription_end"] = new_end.isoformat()
-                return
+                user_email = user.get("email", "")
+                plan_label = plan["label"]
+                new_end_str = new_end.isoformat()
+                break
+    # Send renewal confirmation email outside the lock
+    if user_email:
+        _send_email(
+            user_email,
+            "PiiTrade – Subscription Renewed",
+            _email_renewal_html(plan_label, new_end_str),
+        )
 
 
 def _deactivate_subscription_by_customer(customer_id: str) -> None:
@@ -825,15 +941,16 @@ async def login_submit(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
     username = username.strip()
-    with _USERS_LOCK:
-        user = _USERS.get(username)
-    if user and _hash_password(password, user["salt"]) == user["password_hash"]:
-        request.session["username"] = username
-        next_url = request.query_params.get("next", "/forex")
-        # Admins bypass subscription check; all other users must have an active subscription.
-        if user.get("role") == "admin" or _is_subscription_active(username):
-            return RedirectResponse(url=next_url, status_code=status.HTTP_302_FOUND)
-        return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
+    result = _find_user_by_identifier(username)
+    if result:
+        matched_username, user = result
+        if _hash_password(password, user["salt"]) == user["password_hash"]:
+            request.session["username"] = matched_username
+            next_url = request.query_params.get("next", "/forex")
+            # Admins bypass subscription check; all other users must have an active subscription.
+            if user.get("role") == "admin" or _is_subscription_active(matched_username):
+                return RedirectResponse(url=next_url, status_code=status.HTTP_302_FOUND)
+            return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse(
         request, "login.html",
         _ctx(request, error="Invalid username or password."),
@@ -1173,6 +1290,8 @@ async def admin_approve_payment(request: Request, idx: int):
     if idx < 0 or idx >= len(_PAYMENT_CONFIRMATIONS):
         return JSONResponse({"error": "Payment not found"}, status_code=404)
     confirmation = _PAYMENT_CONFIRMATIONS[idx]
+    if confirmation.get("status") == "approved":
+        return JSONResponse({"error": "Payment already approved"}, status_code=400)
     email = confirmation.get("email", "")
     plan_id = confirmation.get("plan", "").lower()
     # Map legacy plan names to new ids (quarterly/annual → yearly)
@@ -1181,12 +1300,23 @@ async def admin_approve_payment(request: Request, idx: int):
     # Validate plan_id; fall back to monthly for unknown values
     if not any(p["id"] == plan_id for p in _PLANS):
         plan_id = "monthly"
+    plan = next(p for p in _PLANS if p["id"] == plan_id)
     # Find the user by email
     with _USERS_LOCK:
         username = next((k for k, v in _USERS.items() if v.get("email") == email), None)
     if username:
         _activate_subscription(username, plan_id)
+    # Record approval timestamp
     _PAYMENT_CONFIRMATIONS[idx]["status"] = "approved"
+    _PAYMENT_CONFIRMATIONS[idx]["approved_at"] = datetime.now(timezone.utc).isoformat()
+    # Send purchase confirmation email
+    today_str = date.today().isoformat()
+    end_str = (date.today() + timedelta(days=plan["duration_days"])).isoformat()
+    _send_email(
+        email,
+        "PiiTrade – Subscription Activated",
+        _email_purchase_html(plan["label"], today_str, end_str),
+    )
     return JSONResponse({"success": True, "message": f"Payment approved and subscription activated for '{email}'."})
 
 

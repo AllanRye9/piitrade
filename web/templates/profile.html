@@ -157,6 +157,39 @@
     .status-badge.open    { background: #2a2a14; color: #e3b341; }
     .status-badge.pending { background: #2a2a14; color: #e3b341; }
     .status-badge.void    { background: #3a1a1a; color: #f85149; }
+    /* Countdown timer */
+    .countdown-wrap {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .countdown-unit {
+      background: var(--bg, #0d1117);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      text-align: center;
+      min-width: 70px;
+    }
+    .countdown-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent, #58a6ff);
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .countdown-expired {
+      color: var(--text2);
+      font-size: .9rem;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -229,6 +262,20 @@
         </div>
       </div>
     </div>
+    {% if sub_active and profile_user.subscription_end %}
+    <div class="profile-row" style="margin-top:4px">
+      <div class="profile-field" style="min-width:100%">
+        <label>Time Remaining</label>
+        <div class="countdown-wrap" id="countdown-wrap"
+             data-end="{{ profile_user.subscription_end }}">
+          <div class="countdown-unit"><div class="countdown-value" id="cd-days">—</div><div class="countdown-label">Days</div></div>
+          <div class="countdown-unit"><div class="countdown-value" id="cd-hours">—</div><div class="countdown-label">Hours</div></div>
+          <div class="countdown-unit"><div class="countdown-value" id="cd-mins">—</div><div class="countdown-label">Minutes</div></div>
+          <div class="countdown-unit"><div class="countdown-value" id="cd-secs">—</div><div class="countdown-label">Seconds</div></div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- ── Payment Statements ───────────────────────────────────────────────── -->
