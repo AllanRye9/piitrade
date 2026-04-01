@@ -41,6 +41,9 @@ _ADMIN_1 = os.environ.get("ADMIN_1", "")
 _ADMIN_P1 = os.environ.get("ADMIN_P1", "")
 _ADMIN_2 = os.environ.get("ADMIN_2", "")
 _ADMIN_P2 = os.environ.get("ADMIN_P2", "")
+# USER_NAME / ADMIN_PASS provide a simpler single-admin credential alternative
+_USER_NAME = os.environ.get("USER_NAME", "")
+_ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
 _SESSION_MAX_AGE = 86400  # 24 hours
 
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
@@ -136,8 +139,14 @@ def _check_rate_limit(ip: str, max_requests: int = 10, window: int = 60) -> bool
 
 
 def _init_admin_users() -> None:
-    """Seed admin accounts from ADMIN_1/ADMIN_P1 and ADMIN_2/ADMIN_P2 env vars."""
-    admins = [(_ADMIN_1, _ADMIN_P1), (_ADMIN_2, _ADMIN_P2)]
+    """Seed admin accounts from env vars.
+
+    Supported credential pairs (all optional):
+    - USER_NAME / ADMIN_PASS  – primary simple credential
+    - ADMIN_1 / ADMIN_P1      – legacy first admin
+    - ADMIN_2 / ADMIN_P2      – legacy second admin
+    """
+    admins = [(_USER_NAME, _ADMIN_PASS), (_ADMIN_1, _ADMIN_P1), (_ADMIN_2, _ADMIN_P2)]
     with _USERS_LOCK:
         for username, password in admins:
             if username and password:
@@ -1364,9 +1373,9 @@ async def forex_reversals():
 
 # Crypto wallet addresses (configurable via env vars)
 _WALLETS = {
-    "solana": os.environ.get("WALLET_SOL", "SolanaWalletAddressHere"),
-    "litecoin": os.environ.get("WALLET_LTC", "LitecoinWalletAddressHere"),
-    "kaanch": os.environ.get("WALLET_KCH", "KaanchWalletAddressHere"),
+    "solana": os.environ.get("SOLANA_ADDRESS", "SolanaWalletAddressHere"),
+    "litecoin": os.environ.get("LITECOIN_ADDRESS", "LitecoinWalletAddressHere"),
+    "kaanch": os.environ.get("KAANCH_ADDRESS", "KaanchWalletAddressHere"),
 }
 
 # Subscription plans
