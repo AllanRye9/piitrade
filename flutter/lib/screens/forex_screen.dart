@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -143,14 +144,20 @@ class ForexScreen extends StatefulWidget {
 }
 
 class _ForexScreenState extends State<ForexScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
 
   late final TabController _tabController;
   late final ApiService _api;
 
+  // Auto-refresh interval: reload signal data every 5 minutes
+  static const _kAutoRefreshInterval = Duration(minutes: 5);
+  Timer? _refreshTimer;
+
   // ── State ──────────────────────────────────────────────────────────────────
   String _currentPair = 'EUR/USD';
   ForexSignal? _signal;
+  // Unique key for AnimatedSwitcher – changes each time a new signal arrives
+  Key _signalKey = UniqueKey();
   ForexTechnical? _technical;
   List<ForexNewsItem> _news = [];
   bool _loadingSignal = false;
@@ -208,10 +215,18 @@ class _ForexScreenState extends State<ForexScreen>
     _loadPrefs();
     _loadSignal();
     _loadNews();
+    // Auto-refresh signal data periodically
+    _refreshTimer = Timer.periodic(_kAutoRefreshInterval, (_) {
+      if (mounted) {
+        _loadSignal();
+        _loadNews();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _tabController.dispose();
     _balanceCtrl.dispose();
     _riskPctCtrl.dispose();
@@ -243,6 +258,7 @@ class _ForexScreenState extends State<ForexScreen>
           s.direction != _previousDirection;
       setState(() {
         _signal = s;
+        _signalKey = UniqueKey(); // triggers AnimatedSwitcher transition
         _loadingSignal = false;
       });
       _autoFillCalculator(s);
@@ -689,26 +705,61 @@ class _ForexScreenState extends State<ForexScreen>
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildSignalTab(ColorScheme cs) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildPairSelector(cs),
-          const SizedBox(height: 16),
-          if (_loadingSignal)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(48),
-              child: CircularProgressIndicator(),
-            ))
-          else if (_signalError != null)
-            _buildErrorCard(_signalError!, _loadSignal, cs)
-          else if (_signal != null) ...[
-            _buildSignalCard(_signal!, cs),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadSignal();
+        await _loadNews();
+      },
+      color: cs.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildPairSelector(cs),
             const SizedBox(height: 16),
-            _buildHistoryChart(_signal!.history, _currentPair, cs),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.08),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: _loadingSignal
+                  ? const Center(
+                      key: ValueKey('loading'),
+                      child: Padding(
+                        padding: EdgeInsets.all(48),
+                        child: CircularProgressIndicator(),
+                      ))
+                  : _signalError != null
+                      ? _buildErrorCard(
+                          _signalError!, _loadSignal, cs,
+                          key: ValueKey('error'),
+                        )
+                      : _signal != null
+                          ? Column(
+                              key: _signalKey,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildSignalCard(_signal!, cs),
+                                const SizedBox(height: 16),
+                                _buildHistoryChart(
+                                    _signal!.history, _currentPair, cs),
+                              ],
+                            )
+                          : const SizedBox(key: ValueKey('empty')),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1751,8 +1802,10 @@ class _ForexScreenState extends State<ForexScreen>
 
   // ── Shared error card ──────────────────────────────────────────────────────
 
-  Widget _buildErrorCard(String error, VoidCallback retry, ColorScheme cs) {
+  Widget _buildErrorCard(String error, VoidCallback retry, ColorScheme cs,
+      {Key? key}) {
     return Center(
+      key: key,
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(

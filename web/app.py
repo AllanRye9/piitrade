@@ -36,7 +36,29 @@ _STATIC_DIR = _DIR / "static"
 _TEMPLATES_DIR = _DIR / "templates"
 
 # ─── Configuration ─────────────────────────────────────────────────────────────
-_SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+# Resolve a stable secret key so that existing session cookies remain valid
+# across server restarts.  Priority:
+#   1. SECRET_KEY environment variable (recommended for production)
+#   2. Persisted key file in the app directory (auto-generated on first run)
+#   3. Freshly generated random key (fallback – sessions lost on every restart)
+def _load_or_create_secret_key() -> str:
+    env_key = os.environ.get("SECRET_KEY", "")
+    if env_key:
+        return env_key
+    _key_file = _DIR / ".secret_key"
+    if _key_file.exists():
+        stored = _key_file.read_text().strip()
+        if stored:
+            return stored
+    new_key = secrets.token_hex(32)
+    try:
+        _key_file.write_text(new_key)
+    except OSError:
+        pass  # read-only filesystem – fall back to per-process key
+    return new_key
+
+
+_SECRET_KEY = _load_or_create_secret_key()
 _ADMIN_1 = os.environ.get("ADMIN_1", "")
 _ADMIN_P1 = os.environ.get("ADMIN_P1", "")
 _ADMIN_2 = os.environ.get("ADMIN_2", "")
@@ -44,7 +66,7 @@ _ADMIN_P2 = os.environ.get("ADMIN_P2", "")
 # USER_NAME / ADMIN_PASS provide a simpler single-admin credential alternative
 _USER_NAME = os.environ.get("USER_NAME", "")
 _ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
-_SESSION_MAX_AGE = 86400  # 24 hours
+_SESSION_MAX_AGE = 7 * 86400  # 7 days – reduces re-login friction
 
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
 # Set the PIIDATA environment variable to enable persistent database storage.
@@ -569,18 +591,25 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "XAU/USD": (3300.00, 1.0,   _gen_seq("XAU/USD")),
 }
 
-_FOREX_NEWS: list[dict[str, Any]] = [
-    {"headline": "Federal Reserve signals cautious stance on rate cuts as inflation remains sticky", "sentiment": "negative", "source": "Reuters",     "published_at": "2026-03-30T08:45:00Z"},
-    {"headline": "EUR/USD consolidates near 1.0850 ahead of Eurozone CPI data release",              "sentiment": "neutral",  "source": "FXStreet",   "published_at": "2026-03-30T08:00:00Z"},
-    {"headline": "Bank of England holds rates steady, GBP/USD under pressure",                       "sentiment": "negative", "source": "Bloomberg",  "published_at": "2026-03-30T07:30:00Z"},
-    {"headline": "Japan's core CPI rises above expectations, BoJ hawkish bets increase",             "sentiment": "positive", "source": "Nikkei",     "published_at": "2026-03-30T07:00:00Z"},
-    {"headline": "US Non-Farm Payrolls beat forecasts, USD strengthens across the board",             "sentiment": "positive", "source": "MarketWatch","published_at": "2026-03-30T06:30:00Z"},
-    {"headline": "Eurozone PMI unexpectedly contracts, raising recession fears",                      "sentiment": "negative", "source": "Reuters",    "published_at": "2026-03-30T06:00:00Z"},
-    {"headline": "GBP gains on positive UK retail sales data, trade balance improves",               "sentiment": "positive", "source": "FXStreet",   "published_at": "2026-03-30T05:45:00Z"},
-    {"headline": "Dollar index holds above 104 as risk sentiment remains fragile",                    "sentiment": "neutral",  "source": "Bloomberg",  "published_at": "2026-03-30T05:00:00Z"},
-    {"headline": "ECB policymakers divided on pace of future rate reductions",                        "sentiment": "neutral",  "source": "WSJ",        "published_at": "2026-03-30T04:30:00Z"},
-    {"headline": "Yen weakens past 151 as US-Japan yield differential widens further",               "sentiment": "negative", "source": "Nikkei",     "published_at": "2026-03-30T04:00:00Z"},
-]
+def _make_news_items() -> list[dict[str, Any]]:
+    """Build the news list with timestamps relative to the current UTC day."""
+    today = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+
+    def _ts(hours_ago: int, extra_minutes: int = 0) -> str:
+        return (today - timedelta(hours=hours_ago, minutes=extra_minutes)).isoformat()
+
+    return [
+        {"headline": "Federal Reserve signals cautious stance on rate cuts as inflation remains sticky", "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 15)},
+        {"headline": "EUR/USD consolidates ahead of Eurozone CPI data release",                          "sentiment": "neutral",  "source": "FXStreet",   "published_at": _ts(1)},
+        {"headline": "Bank of England holds rates steady, GBP/USD under pressure",                       "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 30)},
+        {"headline": "Japan's core CPI rises above expectations, BoJ hawkish bets increase",             "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2)},
+        {"headline": "US Non-Farm Payrolls beat forecasts, USD strengthens across the board",             "sentiment": "positive", "source": "MarketWatch","published_at": _ts(2, 30)},
+        {"headline": "Eurozone PMI unexpectedly contracts, raising recession fears",                      "sentiment": "negative", "source": "Reuters",    "published_at": _ts(3)},
+        {"headline": "GBP gains on positive UK retail sales data, trade balance improves",               "sentiment": "positive", "source": "FXStreet",   "published_at": _ts(3, 15)},
+        {"headline": "Dollar index holds above 104 as risk sentiment remains fragile",                    "sentiment": "neutral",  "source": "Bloomberg",  "published_at": _ts(4)},
+        {"headline": "ECB policymakers divided on pace of future rate reductions",                        "sentiment": "neutral",  "source": "WSJ",        "published_at": _ts(4, 30)},
+        {"headline": "Yen weakens as US-Japan yield differential widens further",                         "sentiment": "negative", "source": "Nikkei",     "published_at": _ts(5)},
+    ]
 
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
 _PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
@@ -591,8 +620,11 @@ def _build_forex_history(pair: str) -> list[dict[str, Any]]:
     price = base_price
     decimals = 4 if pip < 0.01 else 2
     history: list[dict[str, Any]] = []
+    # Anchor the history to the last 30 days relative to today
+    today = date.today()
+    start_day = today - timedelta(days=len(seq) - 1)
     for i, (pred, actual, delta) in enumerate(seq):
-        d = (date(2026, 3, 1) + timedelta(days=i)).isoformat()
+        d = (start_day + timedelta(days=i)).isoformat()
         entry = round(price, decimals)
         exit_price = round(price + delta * pip, decimals)
         history.append({
@@ -1231,7 +1263,7 @@ async def forex_pairs():
 
 @app.get("/api/forex/news")
 async def forex_news():
-    return JSONResponse({"news": _FOREX_NEWS})
+    return JSONResponse({"news": _make_news_items()})
 
 
 @app.post("/api/forex/subscribe")
@@ -1312,12 +1344,13 @@ async def forex_volatile(timeframe: str = "24h"):
         prices = _get_prices_for_pair(pair, 30)
         vol = _compute_volatility(prices, window)
         signal_info = _FOREX_SIGNALS[pair]
+        live_rate = _fetch_live_rate(pair)
         results.append({
             "pair": pair,
             "volatility_pct": vol,
             "direction": signal_info["direction"],
             "confidence": signal_info["confidence"],
-            "entry_price": signal_info["entry_price"],
+            "entry_price": live_rate if live_rate is not None else signal_info["entry_price"],
         })
 
     results.sort(key=lambda x: x["volatility_pct"], reverse=True)
@@ -1357,13 +1390,14 @@ async def forex_reversals():
         if rev["reversal"] == "none":
             continue
         signal_info = _FOREX_SIGNALS[pair]
+        live_rate = _fetch_live_rate(pair)
         results.append({
             "pair": pair,
             "reversal_type": rev["reversal"],
             "strength": rev["strength"],
             "direction": signal_info["direction"],
             "confidence": signal_info["confidence"],
-            "entry_price": signal_info["entry_price"],
+            "entry_price": live_rate if live_rate is not None else signal_info["entry_price"],
         })
     results.sort(key=lambda x: x["strength"], reverse=True)
     return JSONResponse({"pairs": results})
