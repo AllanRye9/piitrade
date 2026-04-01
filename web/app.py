@@ -22,6 +22,14 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+# ─── Optional Stripe SDK ───────────────────────────────────────────────────────
+try:
+    import stripe as _stripe  # type: ignore
+    _STRIPE_SDK_AVAILABLE = True
+except ImportError:
+    _stripe = None  # type: ignore
+    _STRIPE_SDK_AVAILABLE = False
+
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 _DIR = Path(__file__).parent
 _STATIC_DIR = _DIR / "static"
@@ -38,6 +46,18 @@ _SESSION_MAX_AGE = 86400  # 24 hours
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
 # Set the PIIDATA environment variable to enable persistent database storage.
 _PIIDATA = os.environ.get("PIIDATA", "")
+
+# ─── Stripe configuration ──────────────────────────────────────────────────────
+_STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+_STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+_STRIPE_PRICE_IDS: dict[str, str] = {
+    "weekly":  os.environ.get("STRIPE_PRICE_WEEKLY", ""),
+    "monthly": os.environ.get("STRIPE_PRICE_MONTHLY", ""),
+    "yearly":  os.environ.get("STRIPE_PRICE_YEARLY", ""),
+}
+_STRIPE_AVAILABLE = _STRIPE_SDK_AVAILABLE and bool(_STRIPE_SECRET_KEY)
+if _STRIPE_AVAILABLE:
+    _stripe.api_key = _STRIPE_SECRET_KEY  # type: ignore[union-attr]
 
 _raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://piitrade.onrender.com")
 _cors_origins: list[str] | str = (
@@ -129,13 +149,92 @@ def _init_admin_users() -> None:
                     "role": "admin",
                     "recovery_token": None,
                     "created_at": datetime.now(timezone.utc).isoformat(),
+                    "subscription_status": "active",
+                    "plan": None,
+                    "subscription_start": None,
+                    "subscription_end": None,
+                    "customer_id": None,
                 }
 
 
 _init_admin_users()
 
 
-# ─── Auth helpers ─────────────────────────────────────────────────────────────
+# ─── Subscription helpers ─────────────────────────────────────────────────────
+
+def _is_subscription_active(username: str) -> bool:
+    """Return True if the user has an active, non-expired subscription (or is admin)."""
+    with _USERS_LOCK:
+        user = _USERS.get(username, {})
+    if user.get("role") == "admin":
+        return True
+    if user.get("subscription_status") != "active":
+        return False
+    sub_end = user.get("subscription_end")
+    if not sub_end:
+        return False
+    try:
+        return date.fromisoformat(sub_end) >= date.today()
+    except ValueError:
+        return False
+
+
+def _activate_subscription(username: str, plan_id: str, customer_id: Optional[str] = None) -> None:
+    """Activate (or renew) a user's subscription for the given plan."""
+    plan = next((p for p in _PLANS if p["id"] == plan_id), None)
+    if not plan:
+        return
+    today = date.today()
+    end = today + timedelta(days=plan["duration_days"])
+    with _USERS_LOCK:
+        if username in _USERS:
+            _USERS[username]["subscription_status"] = "active"
+            _USERS[username]["plan"] = plan_id
+            _USERS[username]["subscription_start"] = today.isoformat()
+            _USERS[username]["subscription_end"] = end.isoformat()
+            if customer_id:
+                _USERS[username]["customer_id"] = customer_id
+
+
+def _extend_subscription_by_customer(customer_id: str) -> None:
+    """Extend subscription for the user with the given Stripe customer ID."""
+    with _USERS_LOCK:
+        for username, user in _USERS.items():
+            if user.get("customer_id") == customer_id:
+                plan_id = user.get("plan", "monthly")
+                plan = next((p for p in _PLANS if p["id"] == plan_id), None)
+                if not plan:
+                    return
+                current_end_str = user.get("subscription_end")
+                if current_end_str:
+                    try:
+                        current_end = date.fromisoformat(current_end_str)
+                    except ValueError:
+                        current_end = date.today()
+                else:
+                    current_end = date.today()
+                new_end = max(current_end, date.today()) + timedelta(days=plan["duration_days"])
+                _USERS[username]["subscription_status"] = "active"
+                _USERS[username]["subscription_end"] = new_end.isoformat()
+                return
+
+
+def _deactivate_subscription_by_customer(customer_id: str) -> None:
+    """Set subscription to inactive for the user with the given Stripe customer ID."""
+    with _USERS_LOCK:
+        for username, user in _USERS.items():
+            if user.get("customer_id") == customer_id:
+                _USERS[username]["subscription_status"] = "inactive"
+                return
+
+
+def _find_username_by_customer(customer_id: str) -> Optional[str]:
+    """Return the username associated with a Stripe customer ID, or None."""
+    with _USERS_LOCK:
+        for username, user in _USERS.items():
+            if user.get("customer_id") == customer_id:
+                return username
+    return None
 
 def _get_current_user(request: Request) -> Optional[str]:
     return request.session.get("username")
@@ -637,8 +736,11 @@ async def index(request: Request):
 
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
-    if not _get_current_user(request):
+    username = _get_current_user(request)
+    if not username:
         return RedirectResponse(url="/login?next=/forex", status_code=status.HTTP_302_FOUND)
+    if not _is_subscription_active(username):
+        return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
     try:
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
@@ -680,7 +782,10 @@ async def login_submit(
     if user and _hash_password(password, user["salt"]) == user["password_hash"]:
         request.session["username"] = username
         next_url = request.query_params.get("next", "/forex")
-        return RedirectResponse(url=next_url, status_code=status.HTTP_302_FOUND)
+        # Admins bypass subscription check; all other users must have an active subscription.
+        if user.get("role") == "admin" or _is_subscription_active(username):
+            return RedirectResponse(url=next_url, status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse(
         request, "login.html",
         _ctx(request, error="Invalid username or password."),
@@ -772,6 +877,11 @@ async def register_submit(
             "role": "user",
             "recovery_token": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "subscription_status": "inactive",
+            "plan": None,
+            "subscription_start": None,
+            "subscription_end": None,
+            "customer_id": None,
         }
     return templates.TemplateResponse(
         request, "register.html",
@@ -893,7 +1003,16 @@ async def admin_dashboard(request: Request):
         return RedirectResponse(url="/login?next=/const", status_code=status.HTTP_302_FOUND)
     with _USERS_LOCK:
         users_list = [
-            {"username": k, "email": v["email"], "role": v["role"], "created_at": v["created_at"]}
+            {
+                "username": k,
+                "email": v["email"],
+                "role": v["role"],
+                "created_at": v["created_at"],
+                "subscription_status": v.get("subscription_status", "inactive"),
+                "plan": v.get("plan"),
+                "subscription_start": v.get("subscription_start"),
+                "subscription_end": v.get("subscription_end"),
+            }
             for k, v in _USERS.items()
         ]
     cache_info = []
@@ -908,6 +1027,8 @@ async def admin_dashboard(request: Request):
             request,
             users=users_list,
             subscribers=list(_FOREX_SUBSCRIBERS),
+            payment_confirmations=list(_PAYMENT_CONFIRMATIONS),
+            plans=_PLANS,
             cache_info=sorted(cache_info, key=lambda x: x["key"]),
             total_pairs=len(_SUPPORTED_PAIRS),
         ),
@@ -923,11 +1044,17 @@ async def admin_stats(request: Request):
     with _USERS_LOCK:
         total_users = len(_USERS)
         admin_count = sum(1 for u in _USERS.values() if u["role"] == "admin")
+        active_subs = sum(
+            1 for u in _USERS.values()
+            if u.get("role") != "admin" and u.get("subscription_status") == "active"
+        )
     return JSONResponse({
         "total_users": total_users,
         "admin_users": admin_count,
         "regular_users": total_users - admin_count,
+        "active_subscriptions": active_subs,
         "total_subscribers": len(_FOREX_SUBSCRIBERS),
+        "pending_payments": len([p for p in _PAYMENT_CONFIRMATIONS if p.get("status") == "pending"]),
         "total_pairs": len(_SUPPORTED_PAIRS),
         "cache_entries": len(_RATE_CACHE),
         "server_time": datetime.now(timezone.utc).isoformat(),
@@ -957,6 +1084,63 @@ async def admin_delete_subscriber(request: Request, email: str):
     if len(_FOREX_SUBSCRIBERS) == before:
         return JSONResponse({"error": "Subscriber not found"}, status_code=404)
     return JSONResponse({"success": True, "message": f"Subscriber '{email}' removed."})
+
+
+@app.post("/api/admin/users/{target_username}/subscription")
+async def admin_set_subscription(request: Request, target_username: str):
+    """Admin endpoint to manually activate or deactivate a user's subscription."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=status.HTTP_403_FORBIDDEN)
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+    action = data.get("action", "activate")
+    plan_id = data.get("plan", "monthly")
+    with _USERS_LOCK:
+        if target_username not in _USERS:
+            return JSONResponse({"error": "User not found"}, status_code=404)
+        if action == "activate":
+            plan = next((p for p in _PLANS if p["id"] == plan_id), None)
+            if not plan:
+                return JSONResponse({"error": "Invalid plan"}, status_code=400)
+            today = date.today()
+            end = today + timedelta(days=plan["duration_days"])
+            _USERS[target_username]["subscription_status"] = "active"
+            _USERS[target_username]["plan"] = plan_id
+            _USERS[target_username]["subscription_start"] = today.isoformat()
+            _USERS[target_username]["subscription_end"] = end.isoformat()
+        elif action == "deactivate":
+            _USERS[target_username]["subscription_status"] = "inactive"
+        else:
+            return JSONResponse({"error": "Invalid action. Use 'activate' or 'deactivate'"}, status_code=400)
+    return JSONResponse({"success": True, "message": f"Subscription {action}d for '{target_username}'."})
+
+
+@app.post("/api/admin/payments/{idx}/approve")
+async def admin_approve_payment(request: Request, idx: int):
+    """Admin endpoint to approve a pending crypto payment confirmation."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=status.HTTP_403_FORBIDDEN)
+    if idx < 0 or idx >= len(_PAYMENT_CONFIRMATIONS):
+        return JSONResponse({"error": "Payment not found"}, status_code=404)
+    confirmation = _PAYMENT_CONFIRMATIONS[idx]
+    email = confirmation.get("email", "")
+    plan_id = confirmation.get("plan", "").lower()
+    # Map legacy plan names to new ids (quarterly/annual → yearly)
+    _plan_alias = {"quarterly": "yearly", "annual": "yearly"}
+    plan_id = _plan_alias.get(plan_id, plan_id) if plan_id in _plan_alias else plan_id
+    # Validate plan_id; fall back to monthly for unknown values
+    if not any(p["id"] == plan_id for p in _PLANS):
+        plan_id = "monthly"
+    # Find the user by email
+    with _USERS_LOCK:
+        username = next((k for k, v in _USERS.items() if v.get("email") == email), None)
+    if username:
+        _activate_subscription(username, plan_id)
+    _PAYMENT_CONFIRMATIONS[idx]["status"] = "approved"
+    return JSONResponse({"success": True, "message": f"Payment approved and subscription activated for '{email}'."})
+
 
 
 # ─── Public forex API ─────────────────────────────────────────────────────────
@@ -1187,9 +1371,9 @@ _WALLETS = {
 
 # Subscription plans
 _PLANS = [
-    {"id": "monthly", "label": "Monthly",  "price_usd": 29,  "duration_days": 30},
-    {"id": "quarterly","label": "Quarterly","price_usd": 69,  "duration_days": 90},
-    {"id": "annual",   "label": "Annual",   "price_usd": 199, "duration_days": 365},
+    {"id": "weekly",  "label": "Weekly",  "price_usd": 3,  "duration_days": 7},
+    {"id": "monthly", "label": "Monthly", "price_usd": 14, "duration_days": 30},
+    {"id": "yearly",  "label": "Yearly",  "price_usd": 99, "duration_days": 365},
 ]
 
 
@@ -1197,8 +1381,26 @@ _PLANS = [
 async def subscribe_page(request: Request):
     return templates.TemplateResponse(
         request, "subscribe.html",
-        _ctx(request, wallets=_WALLETS, plans=_PLANS),
+        _ctx(request, wallets=_WALLETS, plans=_PLANS, stripe_available=_STRIPE_AVAILABLE),
     )
+
+
+@app.get("/subscribe/success", response_class=HTMLResponse)
+async def subscribe_success(request: Request, session_id: str = ""):
+    """Stripe checkout success redirect – verify session and activate subscription."""
+    username = _get_current_user(request)
+    if not username:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    if _STRIPE_AVAILABLE and session_id:
+        try:
+            session = _stripe.checkout.Session.retrieve(session_id)  # type: ignore[union-attr]
+            if session.payment_status in ("paid", "no_payment_required"):
+                plan_id = (session.metadata or {}).get("plan", "monthly")
+                customer_id = session.customer
+                _activate_subscription(username, plan_id, customer_id)
+        except Exception:
+            pass
+    return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
 
 
 @app.post("/api/forex/payment-confirm")
@@ -1236,7 +1438,157 @@ async def payment_confirm(request: Request):
     })
 
 
-# ─── Entry point ──────────────────────────────────────────────────────────────
+# ─── Stripe payment routes ─────────────────────────────────────────────────────
+
+@app.post("/api/stripe/create-checkout-session")
+async def stripe_create_checkout(request: Request):
+    """Create a Stripe Checkout session for the selected subscription plan."""
+    username = _get_current_user(request)
+    if not username:
+        return JSONResponse({"error": "Authentication required"}, status_code=status.HTTP_401_UNAUTHORIZED)
+    if not _STRIPE_AVAILABLE:
+        return JSONResponse({"error": "Stripe integration not configured"}, status_code=503)
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+    plan_id = data.get("plan", "monthly")
+    plan = next((p for p in _PLANS if p["id"] == plan_id), None)
+    if not plan:
+        return JSONResponse({"error": "Invalid plan"}, status_code=400)
+    price_id = _STRIPE_PRICE_IDS.get(plan_id, "")
+    if not price_id:
+        return JSONResponse(
+            {"error": f"Stripe price ID not configured for '{plan_id}' plan"},
+            status_code=503,
+        )
+    with _USERS_LOCK:
+        user = dict(_USERS.get(username, {}))
+    checkout_params: dict[str, Any] = {
+        "mode": "subscription",
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": str(request.base_url).rstrip("/") + "/subscribe/success?session_id={CHECKOUT_SESSION_ID}",
+        "cancel_url": str(request.base_url).rstrip("/") + "/subscribe",
+        "metadata": {"username": username, "plan": plan_id},
+    }
+    customer_id = user.get("customer_id")
+    if customer_id:
+        checkout_params["customer"] = customer_id
+    elif user.get("email"):
+        checkout_params["customer_email"] = user["email"]
+    try:
+        session = _stripe.checkout.Session.create(**checkout_params)  # type: ignore[union-attr]
+        return JSONResponse({"url": session.url})
+    except Exception:
+        return JSONResponse({"error": "Failed to create Stripe checkout session"}, status_code=500)
+
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request):
+    """Stripe webhook endpoint – handles subscription lifecycle events."""
+    if not _STRIPE_AVAILABLE:
+        return JSONResponse({"error": "Stripe not configured"}, status_code=503)
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+    try:
+        event = _stripe.Webhook.construct_event(  # type: ignore[union-attr]
+            payload, sig_header, _STRIPE_WEBHOOK_SECRET
+        )
+    except Exception:
+        return JSONResponse({"error": "Invalid webhook signature or payload"}, status_code=400)
+
+    event_type: str = event.get("type", "")
+    data_obj: dict[str, Any] = event.get("data", {}).get("object", {})
+
+    if event_type == "checkout.session.completed":
+        session_username = (data_obj.get("metadata") or {}).get("username")
+        session_plan = (data_obj.get("metadata") or {}).get("plan", "monthly")
+        customer_id = data_obj.get("customer")
+        if session_username:
+            _activate_subscription(session_username, session_plan, customer_id)
+        elif customer_id:
+            # Fall back to customer-ID lookup
+            uname = _find_username_by_customer(customer_id)
+            if uname:
+                _activate_subscription(uname, session_plan, customer_id)
+
+    elif event_type == "invoice.payment_succeeded":
+        customer_id = data_obj.get("customer")
+        if customer_id:
+            _extend_subscription_by_customer(customer_id)
+
+    elif event_type == "customer.subscription.deleted":
+        customer_id = data_obj.get("customer")
+        if customer_id:
+            _deactivate_subscription_by_customer(customer_id)
+
+    elif event_type == "invoice.payment_failed":
+        # Log the failure; after a configurable grace period the subscription
+        # would be deactivated via customer.subscription.deleted.
+        pass
+
+    return JSONResponse({"received": True})
+
+
+# ─── Profile page ─────────────────────────────────────────────────────────────
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    username = _get_current_user(request)
+    if not username:
+        return RedirectResponse(url="/login?next=/profile", status_code=status.HTTP_302_FOUND)
+    with _USERS_LOCK:
+        user = dict(_USERS.get(username, {}))
+
+    invoices: list[dict[str, Any]] = []
+    portal_url: Optional[str] = None
+    customer_id = user.get("customer_id")
+
+    if _STRIPE_AVAILABLE and customer_id:
+        try:
+            invoice_list = _stripe.Invoice.list(customer=customer_id, limit=10)  # type: ignore[union-attr]
+            for inv in invoice_list.auto_paging_iter():
+                invoices.append({
+                    "date": datetime.fromtimestamp(inv.created, tz=timezone.utc).strftime("%Y-%m-%d"),
+                    "amount": f"${inv.amount_paid / 100:.2f}",
+                    "description": inv.lines.data[0].description if inv.lines.data else "PiiTrade Subscription",
+                    "status": inv.status,
+                    "pdf_url": inv.invoice_pdf,
+                })
+                if len(invoices) >= 10:
+                    break
+        except Exception:
+            pass
+        try:
+            portal_session = _stripe.billing_portal.Session.create(  # type: ignore[union-attr]
+                customer=customer_id,
+                return_url=str(request.base_url).rstrip("/") + "/profile",
+            )
+            portal_url = portal_session.url
+        except Exception:
+            pass
+
+    # Include crypto payment confirmations for this user's email
+    user_email = user.get("email", "")
+    local_payments = [p for p in _PAYMENT_CONFIRMATIONS if p.get("email") == user_email]
+
+    plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
+    sub_active = _is_subscription_active(username)
+
+    return templates.TemplateResponse(
+        request, "profile.html",
+        _ctx(
+            request,
+            profile_user=user,
+            profile_username=username,
+            invoices=invoices,
+            local_payments=local_payments,
+            portal_url=portal_url,
+            plan_label=plan_label,
+            sub_active=sub_active,
+            stripe_available=_STRIPE_AVAILABLE,
+        ),
+    )
 
 if __name__ == "__main__":
     import uvicorn

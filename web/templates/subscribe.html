@@ -239,27 +239,42 @@
 
   <div class="sub-hero">
     <h1>💳 Subscribe to PiiTrade</h1>
-    <p>Pay with crypto to unlock the full dashboard — all 15 pairs, volatile pair scanner, trend reversal alerts, risk calculator, and more.</p>
+    <p>Unlock the full dashboard — all 15 pairs, volatile pair scanner, trend reversal alerts, risk calculator, and more.</p>
   </div>
 
   <!-- ── Plans ──────────────────────────────────────────────────────────── -->
   <div class="fx-section-title">Choose a Plan</div>
   <div class="plan-grid" id="plan-grid">
     {% for plan in plans %}
-    <div class="plan-card{% if loop.index == 2 %} selected{% endif %}" data-plan="{{ plan.id }}" data-price="{{ plan.price_usd }}">
+    <div class="plan-card{% if plan.id == 'monthly' %} selected{% endif %}" data-plan="{{ plan.id }}" data-price="{{ plan.price_usd }}" data-label="{{ plan.label }}">
       <div class="plan-label">{{ plan.label }}</div>
       <div class="plan-price"><sup>$</sup>{{ plan.price_usd }}</div>
       <div class="plan-duration">
-        {% if plan.duration_days == 30 %}per month
-        {% elif plan.duration_days == 90 %}per 3 months
-        {% else %}per year{% endif %}
+        {% if plan.duration_days == 7 %}billed every 7 days
+        {% elif plan.duration_days == 30 %}billed every 30 days
+        {% else %}billed once per year{% endif %}
       </div>
-      {% if plan.id == 'quarterly' %}
+      {% if plan.id == 'yearly' %}
       <div class="plan-badge">Best Value</div>
       {% endif %}
     </div>
     {% endfor %}
   </div>
+
+  <!-- ── Stripe Payment (if configured) ───────────────────────────────────── -->
+  {% if stripe_available %}
+  <div class="crypto-section" id="stripe-section" style="margin-bottom:24px">
+    <h2>💳 Pay with Card (Stripe)</h2>
+    <p style="color:var(--text2);font-size:.9rem;line-height:1.6;margin-bottom:18px">
+      Subscribe securely via Stripe. You can manage, update, or cancel your subscription at any time from your profile.
+    </p>
+    <button class="btn-primary" id="btn-stripe-checkout" onclick="startStripeCheckout()">
+      🔐 Subscribe with Card
+    </button>
+    <div id="stripe-status" style="margin-top:12px;font-size:.9rem;color:var(--text2)"></div>
+  </div>
+  <div class="fx-section-title" style="margin-bottom:16px">— or pay with crypto —</div>
+  {% endif %}
 
   <!-- ── Crypto Payment ─────────────────────────────────────────────────── -->
   <div class="crypto-section">
@@ -279,7 +294,7 @@
         <button class="btn-copy" onclick="copyWallet(this, 'wallet-sol')">Copy</button>
       </div>
       <div class="crypto-amount-note">
-        Selected plan: <strong id="sol-plan-note">$29 (Monthly)</strong>. Please send the equivalent in SOL at the time of payment.
+        Selected plan: <strong id="sol-plan-note">$14 (Monthly)</strong>. Please send the equivalent in SOL at the time of payment.
       </div>
     </div>
 
@@ -292,7 +307,7 @@
         <button class="btn-copy" onclick="copyWallet(this, 'wallet-ltc')">Copy</button>
       </div>
       <div class="crypto-amount-note">
-        Selected plan: <strong id="ltc-plan-note">$29 (Monthly)</strong>. Please send the equivalent in LTC at the time of payment.
+        Selected plan: <strong id="ltc-plan-note">$14 (Monthly)</strong>. Please send the equivalent in LTC at the time of payment.
       </div>
     </div>
 
@@ -305,7 +320,7 @@
         <button class="btn-copy" onclick="copyWallet(this, 'wallet-kch')">Copy</button>
       </div>
       <div class="crypto-amount-note">
-        Selected plan: <strong id="kch-plan-note">$29 (Monthly)</strong>. Please send the equivalent in KCH at the time of payment.
+        Selected plan: <strong id="kch-plan-note">$14 (Monthly)</strong>. Please send the equivalent in KCH at the time of payment.
       </div>
     </div>
   </div>
@@ -330,14 +345,13 @@
 <script>
   // ── Plan selection ──────────────────────────────────────────────────────────
   const planNotes = ['sol-plan-note', 'ltc-plan-note', 'kch-plan-note'];
-  let selectedPlan = { label: 'Monthly', price: 29 };
+  let selectedPlan = { id: 'monthly', label: 'Monthly', price: 14 };
 
   document.querySelectorAll('.plan-card').forEach(card => {
     card.addEventListener('click', () => {
       document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
-      const labels = { monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual' };
-      selectedPlan = { label: labels[card.dataset.plan], price: card.dataset.price };
+      selectedPlan = { id: card.dataset.plan, label: card.dataset.label, price: card.dataset.price };
       updatePlanNotes();
     });
   });
@@ -348,6 +362,37 @@
       const el = document.getElementById(id);
       if (el) el.textContent = text;
     });
+  }
+
+  // ── Stripe checkout ─────────────────────────────────────────────────────────
+  async function startStripeCheckout() {
+    const btn = document.getElementById('btn-stripe-checkout');
+    const statusEl = document.getElementById('stripe-status');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirecting to Stripe…'; }
+    if (statusEl) statusEl.textContent = '';
+    try {
+      const r = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: selectedPlan.id }),
+      });
+      const data = await r.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        if (statusEl) {
+          statusEl.style.color = '#f85149';
+          statusEl.textContent = '❌ ' + (data.error || 'Could not start Stripe checkout.');
+        }
+        if (btn) { btn.disabled = false; btn.textContent = '🔐 Subscribe with Card'; }
+      }
+    } catch (e) {
+      if (statusEl) {
+        statusEl.style.color = '#f85149';
+        statusEl.textContent = '❌ Network error. Please try again.';
+      }
+      if (btn) { btn.disabled = false; btn.textContent = '🔐 Subscribe with Card'; }
+    }
   }
 
   // ── Crypto tab switching ────────────────────────────────────────────────────
@@ -377,21 +422,21 @@
   function submitConfirmation() {
     const email = document.getElementById('confirm-email').value.trim();
     const tx    = document.getElementById('confirm-tx').value.trim();
-    const status = document.getElementById('confirm-status');
+    const statusDiv = document.getElementById('confirm-status');
 
     if (!email || !email.includes('@')) {
-      status.textContent = '⚠️ Please enter a valid email address.';
-      status.className = 'confirm-status err';
+      statusDiv.textContent = '⚠️ Please enter a valid email address.';
+      statusDiv.className = 'confirm-status err';
       return;
     }
     if (!tx) {
-      status.textContent = '⚠️ Please enter your transaction hash.';
-      status.className = 'confirm-status err';
+      statusDiv.textContent = '⚠️ Please enter your transaction hash.';
+      statusDiv.className = 'confirm-status err';
       return;
     }
 
-    status.textContent = '⏳ Submitting your confirmation…';
-    status.className = 'confirm-status';
+    statusDiv.textContent = '⏳ Submitting your confirmation…';
+    statusDiv.className = 'confirm-status';
 
     // Send confirmation to server
     fetch('/api/forex/payment-confirm', {
@@ -407,16 +452,16 @@
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          status.textContent = '✅ ' + data.message;
-          status.className = 'confirm-status ok';
+          statusDiv.textContent = '✅ ' + data.message;
+          statusDiv.className = 'confirm-status ok';
         } else {
-          status.textContent = '❌ ' + (data.error || 'Submission failed.');
-          status.className = 'confirm-status err';
+          statusDiv.textContent = '❌ ' + (data.error || 'Submission failed.');
+          statusDiv.className = 'confirm-status err';
         }
       })
       .catch(() => {
-        status.textContent = '❌ Network error. Please try again.';
-        status.className = 'confirm-status err';
+        statusDiv.textContent = '❌ Network error. Please try again.';
+        statusDiv.className = 'confirm-status err';
       });
   }
 </script>
