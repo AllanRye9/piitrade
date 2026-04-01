@@ -217,10 +217,11 @@ class _ForexScreenState extends State<ForexScreen>
     _loadNews();
     // Auto-refresh signal data periodically
     _refreshTimer = Timer.periodic(_kAutoRefreshInterval, (_) {
-      if (mounted) {
-        _loadSignal();
-        _loadNews();
-      }
+      if (!mounted) return;
+      // Fire-and-forget; each method has its own internal error handling
+      // that updates the UI error state, so we just ignore the Future here.
+      _loadSignal().ignore();
+      _loadNews().ignore();
     });
   }
 

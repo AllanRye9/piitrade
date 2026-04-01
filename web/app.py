@@ -53,8 +53,15 @@ def _load_or_create_secret_key() -> str:
     new_key = secrets.token_hex(32)
     try:
         _key_file.write_text(new_key)
-    except OSError:
-        pass  # read-only filesystem – fall back to per-process key
+    except OSError as _e:
+        import warnings
+        warnings.warn(
+            f"PiiTrade: could not persist secret key to {_key_file} ({_e}). "
+            "Sessions will be invalidated on every server restart. "
+            "Set the SECRET_KEY environment variable to avoid this.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     return new_key
 
 
