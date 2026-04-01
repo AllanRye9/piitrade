@@ -136,8 +136,14 @@ const _kBadgeMap = {
 class ForexScreen extends StatefulWidget {
   final String serverUrl;
   final VoidCallback? onSettingsTap;
+  final Future<void> Function()? onLogout;
 
-  const ForexScreen({super.key, required this.serverUrl, this.onSettingsTap});
+  const ForexScreen({
+    super.key,
+    required this.serverUrl,
+    this.onSettingsTap,
+    this.onLogout,
+  });
 
   @override
   State<ForexScreen> createState() => _ForexScreenState();
@@ -573,6 +579,31 @@ class _ForexScreenState extends State<ForexScreen>
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
             onPressed: widget.onSettingsTap,
+          ),
+        if (widget.onLogout != null)
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Sign out'),
+                  content: const Text('Are you sure you want to sign out?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Sign out'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) await widget.onLogout!();
+            },
           ),
       ],
       bottom: PreferredSize(

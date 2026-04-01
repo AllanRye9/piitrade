@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/forex_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/settings_screen.dart';
 
 /// The PIIDATA environment variable can be set at build time via
@@ -13,15 +14,18 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final serverUrl = prefs.getString('server_url') ??
       (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.onrender.com');
-  runApp(PiiTradeApp(initialServerUrl: serverUrl));
+  final loggedIn = prefs.getBool('is_logged_in') ?? false;
+  runApp(PiiTradeApp(initialServerUrl: serverUrl, initiallyLoggedIn: loggedIn));
 }
 
 class PiiTradeApp extends StatefulWidget {
   final String initialServerUrl;
+  final bool initiallyLoggedIn;
 
   const PiiTradeApp({
     super.key,
     required this.initialServerUrl,
+    this.initiallyLoggedIn = false,
   });
 
   @override
@@ -31,11 +35,13 @@ class PiiTradeApp extends StatefulWidget {
 class _PiiTradeAppState extends State<PiiTradeApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   late String _serverUrl;
+  late bool _loggedIn;
 
   @override
   void initState() {
     super.initState();
     _serverUrl = widget.initialServerUrl;
+    _loggedIn = widget.initiallyLoggedIn;
   }
 
   void _updateServerUrl(String url) {
@@ -50,6 +56,40 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
             (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.onrender.com');
       });
     }
+  }
+
+  void _onLoginSuccess() {
+    setState(() => _loggedIn = true);
+    _navigatorKey.currentState?.pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => ForexScreen(
+          serverUrl: _serverUrl,
+          onSettingsTap: _openSettings,
+          onLogout: _logout,
+        ),
+        transitionDuration: _kSplashFadeDuration,
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _logout() async {
+    await clearLoginSession();
+    if (!mounted) return;
+    setState(() => _loggedIn = false);
+    _navigatorKey.currentState?.pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => LoginScreen(onLoginSuccess: _onLoginSuccess),
+        transitionDuration: _kSplashFadeDuration,
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+          child: child,
+        ),
+      ),
+    );
   }
 
   void _openSettings() async {
@@ -80,7 +120,10 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
       ),
       home: _SplashScreen(
         serverUrl: _serverUrl,
+        loggedIn: _loggedIn,
         onSettingsTap: _openSettings,
+        onLoginSuccess: _onLoginSuccess,
+        onLogout: _logout,
       ),
     );
   }
@@ -93,11 +136,17 @@ const Duration _kSplashFadeDuration = Duration(milliseconds: 600);
 
 class _SplashScreen extends StatefulWidget {
   final String serverUrl;
+  final bool loggedIn;
   final VoidCallback onSettingsTap;
+  final VoidCallback onLoginSuccess;
+  final Future<void> Function() onLogout;
 
   const _SplashScreen({
     required this.serverUrl,
+    required this.loggedIn,
     required this.onSettingsTap,
+    required this.onLoginSuccess,
+    required this.onLogout,
   });
 
   @override
@@ -142,7 +191,7 @@ class _SplashScreenState extends State<_SplashScreen>
     _fadeCtrl.forward();
     _scaleCtrl.forward();
 
-    Future.delayed(_kSplashDuration, _navigateToForex);
+    Future.delayed(_kSplashDuration, _navigateNext);
   }
 
   @override
@@ -153,14 +202,12 @@ class _SplashScreenState extends State<_SplashScreen>
     super.dispose();
   }
 
-  void _navigateToForex() {
+  void _navigateNext() {
     if (!mounted) return;
+    final destination = widget.loggedIn ? _buildForexScreen() : _buildLoginScreen();
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => ForexScreen(
-          serverUrl: widget.serverUrl,
-          onSettingsTap: widget.onSettingsTap,
-        ),
+        pageBuilder: (_, __, ___) => destination,
         transitionDuration: _kSplashFadeDuration,
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
@@ -169,6 +216,29 @@ class _SplashScreenState extends State<_SplashScreen>
       ),
     );
   }
+
+  Widget _buildLoginScreen() => LoginScreen(
+        onLoginSuccess: () {
+          widget.onLoginSuccess();
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => _buildForexScreen(),
+              transitionDuration: _kSplashFadeDuration,
+              transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+                child: child,
+              ),
+            ),
+          );
+        },
+      );
+
+  Widget _buildForexScreen() => ForexScreen(
+        serverUrl: widget.serverUrl,
+        onSettingsTap: widget.onSettingsTap,
+        onLogout: widget.onLogout,
+      );
 
   @override
   Widget build(BuildContext context) {
