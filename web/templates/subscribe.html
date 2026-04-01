@@ -26,7 +26,7 @@
       color: var(--text2);
       font-size: 1rem;
       line-height: 1.6;
-      max-width: 520px;
+      max-width: 560px;
       margin: 0 auto;
     }
 
@@ -209,6 +209,32 @@
     }
     .confirm-status.ok { color: #3fb950; }
     .confirm-status.err { color: #f85149; }
+
+    /* Footer */
+    .sub-footer {
+      text-align: center;
+      padding: 28px 24px 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text2);
+      font-size: .8rem;
+      line-height: 1.8;
+    }
+    .sub-footer a { color: var(--text2); text-decoration: none; }
+    .sub-footer a:hover { color: var(--text); }
+    .sub-footer-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .sub-footer-disclaimer {
+      max-width: 640px;
+      margin: 8px auto 0;
+      font-size: .76rem;
+      color: var(--text2);
+      opacity: .8;
+    }
   </style>
 </head>
 <body>
@@ -237,12 +263,16 @@
 <div class="sub-wrap">
 
   <div class="sub-hero">
-    <h1>💳 Subscribe to PiiTrade</h1>
-    <p>Unlock the full dashboard — all 15 pairs, volatile pair scanner, trend reversal alerts, risk calculator, and more.</p>
+    <h1>Activate Your PiiTrade Membership</h1>
+    <p>
+      Choose a subscription plan and pay securely with your preferred cryptocurrency.
+      Gain instant access to all 15 currency pairs, real-time signals, the volatile-pair
+      scanner, trend-reversal alerts, a built-in risk calculator, and more.
+    </p>
   </div>
 
   <!-- ── Plans ──────────────────────────────────────────────────────────── -->
-  <div class="fx-section-title">Choose a Plan</div>
+  <div class="fx-section-title">Select a Subscription Plan</div>
   <div class="plan-grid" id="plan-grid">
     {% for plan in plans %}
     <div class="plan-card{% if plan.id == 'monthly' %} selected{% endif %}" data-plan="{{ plan.id }}" data-price="{{ plan.price_usd }}" data-label="{{ plan.label }}">
@@ -272,22 +302,31 @@
     </button>
     <div id="stripe-status" style="margin-top:12px;font-size:.9rem;color:var(--text2)"></div>
   </div>
-  <div class="fx-section-title" style="margin-bottom:16px">— or pay with crypto —</div>
+  <div class="fx-section-title" style="margin-bottom:16px">— or pay with cryptocurrency —</div>
   {% endif %}
 
   <!-- ── Crypto Payment ─────────────────────────────────────────────────── -->
   <div class="crypto-section">
-    <h2>Select Payment Method</h2>
+    <h2>Pay with Cryptocurrency</h2>
+    <p style="color:var(--text2);font-size:.85rem;line-height:1.55;margin-bottom:18px">
+      Select your preferred network below. All transactions are processed on-chain — send the exact
+      equivalent of your chosen plan to the wallet address shown. Network fees (if any) are the
+      sender's responsibility.
+    </p>
     <div class="crypto-tabs">
       <button class="crypto-tab-btn active" data-crypto="solana">◎ Solana (SOL)</button>
       <button class="crypto-tab-btn" data-crypto="litecoin">Ł Litecoin (LTC)</button>
-      <button class="crypto-tab-btn" data-crypto="kaanch">⬡ Kaanch (KCH)</button>
+      <button class="crypto-tab-btn" data-crypto="nano">Ñ Nano (XNO)</button>
+      <button class="crypto-tab-btn" data-crypto="iota">◆ IOTA (IOTA)</button>
+      <button class="crypto-tab-btn" data-crypto="bitgert">⚡ Bitgert (BRISE)</button>
+      <button class="crypto-tab-btn" data-crypto="stellar">✦ Stellar (XLM)</button>
+      <button class="crypto-tab-btn" data-crypto="ripple">✕ Ripple (XRP)</button>
     </div>
 
     <!-- Solana -->
     <div class="crypto-detail visible" id="crypto-solana">
       <h3>◎ Pay with Solana (SOL)</h3>
-      <p>Send the equivalent amount in SOL to the address below. The current price in SOL is calculated at market rate. After sending, enter your transaction hash below to confirm.</p>
+      <p>Fast, low-cost payments on the Solana network. Send the equivalent amount in SOL at the current market rate to the address below. After sending, submit your transaction hash in the confirmation section.</p>
       <div class="wallet-address-wrap">
         <div class="wallet-address" id="wallet-sol">{{ wallets.solana }}</div>
         <button class="btn-copy" onclick="copyWallet(this, 'wallet-sol')">Copy</button>
@@ -300,7 +339,7 @@
     <!-- Litecoin -->
     <div class="crypto-detail" id="crypto-litecoin">
       <h3>Ł Pay with Litecoin (LTC)</h3>
-      <p>Send the equivalent amount in LTC to the address below. After sending, enter your transaction hash below to confirm.</p>
+      <p>One of the most established payment-focused blockchains. Send the equivalent amount in LTC to the address below. After sending, submit your transaction hash in the confirmation section.</p>
       <div class="wallet-address-wrap">
         <div class="wallet-address" id="wallet-ltc">{{ wallets.litecoin }}</div>
         <button class="btn-copy" onclick="copyWallet(this, 'wallet-ltc')">Copy</button>
@@ -310,26 +349,80 @@
       </div>
     </div>
 
-    <!-- Kaanch -->
-    <div class="crypto-detail" id="crypto-kaanch">
-      <h3>⬡ Pay with Kaanch (KCH)</h3>
-      <p>Send the equivalent amount in KCH to the address below. After sending, enter your transaction hash below to confirm.</p>
+    <!-- Nano -->
+    <div class="crypto-detail" id="crypto-nano">
+      <h3>Ñ Pay with Nano (XNO)</h3>
+      <p>Zero fees, instant settlement via a feeless DAG structure. No transaction fee is deducted — the full amount reaches our wallet. Send the exact USD equivalent in XNO to the address below.</p>
       <div class="wallet-address-wrap">
-        <div class="wallet-address" id="wallet-kch">{{ wallets.kaanch }}</div>
-        <button class="btn-copy" onclick="copyWallet(this, 'wallet-kch')">Copy</button>
+        <div class="wallet-address" id="wallet-nano">{{ wallets.nano }}</div>
+        <button class="btn-copy" onclick="copyWallet(this, 'wallet-nano')">Copy</button>
       </div>
       <div class="crypto-amount-note">
-        Selected plan: <strong id="kch-plan-note">$14 (Monthly)</strong>. Please send the equivalent in KCH at the time of payment.
+        Selected plan: <strong id="nano-plan-note">$14 (Monthly)</strong>. Nano transactions are feeless — send the exact USD equivalent in XNO.
+      </div>
+    </div>
+
+    <!-- IOTA -->
+    <div class="crypto-detail" id="crypto-iota">
+      <h3>◆ Pay with IOTA (IOTA)</h3>
+      <p>Feeless, scalable payments designed for machine-to-machine and IoT ecosystems. No network fee is charged. Send the USD equivalent in IOTA to the address below.</p>
+      <div class="wallet-address-wrap">
+        <div class="wallet-address" id="wallet-iota">{{ wallets.iota }}</div>
+        <button class="btn-copy" onclick="copyWallet(this, 'wallet-iota')">Copy</button>
+      </div>
+      <div class="crypto-amount-note">
+        Selected plan: <strong id="iota-plan-note">$14 (Monthly)</strong>. IOTA transactions are feeless — send the exact USD equivalent.
+      </div>
+    </div>
+
+    <!-- Bitgert -->
+    <div class="crypto-detail" id="crypto-bitgert">
+      <h3>⚡ Pay with Bitgert (BRISE)</h3>
+      <p>Ultra-high throughput (100k+ TPS) with near-zero fees (~$0.00000001 per transaction). Send the equivalent amount in BRISE to the address below.</p>
+      <div class="wallet-address-wrap">
+        <div class="wallet-address" id="wallet-bitgert">{{ wallets.bitgert }}</div>
+        <button class="btn-copy" onclick="copyWallet(this, 'wallet-bitgert')">Copy</button>
+      </div>
+      <div class="crypto-amount-note">
+        Selected plan: <strong id="bitgert-plan-note">$14 (Monthly)</strong>. Please send the equivalent in BRISE at the time of payment.
+      </div>
+    </div>
+
+    <!-- Stellar -->
+    <div class="crypto-detail" id="crypto-stellar">
+      <h3>✦ Pay with Stellar (XLM)</h3>
+      <p>Fast, low-cost cross-border payments with a minimal transaction fee of ~$0.00001. Send the equivalent amount in XLM to the address below.</p>
+      <div class="wallet-address-wrap">
+        <div class="wallet-address" id="wallet-stellar">{{ wallets.stellar }}</div>
+        <button class="btn-copy" onclick="copyWallet(this, 'wallet-stellar')">Copy</button>
+      </div>
+      <div class="crypto-amount-note">
+        Selected plan: <strong id="stellar-plan-note">$14 (Monthly)</strong>. Please send the equivalent in XLM at the time of payment.
+      </div>
+    </div>
+
+    <!-- Ripple -->
+    <div class="crypto-detail" id="crypto-ripple">
+      <h3>✕ Pay with Ripple (XRP)</h3>
+      <p>Institutional-grade settlement network with fast finality and a minimal fee of ~$0.0002. Send the equivalent amount in XRP to the address below.</p>
+      <div class="wallet-address-wrap">
+        <div class="wallet-address" id="wallet-ripple">{{ wallets.ripple }}</div>
+        <button class="btn-copy" onclick="copyWallet(this, 'wallet-ripple')">Copy</button>
+      </div>
+      <div class="crypto-amount-note">
+        Selected plan: <strong id="ripple-plan-note">$14 (Monthly)</strong>. Please send the equivalent in XRP at the time of payment.
       </div>
     </div>
   </div>
 
   <!-- ── Confirm payment ────────────────────────────────────────────────── -->
   <div class="confirm-section">
-    <h2>✅ Confirm Your Payment</h2>
+    <h2>Confirm Your Payment</h2>
     <p>
-      After sending the crypto, enter your transaction hash (TX ID) and registered email below.
-      Our team will verify your payment and activate your subscription within 1–2 hours.
+      After completing your on-chain transfer, enter your transaction hash (TX ID) and the email
+      address associated with your PiiTrade account below. Our team will verify the transaction
+      and activate your subscription within 1–2 hours. You will receive a confirmation email once
+      your account is upgraded.
     </p>
     <div class="confirm-form-row">
       <input type="email" id="confirm-email" class="risk-input" placeholder="your@email.com" autocomplete="email"/>
@@ -341,9 +434,34 @@
 
 </div><!-- /sub-wrap -->
 
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+<footer class="sub-footer">
+  <div class="sub-footer-links">
+    <a href="/">Home</a>
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+    <a href="/methodology">Methodology</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/conduct">Conduct of Usage</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/refund">Refund Policy</a>
+    <a href="/disclaimer">Risk Disclaimer</a>
+  </div>
+  <div>© 2024 PiiTrade · AI Forex Signal Hub · All rights reserved.</div>
+  <div class="sub-footer-disclaimer">
+    All signals and analysis provided by PiiTrade are for informational and educational purposes only.
+    They do not constitute financial, investment, or trading advice. Cryptocurrency payments are
+    non-refundable once confirmed on-chain unless otherwise stated in our Refund Policy.
+    Past performance of signals does not guarantee future results. Trade responsibly.
+  </div>
+</footer>
+
 <script>
   // ── Plan selection ──────────────────────────────────────────────────────────
-  const planNotes = ['sol-plan-note', 'ltc-plan-note', 'kch-plan-note'];
+  const planNoteIds = [
+    'sol-plan-note', 'ltc-plan-note', 'nano-plan-note', 'iota-plan-note',
+    'bitgert-plan-note', 'stellar-plan-note', 'ripple-plan-note',
+  ];
   let selectedPlan = { id: 'monthly', label: 'Monthly', price: 14 };
 
   document.querySelectorAll('.plan-card').forEach(card => {
@@ -357,7 +475,7 @@
 
   function updatePlanNotes() {
     const text = `$${selectedPlan.price} (${selectedPlan.label})`;
-    planNotes.forEach(id => {
+    planNoteIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = text;
     });
@@ -437,7 +555,6 @@
     statusDiv.textContent = '⏳ Submitting your confirmation…';
     statusDiv.className = 'confirm-status';
 
-    // Send confirmation to server
     fetch('/api/forex/payment-confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -1414,9 +1414,13 @@ async def forex_reversals():
 
 # Crypto wallet addresses (configurable via env vars)
 _WALLETS = {
-    "solana": os.environ.get("SOLANA_ADDRESS", "SolanaWalletAddressHere"),
-    "litecoin": os.environ.get("LITECOIN_ADDRESS", "LitecoinWalletAddressHere"),
-    "kaanch": os.environ.get("KAANCH_ADDRESS", "KaanchWalletAddressHere"),
+    "solana":   os.environ.get("SOLANA_ADDRESS",  "SolanaWalletAddressHere"),
+    "litecoin": os.environ.get("LITECOIN_ADDRESS","LitecoinWalletAddressHere"),
+    "nano":     os.environ.get("NANO_ADDRESS",    "NanoWalletAddressHere"),
+    "iota":     os.environ.get("IOTA_ADDRESS",    "IotaWalletAddressHere"),
+    "bitgert":  os.environ.get("BITGERT_ADDRESS", "BitgertWalletAddressHere"),
+    "stellar":  os.environ.get("STELLA_ADDRESS",  "StellarWalletAddressHere"),
+    "ripple":   os.environ.get("RIPPLE_ADDRESS",  "RippleWalletAddressHere"),
 }
 
 # Subscription plans
