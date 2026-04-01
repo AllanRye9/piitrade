@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yot_presentation/models/slide.dart';
-import 'package:yot_presentation/models/presentation_file.dart';
-import 'package:yot_presentation/services/api_service.dart';
-import 'package:yot_presentation/models/forex_signal.dart';
-import 'package:yot_presentation/models/forex_technical.dart';
-import 'package:yot_presentation/models/forex_news.dart';
+import 'package:piitrade/models/slide.dart';
+import 'package:piitrade/models/presentation_file.dart';
+import 'package:piitrade/services/api_service.dart';
+import 'package:piitrade/models/forex_signal.dart';
+import 'package:piitrade/models/forex_technical.dart';
+import 'package:piitrade/models/forex_news.dart';
 
 void main() {
   group('Slide model', () {
