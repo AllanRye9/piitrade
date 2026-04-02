@@ -178,6 +178,28 @@ class _ForexScreenState extends State<ForexScreen>
   bool _loadingAllPairs = false;
   String? _previousDirection;
 
+  // Volatile pairs
+  List<dynamic> _volatilePairs = [];
+  bool _loadingVolatile = false;
+  String? _volatileError;
+  String _volatileTimeframe = '24h';
+
+  // Trend reversals
+  List<dynamic> _reversalPairs = [];
+  bool _loadingReversals = false;
+  String? _reversalError;
+
+  // FVG scanner
+  Map<String, dynamic> _fvgGrouped = {};
+  bool _loadingFvg = false;
+  String? _fvgError;
+  String _fvgFilter = 'approaching';
+
+  // S/R breakouts
+  List<dynamic> _srBreakouts = [];
+  bool _loadingSr = false;
+  String? _srError;
+
   // Gamification
   _GameState _game = _GameState();
   SharedPreferences? _prefs;
@@ -216,11 +238,15 @@ class _ForexScreenState extends State<ForexScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 10, vsync: this);
     _api = ApiService(widget.serverUrl);
     _loadPrefs();
     _loadSignal();
     _loadNews();
+    _loadVolatile();
+    _loadReversals();
+    _loadFvgScanner();
+    _loadSrBreakouts();
     // Auto-refresh signal data periodically
     _refreshTimer = Timer.periodic(_kAutoRefreshInterval, (_) {
       if (!mounted) return;
@@ -228,6 +254,10 @@ class _ForexScreenState extends State<ForexScreen>
       // that updates the UI error state, so we just ignore the Future here.
       _loadSignal().ignore();
       _loadNews().ignore();
+      _loadVolatile().ignore();
+      _loadReversals().ignore();
+      _loadFvgScanner().ignore();
+      _loadSrBreakouts().ignore();
     });
   }
 
@@ -307,6 +337,74 @@ class _ForexScreenState extends State<ForexScreen>
     } catch (e) {
       if (mounted) {
         setState(() { _newsError = e.toString(); _loadingNews = false; });
+      }
+    }
+  }
+
+  Future<void> _loadVolatile() async {
+    setState(() { _loadingVolatile = true; _volatileError = null; });
+    try {
+      final data = await _api.getForexVolatile(_volatileTimeframe);
+      if (mounted) {
+        setState(() {
+          _volatilePairs = data['pairs'] as List<dynamic>? ?? [];
+          _loadingVolatile = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _volatileError = e.toString(); _loadingVolatile = false; });
+      }
+    }
+  }
+
+  Future<void> _loadReversals() async {
+    setState(() { _loadingReversals = true; _reversalError = null; });
+    try {
+      final data = await _api.getForexReversals();
+      if (mounted) {
+        setState(() {
+          _reversalPairs = data['pairs'] as List<dynamic>? ?? [];
+          _loadingReversals = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _reversalError = e.toString(); _loadingReversals = false; });
+      }
+    }
+  }
+
+  Future<void> _loadFvgScanner() async {
+    setState(() { _loadingFvg = true; _fvgError = null; });
+    try {
+      final data = await _api.getForexFvgScanner();
+      if (mounted) {
+        setState(() {
+          _fvgGrouped = data['grouped'] as Map<String, dynamic>? ?? {};
+          _loadingFvg = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _fvgError = e.toString(); _loadingFvg = false; });
+      }
+    }
+  }
+
+  Future<void> _loadSrBreakouts() async {
+    setState(() { _loadingSr = true; _srError = null; });
+    try {
+      final data = await _api.getForexSrBreakouts();
+      if (mounted) {
+        setState(() {
+          _srBreakouts = data['breakouts'] as List<dynamic>? ?? [];
+          _loadingSr = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _srError = e.toString(); _loadingSr = false; });
       }
     }
   }
@@ -534,6 +632,10 @@ class _ForexScreenState extends State<ForexScreen>
                 _buildSignalTab(cs),
                 _buildRiskCalcTab(cs),
                 _buildTechnicalTab(cs),
+                _buildFvgScannerTab(cs),
+                _buildSrBreakoutsTab(cs),
+                _buildVolatileTab(cs),
+                _buildReversalTab(cs),
                 _buildSuccessTab(cs),
                 _buildNewsTab(cs),
                 _buildAlertsTab(cs),
@@ -724,6 +826,10 @@ class _ForexScreenState extends State<ForexScreen>
           Tab(text: '📊 Signal'),
           Tab(text: '📐 Risk Calc'),
           Tab(text: '🔍 Technical'),
+          Tab(text: '🌀 FVG Status'),
+          Tab(text: '💥 S/R Breaks'),
+          Tab(text: '🔥 Volatile'),
+          Tab(text: '🔄 Reversal'),
           Tab(text: '🏆 Success Rates'),
           Tab(text: '📰 News'),
           Tab(text: '🔔 Alerts'),
@@ -1544,7 +1650,557 @@ class _ForexScreenState extends State<ForexScreen>
   );
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // Tab 4 – Success Rates
+  // Tab 4 – FVG Scanner
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildFvgScannerTab(ColorScheme cs) {
+    if (_loadingFvg) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_fvgError != null) {
+      return _buildErrorCard(_fvgError!, _loadFvgScanner, cs);
+    }
+
+    const filters = [
+      ('approaching', '📍 Approaching'),
+      ('reached', '🎯 Inside Zone'),
+      ('rejected', '🚫 Rejected'),
+      ('all', '🔍 All Active'),
+    ];
+
+    final List<dynamic> activeItems = _fvgFilter == 'all'
+        ? [
+            ...(_fvgGrouped['approaching'] as List<dynamic>? ?? []),
+            ...(_fvgGrouped['reached'] as List<dynamic>? ?? []),
+            ...(_fvgGrouped['rejected'] as List<dynamic>? ?? []),
+          ]
+        : (_fvgGrouped[_fvgFilter] as List<dynamic>? ?? []);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Filter chips
+        Container(
+          color: _kCardBg,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: filters.map((f) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(f.$2, style: const TextStyle(fontSize: 12)),
+                        selected: _fvgFilter == f.$1,
+                        onSelected: (_) => setState(() => _fvgFilter = f.$1),
+                        selectedColor: cs.primary.withValues(alpha: 0.25),
+                        backgroundColor: _kBorderColor,
+                        side: BorderSide(
+                          color: _fvgFilter == f.$1 ? cs.primary : Colors.transparent,
+                        ),
+                        labelStyle: TextStyle(
+                          color: _fvgFilter == f.$1 ? cs.primary : Colors.white70,
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 20),
+                onPressed: _loadFvgScanner,
+                tooltip: 'Refresh FVG scanner',
+              ),
+            ],
+          ),
+        ),
+        // Disclaimer
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          color: _kHoldColor.withValues(alpha: 0.08),
+          child: const Text(
+            '⚠️ FVG signals are one tool among many. Always combine with other '
+            'technical indicators and risk management.',
+            style: TextStyle(fontSize: 12, color: _kHoldColor),
+          ),
+        ),
+        Expanded(
+          child: activeItems.isEmpty
+              ? Center(
+                  child: Text(
+                    'No FVG entries for this filter.',
+                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: activeItems.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) => _fvgScannerTile(
+                      activeItems[i] as Map<String, dynamic>, cs),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _fvgScannerTile(Map<String, dynamic> item, ColorScheme cs) {
+    final fvgType = item['fvg_type'] as String? ?? '';
+    final status = item['status'] as String? ?? '';
+    final pair = item['pair'] as String? ?? '';
+    final direction = item['direction'] as String? ?? 'HOLD';
+    final top = (item['top'] as num?)?.toDouble() ?? 0.0;
+    final bottom = (item['bottom'] as num?)?.toDouble() ?? 0.0;
+    final currentPrice = (item['current_price'] as num?)?.toDouble() ?? 0.0;
+    final description = item['description'] as String? ?? '';
+    final created = item['created'] as String? ?? '';
+
+    final typeColor = fvgType == 'bullish' ? _kBuyColor : _kSellColor;
+    final statusColor = status == 'reached'
+        ? _kBuyColor
+        : status == 'rejected'
+            ? _kSellColor
+            : status == 'approaching'
+                ? _kHoldColor
+                : Colors.white38;
+
+    final dec = (_isJpy(pair) || _isGold(pair)) ? 2 : 4;
+    String fmt(double v) => v.toStringAsFixed(dec);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: typeColor.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(pair,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const SizedBox(width: 8),
+          _badge(fvgType.toUpperCase(), typeColor),
+          const SizedBox(width: 6),
+          _badge(status.toUpperCase(), statusColor),
+          const Spacer(),
+          _badge(direction, _directionColor(direction)),
+        ]),
+        const SizedBox(height: 6),
+        Text('Zone: ${fmt(bottom)} – ${fmt(top)}',
+            style: const TextStyle(fontWeight: FontWeight.w500)),
+        Text('Current: ${fmt(currentPrice)}',
+            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6), fontSize: 12)),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(description,
+              style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        ],
+        if (created.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(created,
+              style: const TextStyle(fontSize: 11, color: Colors.white38)),
+        ],
+      ]),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 5 – S/R Breakouts
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildSrBreakoutsTab(ColorScheme cs) {
+    if (_loadingSr) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_srError != null) {
+      return _buildErrorCard(_srError!, _loadSrBreakouts, cs);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: _kCardBg,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '💥 Support & Resistance Breakouts',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 20),
+                onPressed: _loadSrBreakouts,
+                tooltip: 'Refresh S/R breakouts',
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Text(
+            'Pairs that have recently broken through a major support or resistance level.',
+            style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6)),
+          ),
+        ),
+        Expanded(
+          child: _srBreakouts.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('📊', style: TextStyle(fontSize: 36)),
+                      const SizedBox(height: 10),
+                      Text(
+                        'No S/R breakouts detected at this time.\nMarkets may be ranging.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _srBreakouts.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) =>
+                      _srBreakoutTile(_srBreakouts[i] as Map<String, dynamic>, cs),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _srBreakoutTile(Map<String, dynamic> item, ColorScheme cs) {
+    final pair = item['pair'] as String? ?? '';
+    final type = item['type'] as String? ?? '';
+    final level = (item['level'] as num?)?.toDouble() ?? 0.0;
+    final currentPrice = (item['current_price'] as num?)?.toDouble() ?? 0.0;
+    final description = item['description'] as String? ?? '';
+    final direction = item['direction'] as String? ?? 'HOLD';
+    final confidence = (item['confidence'] as num?)?.toDouble() ?? 0.0;
+
+    final isBullish = type == 'resistance_break';
+    final typeColor = isBullish ? _kBuyColor : _kSellColor;
+    final typeLabel = isBullish ? '▲ RESISTANCE BREAK' : '▼ SUPPORT BREAK';
+
+    final dec = (_isJpy(pair) || _isGold(pair)) ? 2 : 4;
+    String fmt(double v) => v.toStringAsFixed(dec);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: typeColor.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(pair,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const SizedBox(width: 8),
+          _badge(typeLabel, typeColor),
+          const Spacer(),
+          _badge(direction, _directionColor(direction)),
+        ]),
+        const SizedBox(height: 6),
+        Row(children: [
+          Text('Level: ${fmt(level)}', style: const TextStyle(fontSize: 13)),
+          const SizedBox(width: 16),
+          Text('Current: ${fmt(currentPrice)}',
+              style: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.6), fontSize: 13)),
+        ]),
+        if (confidence > 0) ...[
+          const SizedBox(height: 4),
+          Row(children: [
+            Text('Confidence: ', style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+            Text('${confidence.toStringAsFixed(1)}%',
+                style: TextStyle(fontSize: 12, color: typeColor, fontWeight: FontWeight.w600)),
+          ]),
+        ],
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(description,
+              style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        ],
+      ]),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 6 – Volatile Pairs
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildVolatileTab(ColorScheme cs) {
+    if (_loadingVolatile) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_volatileError != null) {
+      return _buildErrorCard(_volatileError!, _loadVolatile, cs);
+    }
+
+    const timeframes = [('1h', '1 Hour'), ('4h', '4 Hours'), ('24h', '24 Hours')];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: _kCardBg,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(children: [
+            const Text('Timeframe: ',
+                style: TextStyle(color: Colors.white70, fontSize: 13)),
+            ...timeframes.map((tf) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(tf.$2, style: const TextStyle(fontSize: 12)),
+                selected: _volatileTimeframe == tf.$1,
+                onSelected: (_) {
+                  setState(() => _volatileTimeframe = tf.$1);
+                  _loadVolatile();
+                },
+                selectedColor: cs.primary.withValues(alpha: 0.25),
+                backgroundColor: _kBorderColor,
+                side: BorderSide(
+                  color: _volatileTimeframe == tf.$1
+                      ? cs.primary
+                      : Colors.transparent,
+                ),
+                labelStyle: TextStyle(
+                  color: _volatileTimeframe == tf.$1 ? cs.primary : Colors.white70,
+                ),
+              ),
+            )),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: _loadVolatile,
+              tooltip: 'Refresh volatile pairs',
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Pairs ranked by price-range movement. Higher volatility can signal '
+            'opportunities but also greater risk.',
+            style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6)),
+          ),
+        ),
+        Expanded(
+          child: _volatilePairs.isEmpty
+              ? Center(
+                  child: Text('No data available.',
+                      style:
+                          TextStyle(color: cs.onSurface.withValues(alpha: 0.5))),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: _volatilePairs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => _volatileTile(
+                      i + 1,
+                      _volatilePairs[i] as Map<String, dynamic>,
+                      cs),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _volatileTile(int rank, Map<String, dynamic> item, ColorScheme cs) {
+    final pair = item['pair'] as String? ?? '';
+    final volPct = (item['volatility_pct'] as num?)?.toDouble() ?? 0.0;
+    final direction = item['direction'] as String? ?? 'HOLD';
+    final confidence = (item['confidence'] as num?)?.toDouble() ?? 0.0;
+    final entryPrice = (item['entry_price'] as num?)?.toDouble() ?? 0.0;
+    final dec = (_isJpy(pair) || _isGold(pair)) ? 2 : 4;
+    final volColor = volPct > 1.0 ? _kSellColor : volPct > 0.5 ? _kHoldColor : _kBuyColor;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: _kBorderColor),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(children: [
+        Container(
+          width: 28, height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: volColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Text('$rank',
+              style: TextStyle(
+                  fontSize: 12, color: volColor, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text(pair, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              _badge(direction, _directionColor(direction)),
+            ]),
+            const SizedBox(height: 2),
+            Text('${entryPrice.toStringAsFixed(dec)}',
+                style: TextStyle(
+                    fontSize: 12, color: cs.onSurface.withValues(alpha: 0.55))),
+          ]),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('${volPct.toStringAsFixed(3)}%',
+              style: TextStyle(
+                  color: volColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14)),
+          Text('${confidence.toStringAsFixed(1)}% conf',
+              style: TextStyle(
+                  fontSize: 11, color: cs.onSurface.withValues(alpha: 0.5))),
+        ]),
+      ]),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 7 – Trend Reversal
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildReversalTab(ColorScheme cs) {
+    if (_loadingReversals) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_reversalError != null) {
+      return _buildErrorCard(_reversalError!, _loadReversals, cs);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: _kCardBg,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(children: [
+            const Expanded(
+              child: Text(
+                '🔄 Potential Trend Reversal Pairs',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: _loadReversals,
+              tooltip: 'Refresh reversals',
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Text(
+            'Pairs where a recent momentum shift suggests a potential change in trend direction.',
+            style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6)),
+          ),
+        ),
+        Expanded(
+          child: _reversalPairs.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('🔄', style: TextStyle(fontSize: 36)),
+                      const SizedBox(height: 10),
+                      Text(
+                        'No trend reversals detected at this time.',
+                        style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _reversalPairs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) =>
+                      _reversalTile(_reversalPairs[i] as Map<String, dynamic>, cs),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _reversalTile(Map<String, dynamic> item, ColorScheme cs) {
+    final pair = item['pair'] as String? ?? '';
+    final reversalType = item['reversal_type'] as String? ?? '';
+    final strength = (item['strength'] as num?)?.toDouble() ?? 0.0;
+    final direction = item['direction'] as String? ?? 'HOLD';
+    final confidence = (item['confidence'] as num?)?.toDouble() ?? 0.0;
+    final entryPrice = (item['entry_price'] as num?)?.toDouble() ?? 0.0;
+    final dec = (_isJpy(pair) || _isGold(pair)) ? 2 : 4;
+
+    final isBullish = reversalType == 'bullish';
+    final revColor = isBullish ? _kBuyColor : _kSellColor;
+    final revLabel = isBullish ? '▲ BULLISH REVERSAL' : '▼ BEARISH REVERSAL';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: revColor.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(pair, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const SizedBox(width: 8),
+          _badge(revLabel, revColor),
+          const Spacer(),
+          _badge(direction, _directionColor(direction)),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Strength', style: TextStyle(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.5))),
+              const SizedBox(height: 2),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: strength / 100,
+                  backgroundColor: _kBorderColor,
+                  color: revColor,
+                  minHeight: 6,
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 12),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${strength.toStringAsFixed(1)}%',
+                style: TextStyle(
+                    color: revColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14)),
+            Text('${entryPrice.toStringAsFixed(dec)}',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: cs.onSurface.withValues(alpha: 0.55))),
+          ]),
+        ]),
+        if (confidence > 0) ...[
+          const SizedBox(height: 4),
+          Text('Confidence: ${confidence.toStringAsFixed(1)}%',
+              style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+        ],
+      ]),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 8 – Success Rates
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildSuccessTab(ColorScheme cs) {
@@ -1651,7 +2307,7 @@ class _ForexScreenState extends State<ForexScreen>
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // Tab 5 – News
+  // Tab 9 – News
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildNewsTab(ColorScheme cs) {
@@ -1739,7 +2395,7 @@ class _ForexScreenState extends State<ForexScreen>
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // Tab 6 – Alerts
+  // Tab 10 – Alerts
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildAlertsTab(ColorScheme cs) {
