@@ -1822,3 +1822,145 @@ a:hover { text-decoration: underline; }
   }
   .volatile-dir, .volatile-entry { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FVG Scanner
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.fvg-group {
+  margin-bottom: 28px;
+}
+
+.fvg-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .95rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.fvg-group-title.approaching { background: rgba(88,166,255,.1); color: var(--accent); border-left: 3px solid var(--accent); }
+.fvg-group-title.reached     { background: rgba(63,185,80,.1);  color: var(--accent2); border-left: 3px solid var(--accent2); }
+.fvg-group-title.rejected    { background: rgba(248,81,73,.1);  color: var(--danger);  border-left: 3px solid var(--danger); }
+.fvg-group-title.passed      { background: rgba(139,148,158,.1);color: var(--text2);   border-left: 3px solid var(--border); }
+
+.fvg-group-icon { font-size: 1.1rem; }
+
+.fvg-group-sub {
+  font-weight: 400;
+  font-size: .8rem;
+  color: var(--text2);
+  flex-basis: 100%;
+  margin-left: 28px;
+  margin-top: -4px;
+}
+
+.fvg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fvg-empty {
+  color: var(--text2);
+  font-size: .88rem;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.fvg-row {
+  display: grid;
+  grid-template-columns: 28px 80px auto auto auto auto;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: .87rem;
+  flex-wrap: wrap;
+}
+.fvg-row.fvg-approaching { border-color: rgba(88,166,255,.35); }
+.fvg-row.fvg-reached     { border-color: rgba(63,185,80,.35); }
+.fvg-row.fvg-rejected    { border-color: rgba(248,81,73,.35); }
+.fvg-row.fvg-passed      { opacity: .75; }
+
+.fvg-status-icon { font-size: 1rem; }
+.fvg-pair   { font-weight: 600; color: var(--text); }
+.fvg-zone   { color: var(--text2); font-size: .82rem; font-family: monospace; }
+.fvg-price  { color: var(--accent); font-size: .82rem; font-family: monospace; }
+
+.fvg-type-badge {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.fvg-type-badge.bullish { background: rgba(63,185,80,.18); color: var(--accent2); }
+.fvg-type-badge.bearish { background: rgba(248,81,73,.18); color: var(--danger); }
+
+.fvg-desc {
+  grid-column: 1 / -1;
+  font-size: .8rem;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+@media (max-width: 680px) {
+  .fvg-row { grid-template-columns: 28px 80px 1fr; }
+  .fvg-zone, .fvg-price { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   S/R Breakout scanner
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.sr-break-label {
+  font-weight: 600;
+  font-size: .85rem;
+}
+.sr-break-label.buy  { color: var(--accent2); }
+.sr-break-label.sell { color: var(--danger); }
+
+.sr-break-level,
+.sr-break-price {
+  font-size: .83rem;
+  color: var(--text2);
+  font-family: monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   News new-headline badge & highlight
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.news-new-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(248,81,73,.18);
+  color: var(--danger);
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(248,81,73,.4);
+  margin-left: 10px;
+  animation: dirPulse .4s ease forwards;
+  vertical-align: middle;
+}
+
+@keyframes newsCardHighlight {
+  from { background: rgba(88,166,255,.12); }
+  to   { background: transparent; }
+}
+
+.news-card-new {
+  animation: newsCardHighlight 3s ease forwards;
+  border-color: rgba(88,166,255,.4) !important;
+}
