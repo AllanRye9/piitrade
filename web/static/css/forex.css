@@ -2060,9 +2060,8 @@ a:hover { text-decoration: underline; }
 
 /* Pulsing ring animation for active statuses */
 @keyframes fvgRingPulse {
-  0%   { r: 5;  opacity: .9; }
-  70%  { r: 9;  opacity: 0; }
-  100% { r: 9;  opacity: 0; }
+  0%  { r: 5;  opacity: .9; }
+  70% { r: 9;  opacity: 0; }
 }
 
 .fvg-status-svg--approaching .fvg-svg-pulse,

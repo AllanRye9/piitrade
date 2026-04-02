@@ -794,9 +794,13 @@ function renderTechnicalAnalysis(data) {
   const priceEl = document.getElementById('ta-current-price');
   const pairEl  = document.getElementById('ta-pair-label');
   const timeEl  = document.getElementById('ta-price-updated');
-  if (priceEl) { priceEl.textContent = fmt(data.current_price); priceEl.classList.add('ta-price-flash'); priceEl.addEventListener('animationend', () => priceEl.classList.remove('ta-price-flash'), { once: true }); }
-  if (pairEl)  pairEl.textContent  = data.pair;
-  if (timeEl)  timeEl.textContent  = `Updated: ${new Date().toLocaleTimeString()}`;
+  if (priceEl) {
+    priceEl.textContent = fmt(data.current_price);
+    priceEl.classList.add('ta-price-flash');
+    priceEl.addEventListener('animationend', () => priceEl.classList.remove('ta-price-flash'), { once: true });
+  }
+  if (pairEl) pairEl.textContent = data.pair;
+  if (timeEl) timeEl.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
 
   // Support & Resistance
   const sr = data.support_resistance;
