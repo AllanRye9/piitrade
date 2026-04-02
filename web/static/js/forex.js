@@ -330,6 +330,16 @@ function isGold(pair) {
   return pair && pair.startsWith('XAU');
 }
 
+function isHighPriceCommodity(pair) {
+  // Pairs priced in whole-dollar units (Gold, Oil) — use 2 decimal places
+  return pair && (pair.startsWith('XAU') || pair === 'USOIL');
+}
+
+function getPairDecimals(pair) {
+  if (isJpy(pair) || isHighPriceCommodity(pair)) return 2;
+  return 4;
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -446,8 +456,7 @@ function renderSignal(data) {
 }
 
 function formatPrice(price, pair) {
-  const decimals = isJpy(pair) || isGold(pair) ? 2 : 4;
-  return Number(price).toFixed(decimals);
+  return Number(price).toFixed(getPairDecimals(pair));
 }
 
 // ─── Accuracy Chart ───────────────────────────────────────────────────────────
@@ -685,15 +694,22 @@ function drawChart(history) {
 function pipValuePerStdLot(pair, entryPriceVal) {
   const LOT = 100_000;
   const GOLD_LOT_OZ = 100; // standard gold lot = 100 troy oz
+  const SILVER_LOT_OZ = 5000; // standard silver lot = 5000 troy oz
+  const OIL_BARRELS = 1000; // standard WTI crude oil lot = 1000 barrels
   const jpy = isJpy(pair);
   const gold = isGold(pair);
-  const pipSize = gold ? 1.0 : (jpy ? 0.01 : 0.0001);
+  const silver = pair === 'XAG/USD';
+  const oil = pair === 'USOIL';
+
+  if (gold)   return 1.0 * GOLD_LOT_OZ;      // pip = $1,     lot = 100 oz  → $100 per lot
+  if (silver) return 0.001 * SILVER_LOT_OZ;   // pip = $0.001, lot = 5000 oz → $5 per lot (silver has smaller pip × larger lot)
+  if (oil)    return 0.01 * OIL_BARRELS;       // pip = $0.01,  lot = 1000 bbl → $10 per lot
+
+  const pipSize = jpy ? 0.01 : 0.0001;
   const parts = pair.split('/');
   const quoteCcy = parts[1];
   const baseCcy  = parts[0];
 
-  // Gold (XAU/USD): standard lot = 100 oz, pip = $1 → pip value = $100 per 100-oz lot
-  if (gold) return pipSize * GOLD_LOT_OZ;
   // If quote currency is USD → pip value = pipSize * LOT (always $10 for std lot)
   if (quoteCcy === 'USD') return pipSize * LOT;
   // If base currency is USD → pip value = pipSize * LOT / entryPrice
@@ -728,7 +744,9 @@ function runCalculator() {
 
   const pair = currentPair;
   const jpy  = isJpy(pair);
-  const pipSize = jpy ? 0.01 : 0.0001;
+  const oil  = pair === 'USOIL';
+  const gold = isGold(pair);
+  const pipSize = (gold || oil) ? 0.01 : (jpy ? 0.01 : 0.0001);
 
   const riskAmount = balance * (riskPct / 100);
   const pipsSl     = Math.abs(entry - sl) / pipSize;
@@ -787,7 +805,7 @@ async function loadTechnicalAnalysis(pair) {
 }
 
 function renderTechnicalAnalysis(data) {
-  const dec = isJpy(data.pair) || isGold(data.pair) ? 2 : 4;
+  const dec = getPairDecimals(data.pair);
   const fmt = v => Number(v).toFixed(dec);
 
   // Live current price display
@@ -897,6 +915,8 @@ const successRateCache = {};
 const ALL_PAIRS = [
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD',
   'EUR/GBP', 'EUR/JPY', 'EUR/AUD', 'EUR/CAD', 'GBP/JPY', 'GBP/CHF', 'AUD/JPY',
+  'GBP/AUD', 'GBP/CAD', 'CAD/JPY', 'CHF/JPY',
+  'XAU/USD', 'XAG/USD', 'USOIL',
 ];
 
 /**
@@ -1184,7 +1204,7 @@ function renderFvgScanner(grouped) {
       const cfg    = FVG_STATUS_CONFIG[status] || {};
       const dir    = item.direction || '';
       const dirCls = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
-      const dec    = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+      const dec    = getPairDecimals(item.pair);
       const fmt    = v => Number(v).toFixed(dec);
       const rowId  = `fvg-row-${status}-${idx}`;
       const dropId = `fvg-drop-${status}-${idx}`;
@@ -1238,7 +1258,7 @@ function renderFvgScanner(grouped) {
 
 /** Render all FVGs for a pair in the dropdown panel. */
 function renderFvgDropdown(dropEl, pair, fvgs) {
-  const dec = (pair.includes('JPY') || pair.startsWith('XAU')) ? 2 : 4;
+  const dec = getPairDecimals(pair);
   const fmt = v => Number(v).toFixed(dec);
   if (!fvgs || fvgs.length === 0) {
     dropEl.innerHTML = '<div class="fvg-drop-empty">No FVGs available for this pair.</div>';
@@ -1247,22 +1267,26 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
   // Separate active (unfilled) from consumed (filled)
   const active   = fvgs.filter(f => !f.filled);
   const consumed = fvgs.filter(f => f.filled);
-  const renderGroup = (items, consumed) => items.map(f => {
+  // Current market price is the same for all FVGs of a pair — show it once in the header
+  const marketPrice = fvgs[0] ? fmt(fvgs[0].current_price) : '—';
+  const renderGroup = (items, isConsumed) => items.map(f => {
     const typeIcon = f.type === 'bullish' ? '▲' : '▼';
     const typeCls  = f.type === 'bullish' ? 'bullish' : 'bearish';
+    // Each FVG has a unique midpoint (centre of the gap) — use it as the FVG price
+    const midVal = f.mid != null ? f.mid : ((f.top + f.bottom) / 2);
     return `
-      <div class="fvg-drop-item ${consumed ? 'fvg-drop-item--consumed' : ''}">
+      <div class="fvg-drop-item ${isConsumed ? 'fvg-drop-item--consumed' : ''}">
         <span class="fvg-type-badge ${typeCls}">${typeIcon} ${f.type.toUpperCase()} FVG</span>
         <span class="fvg-drop-zone">
           <span class="fvg-zone-label">Zone:</span>
           <strong>${fmt(f.bottom)} – ${fmt(f.top)}</strong>
         </span>
         <span class="fvg-drop-price">
-          <span class="fvg-zone-label">Price:</span>
-          <span class="fvg-price-value">${fmt(f.current_price)}</span>
+          <span class="fvg-zone-label">Mid:</span>
+          <span class="fvg-price-value">${fmt(midVal)}</span>
         </span>
-        <span class="fvg-drop-status ${consumed ? 'fvg-drop-status--consumed' : 'fvg-drop-status--active'}">
-          ${consumed ? '✅ Consumed' : '⚡ Active'}
+        <span class="fvg-drop-status ${isConsumed ? 'fvg-drop-status--consumed' : 'fvg-drop-status--active'}">
+          ${isConsumed ? '✅ Consumed' : '⚡ Active'}
         </span>
         <span class="fvg-drop-date">${escapeHtml(f.created)}</span>
         <div class="fvg-drop-desc">${escapeHtml(f.description)}</div>
@@ -1271,7 +1295,10 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
 
   dropEl.innerHTML = `
     <div class="fvg-dropdown-inner">
-      <div class="fvg-drop-header">📊 All FVGs for ${escapeHtml(pair)}</div>
+      <div class="fvg-drop-header">
+        📊 All FVGs for ${escapeHtml(pair)}
+        <span class="fvg-drop-market-price">Market: <strong>${marketPrice}</strong></span>
+      </div>
       ${active.length > 0 ? `<div class="fvg-drop-section-title">⚡ Active</div>${renderGroup(active, false)}` : ''}
       ${consumed.length > 0 ? `<div class="fvg-drop-section-title fvg-drop-section-title--consumed">✅ Consumed (Filled)</div>${renderGroup(consumed, true)}` : ''}
     </div>`;
