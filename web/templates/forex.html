@@ -39,6 +39,8 @@
   <button class="fx-tab active" role="tab" aria-selected="true"  data-section="section-signal">📊 Signal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-risk">📐 Risk Calc</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-technical">🔍 Technical</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-fvg">🌀 FVG Status</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-sr-breaks">💥 S/R Breaks</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-volatile">🔥 Volatile</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-reversal">🔄 Reversal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-success">🏆 Success Rates</button>
@@ -291,7 +293,71 @@
     </div>
   </section>
 
-  <!-- 5. Volatile Pairs Scanner ──────────────────────────────────────────── -->
+  <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
+  <section id="section-fvg">
+    <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      All trading pairs classified by their current relationship to Fair Value Gaps.
+      Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
+    </p>
+    <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
+    <div id="fvg-loading" class="ta-loading">Loading FVG scanner…</div>
+
+    <div id="fvg-content" style="display:none">
+      <!-- Approaching -->
+      <div class="fvg-group">
+        <div class="fvg-group-title approaching">
+          <span class="fvg-group-icon">📍</span> Approaching FVG Zone
+          <span class="fvg-group-sub">Price is within 1% of the FVG — potential entry zone forming</span>
+        </div>
+        <div id="fvg-approaching" class="fvg-list"></div>
+      </div>
+
+      <!-- Reached -->
+      <div class="fvg-group">
+        <div class="fvg-group-title reached">
+          <span class="fvg-group-icon">🎯</span> Inside FVG Zone
+          <span class="fvg-group-sub">Price is currently trading inside the Fair Value Gap</span>
+        </div>
+        <div id="fvg-reached" class="fvg-list"></div>
+      </div>
+
+      <!-- Rejected -->
+      <div class="fvg-group">
+        <div class="fvg-group-title rejected">
+          <span class="fvg-group-icon">🚫</span> Strong Rejection at FVG
+          <span class="fvg-group-sub">Price touched the FVG zone but reversed strongly away</span>
+        </div>
+        <div id="fvg-rejected" class="fvg-list"></div>
+      </div>
+
+      <!-- Passed -->
+      <div class="fvg-group">
+        <div class="fvg-group-title passed">
+          <span class="fvg-group-icon">✅</span> Passed Through FVG (Filled)
+          <span class="fvg-group-sub">Price has passed through and filled the Fair Value Gap</span>
+        </div>
+        <div id="fvg-passed" class="fvg-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
+  <section id="section-sr-breaks">
+    <div class="fx-section-title">💥 Support &amp; Resistance Breakouts</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      Pairs that have recently broken through a major support or resistance level,
+      confirming a directional move. Breakouts are identified when price moves
+      beyond the level with confirming momentum.
+    </p>
+    <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
+    <div id="sr-loading" class="ta-loading">Loading S/R breakout scanner…</div>
+    <div id="sr-list" style="display:none"></div>
+    <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
+      No S/R breakouts detected at this time. Markets may be ranging.
+    </div>
+  </section>
+
   <section id="section-volatile">
     <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
     <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
@@ -356,7 +422,9 @@
 
   <!-- 6. Real-Time News Sentiment Feed ────────────────────────────────────── -->
   <section id="section-news">
-    <div class="fx-section-title">📰 News Sentiment Feed</div>
+    <div class="fx-section-title">📰 News Sentiment Feed
+      <span id="news-new-badge" class="news-new-badge" style="display:none">🔔 New</span>
+    </div>
     <div class="fx-news-wrap">
       <div id="news-loading">Loading headlines…</div>
       <div id="news-list"></div>

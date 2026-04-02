@@ -134,6 +134,9 @@ function playSignalSound(type) {
     hold:        { freqs: [440, 440],      dur: 0.15, wave: 'triangle' },
     refresh:     { freqs: [523],           dur: 0.08, wave: 'sine' },
     achievement: { freqs: [523, 659, 784, 1047], dur: 0.1, wave: 'sine' },
+    news:        { freqs: [880, 660], dur: 0.1, wave: 'sine' },
+    fvg:         { freqs: [523, 698], dur: 0.12, wave: 'triangle' },
+    breakout:    { freqs: [440, 587, 740], dur: 0.1, wave: 'sawtooth' },
   };
 
   const s = SOUNDS[type] || SOUNDS.refresh;
@@ -191,7 +194,8 @@ function showToast(type, icon, title, msg, durationMs = 4000) {
 // ─── Tab Navigation ──────────────────────────────────────────────────────────
 const ALL_SECTIONS = [
   'section-signal', 'section-history', 'section-risk',
-  'section-technical', 'section-volatile', 'section-reversal',
+  'section-technical', 'section-fvg', 'section-sr-breaks',
+  'section-volatile', 'section-reversal',
   'section-success', 'section-news', 'section-alerts',
 ];
 
@@ -200,6 +204,8 @@ const TAB_SECTIONS = {
   'section-signal':    ['section-signal', 'section-history'],
   'section-risk':      ['section-risk'],
   'section-technical': ['section-technical'],
+  'section-fvg':       ['section-fvg'],
+  'section-sr-breaks': ['section-sr-breaks'],
   'section-volatile':  ['section-volatile'],
   'section-reversal':  ['section-reversal'],
   'section-success':   ['section-success'],
@@ -241,6 +247,12 @@ document.querySelectorAll('.fx-tab').forEach(tab => {
     }
     if (tab.dataset.section === 'section-reversal' && !reversalLoaded) {
       loadReversalPairs();
+    }
+    if (tab.dataset.section === 'section-fvg' && !fvgLoaded) {
+      loadFvgScanner();
+    }
+    if (tab.dataset.section === 'section-sr-breaks' && !srBreakoutsLoaded) {
+      loadSrBreakouts();
     }
   });
 });
@@ -961,6 +973,10 @@ const loadAllBtn = document.getElementById('btn-load-all-pairs');
 if (loadAllBtn) loadAllBtn.addEventListener('click', loadAllPairSuccessRates);
 
 // ─── News Feed ────────────────────────────────────────────────────────────────
+// Track known headlines so we can detect newly arrived news items
+let _knownNewsHeadlines = new Set();
+let _newsInitialLoad = true;
+
 async function loadNews() {
   try {
     const res = await fetch('/api/forex/news');
@@ -975,8 +991,31 @@ async function loadNews() {
 
 function renderNews(items) {
   newsLoadingEl.style.display = 'none';
+
+  // Detect new headlines (skip notification on the very first load)
+  const newItems = items.filter(item => !_knownNewsHeadlines.has(item.headline));
+  items.forEach(item => _knownNewsHeadlines.add(item.headline));
+
+  if (!_newsInitialLoad && newItems.length > 0) {
+    playSignalSound('news');
+    const badge = document.getElementById('news-new-badge');
+    if (badge) {
+      badge.style.display = 'inline-flex';
+      setTimeout(() => { badge.style.display = 'none'; }, 8000);
+    }
+    showToast(
+      'toast-info', '📰',
+      `${newItems.length} New Headline${newItems.length > 1 ? 's' : ''}`,
+      newItems[0].headline.length > 60
+        ? newItems[0].headline.slice(0, 60) + '…'
+        : newItems[0].headline,
+      6000,
+    );
+  }
+  _newsInitialLoad = false;
+
   newsListEl.innerHTML = items.map(item => `
-    <div class="news-card">
+    <div class="news-card${newItems.some(n => n.headline === item.headline) ? ' news-card-new' : ''}">
       <span class="sentiment-icon">${sentimentIcon(item.sentiment)}</span>
       <div class="news-content">
         <div class="news-headline">${escapeHtml(item.headline)}</div>
@@ -1036,6 +1075,161 @@ subscribeForm.addEventListener('submit', async (e) => {
 function showSubscribeStatus(type, msg) {
   subscribeStatus.className = `subscribe-status ${type}`;
   subscribeStatus.textContent = msg;
+}
+
+// ─── FVG Scanner ─────────────────────────────────────────────────────────────
+let fvgLoaded = false;
+
+const FVG_STATUS_CONFIG = {
+  approaching: { icon: '📍', label: 'Approaching', cls: 'fvg-approaching' },
+  reached:     { icon: '🎯', label: 'Inside Zone',  cls: 'fvg-reached' },
+  rejected:    { icon: '🚫', label: 'Rejected',      cls: 'fvg-rejected' },
+  passed:      { icon: '✅', label: 'Passed/Filled', cls: 'fvg-passed' },
+};
+
+async function loadFvgScanner() {
+  const loadingEl = document.getElementById('fvg-loading');
+  const contentEl = document.getElementById('fvg-content');
+  if (!loadingEl || !contentEl) return;
+
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/forex/fvg-scanner');
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    fvgLoaded = true;
+    renderFvgScanner(data.grouped);
+
+    // Sound alert if any pairs have reached or are being rejected at an FVG
+    const alertCount = (data.grouped.reached || []).length + (data.grouped.rejected || []).length;
+    if (alertCount > 0) {
+      playSignalSound('fvg');
+      showToast('toast-info', '🌀', 'FVG Alert',
+        `${alertCount} pair${alertCount > 1 ? 's' : ''} at FVG zone`, 5000);
+    }
+  } catch (err) {
+    loadingEl.textContent = 'Could not load FVG scanner data.';
+    console.error('FVG scanner failed:', err);
+  }
+}
+
+function renderFvgScanner(grouped) {
+  const loadingEl = document.getElementById('fvg-loading');
+  const contentEl = document.getElementById('fvg-content');
+
+  ['approaching', 'reached', 'rejected', 'passed'].forEach(status => {
+    const listEl = document.getElementById(`fvg-${status}`);
+    if (!listEl) return;
+    const items = grouped[status] || [];
+    if (items.length === 0) {
+      listEl.innerHTML = '<div class="fvg-empty">No pairs in this category right now.</div>';
+      return;
+    }
+    listEl.innerHTML = items.map(item => {
+      const cfg = FVG_STATUS_CONFIG[status] || {};
+      const dir = item.direction || '';
+      const dirCls = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
+      const dec = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+      const fmt = v => Number(v).toFixed(dec);
+      return `
+        <div class="fvg-row ${cfg.cls || ''}">
+          <span class="fvg-status-icon">${cfg.icon || ''}</span>
+          <span class="fvg-pair">${escapeHtml(item.pair)}</span>
+          <span class="fvg-type-badge ${item.fvg_type}">${item.fvg_type.toUpperCase()} FVG</span>
+          <span class="fvg-zone">${fmt(item.bottom)} – ${fmt(item.top)}</span>
+          <span class="fvg-price">@ ${fmt(item.current_price)}</span>
+          <span class="volatile-dir ${dirCls}">${dir}</span>
+          <div class="fvg-desc">${escapeHtml(item.description)}</div>
+        </div>`;
+    }).join('');
+  });
+
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (contentEl) contentEl.style.display = 'block';
+}
+
+const refreshFvgBtn = document.getElementById('btn-refresh-fvg');
+if (refreshFvgBtn) {
+  refreshFvgBtn.addEventListener('click', () => {
+    fvgLoaded = false;
+    loadFvgScanner();
+  });
+}
+
+// ─── S/R Breakout Scanner ────────────────────────────────────────────────────
+let srBreakoutsLoaded = false;
+
+async function loadSrBreakouts() {
+  const loadingEl = document.getElementById('sr-loading');
+  const listEl    = document.getElementById('sr-list');
+  const emptyEl   = document.getElementById('sr-empty');
+  if (!loadingEl || !listEl) return;
+
+  loadingEl.style.display = 'block';
+  listEl.style.display    = 'none';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/forex/sr-breakouts');
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    srBreakoutsLoaded = true;
+    renderSrBreakouts(data.breakouts || []);
+
+    if ((data.breakouts || []).length > 0) {
+      playSignalSound('breakout');
+      showToast('toast-info', '💥', 'S/R Breakout Detected',
+        `${data.breakouts.length} breakout${data.breakouts.length > 1 ? 's' : ''} found`, 5000);
+    }
+  } catch (err) {
+    if (loadingEl) loadingEl.textContent = 'Could not load S/R breakout data.';
+    console.error('S/R breakout scanner failed:', err);
+  }
+}
+
+function renderSrBreakouts(breakouts) {
+  const loadingEl = document.getElementById('sr-loading');
+  const listEl    = document.getElementById('sr-list');
+  const emptyEl   = document.getElementById('sr-empty');
+
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  if (!breakouts || breakouts.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  listEl.innerHTML = breakouts.map((item, idx) => {
+    const isResistance = item.type === 'resistance_break';
+    const cls   = isResistance ? 'buy' : 'sell';
+    const icon  = isResistance ? '▲' : '▼';
+    const label = isResistance ? 'Resistance Break' : 'Support Break';
+    const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+    const fmt   = v => Number(v).toFixed(dec);
+    return `
+      <div class="volatile-row" style="animation-delay:${idx * 60}ms">
+        <span class="volatile-rank">#${idx + 1}</span>
+        <span class="volatile-pair">${escapeHtml(item.pair)}</span>
+        <span class="sr-break-label ${cls}">${icon} ${label}</span>
+        <span class="sr-break-level">Level: ${fmt(item.level)}</span>
+        <span class="sr-break-price">Price: ${fmt(item.current_price)}</span>
+        <div class="sr-break-desc" style="grid-column:1/-1;font-size:.82rem;color:var(--text2);margin-top:4px">${escapeHtml(item.description)}</div>
+      </div>`;
+  }).join('');
+
+  listEl.style.display = 'flex';
+  listEl.style.flexDirection = 'column';
+  listEl.style.gap = '8px';
+}
+
+const refreshSrBtn = document.getElementById('btn-refresh-sr');
+if (refreshSrBtn) {
+  refreshSrBtn.addEventListener('click', () => {
+    srBreakoutsLoaded = false;
+    loadSrBreakouts();
+  });
 }
 
 // ─── Event wiring ─────────────────────────────────────────────────────────────

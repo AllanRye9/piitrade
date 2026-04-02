@@ -804,6 +804,113 @@ def _build_technical_analysis(pair: str, live_price: float | None = None) -> dic
     }
 
 
+def _classify_fvg_status(
+    pair: str,
+    current_price: float,
+    fvg_list: list[dict[str, Any]],
+    prices: list[float],
+) -> list[dict[str, Any]]:
+    """Classify each FVG entry as approaching / reached / passed / rejected.
+
+    Rules
+    -----
+    - **passed**    : FVG is already marked *filled* (price went through it).
+    - **reached**   : current price is *inside* the FVG zone (bottom ≤ price ≤ top).
+    - **rejected**  : price is outside the zone but was recently inside *and* reversed;
+                      detected by checking whether the last 5-bar delta moves away from
+                      the zone while the zone still lies close to the current price.
+    - **approaching**: price is outside the zone but within a 1 % proximity threshold.
+    - All other FVGs (too far away) are excluded from the result.
+    """
+    PROXIMITY_PCT = 0.01  # 1 % of current price
+    results: list[dict[str, Any]] = []
+    recent_trend = (prices[-1] - prices[-5]) if len(prices) >= 5 else 0.0
+
+    for fvg in fvg_list:
+        top = fvg["top"]
+        bottom = fvg["bottom"]
+        filled = fvg.get("filled", False)
+        fvg_type = fvg["type"]
+
+        if filled:
+            status = "passed"
+        elif bottom <= current_price <= top:
+            status = "reached"
+        else:
+            if current_price < bottom:
+                dist = (bottom - current_price) / (current_price or 1)
+                direction_away = recent_trend < 0  # price moving down away from zone above
+            else:  # current_price > top
+                dist = (current_price - top) / (current_price or 1)
+                direction_away = recent_trend > 0  # price moving up away from zone below
+
+            if dist < PROXIMITY_PCT:
+                # Was price recently inside the zone?  Approximate: if distance is tiny
+                # and the recent move reverses away, treat it as rejected.
+                if direction_away and dist < PROXIMITY_PCT * 0.4:
+                    status = "rejected"
+                else:
+                    status = "approaching"
+            else:
+                continue  # too far away – skip
+
+        results.append({
+            "pair": pair,
+            "fvg_type": fvg_type,
+            "top": top,
+            "bottom": bottom,
+            "filled": filled,
+            "status": status,
+            "current_price": current_price,
+            "created": fvg.get("created", ""),
+            "description": fvg.get("description", ""),
+        })
+
+    return results
+
+
+def _detect_sr_breakout(
+    pair: str,
+    current_price: float,
+    prices: list[float],
+    support_levels: list[float],
+    resistance_levels: list[float],
+) -> list[dict[str, Any]]:
+    """Detect whether price has broken through a major support or resistance level.
+
+    A breakout is confirmed when the current price is beyond the level by at
+    least a small buffer (0.05 % of the level price) and the recent 5-bar
+    momentum confirms the move direction.
+    """
+    BUFFER_PCT = 0.0005  # 0.05 %
+    results: list[dict[str, Any]] = []
+    recent_trend = (prices[-1] - prices[-5]) if len(prices) >= 5 else 0.0
+
+    for level in resistance_levels:
+        buffer = level * BUFFER_PCT
+        if current_price > level + buffer and recent_trend > 0:
+            results.append({
+                "pair": pair,
+                "type": "resistance_break",
+                "level": level,
+                "current_price": current_price,
+                "description": f"Price broke above resistance {level} — bullish breakout confirmed",
+            })
+
+    for level in support_levels:
+        buffer = level * BUFFER_PCT
+        if current_price < level - buffer and recent_trend < 0:
+            results.append({
+                "pair": pair,
+                "type": "support_break",
+                "level": level,
+                "current_price": current_price,
+                "description": f"Price broke below support {level} — bearish breakdown confirmed",
+            })
+
+    return results
+
+
 # ─── FastAPI app ───────────────────────────────────────────────────────────────
 
 class _SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -1758,6 +1865,60 @@ async def forex_reversals():
     return JSONResponse({"pairs": results})
 
 
+# ─── FVG Scanner API ──────────────────────────────────────────────────────────
+
+@app.get("/api/forex/fvg-scanner")
+async def forex_fvg_scanner():
+    """Return FVG status for all supported pairs, grouped by status category."""
+    grouped: dict[str, list[dict[str, Any]]] = {
+        "approaching": [],
+        "reached": [],
+        "passed": [],
+        "rejected": [],
+    }
+    for pair in _SUPPORTED_PAIRS:
+        prices = _get_prices_for_pair(pair, 30)
+        live_rate = _fetch_live_rate(pair)
+        current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
+        ta = _build_technical_analysis(pair, current_price)
+        entries = _classify_fvg_status(pair, current_price, ta["fvg"], prices)
+        for entry in entries:
+            bucket = entry.get("status", "")
+            if bucket in grouped:
+                entry["direction"] = _FOREX_SIGNALS[pair]["direction"]
+                grouped[bucket].append(entry)
+    return JSONResponse({
+        "grouped": grouped,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
+# ─── S/R Breakout Scanner API ─────────────────────────────────────────────────
+
+@app.get("/api/forex/sr-breakouts")
+async def forex_sr_breakouts():
+    """Return pairs that have recently broken through major support or resistance."""
+    results: list[dict[str, Any]] = []
+    for pair in _SUPPORTED_PAIRS:
+        prices = _get_prices_for_pair(pair, 30)
+        live_rate = _fetch_live_rate(pair)
+        current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
+        ta = _build_technical_analysis(pair, current_price)
+        sr = ta["support_resistance"]
+        breakouts = _detect_sr_breakout(
+            pair, current_price, prices,
+            sr["support"], sr["resistance"],
+        )
+        for b in breakouts:
+            b["direction"] = _FOREX_SIGNALS[pair]["direction"]
+            b["confidence"] = _FOREX_SIGNALS[pair]["confidence"]
+        results.extend(breakouts)
+    return JSONResponse({
+        "breakouts": results,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 # ─── Subscription / payment page ─────────────────────────────────────────────
 
 # Crypto wallet addresses (configurable via env vars)
@@ -1769,6 +1930,32 @@ _WALLETS = {
     "bitgert":  os.environ.get("BITGERT_ADDRESS", "BitgertWalletAddressHere"),
     "stellar":  os.environ.get("STELLA_ADDRESS",  "StellarWalletAddressHere"),
     "ripple":   os.environ.get("RIPPLE_ADDRESS",  "RippleWalletAddressHere"),
+}
+
+# Mobile Money configuration (configurable via env vars)
+_MOBILE_MONEY = {
+    "mtn": {
+        "name": "MTN Mobile Money",
+        "phone": os.environ.get("MTN_MONEY_PHONE", ""),
+        "account_name": os.environ.get("MTN_MONEY_NAME", "PiiTrade"),
+        "instructions": (
+            "Dial *165# and select 'Send Money', then enter the number above. "
+            "Use your subscription plan amount in your local currency. "
+            "After sending, note the transaction reference/ID shown on screen."
+        ),
+        "countries": "Uganda, Ghana, Rwanda, Zambia, Cameroon, Ivory Coast, Benin, Guinea",
+    },
+    "airtel": {
+        "name": "Airtel Money",
+        "phone": os.environ.get("AIRTEL_MONEY_PHONE", ""),
+        "account_name": os.environ.get("AIRTEL_MONEY_NAME", "PiiTrade"),
+        "instructions": (
+            "Dial *185# and select 'Send Money', then enter the number above. "
+            "Use your subscription plan amount in your local currency. "
+            "After sending, note the transaction reference/ID shown on screen."
+        ),
+        "countries": "Uganda, Kenya, Tanzania, Rwanda, Zambia, Malawi, Nigeria, Congo",
+    },
 }
 
 # Subscription plans
@@ -1783,7 +1970,9 @@ _PLANS = [
 async def subscribe_page(request: Request):
     return templates.TemplateResponse(
         request, "subscribe.html",
-        _ctx(request, wallets=_WALLETS, plans=_PLANS, stripe_available=_STRIPE_AVAILABLE),
+        _ctx(request, wallets=_WALLETS, plans=_PLANS,
+             stripe_available=_STRIPE_AVAILABLE,
+             mobile_money=_MOBILE_MONEY),
     )
 
 
@@ -1836,6 +2025,50 @@ async def payment_confirm(request: Request):
         "message": (
             "Payment confirmation received! Your subscription will be activated "
             "within 1–2 hours after verification. Thank you!"
+        ),
+    })
+
+
+@app.post("/api/forex/mobile-money-confirm")
+async def mobile_money_confirm(request: Request):
+    """Accept a Mobile Money payment confirmation (MTN or Airtel)."""
+    try:
+        data: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+
+    email: str = data.get("email", "").strip().lower()
+    phone: str = data.get("phone", "").strip()
+    tx_ref: str = data.get("tx_ref", "").strip()
+    provider: str = data.get("provider", "").strip().lower()
+    plan: str = data.get("plan", "").strip()
+
+    if not email or "@" not in email or not email.split("@")[-1].count("."):
+        return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
+    if not phone:
+        return JSONResponse({"error": "Phone number is required"}, status_code=400)
+    if not tx_ref:
+        return JSONResponse({"error": "Transaction reference/ID is required"}, status_code=400)
+    if provider not in ("mtn", "airtel"):
+        return JSONResponse({"error": "Provider must be 'mtn' or 'airtel'"}, status_code=400)
+
+    _PAYMENT_CONFIRMATIONS.append({
+        "email": email,
+        "phone": phone,
+        "tx_hash": tx_ref,
+        "provider": provider,
+        "plan": plan,
+        "price_usd": data.get("price_usd"),
+        "payment_method": "mobile_money",
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "status": "pending",
+    })
+    return JSONResponse({
+        "success": True,
+        "message": (
+            "Mobile Money payment confirmation received! "
+            "Your subscription will be activated within 1–2 hours after verification. "
+            "Thank you!"
         ),
     })
 
