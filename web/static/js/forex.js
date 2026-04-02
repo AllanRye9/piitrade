@@ -790,6 +790,18 @@ function renderTechnicalAnalysis(data) {
   const dec = isJpy(data.pair) || isGold(data.pair) ? 2 : 4;
   const fmt = v => Number(v).toFixed(dec);
 
+  // Live current price display
+  const priceEl = document.getElementById('ta-current-price');
+  const pairEl  = document.getElementById('ta-pair-label');
+  const timeEl  = document.getElementById('ta-price-updated');
+  if (priceEl) {
+    priceEl.textContent = fmt(data.current_price);
+    priceEl.classList.add('ta-price-flash');
+    priceEl.addEventListener('animationend', () => priceEl.classList.remove('ta-price-flash'), { once: true });
+  }
+  if (pairEl) pairEl.textContent = data.pair;
+  if (timeEl) timeEl.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+
   // Support & Resistance
   const sr = data.support_resistance;
   taSrContent.innerHTML = `
@@ -797,6 +809,7 @@ function renderTechnicalAnalysis(data) {
       <div class="sr-group-title resistance-title">Resistance</div>
       ${sr.resistance.slice().reverse().map(r => `
         <div class="sr-level resistance">
+          ${buildStatusSvg('resistance')}
           <span class="sr-badge">R</span>
           <span class="sr-price">${fmt(r)}</span>
         </div>`).join('')}
@@ -806,27 +819,44 @@ function renderTechnicalAnalysis(data) {
       </div>
       ${sr.support.map(s => `
         <div class="sr-level support">
+          ${buildStatusSvg('support')}
           <span class="sr-badge">S</span>
           <span class="sr-price">${fmt(s)}</span>
         </div>`).join('')}
     </div>`;
 
-  // Fair Value Gaps
-  taFvgContent.innerHTML = data.fvg.map(g => `
-    <div class="ta-item ${g.type} ${g.filled ? 'filled' : 'unfilled'}">
-      <div class="ta-item-header">
-        <span class="ta-badge ${g.type}">${g.type.toUpperCase()} FVG</span>
-        <span class="ta-badge ${g.filled ? 'neutral' : 'active'}">${g.filled ? 'Filled' : 'Unfilled'}</span>
-        <span class="ta-date">${g.created}</span>
-      </div>
-      <div class="ta-price-range">${fmt(g.bottom)} – ${fmt(g.top)}</div>
-      <div class="ta-desc">${escapeHtml(g.description)}</div>
-    </div>`).join('');
+  // Fair Value Gaps — only show unfilled/active ones, mark filled as consumed
+  taFvgContent.innerHTML = data.fvg.map(g => {
+    if (g.filled) {
+      return `
+        <div class="ta-item ${g.type} filled ta-item--consumed">
+          <div class="ta-item-header">
+            <span class="ta-badge ${g.type}">${g.type.toUpperCase()} FVG</span>
+            <span class="ta-badge neutral">Consumed ✅</span>
+            <span class="ta-date">${g.created}</span>
+          </div>
+          <div class="ta-price-range ta-price-range--consumed">${fmt(g.bottom)} – ${fmt(g.top)}</div>
+          <div class="ta-desc">${escapeHtml(g.description)}</div>
+        </div>`;
+    }
+    return `
+      <div class="ta-item ${g.type} unfilled">
+        <div class="ta-item-header">
+          ${buildStatusSvg(g.type === 'bullish' ? 'reached' : 'rejected')}
+          <span class="ta-badge ${g.type}">${g.type.toUpperCase()} FVG</span>
+          <span class="ta-badge active">Active ⚡</span>
+          <span class="ta-date">${g.created}</span>
+        </div>
+        <div class="ta-price-range"><span class="fvg-zone-label">Zone:</span> <strong>${fmt(g.bottom)} – ${fmt(g.top)}</strong></div>
+        <div class="ta-desc">${escapeHtml(g.description)}</div>
+      </div>`;
+  }).join('');
 
   // Break of Structure
   taBosContent.innerHTML = data.bos.map(b => `
     <div class="ta-item ${b.type}">
       <div class="ta-item-header">
+        ${buildStatusSvg(b.type === 'bullish' ? 'resistance' : 'support')}
         <span class="ta-badge ${b.type}">${b.type.toUpperCase()} BOS</span>
         <span class="ta-date">${b.date}</span>
       </div>
@@ -838,6 +868,7 @@ function renderTechnicalAnalysis(data) {
   taChochContent.innerHTML = data.choch.map(c => `
     <div class="ta-item ${c.type}">
       <div class="ta-item-header">
+        ${buildStatusSvg(c.type === 'bullish' ? 'reached' : 'rejected')}
         <span class="ta-badge ${c.type}">CHoCH</span>
         <span class="ta-date">${c.date}</span>
       </div>
@@ -1079,6 +1110,8 @@ function showSubscribeStatus(type, msg) {
 
 // ─── FVG Scanner ─────────────────────────────────────────────────────────────
 let fvgLoaded = false;
+let _fvgPairFvgs = {};        // pair → all FVGs (from API response)
+let _currentFvgFilter = 'approaching';  // default filter
 
 const FVG_STATUS_CONFIG = {
   approaching: { icon: '📍', label: 'Approaching', cls: 'fvg-approaching' },
@@ -1086,6 +1119,24 @@ const FVG_STATUS_CONFIG = {
   rejected:    { icon: '🚫', label: 'Rejected',      cls: 'fvg-rejected' },
   passed:      { icon: '✅', label: 'Passed/Filled', cls: 'fvg-passed' },
 };
+
+/** Build an animated SVG status dot for FVG / S/R items. */
+function buildStatusSvg(status) {
+  const colors = {
+    approaching: '#58a6ff',
+    reached:     '#3fb950',
+    rejected:    '#f85149',
+    passed:      '#8b949e',
+    resistance:  '#3fb950',
+    support:     '#f85149',
+  };
+  const color = colors[status] || '#8b949e';
+  const pulse = (status === 'passed') ? '' : `<circle class="fvg-svg-pulse" cx="9" cy="9" r="7" fill="none" stroke="${color}" stroke-width="1"/>`;
+  return `<svg class="fvg-status-svg fvg-status-svg--${status}" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    ${pulse}
+    <circle cx="9" cy="9" r="4.5" fill="${color}" opacity="${status === 'passed' ? '0.45' : '1'}"/>
+  </svg>`;
+}
 
 async function loadFvgScanner() {
   const loadingEl = document.getElementById('fvg-loading');
@@ -1100,7 +1151,9 @@ async function loadFvgScanner() {
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     fvgLoaded = true;
+    _fvgPairFvgs = data.pair_fvgs || {};
     renderFvgScanner(data.grouped);
+    applyFvgFilter(_currentFvgFilter);
 
     // Sound alert if any pairs have reached or are being rejected at an FVG
     const alertCount = (data.grouped.reached || []).length + (data.grouped.rejected || []).length;
@@ -1127,28 +1180,125 @@ function renderFvgScanner(grouped) {
       listEl.innerHTML = '<div class="fvg-empty">No pairs in this category right now.</div>';
       return;
     }
-    listEl.innerHTML = items.map(item => {
-      const cfg = FVG_STATUS_CONFIG[status] || {};
-      const dir = item.direction || '';
+    listEl.innerHTML = items.map((item, idx) => {
+      const cfg    = FVG_STATUS_CONFIG[status] || {};
+      const dir    = item.direction || '';
       const dirCls = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
-      const dec = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
-      const fmt = v => Number(v).toFixed(dec);
+      const dec    = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+      const fmt    = v => Number(v).toFixed(dec);
+      const rowId  = `fvg-row-${status}-${idx}`;
+      const dropId = `fvg-drop-${status}-${idx}`;
+      const pairKey = item.pair;
       return `
-        <div class="fvg-row ${cfg.cls || ''}">
-          <span class="fvg-status-icon">${cfg.icon || ''}</span>
+        <div class="fvg-row ${cfg.cls || ''}" id="${rowId}" style="animation-delay:${idx * 50}ms" data-pair="${escapeHtml(pairKey)}" data-drop="${dropId}">
+          <span class="fvg-status-svg-wrap">${buildStatusSvg(status)}</span>
           <span class="fvg-pair">${escapeHtml(item.pair)}</span>
           <span class="fvg-type-badge ${item.fvg_type}">${item.fvg_type.toUpperCase()} FVG</span>
-          <span class="fvg-zone">${fmt(item.bottom)} – ${fmt(item.top)}</span>
-          <span class="fvg-price">@ ${fmt(item.current_price)}</span>
+          <span class="fvg-zone">
+            <span class="fvg-zone-label">Zone:</span>
+            <span class="fvg-zone-prices">${fmt(item.bottom)} – ${fmt(item.top)}</span>
+          </span>
+          <span class="fvg-price">
+            <span class="fvg-price-label">Price:</span>
+            <span class="fvg-price-value">${fmt(item.current_price)}</span>
+          </span>
           <span class="volatile-dir ${dirCls}">${dir}</span>
+          <button class="fvg-expand-btn" type="button" aria-expanded="false" aria-controls="${dropId}" title="Show all FVGs for ${escapeHtml(item.pair)}">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.5L1 3.5h10L6 8.5z"/></svg>
+            All FVGs
+          </button>
           <div class="fvg-desc">${escapeHtml(item.description)}</div>
-        </div>`;
+        </div>
+        <div class="fvg-dropdown" id="${dropId}" hidden data-pair="${escapeHtml(pairKey)}"></div>`;
     }).join('');
+
+    // Attach expand button listeners
+    listEl.querySelectorAll('.fvg-expand-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const row    = btn.closest('.fvg-row');
+        const dropId = row ? row.dataset.drop : null;
+        const drop   = dropId ? document.getElementById(dropId) : null;
+        const pair   = row ? row.dataset.pair : null;
+        if (!drop) return;
+        const isOpen = !drop.hidden;
+        drop.hidden = isOpen;
+        btn.setAttribute('aria-expanded', String(!isOpen));
+        btn.classList.toggle('fvg-expand-btn--open', !isOpen);
+        if (!isOpen && pair && _fvgPairFvgs[pair]) {
+          renderFvgDropdown(drop, pair, _fvgPairFvgs[pair]);
+        }
+      });
+    });
   });
 
   if (loadingEl) loadingEl.style.display = 'none';
   if (contentEl) contentEl.style.display = 'block';
 }
+
+/** Render all FVGs for a pair in the dropdown panel. */
+function renderFvgDropdown(dropEl, pair, fvgs) {
+  const dec = (pair.includes('JPY') || pair.startsWith('XAU')) ? 2 : 4;
+  const fmt = v => Number(v).toFixed(dec);
+  if (!fvgs || fvgs.length === 0) {
+    dropEl.innerHTML = '<div class="fvg-drop-empty">No FVGs available for this pair.</div>';
+    return;
+  }
+  // Separate active (unfilled) from consumed (filled)
+  const active   = fvgs.filter(f => !f.filled);
+  const consumed = fvgs.filter(f => f.filled);
+  const renderGroup = (items, consumed) => items.map(f => {
+    const typeIcon = f.type === 'bullish' ? '▲' : '▼';
+    const typeCls  = f.type === 'bullish' ? 'bullish' : 'bearish';
+    return `
+      <div class="fvg-drop-item ${consumed ? 'fvg-drop-item--consumed' : ''}">
+        <span class="fvg-type-badge ${typeCls}">${typeIcon} ${f.type.toUpperCase()} FVG</span>
+        <span class="fvg-drop-zone">
+          <span class="fvg-zone-label">Zone:</span>
+          <strong>${fmt(f.bottom)} – ${fmt(f.top)}</strong>
+        </span>
+        <span class="fvg-drop-price">
+          <span class="fvg-zone-label">Price:</span>
+          <span class="fvg-price-value">${fmt(f.current_price)}</span>
+        </span>
+        <span class="fvg-drop-status ${consumed ? 'fvg-drop-status--consumed' : 'fvg-drop-status--active'}">
+          ${consumed ? '✅ Consumed' : '⚡ Active'}
+        </span>
+        <span class="fvg-drop-date">${escapeHtml(f.created)}</span>
+        <div class="fvg-drop-desc">${escapeHtml(f.description)}</div>
+      </div>`;
+  }).join('');
+
+  dropEl.innerHTML = `
+    <div class="fvg-dropdown-inner">
+      <div class="fvg-drop-header">📊 All FVGs for ${escapeHtml(pair)}</div>
+      ${active.length > 0 ? `<div class="fvg-drop-section-title">⚡ Active</div>${renderGroup(active, false)}` : ''}
+      ${consumed.length > 0 ? `<div class="fvg-drop-section-title fvg-drop-section-title--consumed">✅ Consumed (Filled)</div>${renderGroup(consumed, true)}` : ''}
+    </div>`;
+}
+
+/** Apply FVG group visibility based on selected filter. */
+function applyFvgFilter(filter) {
+  _currentFvgFilter = filter;
+  document.querySelectorAll('#fvg-content .fvg-group').forEach(group => {
+    const groupName = group.dataset.group;
+    if (filter === 'all') {
+      // Show approaching, reached, rejected (active groups); hide passed (consumed)
+      group.classList.toggle('fx-hidden', groupName === 'passed');
+    } else {
+      group.classList.toggle('fx-hidden', groupName !== filter);
+    }
+  });
+  // Update active button state
+  document.querySelectorAll('.fvg-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+}
+
+// FVG filter button listeners
+document.querySelectorAll('.fvg-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyFvgFilter(btn.dataset.filter));
+});
 
 const refreshFvgBtn = document.getElementById('btn-refresh-fvg');
 if (refreshFvgBtn) {
@@ -1208,13 +1358,14 @@ function renderSrBreakouts(breakouts) {
     const label = isResistance ? 'Resistance Break' : 'Support Break';
     const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
     const fmt   = v => Number(v).toFixed(dec);
+    const svgStatus = isResistance ? 'resistance' : 'support';
     return `
-      <div class="volatile-row" style="animation-delay:${idx * 60}ms">
-        <span class="volatile-rank">#${idx + 1}</span>
+      <div class="volatile-row sr-break-row" style="animation-delay:${idx * 60}ms">
+        <span class="fvg-status-svg-wrap">${buildStatusSvg(svgStatus)}</span>
         <span class="volatile-pair">${escapeHtml(item.pair)}</span>
         <span class="sr-break-label ${cls}">${icon} ${label}</span>
-        <span class="sr-break-level">Level: ${fmt(item.level)}</span>
-        <span class="sr-break-price">Price: ${fmt(item.current_price)}</span>
+        <span class="sr-break-level">Level: <strong>${fmt(item.level)}</strong></span>
+        <span class="sr-break-price">Price: <strong>${fmt(item.current_price)}</strong></span>
         <div class="sr-break-desc" style="grid-column:1/-1;font-size:.82rem;color:var(--text2);margin-top:4px">${escapeHtml(item.description)}</div>
       </div>`;
   }).join('');
@@ -1245,6 +1396,8 @@ pairSelect.addEventListener('change', () => {
   previousDirection = lastDirectionByPair[currentPair] ?? null;
   loadSignal(currentPair);
   resetAutoRefresh();
+  // Keep live technical price in sync when pair changes
+  if (_techPriceTimer !== null) startTechPricePolling();
 });
 
 refreshBtn.addEventListener('click', () => {
@@ -1321,6 +1474,62 @@ showPageLoader();
 Promise.all([loadSignal(currentPair), loadNews()])
   .finally(() => hidePageLoader());
 resetAutoRefresh();
+
+// ─── Live Price for Technical Analysis ────────────────────────────────────────
+const TECH_PRICE_INTERVAL_MS = 30_000; // poll every 30 s
+let _techPriceTimer = null;
+
+function updateTechCurrentPrice(pair) {
+  fetch(`/api/forex/technical?pair=${encodeURIComponent(pair)}`)
+    .then(r => r.json())
+    .then(data => {
+      const el    = document.getElementById('ta-current-price');
+      const pairL = document.getElementById('ta-pair-label');
+      const time  = document.getElementById('ta-price-updated');
+      const badge = document.getElementById('ta-live-price-badge');
+      if (!el) return;
+      const dec    = (pair.includes('JPY') || pair.startsWith('XAU')) ? 2 : 4;
+      el.textContent    = Number(data.current_price).toFixed(dec);
+      if (pairL) pairL.textContent  = pair;
+      if (time)  time.textContent   = `Updated: ${new Date().toLocaleTimeString()}`;
+      if (badge) {
+        badge.textContent = '🟢 Live';
+        badge.className   = 'fx-data-source live';
+      }
+      el.classList.add('ta-price-flash');
+      el.addEventListener('animationend', () => el.classList.remove('ta-price-flash'), { once: true });
+    })
+    .catch(() => {
+      const badge = document.getElementById('ta-live-price-badge');
+      if (badge) { badge.textContent = '🟡 Cached'; badge.className = 'fx-data-source static'; }
+    });
+}
+
+function startTechPricePolling() {
+  if (_techPriceTimer) clearInterval(_techPriceTimer);
+  updateTechCurrentPrice(currentPair);
+  _techPriceTimer = setInterval(() => updateTechCurrentPrice(currentPair), TECH_PRICE_INTERVAL_MS);
+}
+
+// Start polling when Technical tab is opened
+document.querySelectorAll('.fx-tab').forEach(tab => {
+  if (tab.dataset.section === 'section-technical') {
+    tab.addEventListener('click', () => {
+      startTechPricePolling();
+    });
+  }
+});
+
+// Also update technical price when pair changes (handled via existing pairSelect listener)
+
+// ─── Global Disclaimer Close ──────────────────────────────────────────────────
+const disclaimerClose = document.querySelector('.global-disclaimer-close');
+const disclaimerEl    = document.querySelector('.global-disclaimer');
+if (disclaimerClose && disclaimerEl) {
+  disclaimerClose.addEventListener('click', () => {
+    disclaimerEl.classList.add('global-disclaimer--hidden');
+  });
+}
 
 // ─── Volatile Pairs ───────────────────────────────────────────────────────────
 let currentVolatileTf = '1h';
