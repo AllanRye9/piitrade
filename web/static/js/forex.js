@@ -1106,10 +1106,8 @@ async function loadFvgScanner() {
     const alertCount = (data.grouped.reached || []).length + (data.grouped.rejected || []).length;
     if (alertCount > 0) {
       playSignalSound('fvg');
-      if (alertCount > 0) {
-        showToast('toast-info', '🌀', 'FVG Alert',
-          `${alertCount} pair${alertCount > 1 ? 's' : ''} at FVG zone`, 5000);
-      }
+      showToast('toast-info', '🌀', 'FVG Alert',
+        `${alertCount} pair${alertCount > 1 ? 's' : ''} at FVG zone`, 5000);
     }
   } catch (err) {
     loadingEl.textContent = 'Could not load FVG scanner data.';

@@ -1936,8 +1936,8 @@ _WALLETS = {
 _MOBILE_MONEY = {
     "mtn": {
         "name": "MTN Mobile Money",
-        "phone": os.environ.get("MTN_MOMO_PHONE", ""),
-        "account_name": os.environ.get("MTN_MOMO_NAME", "PiiTrade"),
+        "phone": os.environ.get("MTN_MONEY_PHONE", ""),
+        "account_name": os.environ.get("MTN_MONEY_NAME", "PiiTrade"),
         "instructions": (
             "Dial *165# and select 'Send Money', then enter the number above. "
             "Use your subscription plan amount in your local currency. "
@@ -2043,7 +2043,7 @@ async def mobile_money_confirm(request: Request):
     provider: str = data.get("provider", "").strip().lower()
     plan: str = data.get("plan", "").strip()
 
-    if not email or "@" not in email or "." not in email.split("@")[-1]:
+    if not email or "@" not in email or not email.split("@")[-1].count("."):
         return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
     if not phone:
         return JSONResponse({"error": "Phone number is required"}, status_code=400)
