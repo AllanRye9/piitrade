@@ -579,6 +579,19 @@ def _fetch_historical_rates(pair: str, days: int = 30) -> dict[str, float]:
         return {}
 
 
+def _pair_pip_dec(pair: str) -> tuple[float, int]:
+    """Return (pip_size, decimal_places) for the given trading pair."""
+    if pair == "XAU/USD":
+        return 1.0, 2
+    if pair == "USOIL":
+        return 0.01, 2
+    if pair == "XAG/USD":
+        return 0.001, 4
+    if "JPY" in pair:
+        return 0.01, 2
+    return 0.0001, 4
+
+
 def _compute_signal_from_prices(prices: list[float]) -> tuple[str, float]:
     if len(prices) < 5:
         return "HOLD", 50.0
@@ -597,9 +610,7 @@ def _compute_signal_from_prices(prices: list[float]) -> tuple[str, float]:
 
 
 def _compute_tp_sl_pips(prices: list[float], pair: str) -> tuple[int, int]:
-    is_gold = pair == "XAU/USD"
-    is_jpy = "JPY" in pair
-    pip = 1.0 if is_gold else (0.01 if is_jpy else 0.0001)
+    pip, _dec = _pair_pip_dec(pair)
     if len(prices) < 2:
         return 50, 30
     daily_ranges = [abs(prices[i] - prices[i - 1]) for i in range(1, len(prices))]
@@ -609,9 +620,7 @@ def _compute_tp_sl_pips(prices: list[float], pair: str) -> tuple[int, int]:
 
 
 def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[dict[str, Any]]:
-    is_gold = pair == "XAU/USD"
-    is_jpy = "JPY" in pair
-    dec = 2 if (is_jpy or is_gold) else 4
+    _pip, dec = _pair_pip_dec(pair)
     dates = sorted(hist_rates.keys())
     prices = [hist_rates[d] for d in dates]
     history: list[dict[str, Any]] = []
@@ -634,7 +643,8 @@ _SUPPORTED_PAIRS = (
     "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD",
     "EUR/GBP", "EUR/JPY", "EUR/AUD", "EUR/CAD",
     "GBP/JPY", "GBP/CHF", "AUD/JPY",
-    "XAU/USD",
+    "GBP/AUD", "GBP/CAD", "CAD/JPY", "CHF/JPY",
+    "XAU/USD", "XAG/USD", "USOIL",
 )
 
 
@@ -669,6 +679,12 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "GBP/CHF": {"direction": "SELL", "confidence": 58.9, "entry_price": 1.1456, "take_profit": 1.1390, "stop_loss": 1.1500, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "AUD/JPY": {"direction": "HOLD", "confidence": 51.4, "entry_price": 98.65,  "take_profit": 99.30,  "stop_loss": 98.10,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "XAU/USD": {"direction": "BUY",  "confidence": 71.4, "entry_price": 3300.00,"take_profit": 3365.00,"stop_loss": 3263.00, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/AUD": {"direction": "SELL", "confidence": 60.5, "entry_price": 2.0285, "take_profit": 2.0180, "stop_loss": 2.0340, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/CAD": {"direction": "BUY",  "confidence": 64.8, "entry_price": 1.7412, "take_profit": 1.7520, "stop_loss": 1.7350, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "CAD/JPY": {"direction": "BUY",  "confidence": 58.3, "entry_price": 110.82, "take_profit": 112.00, "stop_loss": 110.10, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "CHF/JPY": {"direction": "HOLD", "confidence": 54.6, "entry_price": 168.42, "take_profit": 169.80, "stop_loss": 167.50, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XAG/USD": {"direction": "BUY",  "confidence": 66.2, "entry_price": 33.42,  "take_profit": 34.20,  "stop_loss": 32.90,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USOIL":   {"direction": "SELL", "confidence": 63.7, "entry_price": 71.85,  "take_profit": 69.50,  "stop_loss": 73.20,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
 }
 
 _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]] = {
@@ -714,6 +730,12 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "GBP/CHF": (1.1410, 0.0001, _gen_seq("GBP/CHF")),
     "AUD/JPY": (98.20,  0.01,   _gen_seq("AUD/JPY")),
     "XAU/USD": (3300.00, 1.0,   _gen_seq("XAU/USD")),
+    "GBP/AUD": (2.0240, 0.0001, _gen_seq("GBP/AUD")),
+    "GBP/CAD": (1.7380, 0.0001, _gen_seq("GBP/CAD")),
+    "CAD/JPY": (110.40, 0.01,   _gen_seq("CAD/JPY")),
+    "CHF/JPY": (168.00, 0.01,   _gen_seq("CHF/JPY")),
+    "XAG/USD": (33.10,  0.001,  _gen_seq("XAG/USD")),
+    "USOIL":   (71.50,  0.01,   _gen_seq("USOIL")),
 }
 
 def _make_news_items() -> list[dict[str, Any]]:
@@ -764,10 +786,7 @@ def _build_technical_analysis(pair: str, live_price: float | None = None) -> dic
     signal = _FOREX_SIGNALS[pair]
     price = live_price if live_price is not None else signal["entry_price"]
     direction = signal["direction"]
-    is_gold = pair == "XAU/USD"
-    is_jpy = "JPY" in pair
-    pip = 1.0 if is_gold else (0.01 if is_jpy else 0.0001)
-    dec = 2 if (is_jpy or is_gold) else 4
+    pip, dec = _pair_pip_dec(pair)
 
     def lvl(pips: float) -> float:
         return round(price + pips * pip, dec)
@@ -1673,10 +1692,7 @@ async def forex_signals(pair: str = "EUR/USD"):
             direction, confidence = _compute_signal_from_prices(prices)
             signal["direction"] = direction
             signal["confidence"] = confidence
-            is_gold = pair == "XAU/USD"
-            is_jpy = "JPY" in pair
-            pip = 1.0 if is_gold else (0.01 if is_jpy else 0.0001)
-            dec = 2 if (is_jpy or is_gold) else 4
+            pip, dec = _pair_pip_dec(pair)
             tp_pips, sl_pips = _compute_tp_sl_pips(prices, pair)
             if direction == "BUY":
                 signal["take_profit"] = round(live_rate + tp_pips * pip, dec)
@@ -1715,11 +1731,20 @@ async def forex_technical(pair: str = "EUR/USD"):
 
 @app.get("/api/forex/pairs")
 async def forex_pairs():
+    _COMMODITY_PAIRS = {"XAU/USD", "XAG/USD", "USOIL"}
+    major, cross, commodity = [], [], []
+    for p in _SUPPORTED_PAIRS:
+        if p in _COMMODITY_PAIRS:
+            commodity.append(p)
+        elif "/" in p and "USD" in p.split("/"):
+            major.append(p)
+        else:
+            cross.append(p)
     return JSONResponse({
-        "major":     [p for p in _SUPPORTED_PAIRS if "USD" in p.split("/") and not p.startswith("XAU")],
-        "cross":     [p for p in _SUPPORTED_PAIRS if "USD" not in p.split("/") and not p.startswith("XAU")],
-        "commodity": [p for p in _SUPPORTED_PAIRS if p.startswith("XAU")],
-        "all":       list(_SUPPORTED_PAIRS),
+        "major": major,
+        "cross": cross,
+        "commodity": commodity,
+        "all": list(_SUPPORTED_PAIRS),
     })
 
 
@@ -1892,16 +1917,15 @@ async def forex_fvg_scanner():
             if bucket in grouped:
                 entry["direction"] = _FOREX_SIGNALS[pair]["direction"]
                 grouped[bucket].append(entry)
-        # Annotate each raw FVG with live current_price so the frontend can
-        # show it in the per-pair dropdown without an extra round-trip.
-        is_jpy_pair = "JPY" in pair
-        is_gold_pair = pair == "XAU/USD"
-        dec = 2 if (is_jpy_pair or is_gold_pair) else 4
+        # Annotate each raw FVG with live current_price and zone midpoint so
+        # the frontend can show distinct prices per FVG in the dropdown.
+        _pip, dec = _pair_pip_dec(pair)
         pair_fvgs[pair] = [
             {
                 "type": fvg["type"],
                 "top": round(fvg["top"], dec),
                 "bottom": round(fvg["bottom"], dec),
+                "mid": round((fvg["top"] + fvg["bottom"]) / 2, dec),
                 "filled": fvg.get("filled", False),
                 "created": fvg.get("created", ""),
                 "description": fvg.get("description", ""),

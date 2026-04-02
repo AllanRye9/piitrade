@@ -2148,6 +2148,18 @@ a:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fvg-drop-market-price {
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--text2);
+  font-family: monospace;
 }
 
 .fvg-drop-section-title {

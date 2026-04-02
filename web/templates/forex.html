@@ -107,10 +107,16 @@
           <option value="EUR/CAD">EUR/CAD – Euro / Canadian Dollar</option>
           <option value="GBP/JPY">GBP/JPY – British Pound / Japanese Yen</option>
           <option value="GBP/CHF">GBP/CHF – British Pound / Swiss Franc</option>
+          <option value="GBP/AUD">GBP/AUD – British Pound / Australian Dollar</option>
+          <option value="GBP/CAD">GBP/CAD – British Pound / Canadian Dollar</option>
           <option value="AUD/JPY">AUD/JPY – Australian Dollar / Japanese Yen</option>
+          <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
+          <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
         </optgroup>
         <optgroup label="── Commodities">
           <option value="XAU/USD">XAU/USD – Gold / US Dollar</option>
+          <option value="XAG/USD">XAG/USD – Silver / US Dollar</option>
+          <option value="USOIL">USOIL – US Crude Oil (WTI)</option>
         </optgroup>
       </select>
       <button id="btn-refresh" class="fx-refresh-btn" type="button" title="Refresh signal">
@@ -334,6 +340,7 @@
       <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
       <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
       <button class="fvg-filter-btn" data-filter="all">🔍 All Active</button>
+      <button class="fvg-filter-btn" data-filter="passed">✅ Consumed</button>
       <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
     </div>
 
@@ -503,9 +510,18 @@
           <label><input type="checkbox" value="NZD/USD"/> NZD/USD</label>
           <label><input type="checkbox" value="EUR/GBP"/> EUR/GBP</label>
           <label><input type="checkbox" value="EUR/JPY"/> EUR/JPY</label>
+          <label><input type="checkbox" value="EUR/AUD"/> EUR/AUD</label>
+          <label><input type="checkbox" value="EUR/CAD"/> EUR/CAD</label>
           <label><input type="checkbox" value="GBP/JPY"/> GBP/JPY</label>
+          <label><input type="checkbox" value="GBP/CHF"/> GBP/CHF</label>
+          <label><input type="checkbox" value="GBP/AUD"/> GBP/AUD</label>
+          <label><input type="checkbox" value="GBP/CAD"/> GBP/CAD</label>
           <label><input type="checkbox" value="AUD/JPY"/> AUD/JPY</label>
+          <label><input type="checkbox" value="CAD/JPY"/> CAD/JPY</label>
+          <label><input type="checkbox" value="CHF/JPY"/> CHF/JPY</label>
           <label><input type="checkbox" value="XAU/USD"/> XAU/USD</label>
+          <label><input type="checkbox" value="XAG/USD"/> XAG/USD</label>
+          <label><input type="checkbox" value="USOIL"/> USOIL</label>
         </div>
         <div class="subscribe-status" id="subscribe-status" role="status"></div>
       </form>
