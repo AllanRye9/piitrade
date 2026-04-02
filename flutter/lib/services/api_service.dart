@@ -47,6 +47,37 @@ class ApiService {
         .toList();
   }
 
+  /// Returns volatile pairs ranked by price-range movement for [timeframe].
+  /// Valid timeframes: '1h', '4h', '24h'.
+  Future<Map<String, dynamic>> getForexVolatile(String timeframe) async {
+    final uri = Uri.parse('$_base/api/forex/volatile')
+        .replace(queryParameters: {'timeframe': timeframe});
+    final response = await http.get(uri);
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Returns pairs with detected potential trend reversals.
+  Future<Map<String, dynamic>> getForexReversals() async {
+    final response = await http.get(Uri.parse('$_base/api/forex/reversals'));
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Returns FVG status for all pairs, grouped by approaching/reached/passed/rejected.
+  Future<Map<String, dynamic>> getForexFvgScanner() async {
+    final response = await http.get(Uri.parse('$_base/api/forex/fvg-scanner'));
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Returns pairs that have recently broken through major support or resistance.
+  Future<Map<String, dynamic>> getForexSrBreakouts() async {
+    final response = await http.get(Uri.parse('$_base/api/forex/sr-breakouts'));
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   /// Subscribes [email] to signal alerts for the given [pairs].
   Future<Map<String, dynamic>> subscribeForexAlerts({
     required String email,
