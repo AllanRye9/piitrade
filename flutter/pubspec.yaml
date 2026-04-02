@@ -1,5 +1,5 @@
 name: piitrade
-description: PiiTrade – AI & ML backed forex signal hub for Android & iOS.
+description: PiiTrade – AI & ML backed forex signal subscription service for Android & iOS.
 version: 1.0.0+1
 
 environment:

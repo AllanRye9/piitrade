@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Internet permission for API calls to the Flask server -->
+    <!-- Internet permission for API calls to the PiiTrade backend -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Microphone for voice commands -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- Needed by speech_to_text on Android ≤10 (API 30) -->
-    <uses-permission android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30"/>
-    <!-- Needed by speech_to_text on Android 12+ (API 31+) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
     <application
-        android:label="Yot-Presentation"
+        android:label="PiiTrade"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config">
 
         <activity
             android:name=".MainActivity"

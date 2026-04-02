@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security configuration for PiiTrade.
+  Enforces HTTPS for all connections. Clear-text HTTP traffic is disabled.
+  The backend is served at https://piitrade.onrender.com (and any custom
+  HTTPS URL configured in the app settings).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

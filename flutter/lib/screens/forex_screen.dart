@@ -1170,7 +1170,7 @@ class _ForexScreenState extends State<ForexScreen>
           const SizedBox(height: 12),
           Text(
             '⚠️ Pip values are approximated for a USD-denominated account. '
-            'For educational purposes only.',
+            'For informational purposes only.',
             style: TextStyle(
                 color: cs.onSurface.withValues(alpha: 0.5), fontSize: 12),
           ),
@@ -1599,7 +1599,7 @@ class _ForexScreenState extends State<ForexScreen>
               'The pipeline uses a LightGBM gradient-boosted tree model trained on features '
               'including RSI, MACD, EMA-20/50, news sentiment scores, CPI delta, and PMI '
               'readings.\n\n'
-              '⚠️ Disclaimer: For educational purposes only. Not financial advice. '
+              '⚠️ Disclaimer: For informational purposes only. Not financial advice. '
               'Forex trading involves significant risk of loss.',
               style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
             ),
