@@ -1869,13 +1869,18 @@ async def forex_reversals():
 
 @app.get("/api/forex/fvg-scanner")
 async def forex_fvg_scanner():
-    """Return FVG status for all supported pairs, grouped by status category."""
+    """Return FVG status for all supported pairs, grouped by status category.
+
+    Also returns ``pair_fvgs`` – a mapping of pair → all FVGs (both filled and
+    unfilled) so the frontend can display a full per-pair FVG dropdown.
+    """
     grouped: dict[str, list[dict[str, Any]]] = {
         "approaching": [],
         "reached": [],
         "passed": [],
         "rejected": [],
     }
+    pair_fvgs: dict[str, list[dict[str, Any]]] = {}
     for pair in _SUPPORTED_PAIRS:
         prices = _get_prices_for_pair(pair, 30)
         live_rate = _fetch_live_rate(pair)
@@ -1887,8 +1892,26 @@ async def forex_fvg_scanner():
             if bucket in grouped:
                 entry["direction"] = _FOREX_SIGNALS[pair]["direction"]
                 grouped[bucket].append(entry)
+        # Annotate each raw FVG with live current_price so the frontend can
+        # show it in the per-pair dropdown without an extra round-trip.
+        is_jpy_pair = "JPY" in pair
+        is_gold_pair = pair == "XAU/USD"
+        dec = 2 if (is_jpy_pair or is_gold_pair) else 4
+        pair_fvgs[pair] = [
+            {
+                "type": fvg["type"],
+                "top": round(fvg["top"], dec),
+                "bottom": round(fvg["bottom"], dec),
+                "filled": fvg.get("filled", False),
+                "created": fvg.get("created", ""),
+                "description": fvg.get("description", ""),
+                "current_price": round(current_price, dec),
+            }
+            for fvg in ta["fvg"]
+        ]
     return JSONResponse({
         "grouped": grouped,
+        "pair_fvgs": pair_fvgs,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     })
 

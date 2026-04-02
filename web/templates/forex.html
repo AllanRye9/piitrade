@@ -68,6 +68,18 @@
   <div class="gamebar-badges" id="gamebar-badges"></div>
 </div>
 
+<!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
+<div class="global-disclaimer" role="alert">
+  <span class="global-disclaimer-icon">⚠️</span>
+  <div>
+    <strong>Disclaimer:</strong> Price predictions are for informational purposes only. 
+    Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research, 
+    and consult a licensed financial advisor before making any trading decisions. Forex and commodity trading 
+    involves significant risk of loss.
+  </div>
+  <button class="global-disclaimer-close" type="button" aria-label="Close disclaimer">✕</button>
+</div>
+
 <!-- ═══════════════════════════════ TOAST CONTAINER ═══════════════════════ -->
 <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
@@ -260,6 +272,19 @@
     <div id="ta-loading" class="ta-loading">Loading technical data…</div>
     <div id="ta-content" class="ta-grid" style="display:none">
 
+      <!-- Current Price (live) -->
+      <div class="ta-card ta-card-wide">
+        <div class="ta-card-title">
+          💱 Current Price
+          <span id="ta-live-price-badge" class="fx-data-source live" style="margin-left:8px;font-size:.72rem">🟢 Live</span>
+        </div>
+        <div id="ta-current-price-display" class="ta-live-price-row">
+          <span id="ta-current-price" class="ta-live-price-value">–</span>
+          <span id="ta-pair-label" class="ta-live-price-pair"></span>
+          <span id="ta-price-updated" class="ta-live-price-time"></span>
+        </div>
+      </div>
+
       <!-- Support & Resistance -->
       <div class="ta-card">
         <div class="ta-card-title">📏 Support &amp; Resistance</div>
@@ -299,13 +324,30 @@
     <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
       All trading pairs classified by their current relationship to Fair Value Gaps.
       Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
+      Click any row to expand and view all FVGs for that pair.
     </p>
-    <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
+
+    <!-- FVG Filter Bar -->
+    <div class="fvg-filter-bar">
+      <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Show:</span>
+      <button class="fvg-filter-btn active" data-filter="approaching">📍 Approaching</button>
+      <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
+      <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
+      <button class="fvg-filter-btn" data-filter="all">🔍 All Active</button>
+      <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="fvg-disclaimer">
+      ⚠️ <strong>Important:</strong> FVG signals are one tool among many. Always combine with other technical indicators, 
+      fundamental analysis, and risk management. Do <strong>not</strong> rely solely on price predictions for trading decisions.
+    </div>
+
     <div id="fvg-loading" class="ta-loading">Loading FVG scanner…</div>
 
     <div id="fvg-content" style="display:none">
       <!-- Approaching -->
-      <div class="fvg-group">
+      <div class="fvg-group" data-group="approaching">
         <div class="fvg-group-title approaching">
           <span class="fvg-group-icon">📍</span> Approaching FVG Zone
           <span class="fvg-group-sub">Price is within 1% of the FVG — potential entry zone forming</span>
@@ -314,7 +356,7 @@
       </div>
 
       <!-- Reached -->
-      <div class="fvg-group">
+      <div class="fvg-group" data-group="reached">
         <div class="fvg-group-title reached">
           <span class="fvg-group-icon">🎯</span> Inside FVG Zone
           <span class="fvg-group-sub">Price is currently trading inside the Fair Value Gap</span>
@@ -323,7 +365,7 @@
       </div>
 
       <!-- Rejected -->
-      <div class="fvg-group">
+      <div class="fvg-group" data-group="rejected">
         <div class="fvg-group-title rejected">
           <span class="fvg-group-icon">🚫</span> Strong Rejection at FVG
           <span class="fvg-group-sub">Price touched the FVG zone but reversed strongly away</span>
@@ -331,8 +373,8 @@
         <div id="fvg-rejected" class="fvg-list"></div>
       </div>
 
-      <!-- Passed -->
-      <div class="fvg-group">
+      <!-- Passed — hidden by default (consumed FVGs) -->
+      <div class="fvg-group fx-hidden" data-group="passed">
         <div class="fvg-group-title passed">
           <span class="fvg-group-icon">✅</span> Passed Through FVG (Filled)
           <span class="fvg-group-sub">Price has passed through and filled the Fair Value Gap</span>
