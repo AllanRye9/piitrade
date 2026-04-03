@@ -408,7 +408,16 @@
       All trading pairs classified by their current relationship to major support and
       resistance levels — from those approaching, to those touching, to confirmed breaks.
     </p>
-    <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
+
+    <!-- S/R Group Filter Bar -->
+    <div class="fvg-filter-bar">
+      <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Group:</span>
+      <button class="fvg-filter-btn sr-filter-btn active" data-sr-filter="soon_touching">📍 Soon Touching</button>
+      <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="touched">🎯 Touched</button>
+      <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="broke">💥 Broke</button>
+      <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
+    </div>
+
     <div id="sr-loading" class="ta-loading">Loading S/R scanner…</div>
     <div id="sr-content" style="display:none">
       <!-- Soon Touching -->
@@ -420,7 +429,7 @@
         <div id="sr-soon-touching" class="fvg-list"></div>
       </div>
       <!-- Touched -->
-      <div class="sr-group" data-sr-group="touched">
+      <div class="sr-group fx-hidden" data-sr-group="touched">
         <div class="fvg-group-title reached">
           <span class="fvg-group-icon">🎯</span> Touched
           <span class="fvg-group-sub">Price is right at the S/R level — potential reversal or breakout</span>
@@ -428,7 +437,7 @@
         <div id="sr-touched" class="fvg-list"></div>
       </div>
       <!-- Broke -->
-      <div class="sr-group" data-sr-group="broke">
+      <div class="sr-group fx-hidden" data-sr-group="broke">
         <div class="fvg-group-title rejected">
           <span class="fvg-group-icon">💥</span> Broke
           <span class="fvg-group-sub">Price has broken through the level with confirmed momentum</span>

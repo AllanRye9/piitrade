@@ -1443,6 +1443,20 @@ if (refreshSrBtn) {
   });
 }
 
+// S/R group filter (tabs within the S/R Breaks section)
+function applySrFilter(filter) {
+  document.querySelectorAll('.sr-group').forEach(group => {
+    group.classList.toggle('fx-hidden', group.dataset.srGroup !== filter);
+  });
+  document.querySelectorAll('.sr-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.srFilter === filter);
+  });
+}
+
+document.querySelectorAll('.sr-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => applySrFilter(btn.dataset.srFilter));
+});
+
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 // Per-pair last-seen direction cache so switching pairs doesn't trigger
 // false "new signal" notifications on the initial load for that pair.
@@ -1532,7 +1546,15 @@ activateTab('section-signal');
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
 Promise.all([loadSignal(currentPair), loadNews()])
-  .finally(() => hidePageLoader());
+  .finally(() => {
+    hidePageLoader();
+    // Pre-fetch all other tab resources silently in the background so that
+    // when a user clicks any tab the data is already rendered and ready.
+    loadFvgScanner();
+    loadSrBreakouts();
+    loadVolatilePairs(currentVolatileTf);
+    loadReversalPairs();
+  });
 resetAutoRefresh();
 
 // ─── Live Price for Technical Analysis ────────────────────────────────────────
