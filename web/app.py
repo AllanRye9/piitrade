@@ -514,6 +514,38 @@ _YF_HEADERS = {
 # Stock tickers served via Yahoo Finance (real-time prices, no cache warm-up needed)
 _STOCK_TICKERS: frozenset[str] = frozenset({"AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "META"})
 
+# Commodity pairs served via Yahoo Finance futures tickers
+_COMMODITY_PAIRS: frozenset[str] = frozenset({"XAU/USD", "XAG/USD", "WTI/USD", "BRENT/USD"})
+
+# Crypto pairs served via Yahoo Finance crypto tickers
+_CRYPTO_PAIRS: frozenset[str] = frozenset({"BTC/USD", "ETH/USD", "BNB/USD", "XRP/USD", "SOL/USD"})
+
+# All pairs requiring Yahoo Finance (stocks + commodities + crypto)
+_YF_PAIRS: frozenset[str] = _STOCK_TICKERS | _COMMODITY_PAIRS | _CRYPTO_PAIRS
+
+# Mapping from pair name to Yahoo Finance ticker symbol
+_YF_TICKER_MAP: dict[str, str] = {
+    # Stocks
+    "AAPL": "AAPL",
+    "TSLA": "TSLA",
+    "NVDA": "NVDA",
+    "AMZN": "AMZN",
+    "MSFT": "MSFT",
+    "GOOGL": "GOOGL",
+    "META": "META",
+    # Commodities (futures)
+    "XAU/USD": "GC=F",    # Gold futures
+    "XAG/USD": "SI=F",    # Silver futures
+    "WTI/USD": "CL=F",    # WTI Crude Oil futures
+    "BRENT/USD": "BZ=F",  # Brent Crude Oil futures
+    # Crypto
+    "BTC/USD": "BTC-USD",
+    "ETH/USD": "ETH-USD",
+    "BNB/USD": "BNB-USD",
+    "XRP/USD": "XRP-USD",
+    "SOL/USD": "SOL-USD",
+}
+
 
 def _fetch_yf_rate(ticker: str) -> float | None:
     """Fetch the current price for a Yahoo Finance ticker (stock or index)."""
@@ -566,8 +598,9 @@ def _fetch_live_rate(pair: str) -> float | None:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["rate"]
-    if pair in _STOCK_TICKERS:
-        rate: float | None = _fetch_yf_rate(pair)
+    if pair in _YF_PAIRS:
+        yf_ticker = _YF_TICKER_MAP.get(pair, pair)
+        rate: float | None = _fetch_yf_rate(yf_ticker)
     else:
         try:
             base, quote = pair.split("/")
@@ -593,8 +626,9 @@ def _fetch_historical_rates(pair: str, days: int = 30) -> dict[str, float]:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["data"]
-    if pair in _STOCK_TICKERS:
-        data = _fetch_yf_historical(pair, days)
+    if pair in _YF_PAIRS:
+        yf_ticker = _YF_TICKER_MAP.get(pair, pair)
+        data = _fetch_yf_historical(yf_ticker, days)
     else:
         try:
             base, quote = pair.split("/")
@@ -620,6 +654,18 @@ def _fetch_historical_rates(pair: str, days: int = 30) -> dict[str, float]:
 def _pair_pip_dec(pair: str) -> tuple[float, int]:
     """Return (pip_size, decimal_places) for the given trading pair."""
     if pair in _STOCK_TICKERS:
+        return 0.01, 2
+    if pair in _COMMODITY_PAIRS:
+        # Gold/Silver/Oil use 2 decimal places; silver uses 3 but we round to 2
+        if pair == "XAG/USD":
+            return 0.001, 3
+        return 0.01, 2
+    if pair in _CRYPTO_PAIRS:
+        # BTC uses whole-dollar pips; ETH/BNB/SOL use $0.01; XRP uses $0.0001
+        if pair == "BTC/USD":
+            return 1.0, 2
+        if pair == "XRP/USD":
+            return 0.0001, 4
         return 0.01, 2
     if "JPY" in pair:
         return 0.01, 2
@@ -685,6 +731,10 @@ _SUPPORTED_PAIRS = (
     # ── Exotic pairs ───────────────────────────────────────────────────────────
     "USD/MXN", "USD/NOK", "USD/SEK", "USD/SGD", "USD/HKD",
     "USD/TRY", "USD/ZAR", "USD/CNY",
+    # ── Commodities (real-time via Yahoo Finance futures) ──────────────────────
+    "XAU/USD", "XAG/USD", "WTI/USD", "BRENT/USD",
+    # ── Major Cryptocurrencies (real-time via Yahoo Finance) ───────────────────
+    "BTC/USD", "ETH/USD", "BNB/USD", "XRP/USD", "SOL/USD",
     # ── Stocks (real-time via Yahoo Finance) ───────────────────────────────────
     "AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "META",
 )
@@ -752,6 +802,17 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "MSFT": {"direction": "BUY",  "confidence": 70.8, "entry_price": 395.00, "take_profit": 415.00, "stop_loss": 383.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "GOOGL": {"direction": "HOLD", "confidence": 55.1, "entry_price": 170.00, "take_profit": 178.00, "stop_loss": 165.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "META": {"direction": "BUY",  "confidence": 71.2, "entry_price": 580.00, "take_profit": 610.00, "stop_loss": 562.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Commodities (Yahoo Finance futures) ───────────────────────────────────
+    "XAU/USD":   {"direction": "BUY",  "confidence": 76.8, "entry_price": 3120.00, "take_profit": 3180.00, "stop_loss": 3090.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XAG/USD":   {"direction": "BUY",  "confidence": 64.3, "entry_price": 34.250,  "take_profit": 35.500,  "stop_loss": 33.600,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "WTI/USD":   {"direction": "SELL", "confidence": 62.1, "entry_price": 71.50,   "take_profit": 68.00,   "stop_loss": 73.50,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "BRENT/USD": {"direction": "SELL", "confidence": 60.5, "entry_price": 75.20,   "take_profit": 71.50,   "stop_loss": 77.30,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Crypto (Yahoo Finance) ─────────────────────────────────────────────────
+    "BTC/USD": {"direction": "HOLD", "confidence": 58.4, "entry_price": 82500.00, "take_profit": 87000.00, "stop_loss": 79000.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "ETH/USD": {"direction": "SELL", "confidence": 63.7, "entry_price": 1790.00,  "take_profit": 1650.00,  "stop_loss": 1870.00,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "BNB/USD": {"direction": "HOLD", "confidence": 54.2, "entry_price": 590.00,   "take_profit": 625.00,   "stop_loss": 565.00,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XRP/USD": {"direction": "BUY",  "confidence": 67.9, "entry_price": 2.1850,   "take_profit": 2.3500,   "stop_loss": 2.0900,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "SOL/USD": {"direction": "SELL", "confidence": 61.3, "entry_price": 120.50,   "take_profit": 108.00,   "stop_loss": 128.00,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
 }
 
 _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]] = {
@@ -820,6 +881,17 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/TRY": (38.200, 0.0001, _gen_seq("USD/TRY")),
     "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
+    # ── Commodities (pip=0.01 for gold/oil, 0.001 for silver) ─────────────────
+    "XAU/USD":   (3050.00, 0.01,  _gen_seq("XAU/USD")),
+    "XAG/USD":   (33.000,  0.001, _gen_seq("XAG/USD")),
+    "WTI/USD":   (70.00,   0.01,  _gen_seq("WTI/USD")),
+    "BRENT/USD": (74.00,   0.01,  _gen_seq("BRENT/USD")),
+    # ── Crypto (pip=1.0 for BTC, 0.01 for others, 0.0001 for XRP) ─────────────
+    "BTC/USD": (80000.00, 1.0,    _gen_seq("BTC/USD")),
+    "ETH/USD": (1750.00,  0.01,   _gen_seq("ETH/USD")),
+    "BNB/USD": (580.00,   0.01,   _gen_seq("BNB/USD")),
+    "XRP/USD": (2.1000,   0.0001, _gen_seq("XRP/USD")),
+    "SOL/USD": (118.00,   0.01,   _gen_seq("SOL/USD")),
     # ── Stocks (pip=0.01 matches _pair_pip_dec; seq deltas give ~$0.20–$0.60 daily moves) ──
     "AAPL":  (210.00, 0.01, _gen_seq("AAPL")),
     "TSLA":  (270.00, 0.01, _gen_seq("TSLA")),
@@ -838,18 +910,34 @@ def _make_news_items() -> list[dict[str, Any]]:
         return (today - timedelta(hours=hours_ago, minutes=extra_minutes)).isoformat()
 
     return [
-        {"headline": "Trump tariff shock: 10% blanket import levy triggers global market sell-off", "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 10)},
-        {"headline": "S&P 500 drops 4.8% as tariff fears hammer risk appetite; tech leads losses",  "sentiment": "negative", "source": "MarketWatch", "published_at": _ts(0, 30)},
-        {"headline": "USD surges on safe-haven demand; EUR/USD slides below 1.09 on trade war fears","sentiment": "negative", "source": "FXStreet",   "published_at": _ts(1)},
-        {"headline": "NVIDIA falls 7% amid chip export restrictions tied to new tariff framework",    "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 20)},
-        {"headline": "Bank of Japan holds rates at 0.5%; yen gains as investors flee equities",       "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2)},
-        {"headline": "Apple and Meta lead tech rout; Nasdaq-100 logs worst session since 2022",       "sentiment": "negative", "source": "WSJ",        "published_at": _ts(2, 30)},
-        {"headline": "ECB signals faster rate cuts if tariffs dent Eurozone growth outlook",          "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(3)},
-        {"headline": "AUD/USD hits 5-year low as commodity currencies crushed by trade war fears",   "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(3, 45)},
-        {"headline": "Tesla Q1 deliveries miss estimates by 15%; shares extend monthly decline",      "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(4, 15)},
-        {"headline": "Gold rises 1.2% to record $3,120/oz as investors seek safe-haven assets",      "sentiment": "positive", "source": "MarketWatch","published_at": _ts(5)},
-        {"headline": "Microsoft Azure revenue up 33% YoY; AI services offset macro headwinds",       "sentiment": "positive", "source": "WSJ",        "published_at": _ts(5, 30)},
-        {"headline": "Fed's Powell warns tariffs are 'highly uncertain'; rules out emergency cuts",   "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(6)},
+        # ── Forex ──────────────────────────────────────────────────────────────
+        {"headline": "USD surges on safe-haven demand; EUR/USD slides below 1.09 on trade war fears", "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(1),     "category": "forex"},
+        {"headline": "Bank of Japan holds rates at 0.5%; yen gains as investors flee equities",        "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2),     "category": "forex"},
+        {"headline": "ECB signals faster rate cuts if tariffs dent Eurozone growth outlook",           "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(3),     "category": "forex"},
+        {"headline": "AUD/USD hits 5-year low as commodity currencies crushed by trade war fears",    "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(3, 45), "category": "forex"},
+        {"headline": "GBP/USD rebounds after UK inflation data surprises to the upside",               "sentiment": "positive", "source": "Bloomberg",  "published_at": _ts(5),     "category": "forex"},
+        {"headline": "Fed's Powell warns tariffs are 'highly uncertain'; rules out emergency cuts",    "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(6),     "category": "forex"},
+        {"headline": "Dollar index DXY climbs to 104.8 as risk-off mood sweeps global markets",       "sentiment": "negative", "source": "MarketWatch","published_at": _ts(7),     "category": "forex"},
+        # ── Stocks ─────────────────────────────────────────────────────────────
+        {"headline": "S&P 500 drops 4.8% as tariff fears hammer risk appetite; tech leads losses",   "sentiment": "negative", "source": "MarketWatch", "published_at": _ts(0, 30), "category": "stocks"},
+        {"headline": "Trump tariff shock: 10% blanket import levy triggers global market sell-off",   "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 10), "category": "stocks"},
+        {"headline": "NVIDIA falls 7% amid chip export restrictions tied to new tariff framework",     "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 20), "category": "stocks"},
+        {"headline": "Apple and Meta lead tech rout; Nasdaq-100 logs worst session since 2022",        "sentiment": "negative", "source": "WSJ",        "published_at": _ts(2, 30), "category": "stocks"},
+        {"headline": "Tesla Q1 deliveries miss estimates by 15%; shares extend monthly decline",       "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(4, 15), "category": "stocks"},
+        {"headline": "Microsoft Azure revenue up 33% YoY; AI services offset macro headwinds",        "sentiment": "positive", "source": "WSJ",        "published_at": _ts(5, 30), "category": "stocks"},
+        {"headline": "Amazon AWS beats estimates as enterprise cloud spending accelerates in Q1",      "sentiment": "positive", "source": "Reuters",    "published_at": _ts(8),     "category": "stocks"},
+        # ── Commodities ────────────────────────────────────────────────────────
+        {"headline": "Gold rises 1.2% to record $3,120/oz as investors seek safe-haven assets",       "sentiment": "positive", "source": "MarketWatch","published_at": _ts(5),     "category": "commodities"},
+        {"headline": "Silver outperforms gold; XAG/USD breaks $34 on industrial demand surge",        "sentiment": "positive", "source": "Kitco",      "published_at": _ts(6, 30), "category": "commodities"},
+        {"headline": "WTI crude oil falls 3.2% on demand fears; OPEC+ output talks stall",            "sentiment": "negative", "source": "Reuters",    "published_at": _ts(4),     "category": "commodities"},
+        {"headline": "Brent crude drops below $76 as tariff shock rattles energy markets globally",    "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(2, 15), "category": "commodities"},
+        {"headline": "Gold ETF inflows hit 18-month high as institutions pile into safe havens",       "sentiment": "positive", "source": "FT",         "published_at": _ts(9),     "category": "commodities"},
+        # ── Crypto ─────────────────────────────────────────────────────────────
+        {"headline": "Bitcoin drops 6% to $82,500 as risk-off sentiment sweeps crypto markets",       "sentiment": "negative", "source": "CoinDesk",   "published_at": _ts(1, 30), "category": "crypto"},
+        {"headline": "Ethereum falls below $1,800 amid broad market deleveraging and ETF outflows",   "sentiment": "negative", "source": "CoinTelegraph","published_at": _ts(3),    "category": "crypto"},
+        {"headline": "XRP surges 8% as Ripple wins key SEC ruling; legal uncertainty lifts",          "sentiment": "positive", "source": "Reuters",    "published_at": _ts(4, 45), "category": "crypto"},
+        {"headline": "Solana DeFi TVL hits new all-time high despite broader crypto weakness",         "sentiment": "positive", "source": "DeFi Pulse", "published_at": _ts(7, 15), "category": "crypto"},
+        {"headline": "BNB chain transaction volumes drop 12% amid declining retail sentiment",        "sentiment": "negative", "source": "CoinDesk",   "published_at": _ts(8, 30), "category": "crypto"},
     ]
 
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
@@ -1844,9 +1932,14 @@ async def forex_signals(pair: str = "EUR/USD"):
     if live_rate is not None:
         signal["entry_price"] = live_rate
         signal["generated_at"] = datetime.now(timezone.utc).isoformat()
-        signal["data_source"] = (
-            "Yahoo Finance" if pair in _STOCK_TICKERS else "Frankfurter API (ECB)"
-        )
+        if pair in _STOCK_TICKERS:
+            signal["data_source"] = "Yahoo Finance"
+        elif pair in _COMMODITY_PAIRS:
+            signal["data_source"] = "Yahoo Finance (Futures)"
+        elif pair in _CRYPTO_PAIRS:
+            signal["data_source"] = "Yahoo Finance (Crypto)"
+        else:
+            signal["data_source"] = "Frankfurter API (ECB)"
         signal["is_live"] = True
         if hist_rates:
             prices = list(hist_rates.values())
@@ -1896,10 +1989,16 @@ async def forex_pairs():
     major: list[str] = []
     minor: list[str] = []
     exotic: list[str] = []
+    commodities: list[str] = []
+    crypto: list[str] = []
     stocks: list[str] = []
     for p in _SUPPORTED_PAIRS:
         if p in _STOCK_TICKERS:
             stocks.append(p)
+        elif p in _COMMODITY_PAIRS:
+            commodities.append(p)
+        elif p in _CRYPTO_PAIRS:
+            crypto.append(p)
         else:
             parts = p.split("/")
             base, quote = parts[0], parts[1]
@@ -1911,12 +2010,17 @@ async def forex_pairs():
                     exotic.append(p)
             else:
                 minor.append(p)
+    # Check if Yahoo Finance is available (determines if stocks/commodities/crypto can be shown)
+    yf_live = _fetch_live_rate("AAPL") is not None
     return JSONResponse({
         "major": major,
         "minor": minor,
         "exotic": exotic,
+        "commodities": commodities,
+        "crypto": crypto,
         "stocks": stocks,
         "all": list(_SUPPORTED_PAIRS),
+        "yf_live": yf_live,
     })
 
 
@@ -2171,10 +2275,10 @@ async def forex_sr_breakouts():
 
 @app.get("/api/forex/pattern-scanner")
 async def forex_pattern_scanner():
-    """Detect price action formations across all supported pairs.
+    """Detect market structure formations across all supported pairs.
 
     Analyses each pair's technical data (BOS, CHoCH, FVG status, S/R proximity,
-    and signal strength) and maps them to named price-action formations.
+    and signal strength) and maps them to named market structure formations.
 
     Each pattern entry includes:
     - ``pair``        : trading pair symbol
@@ -2207,7 +2311,7 @@ async def forex_pattern_scanner():
                 "description": (
                     f"{pair}: {choch['description']} at level {choch['level']:.5g}. "
                     "CHoCH signals a potential trend reversal — one of the strongest "
-                    "price action formations."
+                    "market structure formations."
                 ),
             })
 

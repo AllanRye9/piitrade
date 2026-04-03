@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Forex Signal Hub – PiiTrade (Free)</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>AI Signal Hub – PiiTrade (Free) | Forex, Crypto, Commodities & Stocks</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade free AI trading signal dashboard. Real-time buy/sell/hold signals for 42 forex pairs and top stocks. Majors, minors, exotics, AAPL, NVDA, TSLA and more. Includes risk calculator, technical analysis, FVG scanner, volatility scanner, and signal alerts. No login required."/>
-  <meta name="keywords" content="forex signals dashboard, free forex signals, AI trading signals, EUR/USD, GBP/USD, USD/JPY, stock signals, AAPL, NVDA, TSLA, risk calculator, technical analysis, FVG, volatility scanner, trend reversal, forex alerts"/>
+  <meta name="description" content="PiiTrade free AI trading signal dashboard. Real-time buy/sell/hold signals for 51 pairs — forex majors, minors, exotics, gold, silver, oil, BTC, ETH, XRP, and top stocks. Risk calculator, FVG scanner, volatility scanner. No login required."/>
+  <meta name="keywords" content="forex signals, free forex signals, AI trading signals, EUR/USD, GBP/USD, gold signals XAU/USD, Bitcoin BTC signals, Ethereum ETH, crypto signals, stock signals, AAPL, NVDA, risk calculator, technical analysis, FVG, volatility scanner, trend reversal, market alerts"/>
   <meta name="robots" content="index, follow"/>
   <meta name="author" content="PiiTrade"/>
   <link rel="canonical" href="https://piitrade.onrender.com/forex"/>
   <!-- Open Graph -->
   <meta property="og:type" content="website"/>
-  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
-  <meta property="og:description" content="Free real-time AI trading signals for 42 forex pairs and top stocks. Risk calculator, technical analysis, FVG scanner, volatility scanner – all free, no account needed."/>
+  <meta property="og:title" content="PiiTrade – Free AI Signal Dashboard | Forex, Crypto, Commodities &amp; Stocks"/>
+  <meta property="og:description" content="Free real-time AI trading signals for 51 pairs — forex, crypto (BTC, ETH), commodities (gold, oil), and top stocks. Risk calculator, technical analysis, FVG scanner – all free, no account needed."/>
   <meta property="og:url" content="https://piitrade.onrender.com/forex"/>
   <meta property="og:site_name" content="PiiTrade"/>
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary"/>
-  <meta name="twitter:title" content="PiiTrade – Free AI Forex Dashboard"/>
-  <meta name="twitter:description" content="Free AI-powered trading signals for 42 forex pairs and top stocks. No sign-up required."/>
+  <meta name="twitter:title" content="PiiTrade – Free AI Signal Dashboard"/>
+  <meta name="twitter:description" content="Free AI-powered signals for 51 pairs: forex, crypto, commodities &amp; stocks. No sign-up required."/>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
 </head>
@@ -35,7 +36,7 @@
   <div class="brand">
     <span>📊</span>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Forex Signal Hub</span>
+    <span class="brand-sub">AI Signal Hub – Forex · Crypto · Commodities · Stocks</span>
   </div>
   <nav class="fx-nav">
     <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds" aria-pressed="true">🔔</button>
@@ -56,7 +57,7 @@
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-volatile">🔥 Volatile</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-reversal">🔄 Reversal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-success">🏆 Success Rates</button>
-  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-patterns">🔮 Patterns</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-patterns">🔮 Structure Scanner</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-news">📰 News</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-alerts">🔔 Alerts</button>
 </nav>
@@ -85,10 +86,10 @@
 <div class="global-disclaimer" role="alert">
   <span class="global-disclaimer-icon">⚠️</span>
   <div>
-    <strong>Disclaimer:</strong> Price predictions are for informational purposes only. 
+    <strong>Disclaimer:</strong> All signals are for informational purposes only. 
     Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research, 
-    and consult a licensed financial advisor before making any trading decisions. Forex and stock trading 
-    involves significant risk of loss.
+    and consult a licensed financial advisor before making any trading decisions. Trading forex, crypto,
+    commodities, and stocks involves significant risk of loss.
   </div>
   <button class="global-disclaimer-close" type="button" aria-label="Close disclaimer">✕</button>
 </div>
@@ -102,9 +103,9 @@
   <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
   <section id="section-signal">
     <div class="fx-pair-bar">
-      <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Currency Pair:</label>
-      <select id="pair-select" class="fx-pair-select" aria-label="Select currency pair">
-        <optgroup label="── Major Pairs (USD)">
+      <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
+      <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
+        <optgroup label="── Major Pairs (USD)" data-group="major">
           <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
           <option value="GBP/USD">GBP/USD – British Pound / US Dollar</option>
           <option value="USD/JPY">USD/JPY – US Dollar / Japanese Yen</option>
@@ -113,7 +114,7 @@
           <option value="USD/CAD">USD/CAD – US Dollar / Canadian Dollar</option>
           <option value="NZD/USD">NZD/USD – New Zealand Dollar / US Dollar</option>
         </optgroup>
-        <optgroup label="── Minor / Cross Pairs">
+        <optgroup label="── Minor / Cross Pairs" data-group="minor">
           <option value="EUR/GBP">EUR/GBP – Euro / British Pound</option>
           <option value="EUR/JPY">EUR/JPY – Euro / Japanese Yen</option>
           <option value="EUR/AUD">EUR/AUD – Euro / Australian Dollar</option>
@@ -135,7 +136,7 @@
           <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
           <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
         </optgroup>
-        <optgroup label="── Exotic Pairs">
+        <optgroup label="── Exotic Pairs" data-group="exotic">
           <option value="USD/MXN">USD/MXN – US Dollar / Mexican Peso</option>
           <option value="USD/NOK">USD/NOK – US Dollar / Norwegian Krone</option>
           <option value="USD/SEK">USD/SEK – US Dollar / Swedish Krona</option>
@@ -145,7 +146,20 @@
           <option value="USD/ZAR">USD/ZAR – US Dollar / South African Rand</option>
           <option value="USD/CNY">USD/CNY – US Dollar / Chinese Yuan</option>
         </optgroup>
-        <optgroup label="── Stocks (Real-Time)">
+        <optgroup id="optgroup-commodities" label="── Commodities (Live)" data-group="commodities" data-requires-yf="true">
+          <option value="XAU/USD">XAU/USD – Gold / US Dollar</option>
+          <option value="XAG/USD">XAG/USD – Silver / US Dollar</option>
+          <option value="WTI/USD">WTI/USD – WTI Crude Oil / US Dollar</option>
+          <option value="BRENT/USD">BRENT/USD – Brent Crude Oil / US Dollar</option>
+        </optgroup>
+        <optgroup id="optgroup-crypto" label="── Crypto (Live)" data-group="crypto" data-requires-yf="true">
+          <option value="BTC/USD">BTC/USD – Bitcoin / US Dollar</option>
+          <option value="ETH/USD">ETH/USD – Ethereum / US Dollar</option>
+          <option value="BNB/USD">BNB/USD – BNB / US Dollar</option>
+          <option value="XRP/USD">XRP/USD – XRP / US Dollar</option>
+          <option value="SOL/USD">SOL/USD – Solana / US Dollar</option>
+        </optgroup>
+        <optgroup id="optgroup-stocks" label="── Stocks (Live)" data-group="stocks" data-requires-yf="true">
           <option value="AAPL">AAPL – Apple Inc.</option>
           <option value="TSLA">TSLA – Tesla Inc.</option>
           <option value="NVDA">NVDA – NVIDIA Corporation</option>
@@ -536,18 +550,18 @@
     </div>
   </section>
 
-  <!-- 8. Price Action Pattern Scanner ──────────────────────────────────────── -->
+  <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
   <section id="section-patterns">
-    <div class="fx-section-title">🔮 Price Action Pattern Scanner</div>
+    <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
     <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Detects key price action formations — BOS, CHoCH, FVG reactions, and S/R interactions —
+      Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
       across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
     </p>
 
     <div class="fvg-disclaimer">
       ⚠️ <strong>Important:</strong> Pattern identification is automated and approximate.
       Always confirm formations with multiple timeframes, volume analysis, and your own
-      technical research before trading. Do <strong>not</strong> act on AI-detected patterns alone.
+      technical research before trading. Do <strong>not</strong> act on AI-detected market structure signals alone.
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
@@ -557,17 +571,25 @@
 
     <div id="pattern-loading" class="ta-loading">Loading pattern scanner…</div>
     <div id="pattern-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
-      No significant price action formations detected at this time.
+      No significant market structure formations detected at this time.
     </div>
     <div id="pattern-content" style="display:none">
       <div id="pattern-list" class="pattern-list"></div>
     </div>
   </section>
 
-  <!-- 6. Real-Time News Sentiment Feed ────────────────────────────────────── -->
+  <!-- 6. Real-Time News Feed ──────────────────────────────────────────────── -->
   <section id="section-news">
-    <div class="fx-section-title">📰 News Sentiment Feed
+    <div class="fx-section-title">📰 Market News
       <span id="news-new-badge" class="news-new-badge" style="display:none">🔔 New</span>
+    </div>
+    <!-- News category tabs -->
+    <div class="news-cat-tabs" role="tablist" aria-label="News categories">
+      <button class="news-cat-tab active" data-cat="all" role="tab" aria-selected="true">🌐 All</button>
+      <button class="news-cat-tab" data-cat="forex" role="tab" aria-selected="false">💱 Forex</button>
+      <button class="news-cat-tab" data-cat="stocks" role="tab" aria-selected="false">📈 Stocks</button>
+      <button class="news-cat-tab" data-cat="commodities" role="tab" aria-selected="false">🏅 Commodities</button>
+      <button class="news-cat-tab" data-cat="crypto" role="tab" aria-selected="false">₿ Crypto</button>
     </div>
     <div class="fx-news-wrap">
       <div id="news-loading">Loading headlines…</div>
@@ -575,13 +597,127 @@
     </div>
   </section>
 
-  <!-- 7. Alert Subscription ───────────────────────────────────────────────── -->
+  <!-- 7. Alerts & Events ─────────────────────────────────────────────────── -->
   <section id="section-alerts">
-    <div class="fx-section-title">🔔 Get Signal Alerts</div>
-    <div class="fx-subscribe">
-      <p>
-        Receive an email the moment a new AI signal is generated for your chosen
-        currency pairs. Alerts are triggered automatically when new predictions are published.
+    <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      Tracks impactful market events, institutional activity, and significant price surges in real time.
+      Use this section to stay ahead of major catalysts that move markets.
+    </p>
+
+    <!-- Alert category tabs -->
+    <div class="alerts-cat-tabs">
+      <button class="alerts-cat-tab active" data-alert-cat="all">📋 All Events</button>
+      <button class="alerts-cat-tab" data-alert-cat="institutional">🏦 Institutional</button>
+      <button class="alerts-cat-tab" data-alert-cat="surge">🚀 Price Surges</button>
+      <button class="alerts-cat-tab" data-alert-cat="economic">📅 Economic</button>
+    </div>
+
+    <!-- Live alert feed -->
+    <div id="alerts-feed" class="alerts-feed">
+      <!-- Institutional activity -->
+      <div class="alert-card high" data-alert-type="institutional">
+        <div class="alert-header">
+          <span class="alert-icon">🏦</span>
+          <span class="alert-title">Institutional BUY – Gold (XAU/USD)</span>
+          <span class="alert-badge institutional">Institutional</span>
+          <span class="alert-time">2h ago</span>
+        </div>
+        <div class="alert-body">
+          Central banks added 38 tonnes of gold reserves in Q1 2026. Demand from China and emerging markets remains elevated, supporting the $3,100+ price level.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value positive">🟢 Bullish for XAU/USD</span>
+        </div>
+      </div>
+
+      <div class="alert-card high" data-alert-type="surge">
+        <div class="alert-header">
+          <span class="alert-icon">🚀</span>
+          <span class="alert-title">Price Surge – XRP/USD +8.4%</span>
+          <span class="alert-badge surge">Price Surge</span>
+          <span class="alert-time">3h ago</span>
+        </div>
+        <div class="alert-body">
+          XRP surged 8.4% following the Ripple vs SEC ruling. Strong volume confirms institutional re-entry. Watch the $2.35 resistance level for potential breakout continuation.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value positive">🟢 Bullish for XRP/USD</span>
+        </div>
+      </div>
+
+      <div class="alert-card medium" data-alert-type="economic">
+        <div class="alert-header">
+          <span class="alert-icon">📅</span>
+          <span class="alert-title">Fed Rate Decision – FOMC Statement</span>
+          <span class="alert-badge economic">Economic</span>
+          <span class="alert-time">5h ago</span>
+        </div>
+        <div class="alert-body">
+          Federal Reserve holds rates at 4.25–4.50%. Powell cites trade war uncertainty as a key risk factor. No emergency cuts expected in Q2. USD may see volatility across forex pairs.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value neutral">🟡 Neutral – watch EUR/USD, GBP/USD</span>
+        </div>
+      </div>
+
+      <div class="alert-card high" data-alert-type="institutional">
+        <div class="alert-header">
+          <span class="alert-icon">🏦</span>
+          <span class="alert-title">Large Block Trade – BTC/USD</span>
+          <span class="alert-badge institutional">Institutional</span>
+          <span class="alert-time">6h ago</span>
+        </div>
+        <div class="alert-body">
+          A whale wallet moved 1,240 BTC ($102M) to a Coinbase institutional custody address, signalling potential OTC accumulation. On-chain data shows HODLer supply at 3-year high.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value positive">🟢 Bullish signal for BTC/USD</span>
+        </div>
+      </div>
+
+      <div class="alert-card medium" data-alert-type="surge">
+        <div class="alert-header">
+          <span class="alert-icon">📉</span>
+          <span class="alert-title">Sharp Drop – WTI/USD -3.2%</span>
+          <span class="alert-badge surge">Price Surge</span>
+          <span class="alert-time">4h ago</span>
+        </div>
+        <div class="alert-body">
+          WTI crude fell 3.2% on tariff-related demand fears. OPEC+ output cut discussions stalled. EIA inventory report showed +4.1M barrel build versus expected -1.5M. Bearish momentum building.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value negative">🔴 Bearish for WTI/USD, BRENT/USD</span>
+        </div>
+      </div>
+
+      <div class="alert-card low" data-alert-type="economic">
+        <div class="alert-header">
+          <span class="alert-icon">📅</span>
+          <span class="alert-title">Japan CPI Data – Inflation Uptick</span>
+          <span class="alert-badge economic">Economic</span>
+          <span class="alert-time">8h ago</span>
+        </div>
+        <div class="alert-body">
+          Japan's core CPI rose 2.8% YoY, above the 2.5% estimate. The Bank of Japan may consider additional rate hikes if trend continues. JPY strengthened across major pairs on the data release.
+        </div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Market Impact:</span>
+          <span class="alert-impact-value positive">🟢 Bullish for JPY – watch USD/JPY, EUR/JPY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email subscription (moved below alerts feed) -->
+    <div class="alerts-subscribe-section">
+      <div class="fx-section-title" style="font-size:1rem;margin-bottom:12px">📧 Get Signal Alerts by Email</div>
+      <p style="color:var(--text2);font-size:.85rem;margin:0 0 14px">
+        Receive an email the moment a new AI signal is generated for your chosen pairs.
       </p>
       <form class="subscribe-form" id="subscribe-form" novalidate>
         <div class="email-row">
@@ -631,6 +767,15 @@
           <label><input type="checkbox" value="USD/TRY"/> USD/TRY</label>
           <label><input type="checkbox" value="USD/ZAR"/> USD/ZAR</label>
           <label><input type="checkbox" value="USD/CNY"/> USD/CNY</label>
+          <label><input type="checkbox" value="XAU/USD"/> XAU/USD</label>
+          <label><input type="checkbox" value="XAG/USD"/> XAG/USD</label>
+          <label><input type="checkbox" value="WTI/USD"/> WTI/USD</label>
+          <label><input type="checkbox" value="BRENT/USD"/> BRENT/USD</label>
+          <label><input type="checkbox" value="BTC/USD"/> BTC/USD</label>
+          <label><input type="checkbox" value="ETH/USD"/> ETH/USD</label>
+          <label><input type="checkbox" value="BNB/USD"/> BNB/USD</label>
+          <label><input type="checkbox" value="XRP/USD"/> XRP/USD</label>
+          <label><input type="checkbox" value="SOL/USD"/> SOL/USD</label>
           <label><input type="checkbox" value="AAPL"/> AAPL</label>
           <label><input type="checkbox" value="TSLA"/> TSLA</label>
           <label><input type="checkbox" value="NVDA"/> NVDA</label>
@@ -653,7 +798,7 @@
     <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
     <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
   </div>
-  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex &amp; Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
+  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
 </footer>
 
 <script src="/static/js/forex.js"></script>

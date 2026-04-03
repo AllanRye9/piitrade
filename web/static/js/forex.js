@@ -196,7 +196,7 @@ const ALL_SECTIONS = [
   'section-signal', 'section-history', 'section-risk',
   'section-technical', 'section-fvg', 'section-sr-breaks',
   'section-volatile', 'section-reversal',
-  'section-success', 'section-news', 'section-alerts',
+  'section-success', 'section-patterns', 'section-news', 'section-alerts',
 ];
 
 // Sections belonging to each tab
@@ -209,6 +209,7 @@ const TAB_SECTIONS = {
   'section-volatile':  ['section-volatile'],
   'section-reversal':  ['section-reversal'],
   'section-success':   ['section-success'],
+  'section-patterns':  ['section-patterns'],
   'section-news':      ['section-news'],
   'section-alerts':    ['section-alerts'],
 };
@@ -328,13 +329,29 @@ function isJpy(pair) {
 
 // Explicit set of stock tickers — must stay in sync with _STOCK_TICKERS in web/app.py
 const STOCK_TICKERS = new Set(['AAPL', 'TSLA', 'NVDA', 'AMZN', 'MSFT', 'GOOGL', 'META']);
+// Commodity and crypto pairs served via Yahoo Finance
+const COMMODITY_PAIRS = new Set(['XAU/USD', 'XAG/USD', 'WTI/USD', 'BRENT/USD']);
+const CRYPTO_PAIRS = new Set(['BTC/USD', 'ETH/USD', 'BNB/USD', 'XRP/USD', 'SOL/USD']);
+// All pairs that require Yahoo Finance (cached when YF unavailable)
+const YF_PAIRS = new Set([...STOCK_TICKERS, ...COMMODITY_PAIRS, ...CRYPTO_PAIRS]);
 
 function isStock(pair) {
   return pair && STOCK_TICKERS.has(pair);
 }
 
+function isCommodity(pair) {
+  return pair && COMMODITY_PAIRS.has(pair);
+}
+
+function isCrypto(pair) {
+  return pair && CRYPTO_PAIRS.has(pair);
+}
+
 function getPairDecimals(pair) {
-  if (isJpy(pair) || isStock(pair)) return 2;
+  if (pair === 'BTC/USD') return 2;
+  if (pair === 'XRP/USD') return 4;
+  if (pair === 'XAG/USD') return 3;
+  if (isJpy(pair) || isStock(pair) || isCommodity(pair) || isCrypto(pair)) return 2;
   return 4;
 }
 
@@ -913,6 +930,10 @@ const ALL_PAIRS = [
   // Exotics
   'USD/MXN', 'USD/NOK', 'USD/SEK', 'USD/SGD', 'USD/HKD',
   'USD/TRY', 'USD/ZAR', 'USD/CNY',
+  // Commodities
+  'XAU/USD', 'XAG/USD', 'WTI/USD', 'BRENT/USD',
+  // Crypto
+  'BTC/USD', 'ETH/USD', 'BNB/USD', 'XRP/USD', 'SOL/USD',
   // Stocks
   'AAPL', 'TSLA', 'NVDA', 'AMZN', 'MSFT', 'GOOGL', 'META',
 ];
@@ -973,7 +994,11 @@ function updateSuccessRateCard(pair, data) {
 /** Fetch success rates for all pairs in small parallel batches (rate-limit friendly). */
 async function loadAllPairSuccessRates() {
   const btn = document.getElementById('btn-load-all-pairs');
-  if (btn) { btn.disabled = true; btn.textContent = '⟳ Loading…'; }
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('loading-spin');
+    btn.textContent = '⟳ Loading…';
+  }
 
   const grid = document.getElementById('success-rate-grid');
   const placeholder = document.getElementById('success-loading');
@@ -1014,7 +1039,11 @@ async function loadAllPairSuccessRates() {
     }
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = '⟳ Reload All Pairs'; }
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.remove('loading-spin');
+    btn.textContent = '⟳ Reload All Pairs';
+  }
   showToast('toast-info', '🏆', 'Success Rates Updated', `Loaded data for ${ALL_PAIRS.length} pairs.`);
 }
 
@@ -1025,21 +1054,29 @@ if (loadAllBtn) loadAllBtn.addEventListener('click', loadAllPairSuccessRates);
 // Track known headlines so we can detect newly arrived news items
 let _knownNewsHeadlines = new Set();
 let _newsInitialLoad = true;
+let _allNewsItems = [];
+let _activeNewsCat = 'all';
 
 async function loadNews() {
   try {
     const res = await fetch('/api/forex/news');
     if (!res.ok) throw new Error(await res.text());
     const { news } = await res.json();
+    _allNewsItems = news;
     renderNews(news);
   } catch (err) {
-    newsLoadingEl.textContent = 'Could not load news at this time.';
+    if (newsLoadingEl) newsLoadingEl.textContent = 'Could not load news at this time.';
     console.error('Failed to load news:', err);
   }
 }
 
 function renderNews(items) {
-  newsLoadingEl.style.display = 'none';
+  if (newsLoadingEl) newsLoadingEl.style.display = 'none';
+
+  // Filter by active category
+  const filtered = _activeNewsCat === 'all'
+    ? items
+    : items.filter(item => (item.category || 'forex') === _activeNewsCat);
 
   // Detect new headlines (skip notification on the very first load)
   const newItems = items.filter(item => !_knownNewsHeadlines.has(item.headline));
@@ -1063,19 +1100,50 @@ function renderNews(items) {
   }
   _newsInitialLoad = false;
 
-  newsListEl.innerHTML = items.map(item => `
-    <div class="news-card${newItems.some(n => n.headline === item.headline) ? ' news-card-new' : ''}">
+  const sentimentMarker = (s) => {
+    if (s === 'positive') return '<span class="sentiment-marker positive">▲ Positive</span>';
+    if (s === 'negative') return '<span class="sentiment-marker negative">▼ Negative</span>';
+    return '<span class="sentiment-marker neutral">→ Neutral</span>';
+  };
+
+  const catIcon = (cat) => {
+    const icons = { forex: '💱', stocks: '📈', commodities: '🏅', crypto: '₿' };
+    return cat ? `<span class="news-cat-chip">${icons[cat] || '📰'} ${cat}</span>` : '';
+  };
+
+  if (filtered.length === 0) {
+    newsListEl.innerHTML = '<div style="color:var(--text2);padding:24px 0;text-align:center">No news for this category at this time.</div>';
+    return;
+  }
+
+  newsListEl.innerHTML = filtered.map(item => `
+    <div class="news-card${newItems.some(n => n.headline === item.headline) ? ' news-card-new' : ''}" data-cat="${escapeHtml(item.category || 'forex')}">
       <span class="sentiment-icon">${sentimentIcon(item.sentiment)}</span>
       <div class="news-content">
         <div class="news-headline">${escapeHtml(item.headline)}</div>
         <div class="news-meta">
           <span class="source">${escapeHtml(item.source)}</span>
           <span>${formatDate(item.published_at)}</span>
-          <span class="sentiment-badge ${item.sentiment}">${item.sentiment}</span>
+          ${catIcon(item.category)}
+          ${sentimentMarker(item.sentiment)}
         </div>
       </div>
     </div>`).join('');
 }
+
+// News category tab click handler
+document.querySelectorAll('.news-cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.news-cat-tab').forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+    _activeNewsCat = tab.dataset.cat;
+    renderNews(_allNewsItems);
+  });
+});
 
 // ─── Alert Subscription ───────────────────────────────────────────────────────
 subscribeForm.addEventListener('submit', async (e) => {
@@ -1125,6 +1193,43 @@ function showSubscribeStatus(type, msg) {
   subscribeStatus.className = `subscribe-status ${type}`;
   subscribeStatus.textContent = msg;
 }
+
+// ─── Alerts Category Tabs ─────────────────────────────────────────────────────
+document.querySelectorAll('.alerts-cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.alerts-cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const cat = tab.dataset.alertCat;
+    document.querySelectorAll('#alerts-feed .alert-card').forEach(card => {
+      const cardType = card.dataset.alertType;
+      card.style.display = (cat === 'all' || cardType === cat) ? '' : 'none';
+    });
+  });
+});
+
+// ─── YF Live Status – Show/Hide Cached Pair Groups ───────────────────────────
+(async function checkYfStatus() {
+  try {
+    const res = await fetch('/api/forex/pairs');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.yf_live) {
+      // Hide stocks, commodities, and crypto optgroups when YF is unavailable
+      ['optgroup-commodities', 'optgroup-crypto', 'optgroup-stocks'].forEach(id => {
+        const grp = document.getElementById(id);
+        if (grp) {
+          // Remove options so they cannot be selected even if the optgroup label is visible
+          grp.querySelectorAll('option').forEach(opt => opt.remove());
+          // Add a disabled placeholder to indicate data is unavailable
+          const placeholder = document.createElement('option');
+          placeholder.disabled = true;
+          placeholder.textContent = '⚠️ Live feed unavailable';
+          grp.appendChild(placeholder);
+        }
+      });
+    }
+  } catch { /* silently ignore – forex pairs still work */ }
+})();
 
 // ─── FVG Scanner ─────────────────────────────────────────────────────────────
 let fvgLoaded = false;
@@ -1844,7 +1949,7 @@ if (refreshReversalBtn) {
   });
 }
 
-// ─── Price Action Pattern Scanner ────────────────────────────────────────────
+// ─── Structure & Pattern Scanner ─────────────────────────────────────────────
 let patternLoaded = false;
 
 /** Track pairs whose high-impact pattern has already triggered an alert
@@ -1871,7 +1976,7 @@ const PATTERN_ICONS = {
   strong_signal: '💎',
 };
 
-/** Load all price-action patterns from the API and render them. */
+/** Load all market structure patterns from the API and render them. */
 async function loadPatternScanner() {
   const loadingEl = document.getElementById('pattern-loading');
   const contentEl = document.getElementById('pattern-content');
