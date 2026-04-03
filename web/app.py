@@ -177,7 +177,7 @@ _RATE_LIMIT: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
 
 # ─── Support / forwarding email ───────────────────────────────────────────────
-_SUPPORT_ALERT_EMAIL = "support@yotweek.com"
+_SUPPORT_ALERT_EMAIL = os.environ.get("SUPPORT_ALERT_EMAIL", "support@yotweek.com")
 
 # ─── Visitor tracking ─────────────────────────────────────────────────────────
 # ip -> {first_seen, last_seen, country, page_views, first_date}
@@ -208,7 +208,7 @@ def _lookup_country_bg(ip: str) -> None:
     else:
         try:
             resp = _requests.get(
-                f"http://ip-api.com/json/{ip}?fields=country,countryCode",
+                f"https://ip-api.com/json/{ip}?fields=country,countryCode",
                 timeout=4,
             )
             if resp.status_code == 200:
@@ -221,6 +221,26 @@ def _lookup_country_bg(ip: str) -> None:
     with _VISITOR_LOG_LOCK:
         if ip in _VISITOR_LOG and not _VISITOR_LOG[ip].get("country"):
             _VISITOR_LOG[ip]["country"] = country
+
+
+def _mask_ip(ip: str) -> str:
+    """Return a privacy-safe display version of an IP address.
+
+    IPv4: mask the last octet (e.g. '203.0.113.1' → '203.0.113.***')
+    IPv6: keep only the first two groups (e.g. '2001:db8::1' → '2001:db8:***')
+    Other: show first 8 chars followed by ***
+    """
+    if "." in ip and ":" not in ip:
+        # IPv4
+        parts = ip.split(".")
+        if len(parts) == 4:
+            return f"{parts[0]}.{parts[1]}.{parts[2]}.*"
+    elif ":" in ip:
+        # IPv6
+        groups = ip.split(":")
+        if len(groups) >= 2:
+            return f"{groups[0]}:{groups[1]}:***"
+    return ip[:8] + "***"
 
 
 def _record_visit(ip: str) -> None:
@@ -1634,7 +1654,7 @@ async def admin_dashboard(request: Request):
         "top_countries": [{"country": c, "count": n} for c, n in top_countries],
         "recent_visitors": [
             {
-                "ip": ip[:8] + "***",  # Partially mask IP for privacy
+                "ip": _mask_ip(ip),
                 "country": data.get("country", "Unknown"),
                 "first_seen": data.get("first_seen", "")[:10],
                 "last_seen": data.get("last_seen", "")[:10],
@@ -1895,10 +1915,13 @@ async def forex_subscribe(request: Request):
         "pairs": pairs,
         "subscribed_at": datetime.now(timezone.utc).isoformat(),
     })
-    # Forward new subscriber info to support (backend only – address not exposed to frontend)
+    # Subscriber is stored before attempting the notification email so that
+    # a transient SMTP failure never prevents the subscription from being recorded.
+    # Forward new subscriber info to support (backend only – address not exposed to frontend).
+    # _send_email() silently swallows exceptions and returns False on failure.
     _send_email(
         _SUPPORT_ALERT_EMAIL,
-        f"PiiTrade – New Signal Alert Subscriber",
+        "PiiTrade – New Signal Alert Subscriber",
         f"<html><body style='font-family:sans-serif'>"
         f"<p><strong>New subscriber:</strong> {email}</p>"
         f"<p><strong>Pairs:</strong> {', '.join(pairs)}</p>"
