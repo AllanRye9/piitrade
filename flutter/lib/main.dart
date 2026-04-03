@@ -171,8 +171,8 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
 
 // ── Splash / loading screen ────────────────────────────────────────────────────
 
-const Duration _kSplashDuration = Duration(milliseconds: 2600);
-const Duration _kSplashFadeDuration = Duration(milliseconds: 600);
+const Duration _kSplashDuration = Duration(milliseconds: 1600);
+const Duration _kSplashFadeDuration = Duration(milliseconds: 400);
 
 class _SplashScreen extends StatefulWidget {
   final String serverUrl;
