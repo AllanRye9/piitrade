@@ -32,14 +32,14 @@
       <a href="#section-overview" class="sidenav-item active" onclick="showSection('section-overview', this)">
         <span>📊</span><span>Overview</span>
       </a>
+      <a href="#section-visitors" class="sidenav-item" onclick="showSection('section-visitors', this)">
+        <span>🌍</span><span>Visitors</span>
+      </a>
       <a href="#section-users" class="sidenav-item" onclick="showSection('section-users', this)">
         <span>👥</span><span>Users</span>
       </a>
       <a href="#section-subscriptions" class="sidenav-item" onclick="showSection('section-subscriptions', this)">
         <span>💳</span><span>Subscriptions</span>
-      </a>
-      <a href="#section-payments" class="sidenav-item" onclick="showSection('section-payments', this)">
-        <span>📋</span><span>Payments</span>
       </a>
       <a href="#section-subscribers" class="sidenav-item" onclick="showSection('section-subscribers', this)">
         <span>📬</span><span>Subscribers</span>
@@ -63,19 +63,24 @@
           <div class="stat-label">Total Users</div>
         </div>
         <div class="admin-stat-card">
-          <div class="stat-icon">🛡️</div>
-          <div class="stat-value" id="stat-admins">{{ users | selectattr('role','eq','admin') | list | length }}</div>
-          <div class="stat-label">Admin Accounts</div>
+          <div class="stat-icon">🌍</div>
+          <div class="stat-value">{{ visitor_stats.total_visitors }}</div>
+          <div class="stat-label">Total Visitors</div>
         </div>
         <div class="admin-stat-card">
-          <div class="stat-icon">💳</div>
-          <div class="stat-value">{{ users | selectattr('subscription_status','eq','active') | list | length }}</div>
-          <div class="stat-label">Active Subscriptions</div>
+          <div class="stat-icon">🗺️</div>
+          <div class="stat-value">{{ visitor_stats.unique_countries }}</div>
+          <div class="stat-label">Countries Reached</div>
         </div>
         <div class="admin-stat-card">
-          <div class="stat-icon">📋</div>
-          <div class="stat-value">{{ payment_confirmations | selectattr('status','eq','pending') | list | length }}</div>
-          <div class="stat-label">Pending Payments</div>
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">{{ visitor_stats.total_page_views }}</div>
+          <div class="stat-label">Total Page Views</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value">{{ visitor_stats.visitors_today }}</div>
+          <div class="stat-label">Visitors Today</div>
         </div>
         <div class="admin-stat-card">
           <div class="stat-icon">📬</div>
@@ -112,6 +117,90 @@
           </table>
         </div>
       </div>
+    </section>
+
+    <!-- ── Visitors ──────────────────────────────────────────────────────────── -->
+    <section id="section-visitors" class="admin-section" style="display:none">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">🌍 Visitor Analytics</h2>
+        <span class="admin-badge">{{ visitor_stats.total_visitors }} unique visitors</span>
+      </div>
+
+      <div class="admin-stats-grid" style="margin-bottom:24px">
+        <div class="admin-stat-card">
+          <div class="stat-icon">🌍</div>
+          <div class="stat-value">{{ visitor_stats.total_visitors }}</div>
+          <div class="stat-label">Unique Visitors</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">🗺️</div>
+          <div class="stat-value">{{ visitor_stats.unique_countries }}</div>
+          <div class="stat-label">Countries Reached</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">{{ visitor_stats.total_page_views }}</div>
+          <div class="stat-label">Total Page Views</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value">{{ visitor_stats.visitors_today }}</div>
+          <div class="stat-label">Visitors Today</div>
+        </div>
+      </div>
+
+      <div class="admin-info-row">
+        <!-- Top Countries -->
+        <div class="admin-info-card">
+          <h3 class="admin-info-title">🏆 Top Countries</h3>
+          {% if visitor_stats.top_countries %}
+          <table class="admin-table">
+            <thead><tr><th>Country</th><th>Visitors</th></tr></thead>
+            <tbody>
+              {% for row in visitor_stats.top_countries %}
+              <tr>
+                <td>{{ row.country }}</td>
+                <td>{{ row.count }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="td-empty" style="padding:16px">No visitor data yet.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Recent Visitors -->
+      <h3 class="admin-info-title" style="margin-top:24px;margin-bottom:12px">🕒 Recent Visitors</h3>
+      {% if visitor_stats.recent_visitors %}
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-full">
+          <thead>
+            <tr>
+              <th>IP (masked)</th>
+              <th>Country</th>
+              <th>First Seen</th>
+              <th>Last Seen</th>
+              <th>Page Views</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in visitor_stats.recent_visitors %}
+            <tr>
+              <td style="font-family:monospace">{{ v.ip }}</td>
+              <td>{{ v.country or '—' }}</td>
+              <td class="td-date">{{ v.first_seen }}</td>
+              <td class="td-date">{{ v.last_seen }}</td>
+              <td>{{ v.page_views }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="td-empty" style="padding:24px;text-align:center">No visitor data recorded yet.</div>
+      {% endif %}
     </section>
 
     <!-- ── Users ─────────────────────────────────────────────────────────── -->
@@ -223,64 +312,6 @@
             {% endif %}
             {% else %}
             <tr><td colspan="6" class="td-empty">No active subscriptions yet.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ── Payment Confirmations ──────────────────────────────────────────── -->
-    <section id="section-payments" class="admin-section" style="display:none">
-      <div class="admin-section-header">
-        <h2 class="admin-section-title">📋 Crypto Payment Confirmations</h2>
-        <span class="admin-badge">{{ payment_confirmations|length }} total</span>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table admin-table-full">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Plan</th>
-              <th>Amount</th>
-              <th>TX Hash</th>
-              <th>Submitted</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="payments-tbody">
-            {% for pmt in payment_confirmations %}
-            <tr id="pmt-row-{{ loop.index0 }}">
-              <td>{{ pmt.email }}</td>
-              <td>{{ pmt.plan }}</td>
-              <td>{% if pmt.price_usd %}${{ pmt.price_usd }}{% else %}—{% endif %}</td>
-              <td style="font-family:monospace;font-size:.8rem;word-break:break-all">
-                {{ pmt.tx_hash[:20] }}{% if pmt.tx_hash|length > 20 %}…{% endif %}
-              </td>
-              <td class="td-date">{{ pmt.submitted_at[:10] }}</td>
-              <td>
-                {% if pmt.status == 'approved' %}
-                <span style="color:#3fb950;font-weight:600">✅ Approved</span>
-                {% elif pmt.status == 'pending' %}
-                <span style="color:#e3b341;font-weight:600">⏳ Pending</span>
-                {% else %}
-                <span style="color:#f85149;font-weight:600">❌ {{ pmt.status }}</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if pmt.status == 'pending' %}
-                <button
-                  class="btn-primary"
-                  style="padding:4px 10px;font-size:.8rem"
-                  onclick="approvePayment({{ loop.index0 }})"
-                  title="Approve and activate subscription">✅ Approve</button>
-                {% else %}
-                <span class="td-muted">—</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="td-empty">No payment confirmations yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -436,21 +467,7 @@
   }
 
   /* Approve crypto payment */
-  async function approvePayment(idx) {
-    if (!confirm('Approve this payment and activate the subscription?')) return;
-    try {
-      const r = await fetch(`/api/admin/payments/${idx}/approve`, { method: 'POST' });
-      const d = await r.json();
-      if (d.success) {
-        showToast(d.message, 'success');
-        setTimeout(() => location.reload(), 1200);
-      } else {
-        showToast(d.error || 'Approval failed.', 'error');
-      }
-    } catch(e) {
-      showToast('Request failed: ' + e.message, 'error');
-    }
-  }
+  async function approvePayment(idx) { /* payment methods removed */ }
 
   /* Delete subscriber */
   async function deleteSubscriber(email) {
@@ -478,9 +495,9 @@
   (function() {
     const map = {
       '#section-overview':      0,
-      '#section-users':         1,
-      '#section-subscriptions': 2,
-      '#section-payments':      3,
+      '#section-visitors':      1,
+      '#section-users':         2,
+      '#section-subscriptions': 3,
       '#section-subscribers':   4,
       '#section-cache':         5,
     };

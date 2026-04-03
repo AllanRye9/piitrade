@@ -3,7 +3,23 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Forex Signal Hub</title>
+  <title>AI Forex Signal Hub – PiiTrade (Free)</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="PiiTrade free AI forex signal dashboard. Real-time buy/sell/hold signals for 21 currency pairs: EUR/USD, GBP/USD, USD/JPY, XAU/USD gold, silver, oil and more. Includes risk calculator, technical analysis, FVG scanner, volatility scanner, and signal alerts. No login required."/>
+  <meta name="keywords" content="forex signals dashboard, free forex signals, AI trading signals, EUR/USD, GBP/USD, USD/JPY, XAU/USD, gold signals, risk calculator, technical analysis, FVG, volatility scanner, trend reversal, forex alerts"/>
+  <meta name="robots" content="index, follow"/>
+  <meta name="author" content="PiiTrade"/>
+  <link rel="canonical" href="https://piitrade.onrender.com/forex"/>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
+  <meta property="og:description" content="Free real-time AI forex signals for 21 currency pairs. Risk calculator, technical analysis, FVG scanner, volatility scanner – all free, no account needed."/>
+  <meta property="og:url" content="https://piitrade.onrender.com/forex"/>
+  <meta property="og:site_name" content="PiiTrade"/>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="PiiTrade – Free AI Forex Dashboard"/>
+  <meta name="twitter:description" content="Free AI-powered forex signals for 21 pairs. No sign-up required."/>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
 </head>
@@ -23,13 +39,9 @@
   </div>
   <nav class="fx-nav">
     <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds" aria-pressed="true">🔔</button>
-    {% if current_user %}
-      {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
-      <a href="/profile" class="nav-user">👤 {{ current_user }}</a>
+    {% if current_user and is_admin %}
+      <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% else %}
-      <a href="/login" class="btn-outline">Login</a>
-      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>
@@ -556,13 +568,10 @@
 <footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
   <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
     <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
-    <a href="/subscribe" style="color:var(--text2);text-decoration:none">Subscribe</a>
     <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
-    <a href="/profile" style="color:var(--text2);text-decoration:none">Profile</a>
     <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
-    <a href="/logout" style="color:var(--text2);text-decoration:none">Logout</a>
   </div>
-  <div>© 2026 PiiTrade · AI Forex Signal Hub · Subscription-based signal service. Signals are for informational purposes only and do not constitute financial advice.</div>
+  <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute financial advice.</div>
 </footer>
 
 <script src="/static/js/forex.js"></script>
