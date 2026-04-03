@@ -1390,13 +1390,13 @@ function buildSrRow(item, idx) {
   const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
   const fmt   = v => Number(v).toFixed(dec);
   const svgStatus = isResistance ? 'resistance' : 'support';
-  const distPct = item.dist != null ? ` <span class="fvg-dist-badge">${(item.dist * 100).toFixed(3)}%</span>` : '';
+  const distBadge = item.dist != null ? ` <span class="fvg-dist-badge">${(item.dist * 100).toFixed(3)}%</span>` : '';
   return `
     <div class="volatile-row sr-break-row" style="animation-delay:${idx * 60}ms">
       <span class="fvg-status-svg-wrap">${buildStatusSvg(svgStatus)}</span>
       <span class="volatile-pair">${escapeHtml(item.pair)}</span>
       <span class="sr-break-label ${cls}">${icon} ${srLabel}</span>
-      <span class="sr-break-level">Level: <strong>${fmt(item.level)}</strong>${distPct}</span>
+      <span class="sr-break-level">Level: <strong>${fmt(item.level)}</strong>${distBadge}</span>
       <span class="sr-break-price">Price: <strong>${fmt(item.current_price)}</strong></span>
       <div class="sr-break-desc" style="grid-column:1/-1;font-size:.82rem;color:var(--text2);margin-top:4px">${escapeHtml(item.description)}</div>
     </div>`;

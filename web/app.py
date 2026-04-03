@@ -850,6 +850,9 @@ def _classify_fvg_status(
         bottom = fvg["bottom"]
         filled = fvg.get("filled", False)
         fvg_type = fvg["type"]
+        # dist = 0.0 means price is at/inside the zone (reached) or zone was already
+        # consumed (passed).  For approaching/rejected items the value is computed
+        # in the else-branch below.
         dist = 0.0
 
         if filled:
