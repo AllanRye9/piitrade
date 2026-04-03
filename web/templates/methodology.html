@@ -3,7 +3,36 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Methodology – AI Forex Signal Hub</title>
+  <title>Methodology &amp; Transparency – PiiTrade AI Signal Hub</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="How PiiTrade's AI trading signals work: LightGBM machine-learning pipeline trained on 10+ years of price data, RSI, MACD, EMA, news sentiment, and macroeconomic indicators. Covers 51 pairs across forex, crypto, commodities, and stocks."/>
+  <meta name="keywords" content="AI trading signal methodology, LightGBM forex signals, machine learning trading, forex signal transparency, how AI signals work, trading signal accuracy, technical indicators RSI MACD EMA, news sentiment trading, PiiTrade methodology"/>
+  <meta name="robots" content="index, follow"/>
+  <meta name="author" content="PiiTrade"/>
+  <link rel="canonical" href="https://piitrade.onrender.com/methodology"/>
+  <!-- Open Graph -->
+  <meta property="og:type" content="article"/>
+  <meta property="og:title" content="Methodology &amp; Transparency – PiiTrade AI Signal Hub"/>
+  <meta property="og:description" content="Detailed explanation of PiiTrade's LightGBM AI pipeline, data sources, feature engineering, and how buy/sell/hold signals are generated for 51 trading pairs."/>
+  <meta property="og:url" content="https://piitrade.onrender.com/methodology"/>
+  <meta property="og:site_name" content="PiiTrade"/>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="PiiTrade Methodology – How Our AI Trading Signals Work"/>
+  <meta name="twitter:description" content="LightGBM AI pipeline generating free trading signals for 51 pairs: forex, crypto, commodities, and stocks."/>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "PiiTrade AI Signal Methodology & Transparency",
+    "description": "Detailed explanation of the LightGBM machine-learning pipeline used to generate free buy/sell/hold signals for 51 trading pairs including forex, crypto, commodities, and stocks.",
+    "url": "https://piitrade.onrender.com/methodology",
+    "author": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.onrender.com/" },
+    "publisher": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.onrender.com/" },
+    "dateModified": "2026-04-03"
+  }
+  </script>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
   <style>
@@ -80,7 +109,7 @@
   <div class="brand">
     <span>📊</span>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Forex Signal Hub</span>
+    <span class="brand-sub">AI Signal Hub – Forex · Crypto · Commodities · Stocks</span>
   </div>
   <nav class="fx-nav">
     <a href="/forex">Dashboard</a>
@@ -88,9 +117,6 @@
       {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
       <span class="nav-user">👤 {{ current_user }}</span>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% else %}
-      <a href="/login" class="btn-outline">Login</a>
-      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>
@@ -107,15 +133,17 @@
   <div class="method-section">
     <h2>🔍 Overview</h2>
     <p>
-      The AI Forex Signal Hub uses a fully automated, no-cost machine-learning pipeline
-      to generate daily buy/sell/hold signals for three major forex pairs.
-      All components run within their respective free-tier limits and are designed
-      to be transparent and reproducible.
+      PiiTrade uses a fully automated, no-cost machine-learning pipeline to generate
+      real-time buy/sell/hold signals for <strong>51 trading pairs</strong> across four asset classes:
+      forex (majors, minors, and exotics), commodities (gold, silver, WTI oil, Brent oil),
+      major cryptocurrencies (BTC, ETH, XRP, SOL, BNB), and top US stocks (AAPL, TSLA,
+      NVDA, AMZN, MSFT, GOOGL, META).
     </p>
     <p style="margin-top:10px">
-      Signals are generated once per day after the New York session closes
-      (approx. 21:00 UTC) and are published to a central Google Sheet, which
-      this site reads via the Sheets API.
+      Signals are updated dynamically using live price feeds. For forex pairs, rates are
+      sourced from the European Central Bank via the Frankfurter API. For commodities,
+      crypto, and stocks, real-time data is sourced from Yahoo Finance. The model pipeline
+      is designed to be transparent, reproducible, and entirely free to use.
     </p>
   </div>
 
@@ -278,18 +306,29 @@ tscv = TimeSeriesSplit(n_splits=5)
       model's predicted class probability, not a rigorous uncertainty estimate.
     </p>
     <p style="margin-top:8px">
-      Forex markets are influenced by events that cannot be captured in
-      historical price data or news sentiment alone (e.g. geopolitical shocks,
-      central bank surprises). The model may underperform during high-volatility
-      or news-driven regimes.
+      Markets are influenced by events that cannot be captured in historical price data
+      or news sentiment alone — geopolitical shocks, central bank surprises, or sudden
+      trade policy changes (such as the tariff announcements of early April 2026) can
+      quickly invalidate model assumptions. The model may underperform during
+      high-volatility or news-driven regimes.
     </p>
     <div class="fx-disclaimer" style="margin-top:14px">
       ⚠️ <strong>Disclaimer:</strong> All signals are for informational purposes only
       and do not constitute financial advice. Past model accuracy does not guarantee
-      future performance. Use at your own risk.
+      future performance. Use at your own risk. See full <a href="/disclaimer" style="color:var(--accent)">Risk Disclaimer</a>.
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+<footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+  <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+    <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+    <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
+    <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+  </div>
+  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
+</footer>
 
 </body>
 </html>
