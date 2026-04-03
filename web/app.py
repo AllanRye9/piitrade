@@ -25,13 +25,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-# ─── Optional Stripe SDK ───────────────────────────────────────────────────────
-try:
-    import stripe as _stripe  # type: ignore
-    _STRIPE_SDK_AVAILABLE = True
-except ImportError:
-    _stripe = None  # type: ignore
-    _STRIPE_SDK_AVAILABLE = False
+
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 _DIR = Path(__file__).parent
@@ -84,17 +78,8 @@ _SESSION_HTTPS_ONLY = os.environ.get("SESSION_HTTPS_ONLY", "1") != "0"
 # Set the PIIDATA environment variable to enable persistent database storage.
 _PIIDATA = os.environ.get("PIIDATA", "")
 
-# ─── Stripe configuration ──────────────────────────────────────────────────────
-_STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
-_STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-_STRIPE_PRICE_IDS: dict[str, str] = {
-    "weekly":  os.environ.get("STRIPE_PRICE_WEEKLY", ""),
-    "monthly": os.environ.get("STRIPE_PRICE_MONTHLY", ""),
-    "yearly":  os.environ.get("STRIPE_PRICE_YEARLY", ""),
-}
-_STRIPE_AVAILABLE = _STRIPE_SDK_AVAILABLE and bool(_STRIPE_SECRET_KEY)
-if _STRIPE_AVAILABLE:
-    _stripe.api_key = _STRIPE_SECRET_KEY  # type: ignore[union-attr]
+# Stripe payments have been removed – service is free
+_STRIPE_AVAILABLE = False
 
 # ─── SMTP / email configuration ───────────────────────────────────────────────
 _SMTP_HOST = os.environ.get("SMTP_HOST", "")
@@ -188,9 +173,80 @@ def _send_email(to: str, subject: str, html_body: str) -> bool:
 _USERS: dict[str, dict[str, Any]] = {}
 _USERS_LOCK = Lock()
 
-# Rate-limit tracker: ip -> list of request timestamps
 _RATE_LIMIT: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
+
+# ─── Support / forwarding email ───────────────────────────────────────────────
+_SUPPORT_ALERT_EMAIL = "support@yotweek.com"
+
+# ─── Visitor tracking ─────────────────────────────────────────────────────────
+# ip -> {first_seen, last_seen, country, page_views, first_date}
+_VISITOR_LOG: dict[str, dict[str, Any]] = {}
+_VISITOR_LOG_LOCK = Lock()
+_TOTAL_PAGE_VIEWS = 0
+_TOTAL_PAGE_VIEWS_LOCK = Lock()
+
+
+def _get_client_ip(request: Request) -> str:
+    """Return real client IP, honouring X-Forwarded-For from Render's proxy."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _lookup_country_bg(ip: str) -> None:
+    """Background thread: look up the country for *ip* and cache it."""
+    import threading as _threading
+    if ip in ("127.0.0.1", "::1", "unknown"):
+        country = "Local"
+    elif ip.startswith(("10.", "172.16.", "172.17.", "172.18.", "172.19.",
+                         "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+                         "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+                         "172.30.", "172.31.", "192.168.")):
+        country = "Local"
+    else:
+        try:
+            resp = _requests.get(
+                f"http://ip-api.com/json/{ip}?fields=country,countryCode",
+                timeout=4,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                country = data.get("country", "") if data.get("status") == "success" else ""
+            else:
+                country = ""
+        except Exception:
+            country = ""
+    with _VISITOR_LOG_LOCK:
+        if ip in _VISITOR_LOG and not _VISITOR_LOG[ip].get("country"):
+            _VISITOR_LOG[ip]["country"] = country
+
+
+def _record_visit(ip: str) -> None:
+    """Record a page-view hit; spawns a background country-lookup for new IPs."""
+    import threading as _threading
+    global _TOTAL_PAGE_VIEWS
+    now = datetime.now(timezone.utc).isoformat()
+    today = now[:10]
+    is_new = False
+    with _VISITOR_LOG_LOCK:
+        if ip not in _VISITOR_LOG:
+            _VISITOR_LOG[ip] = {
+                "first_seen": now,
+                "last_seen": now,
+                "country": "",
+                "page_views": 1,
+                "first_date": today,
+            }
+            is_new = True
+        else:
+            _VISITOR_LOG[ip]["last_seen"] = now
+            _VISITOR_LOG[ip]["page_views"] += 1
+    with _TOTAL_PAGE_VIEWS_LOCK:
+        _TOTAL_PAGE_VIEWS += 1
+    if is_new:
+        _threading.Thread(target=_lookup_country_bg, args=(ip,), daemon=True).start()
 
 
 def _check_rate_limit(ip: str, max_requests: int = 10, window: int = 60) -> bool:
@@ -1081,7 +1137,8 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Landing page: shows EUR/USD preview signal; prompts login/register for more."""
+    """Landing page: shows EUR/USD preview signal."""
+    _record_visit(_get_client_ip(request))
     try:
         pair = "EUR/USD"
         live_rate = _fetch_live_rate(pair)
@@ -1122,11 +1179,7 @@ async def index(request: Request):
 
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
-    username = _get_current_user(request)
-    if not username:
-        return RedirectResponse(url="/login?next=/forex", status_code=status.HTTP_302_FOUND)
-    if not _is_subscription_active(username):
-        return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
+    _record_visit(_get_client_ip(request))
     try:
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
@@ -1167,12 +1220,14 @@ async def login_submit(
     if result:
         matched_username, user = result
         if _hash_password(password, user["salt"]) == user["password_hash"]:
+            if user.get("role") != "admin":
+                return templates.TemplateResponse(
+                    request, "login.html",
+                    _ctx(request, error="Login is restricted to administrators only."),
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                )
             request.session["username"] = matched_username
-            next_url = request.query_params.get("next", "/forex")
-            # Admins bypass subscription check; all other users must have an active subscription.
-            if user.get("role") == "admin" or _is_subscription_active(matched_username):
-                return RedirectResponse(url=next_url, status_code=status.HTTP_302_FOUND)
-            return RedirectResponse(url="/subscribe", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse(url="/const", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse(
         request, "login.html",
         _ctx(request, error="Invalid username or password."),
@@ -1183,97 +1238,17 @@ async def login_submit(
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    if _get_current_user(request):
-        return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse(request, "register.html", _ctx(request, error=None, success=None))
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
 @app.post("/register", response_class=HTMLResponse)
-async def register_submit(
-    request: Request,
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    confirm_password: str = Form(...),
-    csrf_token: str = Form(...),
-):
-    ip = request.client.host if request.client else "unknown"
-    if not _check_rate_limit(ip, max_requests=5, window=60):
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Too many registration attempts. Please wait.", success=None),
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-    if not _verify_csrf_token(csrf_token, _session_id(request)):
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Invalid request. Please try again.", success=None),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    username = username.strip()
-    email = email.strip().lower()
-
-    if len(username) < 3 or len(username) > 32:
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Username must be between 3 and 32 characters.", success=None),
-        )
-    if not all(c.isalnum() or c in "_-" for c in username):
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Username may only contain letters, numbers, hyphens and underscores.", success=None),
-        )
-    if "@" not in email or "." not in email.split("@")[-1]:
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Please provide a valid email address.", success=None),
-        )
-    if len(password) < 8:
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Password must be at least 8 characters.", success=None),
-        )
-    if password != confirm_password:
-        return templates.TemplateResponse(
-            request, "register.html",
-            _ctx(request, error="Passwords do not match.", success=None),
-        )
-
-    with _USERS_LOCK:
-        if username in _USERS:
-            return templates.TemplateResponse(
-                request, "register.html",
-                _ctx(request, error="Username is already taken.", success=None),
-            )
-        if any(u["email"] == email for u in _USERS.values()):
-            return templates.TemplateResponse(
-                request, "register.html",
-                _ctx(request, error="An account with this email already exists.", success=None),
-            )
-        salt = _make_salt()
-        _USERS[username] = {
-            "email": email,
-            "password_hash": _hash_password(password, salt),
-            "salt": salt,
-            "role": "user",
-            "recovery_token": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "subscription_status": "inactive",
-            "plan": None,
-            "subscription_start": None,
-            "subscription_end": None,
-            "customer_id": None,
-        }
-    return templates.TemplateResponse(
-        request, "register.html",
-        _ctx(request, error=None, success="Account created! You can now log in."),
-    )
+async def register_submit(request: Request):
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/recovery", response_class=HTMLResponse)
@@ -1624,16 +1599,61 @@ async def admin_dashboard(request: Request):
         for key, entry in _RATE_CACHE.items():
             age = int(now_ts - entry.get("fetched_at", now_ts))
             cache_info.append({"key": key, "age_seconds": age, "fresh": age < _CACHE_TTL_SECONDS})
+
+    # Visitor tracking stats
+    today_str = date.today().isoformat()
+    with _VISITOR_LOG_LOCK:
+        total_visitors = len(_VISITOR_LOG)
+        unique_countries_set = {v["country"] for v in _VISITOR_LOG.values() if v.get("country") and v["country"] != "Local"}
+        unique_countries = len(unique_countries_set)
+        visitors_today = sum(
+            1 for v in _VISITOR_LOG.values()
+            if v.get("last_seen", "")[:10] == today_str or v.get("first_date", "") == today_str
+        )
+        # Top 10 countries by visitor count
+        country_counts: dict[str, int] = {}
+        for v in _VISITOR_LOG.values():
+            c = v.get("country", "")
+            if c and c != "Local":
+                country_counts[c] = country_counts.get(c, 0) + 1
+        top_countries = sorted(country_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        # Recent visitors (last 20 unique IPs by last_seen)
+        recent_visitors = sorted(
+            _VISITOR_LOG.items(),
+            key=lambda x: x[1].get("last_seen", ""),
+            reverse=True,
+        )[:20]
+    with _TOTAL_PAGE_VIEWS_LOCK:
+        total_page_views = _TOTAL_PAGE_VIEWS
+
+    visitor_stats = {
+        "total_visitors": total_visitors,
+        "unique_countries": unique_countries,
+        "visitors_today": visitors_today,
+        "total_page_views": total_page_views,
+        "top_countries": [{"country": c, "count": n} for c, n in top_countries],
+        "recent_visitors": [
+            {
+                "ip": ip[:8] + "***",  # Partially mask IP for privacy
+                "country": data.get("country", "Unknown"),
+                "first_seen": data.get("first_seen", "")[:10],
+                "last_seen": data.get("last_seen", "")[:10],
+                "page_views": data.get("page_views", 0),
+            }
+            for ip, data in recent_visitors
+        ],
+    }
+
     return templates.TemplateResponse(
         request, "admin.html",
         _ctx(
             request,
             users=users_list,
             subscribers=list(_FOREX_SUBSCRIBERS),
-            payment_confirmations=list(_PAYMENT_CONFIRMATIONS),
             plans=_PLANS,
             cache_info=sorted(cache_info, key=lambda x: x["key"]),
             total_pairs=len(_SUPPORTED_PAIRS),
+            visitor_stats=visitor_stats,
         ),
     )
 
@@ -1875,6 +1895,15 @@ async def forex_subscribe(request: Request):
         "pairs": pairs,
         "subscribed_at": datetime.now(timezone.utc).isoformat(),
     })
+    # Forward new subscriber info to support (backend only – address not exposed to frontend)
+    _send_email(
+        _SUPPORT_ALERT_EMAIL,
+        f"PiiTrade – New Signal Alert Subscriber",
+        f"<html><body style='font-family:sans-serif'>"
+        f"<p><strong>New subscriber:</strong> {email}</p>"
+        f"<p><strong>Pairs:</strong> {', '.join(pairs)}</p>"
+        f"</body></html>",
+    )
     return JSONResponse({
         "success": True,
         "message": "Subscribed! You will receive alerts when new signals are generated.",
@@ -2079,44 +2108,7 @@ async def forex_sr_breakouts():
 
 # ─── Subscription / payment page ─────────────────────────────────────────────
 
-# Crypto wallet addresses (configurable via env vars)
-_WALLETS = {
-    "solana":   os.environ.get("SOLANA_ADDRESS",  "SolanaWalletAddressHere"),
-    "litecoin": os.environ.get("LITECOIN_ADDRESS","LitecoinWalletAddressHere"),
-    "nano":     os.environ.get("NANO_ADDRESS",    "NanoWalletAddressHere"),
-    "iota":     os.environ.get("IOTA_ADDRESS",    "IotaWalletAddressHere"),
-    "bitgert":  os.environ.get("BITGERT_ADDRESS", "BitgertWalletAddressHere"),
-    "stellar":  os.environ.get("STELLA_ADDRESS",  "StellarWalletAddressHere"),
-    "ripple":   os.environ.get("RIPPLE_ADDRESS",  "RippleWalletAddressHere"),
-}
-
-# Mobile Money configuration (configurable via env vars)
-_MOBILE_MONEY = {
-    "mtn": {
-        "name": "MTN Mobile Money",
-        "phone": os.environ.get("MTN_MONEY_PHONE", ""),
-        "account_name": os.environ.get("MTN_MONEY_NAME", "PiiTrade"),
-        "instructions": (
-            "Dial *165# and select 'Send Money', then enter the number above. "
-            "Use your subscription plan amount in your local currency. "
-            "After sending, note the transaction reference/ID shown on screen."
-        ),
-        "countries": "Uganda, Ghana, Rwanda, Zambia, Cameroon, Ivory Coast, Benin, Guinea",
-    },
-    "airtel": {
-        "name": "Airtel Money",
-        "phone": os.environ.get("AIRTEL_MONEY_PHONE", ""),
-        "account_name": os.environ.get("AIRTEL_MONEY_NAME", "PiiTrade"),
-        "instructions": (
-            "Dial *185# and select 'Send Money', then enter the number above. "
-            "Use your subscription plan amount in your local currency. "
-            "After sending, note the transaction reference/ID shown on screen."
-        ),
-        "countries": "Uganda, Kenya, Tanzania, Rwanda, Zambia, Malawi, Nigeria, Congo",
-    },
-}
-
-# Subscription plans
+# Subscription plans (kept for admin manual management)
 _PLANS = [
     {"id": "weekly",  "label": "Weekly",  "price_usd": 3,  "duration_days": 7},
     {"id": "monthly", "label": "Monthly", "price_usd": 14, "duration_days": 30},
@@ -2126,201 +2118,13 @@ _PLANS = [
 
 @app.get("/subscribe", response_class=HTMLResponse)
 async def subscribe_page(request: Request):
-    return templates.TemplateResponse(
-        request, "subscribe.html",
-        _ctx(request, wallets=_WALLETS, plans=_PLANS,
-             stripe_available=_STRIPE_AVAILABLE,
-             mobile_money=_MOBILE_MONEY),
-    )
+    """Redirect legacy subscribe URL to the forex dashboard (service is now free)."""
+    return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/subscribe/success", response_class=HTMLResponse)
 async def subscribe_success(request: Request, session_id: str = ""):
-    """Stripe checkout success redirect – verify session and activate subscription."""
-    username = _get_current_user(request)
-    if not username:
-        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    if _STRIPE_AVAILABLE and session_id:
-        try:
-            session = _stripe.checkout.Session.retrieve(session_id)  # type: ignore[union-attr]
-            if session.payment_status in ("paid", "no_payment_required"):
-                plan_id = (session.metadata or {}).get("plan", "monthly")
-                customer_id = session.customer
-                _activate_subscription(username, plan_id, customer_id)
-        except Exception:
-            pass
     return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
-
-
-@app.post("/api/forex/payment-confirm")
-async def payment_confirm(request: Request):
-    """Accept a payment confirmation with email, tx hash, and plan info."""
-    try:
-        data: dict[str, Any] = await request.json()
-    except Exception:
-        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
-
-    email: str = data.get("email", "").strip().lower()
-    tx_hash: str = data.get("tx_hash", "").strip()
-    plan: str = data.get("plan", "").strip()
-
-    if not email or "@" not in email or "." not in email.split("@")[-1]:
-        return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
-    if not tx_hash:
-        return JSONResponse({"error": "Transaction hash is required"}, status_code=400)
-
-    # Store confirmation for admin review
-    _PAYMENT_CONFIRMATIONS.append({
-        "email": email,
-        "tx_hash": tx_hash,
-        "plan": plan,
-        "price_usd": data.get("price_usd"),
-        "submitted_at": datetime.now(timezone.utc).isoformat(),
-        "status": "pending",
-    })
-    return JSONResponse({
-        "success": True,
-        "message": (
-            "Payment confirmation received! Your subscription will be activated "
-            "within 1–2 hours after verification. Thank you!"
-        ),
-    })
-
-
-@app.post("/api/forex/mobile-money-confirm")
-async def mobile_money_confirm(request: Request):
-    """Accept a Mobile Money payment confirmation (MTN or Airtel)."""
-    try:
-        data: dict[str, Any] = await request.json()
-    except Exception:
-        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
-
-    email: str = data.get("email", "").strip().lower()
-    phone: str = data.get("phone", "").strip()
-    tx_ref: str = data.get("tx_ref", "").strip()
-    provider: str = data.get("provider", "").strip().lower()
-    plan: str = data.get("plan", "").strip()
-
-    if not email or "@" not in email or not email.split("@")[-1].count("."):
-        return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
-    if not phone:
-        return JSONResponse({"error": "Phone number is required"}, status_code=400)
-    if not tx_ref:
-        return JSONResponse({"error": "Transaction reference/ID is required"}, status_code=400)
-    if provider not in ("mtn", "airtel"):
-        return JSONResponse({"error": "Provider must be 'mtn' or 'airtel'"}, status_code=400)
-
-    _PAYMENT_CONFIRMATIONS.append({
-        "email": email,
-        "phone": phone,
-        "tx_hash": tx_ref,
-        "provider": provider,
-        "plan": plan,
-        "price_usd": data.get("price_usd"),
-        "payment_method": "mobile_money",
-        "submitted_at": datetime.now(timezone.utc).isoformat(),
-        "status": "pending",
-    })
-    return JSONResponse({
-        "success": True,
-        "message": (
-            "Mobile Money payment confirmation received! "
-            "Your subscription will be activated within 1–2 hours after verification. "
-            "Thank you!"
-        ),
-    })
-
-
-# ─── Stripe payment routes ─────────────────────────────────────────────────────
-
-@app.post("/api/stripe/create-checkout-session")
-async def stripe_create_checkout(request: Request):
-    """Create a Stripe Checkout session for the selected subscription plan."""
-    username = _get_current_user(request)
-    if not username:
-        return JSONResponse({"error": "Authentication required"}, status_code=status.HTTP_401_UNAUTHORIZED)
-    if not _STRIPE_AVAILABLE:
-        return JSONResponse({"error": "Stripe integration not configured"}, status_code=503)
-    try:
-        data: dict[str, Any] = await request.json()
-    except Exception:
-        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
-    plan_id = data.get("plan", "monthly")
-    plan = next((p for p in _PLANS if p["id"] == plan_id), None)
-    if not plan:
-        return JSONResponse({"error": "Invalid plan"}, status_code=400)
-    price_id = _STRIPE_PRICE_IDS.get(plan_id, "")
-    if not price_id:
-        return JSONResponse(
-            {"error": f"Stripe price ID not configured for '{plan_id}' plan"},
-            status_code=503,
-        )
-    with _USERS_LOCK:
-        user = dict(_USERS.get(username, {}))
-    checkout_params: dict[str, Any] = {
-        "mode": "subscription",
-        "line_items": [{"price": price_id, "quantity": 1}],
-        "success_url": str(request.base_url).rstrip("/") + "/subscribe/success?session_id={CHECKOUT_SESSION_ID}",
-        "cancel_url": str(request.base_url).rstrip("/") + "/subscribe",
-        "metadata": {"username": username, "plan": plan_id},
-    }
-    customer_id = user.get("customer_id")
-    if customer_id:
-        checkout_params["customer"] = customer_id
-    elif user.get("email"):
-        checkout_params["customer_email"] = user["email"]
-    try:
-        session = _stripe.checkout.Session.create(**checkout_params)  # type: ignore[union-attr]
-        return JSONResponse({"url": session.url})
-    except Exception:
-        return JSONResponse({"error": "Failed to create Stripe checkout session"}, status_code=500)
-
-
-@app.post("/api/stripe/webhook")
-async def stripe_webhook(request: Request):
-    """Stripe webhook endpoint – handles subscription lifecycle events."""
-    if not _STRIPE_AVAILABLE:
-        return JSONResponse({"error": "Stripe not configured"}, status_code=503)
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature", "")
-    try:
-        event = _stripe.Webhook.construct_event(  # type: ignore[union-attr]
-            payload, sig_header, _STRIPE_WEBHOOK_SECRET
-        )
-    except Exception:
-        return JSONResponse({"error": "Invalid webhook signature or payload"}, status_code=400)
-
-    event_type: str = event.get("type", "")
-    data_obj: dict[str, Any] = event.get("data", {}).get("object", {})
-
-    if event_type == "checkout.session.completed":
-        session_username = (data_obj.get("metadata") or {}).get("username")
-        session_plan = (data_obj.get("metadata") or {}).get("plan", "monthly")
-        customer_id = data_obj.get("customer")
-        if session_username:
-            _activate_subscription(session_username, session_plan, customer_id)
-        elif customer_id:
-            # Fall back to customer-ID lookup
-            uname = _find_username_by_customer(customer_id)
-            if uname:
-                _activate_subscription(uname, session_plan, customer_id)
-
-    elif event_type == "invoice.payment_succeeded":
-        customer_id = data_obj.get("customer")
-        if customer_id:
-            _extend_subscription_by_customer(customer_id)
-
-    elif event_type == "customer.subscription.deleted":
-        customer_id = data_obj.get("customer")
-        if customer_id:
-            _deactivate_subscription_by_customer(customer_id)
-
-    elif event_type == "invoice.payment_failed":
-        # Log the failure; after a configurable grace period the subscription
-        # would be deactivated via customer.subscription.deleted.
-        pass
-
-    return JSONResponse({"received": True})
 
 
 # ─── Profile page ─────────────────────────────────────────────────────────────
@@ -2333,38 +2137,6 @@ async def profile_page(request: Request):
     with _USERS_LOCK:
         user = dict(_USERS.get(username, {}))
 
-    invoices: list[dict[str, Any]] = []
-    portal_url: Optional[str] = None
-    customer_id = user.get("customer_id")
-
-    if _STRIPE_AVAILABLE and customer_id:
-        try:
-            invoice_list = _stripe.Invoice.list(customer=customer_id, limit=10)  # type: ignore[union-attr]
-            for inv in invoice_list.auto_paging_iter():
-                invoices.append({
-                    "date": datetime.fromtimestamp(inv.created, tz=timezone.utc).strftime("%Y-%m-%d"),
-                    "amount": f"${inv.amount_paid / 100:.2f}",
-                    "description": inv.lines.data[0].description if inv.lines.data else "PiiTrade Subscription",
-                    "status": inv.status,
-                    "pdf_url": inv.invoice_pdf,
-                })
-                if len(invoices) >= 10:
-                    break
-        except Exception:
-            pass
-        try:
-            portal_session = _stripe.billing_portal.Session.create(  # type: ignore[union-attr]
-                customer=customer_id,
-                return_url=str(request.base_url).rstrip("/") + "/profile",
-            )
-            portal_url = portal_session.url
-        except Exception:
-            pass
-
-    # Include crypto payment confirmations for this user's email
-    user_email = user.get("email", "")
-    local_payments = [p for p in _PAYMENT_CONFIRMATIONS if p.get("email") == user_email]
-
     plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
     sub_active = _is_subscription_active(username)
 
@@ -2374,12 +2146,12 @@ async def profile_page(request: Request):
             request,
             profile_user=user,
             profile_username=username,
-            invoices=invoices,
-            local_payments=local_payments,
-            portal_url=portal_url,
+            invoices=[],
+            local_payments=[],
+            portal_url=None,
             plan_label=plan_label,
             sub_active=sub_active,
-            stripe_available=_STRIPE_AVAILABLE,
+            stripe_available=False,
         ),
     )
 
