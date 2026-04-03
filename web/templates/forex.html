@@ -56,6 +56,7 @@
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-volatile">🔥 Volatile</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-reversal">🔄 Reversal</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-success">🏆 Success Rates</button>
+  <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-patterns">🔮 Patterns</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-news">📰 News</button>
   <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-alerts">🔔 Alerts</button>
 </nav>
@@ -509,6 +510,34 @@
         Forex trading involves significant risk of loss. Past signal accuracy does not
         guarantee future results. Always conduct your own analysis before trading.
       </div>
+    </div>
+  </section>
+
+  <!-- 8. Price Action Pattern Scanner ──────────────────────────────────────── -->
+  <section id="section-patterns">
+    <div class="fx-section-title">🔮 Price Action Pattern Scanner</div>
+    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+      Detects key price action formations — BOS, CHoCH, FVG reactions, and S/R interactions —
+      across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
+    </p>
+
+    <div class="fvg-disclaimer">
+      ⚠️ <strong>Important:</strong> Pattern identification is automated and approximate.
+      Always confirm formations with multiple timeframes, volume analysis, and your own
+      technical research before trading. Do <strong>not</strong> act on AI-detected patterns alone.
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <button id="btn-refresh-patterns" class="fx-refresh-btn" type="button">↻ Refresh Patterns</button>
+      <span style="color:var(--text2);font-size:.82rem">🔔 Sound alerts fire automatically for High Impact formations</span>
+    </div>
+
+    <div id="pattern-loading" class="ta-loading">Loading pattern scanner…</div>
+    <div id="pattern-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
+      No significant price action formations detected at this time.
+    </div>
+    <div id="pattern-content" style="display:none">
+      <div id="pattern-list" class="pattern-list"></div>
     </div>
   </section>
 

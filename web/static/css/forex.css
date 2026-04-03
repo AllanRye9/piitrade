@@ -2274,3 +2274,191 @@ a:hover { text-decoration: underline; }
 
 /* S/R group visibility toggled by filter */
 .sr-group.fx-hidden { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   S/R Break Row – Mobile Responsiveness
+   Note: !important is required here because .sr-break-row (above) already uses
+   !important to override the base .volatile-row grid. The media query must
+   use the same specificity strategy to win the cascade on small screens.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 680px) {
+  .sr-break-row {
+    grid-template-columns: 22px 80px 1fr auto !important;
+    grid-template-rows: auto auto;
+  }
+  .sr-break-row .sr-break-price { display: none; }
+  .sr-break-row .sr-break-level { font-size: .79rem; }
+}
+
+@media (max-width: 420px) {
+  .sr-break-row {
+    grid-template-columns: 22px 65px 1fr !important;
+    grid-template-rows: auto auto auto;
+  }
+  .sr-break-row .sr-break-price { display: none; }
+  .sr-break-row .sr-break-level {
+    grid-column: 2 / -1;
+    font-size: .78rem;
+  }
+  .sr-break-row .sr-break-label { font-size: .78rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FVG Dropdown – Magnitude & Detail Enhancement
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.fvg-drop-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fvg-drop-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.fvg-drop-data-row,
+.fvg-drop-magnitude-row,
+.fvg-drop-position-row,
+.fvg-drop-target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: .8rem;
+}
+
+/* Magnitude badge colours */
+.fvg-mag-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.fvg-mag-badge.mag-tiny   { background: rgba(139,148,158,.2); color: var(--text2); }
+.fvg-mag-badge.mag-small  { background: rgba(210,153,34,.18); color: var(--warn); }
+.fvg-mag-badge.mag-medium { background: rgba(88,166,255,.18); color: var(--accent); }
+.fvg-mag-badge.mag-large  { background: rgba(248,81,73,.18);  color: var(--danger); }
+
+.fvg-mag-pips {
+  font-size: .75rem;
+  color: var(--text2);
+  font-family: monospace;
+}
+
+.fvg-mag-bar-svg {
+  vertical-align: middle;
+}
+
+/* Price position relative to zone */
+.fvg-drop-pos {
+  font-size: .75rem;
+  font-weight: 600;
+}
+.fvg-drop-pos.pos-above  { color: var(--accent2); }
+.fvg-drop-pos.pos-below  { color: var(--danger); }
+.fvg-drop-pos.pos-inside { color: var(--warn); }
+
+.fvg-drop-dist {
+  font-size: .75rem;
+  color: var(--text2);
+  font-family: monospace;
+}
+
+.fvg-drop-target {
+  font-size: .78rem;
+  color: var(--text2);
+  font-style: italic;
+}
+
+/* Revised grid: let each item be a flex column */
+.fvg-drop-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: .83rem;
+  animation: volatileRowIn .25s ease forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Price Action Pattern Scanner
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.pattern-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pattern-group { display: flex; flex-direction: column; gap: 6px; }
+
+.pattern-group-title {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 5px 12px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+.pattern-group-title.impact-high   { background: rgba(248,81,73,.15);  color: var(--danger); }
+.pattern-group-title.impact-medium { background: rgba(88,166,255,.15); color: var(--accent); }
+.pattern-group-title.impact-low    { background: rgba(139,148,158,.12); color: var(--text2); }
+
+.pattern-row {
+  display: grid;
+  grid-template-columns: 28px 80px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: .87rem;
+  opacity: 0;
+  animation: volatileRowIn .35s ease forwards;
+}
+
+.pattern-icon   { font-size: 1rem; text-align: center; }
+.pattern-label  { font-weight: 600; color: var(--text); font-size: .85rem; }
+.pattern-desc   { grid-column: 1 / -1; font-size: .8rem; color: var(--text2); margin-top: 3px; }
+
+.pattern-impact-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pattern-impact-badge.impact-high   { background: rgba(248,81,73,.18);  color: var(--danger); }
+.pattern-impact-badge.impact-medium { background: rgba(88,166,255,.18); color: var(--accent); }
+.pattern-impact-badge.impact-low    { background: rgba(139,148,158,.15); color: var(--text2); }
+
+@media (max-width: 680px) {
+  .pattern-row {
+    grid-template-columns: 28px 70px 1fr auto;
+    grid-template-rows: auto auto;
+  }
+  .pattern-row .pattern-impact-badge { display: none; }
+}
+
+@media (max-width: 420px) {
+  .pattern-row {
+    grid-template-columns: 28px 1fr auto;
+  }
+  .pattern-row .volatile-dir { display: none; }
+}

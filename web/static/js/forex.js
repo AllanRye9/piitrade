@@ -1274,9 +1274,10 @@ function renderFvgScanner(grouped) {
   if (contentEl) contentEl.style.display = 'block';
 }
 
-/** Render all active FVGs for a pair in the dropdown panel. */
+/** Render all active FVGs for a pair in the dropdown panel, including magnitude data. */
 function renderFvgDropdown(dropEl, pair, fvgs) {
   const dec = getPairDecimals(pair);
+  const pip = dec === 2 ? 0.01 : 0.0001;
   const fmt = v => Number(v).toFixed(dec);
   if (!fvgs || fvgs.length === 0) {
     dropEl.innerHTML = '<div class="fvg-drop-empty">No FVGs available for this pair.</div>';
@@ -1285,25 +1286,110 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
   // Only show active (unfilled) FVGs — consumed zones are excluded
   const active = fvgs.filter(f => !f.filled);
   // Current market price is the same for all FVGs of a pair — show it once in the header
-  const marketPrice = fvgs[0] ? fmt(fvgs[0].current_price) : '—';
+  const currentPrice = fvgs[0] ? fvgs[0].current_price : null;
+  const marketPrice  = currentPrice != null ? fmt(currentPrice) : '—';
+
+  /**
+   * Classify gap size (in pips) into a magnitude label.
+   * Thresholds are intentionally generous to cover both tight FX pairs (4 dec)
+   * and high-priced commodities (2 dec, e.g. Gold) where pip values differ.
+   */
+  function magnitudeLabel(pips) {
+    if (pips < 5)   return { label: 'Tiny',   cls: 'mag-tiny'   };
+    if (pips < 20)  return { label: 'Small',  cls: 'mag-small'  };
+    if (pips < 60)  return { label: 'Medium', cls: 'mag-medium' };
+    return           { label: 'Large',  cls: 'mag-large'  };
+  }
+
+  /** Build an SVG magnitude bar whose filled width reflects gap size relative to 100 pips. */
+  function magnitudeSvg(pips) {
+    const pct = Math.min(100, (pips / 100) * 100);
+    const color = pips < 5 ? '#8b949e' : pips < 20 ? '#d29922' : pips < 60 ? '#58a6ff' : '#f85149';
+    return `<svg class="fvg-mag-bar-svg" viewBox="0 0 80 8" width="80" height="8" aria-hidden="true">
+      <rect x="0" y="0" width="80" height="8" rx="4" fill="rgba(139,148,158,0.15)"/>
+      <rect x="0" y="0" width="${(pct / 100) * 80}" height="8" rx="4" fill="${color}"/>
+    </svg>`;
+  }
+
   const renderGroup = items => items.map(f => {
     const typeIcon = f.type === 'bullish' ? '▲' : '▼';
     const typeCls  = f.type === 'bullish' ? 'bullish' : 'bearish';
-    // Each FVG has a unique midpoint (centre of the gap) — use it as the FVG price
-    const midVal = f.mid != null ? f.mid : ((f.top + f.bottom) / 2);
+    const midVal   = f.mid != null ? f.mid : ((f.top + f.bottom) / 2);
+
+    // ── Magnitude ──────────────────────────────────────────────────────────────
+    const gapSize  = Math.abs(f.top - f.bottom);
+    const gapPips  = gapSize / pip;
+    const mag      = magnitudeLabel(gapPips);
+
+    // ── Price position relative to zone ────────────────────────────────────────
+    let posLabel, posCls;
+    if (currentPrice == null) {
+      posLabel = '—'; posCls = '';
+    } else if (currentPrice > f.top) {
+      posLabel = 'Price ABOVE zone ↑'; posCls = 'pos-above';
+    } else if (currentPrice < f.bottom) {
+      posLabel = 'Price BELOW zone ↓'; posCls = 'pos-below';
+    } else {
+      posLabel = '⚡ Price INSIDE zone'; posCls = 'pos-inside';
+    }
+
+    // ── Distance from zone ─────────────────────────────────────────────────────
+    let distText;
+    if (currentPrice == null) {
+      distText = '—';
+    } else if (currentPrice >= f.bottom && currentPrice <= f.top) {
+      distText = 'Inside zone';
+    } else if (currentPrice > f.top) {
+      const distPips = (currentPrice - f.top) / pip;
+      distText = `${distPips.toFixed(1)} pips from top`;
+    } else {
+      const distPips = (f.bottom - currentPrice) / pip;
+      distText = `${distPips.toFixed(1)} pips from bottom`;
+    }
+
+    // ── Potential target ───────────────────────────────────────────────────────
+    let targetText;
+    if (f.type === 'bullish') {
+      targetText = currentPrice != null && currentPrice < f.bottom
+        ? `If price enters → target: ${fmt(f.top)} (+${((f.top - currentPrice) / pip).toFixed(1)} pips up)`
+        : `Zone top: ${fmt(f.top)}`;
+    } else {
+      targetText = currentPrice != null && currentPrice > f.top
+        ? `If price enters → target: ${fmt(f.bottom)} (−${((currentPrice - f.bottom) / pip).toFixed(1)} pips down)`
+        : `Zone bottom: ${fmt(f.bottom)}`;
+    }
+
     return `
       <div class="fvg-drop-item">
-        <span class="fvg-type-badge ${typeCls}">${typeIcon} ${f.type.toUpperCase()} FVG</span>
-        <span class="fvg-drop-zone">
-          <span class="fvg-zone-label">Zone:</span>
-          <strong>${fmt(f.bottom)} – ${fmt(f.top)}</strong>
-        </span>
-        <span class="fvg-drop-price">
-          <span class="fvg-zone-label">Mid:</span>
-          <span class="fvg-price-value">${fmt(midVal)}</span>
-        </span>
-        <span class="fvg-drop-status fvg-drop-status--active">⚡ Active</span>
-        <span class="fvg-drop-date">${escapeHtml(f.created)}</span>
+        <div class="fvg-drop-item-header">
+          <span class="fvg-type-badge ${typeCls}">${typeIcon} ${f.type.toUpperCase()} FVG</span>
+          <span class="fvg-drop-status fvg-drop-status--active">⚡ Active</span>
+          <span class="fvg-drop-date">${escapeHtml(f.created)}</span>
+        </div>
+        <div class="fvg-drop-item-body">
+          <div class="fvg-drop-data-row">
+            <span class="fvg-zone-label">Zone:</span>
+            <span class="fvg-drop-zone"><strong>${fmt(f.bottom)} – ${fmt(f.top)}</strong></span>
+            <span class="fvg-zone-label">Mid:</span>
+            <span class="fvg-drop-price fvg-price-value">${fmt(midVal)}</span>
+          </div>
+          <div class="fvg-drop-magnitude-row">
+            <span class="fvg-zone-label">Magnitude:</span>
+            <span class="fvg-mag-badge ${mag.cls}">${mag.label}</span>
+            <span class="fvg-mag-pips">${gapPips.toFixed(1)} pips</span>
+            ${magnitudeSvg(gapPips)}
+          </div>
+          <div class="fvg-drop-position-row">
+            <span class="fvg-zone-label">Position:</span>
+            <span class="fvg-drop-pos ${posCls}">${posLabel}</span>
+            <span class="fvg-zone-label">Distance:</span>
+            <span class="fvg-drop-dist">${escapeHtml(distText)}</span>
+          </div>
+          <div class="fvg-drop-target-row">
+            <span class="fvg-zone-label">Target:</span>
+            <span class="fvg-drop-target">${escapeHtml(targetText)}</span>
+          </div>
+        </div>
         <div class="fvg-drop-desc">${escapeHtml(f.description)}</div>
       </div>`;
   }).join('');
@@ -1554,6 +1640,7 @@ Promise.all([loadSignal(currentPair), loadNews()])
     loadSrBreakouts();
     loadVolatilePairs(currentVolatileTf);
     loadReversalPairs();
+    loadPatternScanner();
   });
 resetAutoRefresh();
 
@@ -1598,6 +1685,12 @@ document.querySelectorAll('.fx-tab').forEach(tab => {
   if (tab.dataset.section === 'section-technical') {
     tab.addEventListener('click', () => {
       startTechPricePolling();
+    });
+  }
+  // Reload pattern scanner when Patterns tab is opened (if not already loaded)
+  if (tab.dataset.section === 'section-patterns') {
+    tab.addEventListener('click', () => {
+      if (!patternLoaded) loadPatternScanner();
     });
   }
 });
@@ -1750,5 +1843,136 @@ if (refreshReversalBtn) {
   refreshReversalBtn.addEventListener('click', () => {
     reversalLoaded = false;
     loadReversalPairs();
+  });
+}
+
+// ─── Price Action Pattern Scanner ────────────────────────────────────────────
+let patternLoaded = false;
+
+/** Track pairs whose high-impact pattern has already triggered an alert
+ *  (reset on each fresh pattern scan load to re-alert on new detections). */
+const _alertedPatterns = new Set();
+
+/** Impact definitions used throughout the pattern scanner. */
+const PATTERN_IMPACT = {
+  high:   { label: 'High Impact',   cls: 'impact-high',   sound: 'breakout' },
+  medium: { label: 'Medium Impact', cls: 'impact-medium', sound: 'fvg'      },
+  low:    { label: 'Low Impact',    cls: 'impact-low',    sound: null        },
+};
+
+/** Icon for each pattern type. */
+const PATTERN_ICONS = {
+  choch:         '🔄',
+  bos:           '⚡',
+  fvg_rejection: '🚫',
+  fvg_inside:    '🎯',
+  fvg_approach:  '📍',
+  sr_broke:      '💥',
+  sr_touched:    '🔔',
+  sr_approaching:'📌',
+  strong_signal: '💎',
+};
+
+/** Load all price-action patterns from the API and render them. */
+async function loadPatternScanner() {
+  const loadingEl = document.getElementById('pattern-loading');
+  const contentEl = document.getElementById('pattern-content');
+  const emptyEl   = document.getElementById('pattern-empty');
+  if (!loadingEl || !contentEl) return;
+
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/forex/pattern-scanner');
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    patternLoaded = true;
+    renderPatternScanner(data.patterns || []);
+
+    // Fire sound + toast for any new high-impact patterns
+    const newHighImpact = (data.patterns || []).filter(p => {
+      if (p.impact !== 'high') return false;
+      const key = `${p.pair}::${p.type}`;
+      if (_alertedPatterns.has(key)) return false;
+      _alertedPatterns.add(key);
+      return true;
+    });
+
+    if (newHighImpact.length > 0) {
+      playSignalSound('breakout');
+      const pairNames = [...new Set(newHighImpact.map(p => p.pair))].slice(0, 3).join(', ');
+      const extra = newHighImpact.length > 3 ? ` +${newHighImpact.length - 3} more` : '';
+      showToast('toast-sell', '🔮', 'Pattern Alert — High Impact!',
+        `${pairNames}${extra}: ${newHighImpact[0].label}`, 7000);
+    }
+  } catch (err) {
+    if (loadingEl) loadingEl.textContent = '❌ Failed to load pattern scanner data.';
+    console.error('Pattern scanner failed:', err);
+  }
+}
+
+/** Render the list of detected patterns. */
+function renderPatternScanner(patterns) {
+  const loadingEl = document.getElementById('pattern-loading');
+  const contentEl = document.getElementById('pattern-content');
+  const emptyEl   = document.getElementById('pattern-empty');
+  const listEl    = document.getElementById('pattern-list');
+  if (!listEl) return;
+
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  if (patterns.length === 0) {
+    if (emptyEl) { emptyEl.style.display = 'block'; return; }
+  }
+
+  // Group by impact
+  const byImpact = { high: [], medium: [], low: [] };
+  patterns.forEach(p => {
+    const bucket = p.impact in byImpact ? p.impact : 'low';
+    byImpact[bucket].push(p);
+  });
+
+  listEl.innerHTML = '';
+
+  ['high', 'medium', 'low'].forEach(impact => {
+    const items = byImpact[impact];
+    if (items.length === 0) return;
+    const imp = PATTERN_IMPACT[impact];
+
+    const groupEl = document.createElement('div');
+    groupEl.className = 'pattern-group';
+    groupEl.innerHTML = `<div class="pattern-group-title ${imp.cls}">${imp.label} Formations (${items.length})</div>`;
+
+    items.forEach((p, idx) => {
+      const icon   = PATTERN_ICONS[p.type] || '📊';
+      const dirCls = p.direction === 'BUY' ? 'buy' : p.direction === 'SELL' ? 'sell' : 'hold';
+      const row    = document.createElement('div');
+      row.className = 'pattern-row';
+      row.style.animationDelay = `${idx * 50}ms`;
+      row.innerHTML = `
+        <span class="pattern-icon">${icon}</span>
+        <span class="volatile-pair">${escapeHtml(p.pair)}</span>
+        <span class="pattern-label">${escapeHtml(p.label)}</span>
+        <span class="pattern-impact-badge ${imp.cls}">${imp.label}</span>
+        <span class="volatile-dir ${dirCls}">${p.direction}</span>
+        <div class="pattern-desc">${escapeHtml(p.description)}</div>`;
+      groupEl.appendChild(row);
+    });
+
+    listEl.appendChild(groupEl);
+  });
+
+  if (contentEl) contentEl.style.display = 'block';
+}
+
+// Refresh button for pattern scanner
+const refreshPatternBtn = document.getElementById('btn-refresh-patterns');
+if (refreshPatternBtn) {
+  refreshPatternBtn.addEventListener('click', () => {
+    patternLoaded = false;
+    _alertedPatterns.clear();
+    loadPatternScanner();
   });
 }

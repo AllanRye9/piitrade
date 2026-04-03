@@ -2145,6 +2145,191 @@ async def forex_sr_breakouts():
     })
 
 
+# ─── Price Action Pattern Scanner API ────────────────────────────────────────
+
+@app.get("/api/forex/pattern-scanner")
+async def forex_pattern_scanner():
+    """Detect price action formations across all supported pairs.
+
+    Analyses each pair's technical data (BOS, CHoCH, FVG status, S/R proximity,
+    and signal strength) and maps them to named price-action formations.
+
+    Each pattern entry includes:
+    - ``pair``        : trading pair symbol
+    - ``type``        : machine-readable formation type
+    - ``label``       : human-readable formation name
+    - ``impact``      : ``'high'`` | ``'medium'`` | ``'low'``
+    - ``direction``   : ``'BUY'`` | ``'SELL'`` | ``'HOLD'``
+    - ``description`` : detailed explanation
+    """
+    patterns: list[dict[str, Any]] = []
+
+    for pair in _SUPPORTED_PAIRS:
+        prices = _get_prices_for_pair(pair, 30)
+        live_rate = _fetch_live_rate(pair)
+        current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
+        signal = _FOREX_SIGNALS[pair]
+        direction = signal["direction"]
+        confidence = signal.get("confidence", 0.5)
+        ta = _build_technical_analysis(pair, current_price)
+
+        # ── Change of Character (CHoCH) — trend reversal formation ────────────
+        for choch in ta.get("choch", []):
+            choch_dir = "BUY" if choch["type"] == "bullish" else "SELL"
+            patterns.append({
+                "pair": pair,
+                "type": "choch",
+                "label": "Change of Character (CHoCH)",
+                "impact": "high",
+                "direction": choch_dir,
+                "description": (
+                    f"{pair}: {choch['description']} at level {choch['level']:.5g}. "
+                    "CHoCH signals a potential trend reversal — one of the strongest "
+                    "price action formations."
+                ),
+            })
+
+        # ── Break of Structure (BOS) — momentum continuation ──────────────────
+        for bos in ta.get("bos", []):
+            bos_dir = "BUY" if bos["type"] == "bullish" else "SELL"
+            patterns.append({
+                "pair": pair,
+                "type": "bos",
+                "label": "Break of Structure (BOS)",
+                "impact": "high",
+                "direction": bos_dir,
+                "description": (
+                    f"{pair}: {bos['description']} at level {bos['level']:.5g}. "
+                    "A BOS confirms market structure continuation and is used to "
+                    "identify the dominant trend direction."
+                ),
+            })
+
+        # ── FVG-based formations ───────────────────────────────────────────────
+        fvg_entries = _classify_fvg_status(pair, current_price, ta["fvg"], prices)
+        for fvg in fvg_entries:
+            status = fvg.get("status", "")
+            fvg_dir = direction  # inherit pair signal direction
+
+            if status == "rejected":
+                patterns.append({
+                    "pair": pair,
+                    "type": "fvg_rejection",
+                    "label": "FVG Order Block Rejection",
+                    "impact": "high",
+                    "direction": fvg_dir,
+                    "description": (
+                        f"{pair}: Price was rejected at the "
+                        f"{'bullish' if fvg['fvg_type'] == 'bullish' else 'bearish'} FVG zone "
+                        f"({fvg['bottom']:.5g} – {fvg['top']:.5g}). "
+                        "Order block rejections often signal strong reversals and high-probability "
+                        "entry points."
+                    ),
+                })
+            elif status == "reached":
+                patterns.append({
+                    "pair": pair,
+                    "type": "fvg_inside",
+                    "label": "Price Inside FVG Zone",
+                    "impact": "medium",
+                    "direction": fvg_dir,
+                    "description": (
+                        f"{pair}: Price is trading inside the "
+                        f"{'bullish' if fvg['fvg_type'] == 'bullish' else 'bearish'} FVG zone "
+                        f"({fvg['bottom']:.5g} – {fvg['top']:.5g}). "
+                        "Price often fills the gap before continuing in the dominant direction."
+                    ),
+                })
+            elif status == "approaching":
+                patterns.append({
+                    "pair": pair,
+                    "type": "fvg_approach",
+                    "label": "Approaching FVG Zone",
+                    "impact": "low",
+                    "direction": fvg_dir,
+                    "description": (
+                        f"{pair}: Price is approaching the "
+                        f"{'bullish' if fvg['fvg_type'] == 'bullish' else 'bearish'} FVG zone "
+                        f"({fvg['bottom']:.5g} – {fvg['top']:.5g}). "
+                        "Watch for a reaction as price enters the imbalance area."
+                    ),
+                })
+
+        # ── S/R-based formations ───────────────────────────────────────────────
+        sr = ta["support_resistance"]
+        sr_items = _classify_sr_levels(
+            pair, current_price, prices,
+            sr["support"], sr["resistance"],
+        )
+        for item in sr_items:
+            sr_status = item.get("status", "")
+            is_res = item["type"].startswith("resistance")
+            sr_dir = "BUY" if is_res else "SELL"
+
+            if sr_status == "broke":
+                patterns.append({
+                    "pair": pair,
+                    "type": "sr_broke",
+                    "label": "S/R Breakout Formation",
+                    "impact": "high",
+                    "direction": sr_dir,
+                    "description": (
+                        f"{pair}: {item['description']} "
+                        "Confirmed breakouts beyond key levels often precede "
+                        "significant directional moves."
+                    ),
+                })
+            elif sr_status == "touched":
+                patterns.append({
+                    "pair": pair,
+                    "type": "sr_touched",
+                    "label": "Key Level Touch",
+                    "impact": "medium",
+                    "direction": direction,
+                    "description": (
+                        f"{pair}: {item['description']} "
+                        "Price testing a key level can produce a bounce or breakout — "
+                        "watch for volume and momentum confirmation."
+                    ),
+                })
+            elif sr_status == "soon_touching":
+                patterns.append({
+                    "pair": pair,
+                    "type": "sr_approaching",
+                    "label": "Approaching Key Level",
+                    "impact": "low",
+                    "direction": direction,
+                    "description": (
+                        f"{pair}: {item['description']} "
+                        "Prepare for a potential reaction as price nears the level."
+                    ),
+                })
+
+        # ── Strong directional signal (high-confidence) ────────────────────────
+        if confidence >= 0.80 and direction in ("BUY", "SELL"):
+            patterns.append({
+                "pair": pair,
+                "type": "strong_signal",
+                "label": "Strong Directional Signal",
+                "impact": "high",
+                "direction": direction,
+                "description": (
+                    f"{pair}: AI model returned a {direction} signal with "
+                    f"{confidence * 100:.1f}% confidence — above the high-conviction "
+                    "threshold. Multiple indicators aligned in the same direction."
+                ),
+            })
+
+    # Sort: high → medium → low, then alphabetically within each group
+    IMPACT_ORDER = {"high": 0, "medium": 1, "low": 2}
+    patterns.sort(key=lambda p: (IMPACT_ORDER.get(p["impact"], 3), p["pair"]))
+
+    return JSONResponse({
+        "patterns": patterns,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 # ─── Subscription / payment page ─────────────────────────────────────────────
 
 # Subscription plans (kept for admin manual management)
