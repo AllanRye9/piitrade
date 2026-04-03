@@ -2484,8 +2484,9 @@ async def forex_pattern_scanner():
                 ),
             })
 
-    # Deduplicate: keep only the highest-impact pattern per pair (most recent wins
-    # when impact is equal, since candidates are generated in _SUPPORTED_PAIRS order).
+    # Deduplicate: keep only the highest-impact pattern per pair.  Sort candidates
+    # so the highest-impact entry per pair is always encountered first, then iterate
+    # and keep only the first occurrence of each pair.
     IMPACT_ORDER = {"high": 0, "medium": 1, "low": 2}
     _all_candidates.sort(key=lambda p: (IMPACT_ORDER.get(p["impact"], 3), p["pair"]))
     seen_pairs: set[str] = set()
@@ -2494,9 +2495,6 @@ async def forex_pattern_scanner():
         if candidate["pair"] not in seen_pairs:
             patterns.append(candidate)
             seen_pairs.add(candidate["pair"])
-
-    # Already sorted by impact; re-sort alphabetically within each impact group
-    patterns.sort(key=lambda p: (IMPACT_ORDER.get(p["impact"], 3), p["pair"]))
 
     return JSONResponse({
         "patterns": patterns,
