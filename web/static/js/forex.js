@@ -357,11 +357,11 @@ function getPairDecimals(pair) {
 
 /** Return the pip size for a pair, matching Python's _pair_pip_dec(). */
 function getPairPip(pair) {
-  if (pair === 'BTC/USD')  return 1.0;
-  if (pair === 'XRP/USD')  return 0.0001;
-  if (pair === 'XAG/USD')  return 0.001;
-  if (isJpy(pair) || isStock(pair) || isCommodity(pair) || isCrypto(pair)) return 0.01;
-  return 0.0001;
+  if (pair === 'BTC/USD')  return 1.0;     // Bitcoin: whole-dollar pip
+  if (pair === 'XRP/USD')  return 0.0001;  // XRP: 4-decimal pip
+  if (pair === 'XAG/USD')  return 0.001;   // Silver: 3-decimal pip
+  if (isJpy(pair) || isStock(pair) || isCommodity(pair) || isCrypto(pair)) return 0.01; // 2-decimal pip
+  return 0.0001; // Standard forex: 4-decimal pip
 }
 
 function escapeHtml(str) {
@@ -1104,9 +1104,15 @@ function renderNews(items) {
   if (newsLoadingEl) newsLoadingEl.style.display = 'none';
 
   // Discard news items older than 48 hours
-  const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+  const NEWS_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+  const cutoff = Date.now() - NEWS_MAX_AGE_MS;
   const recent = items.filter(item => {
-    try { return new Date(item.published_at).getTime() >= cutoff; } catch { return false; }
+    try {
+      return new Date(item.published_at).getTime() >= cutoff;
+    } catch {
+      // Invalid or missing date — treat as stale so it won't be shown
+      return false;
+    }
   });
 
   // Filter by active category
