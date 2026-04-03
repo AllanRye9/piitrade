@@ -326,17 +326,13 @@ function isJpy(pair) {
   return pair && pair.includes('JPY');
 }
 
-function isGold(pair) {
-  return pair && pair.startsWith('XAU');
-}
-
-function isHighPriceCommodity(pair) {
-  // Pairs priced in whole-dollar units (Gold, Oil) — use 2 decimal places
-  return pair && (pair.startsWith('XAU') || pair === 'USOIL');
+function isStock(pair) {
+  // Stocks have no '/' in their ticker symbol
+  return pair && !pair.includes('/');
 }
 
 function getPairDecimals(pair) {
-  if (isJpy(pair) || isHighPriceCommodity(pair)) return 2;
+  if (isJpy(pair) || isStock(pair)) return 2;
   return 4;
 }
 
@@ -693,17 +689,10 @@ function drawChart(history) {
  */
 function pipValuePerStdLot(pair, entryPriceVal) {
   const LOT = 100_000;
-  const GOLD_LOT_OZ = 100; // standard gold lot = 100 troy oz
-  const SILVER_LOT_OZ = 5000; // standard silver lot = 5000 troy oz
-  const OIL_BARRELS = 1000; // standard WTI crude oil lot = 1000 barrels
+  const STOCK_LOT = 100; // 1 standard stock lot = 100 shares
   const jpy = isJpy(pair);
-  const gold = isGold(pair);
-  const silver = pair === 'XAG/USD';
-  const oil = pair === 'USOIL';
 
-  if (gold)   return 1.0 * GOLD_LOT_OZ;      // pip = $1,     lot = 100 oz  → $100 per lot
-  if (silver) return 0.001 * SILVER_LOT_OZ;   // pip = $0.001, lot = 5000 oz → $5 per lot (silver has smaller pip × larger lot)
-  if (oil)    return 0.01 * OIL_BARRELS;       // pip = $0.01,  lot = 1000 bbl → $10 per lot
+  if (isStock(pair)) return 0.01 * STOCK_LOT; // $0.01 pip × 100 shares = $1 per lot
 
   const pipSize = jpy ? 0.01 : 0.0001;
   const parts = pair.split('/');
@@ -744,9 +733,7 @@ function runCalculator() {
 
   const pair = currentPair;
   const jpy  = isJpy(pair);
-  const oil  = pair === 'USOIL';
-  const gold = isGold(pair);
-  const pipSize = (gold || oil) ? 0.01 : (jpy ? 0.01 : 0.0001);
+  const pipSize = isStock(pair) ? 0.01 : (jpy ? 0.01 : 0.0001);
 
   const riskAmount = balance * (riskPct / 100);
   const pipsSl     = Math.abs(entry - sl) / pipSize;
@@ -913,10 +900,19 @@ function renderTechnicalAnalysis(data) {
 const successRateCache = {};
 
 const ALL_PAIRS = [
+  // Majors
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD',
-  'EUR/GBP', 'EUR/JPY', 'EUR/AUD', 'EUR/CAD', 'GBP/JPY', 'GBP/CHF', 'AUD/JPY',
-  'GBP/AUD', 'GBP/CAD', 'CAD/JPY', 'CHF/JPY',
-  'XAU/USD', 'XAG/USD', 'USOIL',
+  // Minors / Crosses
+  'EUR/GBP', 'EUR/JPY', 'EUR/AUD', 'EUR/CAD', 'EUR/CHF', 'EUR/NZD',
+  'GBP/JPY', 'GBP/CHF', 'GBP/AUD', 'GBP/CAD', 'GBP/NZD',
+  'AUD/JPY', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD',
+  'NZD/JPY', 'NZD/CAD', 'NZD/CHF',
+  'CAD/JPY', 'CHF/JPY',
+  // Exotics
+  'USD/MXN', 'USD/NOK', 'USD/SEK', 'USD/SGD', 'USD/HKD',
+  'USD/TRY', 'USD/ZAR', 'USD/CNY',
+  // Stocks
+  'AAPL', 'TSLA', 'NVDA', 'AMZN', 'MSFT', 'GOOGL', 'META',
 ];
 
 /**
@@ -1387,7 +1383,7 @@ function buildSrRow(item, idx) {
   const cls   = isResistance ? 'buy' : 'sell';
   const icon  = isResistance ? '▲' : '▼';
   const srLabel = isResistance ? 'Resistance' : 'Support';
-  const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+  const dec   = (item.pair && (item.pair.includes('JPY') || isStock(item.pair))) ? 2 : 4;
   const fmt   = v => Number(v).toFixed(dec);
   const svgStatus = isResistance ? 'resistance' : 'support';
   const distBadge = item.dist != null ? ` <span class="fvg-dist-badge">${(item.dist * 100).toFixed(3)}%</span>` : '';
@@ -1570,7 +1566,7 @@ function updateTechCurrentPrice(pair) {
       const time  = document.getElementById('ta-price-updated');
       const badge = document.getElementById('ta-live-price-badge');
       if (!el) return;
-      const dec    = (pair.includes('JPY') || pair.startsWith('XAU')) ? 2 : 4;
+      const dec    = (pair.includes('JPY') || isStock(pair)) ? 2 : 4;
       el.textContent    = Number(data.current_price).toFixed(dec);
       if (pairL) pairL.textContent  = pair;
       if (time)  time.textContent   = `Updated: ${new Date().toLocaleTimeString()}`;

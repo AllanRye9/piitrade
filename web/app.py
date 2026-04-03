@@ -500,8 +500,6 @@ def _session_id(request: Request) -> str:
 _FRANKFURTER_BASE = "https://api.frankfurter.app"
 _YAHOO_FINANCE_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
 _YAHOO_FINANCE_BASE_ALT = "https://query2.finance.yahoo.com/v8/finance/chart"
-_GOLD_TICKER = "GC=F"
-_METALS_LIVE_BASE = "https://metals.live/api/spot"
 _RATE_CACHE: dict[str, dict] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL_SECONDS = 300
@@ -513,77 +511,33 @@ _YF_HEADERS = {
     )
 }
 
-
-def _fetch_gold_rate_yahoo(base_url: str) -> float | None:
-    """Fetch gold spot price from Yahoo Finance (returns USD per troy oz)."""
-    try:
-        resp = _requests.get(
-            f"{base_url}/{_GOLD_TICKER}",
-            params={"interval": "1d", "range": "1d"},
-            headers=_YF_HEADERS,
-            timeout=6,
-        )
-        resp.raise_for_status()
-        return float(
-            resp.json()["chart"]["result"][0]["meta"]["regularMarketPrice"]
-        )
-    except Exception:
-        return None
+# Stock tickers served via Yahoo Finance (real-time prices, no cache warm-up needed)
+_STOCK_TICKERS: frozenset[str] = frozenset({"AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "META"})
 
 
-def _fetch_gold_rate_metals_live() -> float | None:
-    """Fetch gold spot price from metals.live free API (USD per troy oz)."""
-    try:
-        resp = _requests.get(
-            f"{_METALS_LIVE_BASE}/gold",
-            headers={"Accept": "application/json"},
-            timeout=6,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        # metals.live returns [{"gold": <price_in_usd_per_troy_oz>, ...}]
-        record: dict | None = None
-        if isinstance(data, list) and data:
-            record = data[0]
-        elif isinstance(data, dict):
-            record = data
-        if record is not None and "gold" in record:
-            price = float(record["gold"])
-            return price if price > 0 else None
-    except Exception:
-        pass
-    return None
-
-
-def _fetch_gold_rate() -> float | None:
-    cache_key = "rate:XAU/USD"
-    now = datetime.now(timezone.utc).timestamp()
-    with _CACHE_LOCK:
-        entry = _RATE_CACHE.get(cache_key)
-        if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
-            return entry["rate"]
-    rate = (
-        _fetch_gold_rate_yahoo(_YAHOO_FINANCE_BASE)
-        or _fetch_gold_rate_yahoo(_YAHOO_FINANCE_BASE_ALT)
-        or _fetch_gold_rate_metals_live()
-    )
-    if rate:
-        with _CACHE_LOCK:
-            _RATE_CACHE[cache_key] = {"rate": rate, "fetched_at": now}
-    return rate
-
-
-def _fetch_gold_historical_rates(days: int = 30) -> dict[str, float]:
-    cache_key = f"hist:XAU/USD:{days}"
-    now = datetime.now(timezone.utc).timestamp()
-    with _CACHE_LOCK:
-        entry = _RATE_CACHE.get(cache_key)
-        if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
-            return entry["data"]
+def _fetch_yf_rate(ticker: str) -> float | None:
+    """Fetch the current price for a Yahoo Finance ticker (stock or index)."""
     for base_url in (_YAHOO_FINANCE_BASE, _YAHOO_FINANCE_BASE_ALT):
         try:
             resp = _requests.get(
-                f"{base_url}/{_GOLD_TICKER}",
+                f"{base_url}/{ticker}",
+                params={"interval": "1d", "range": "1d"},
+                headers=_YF_HEADERS,
+                timeout=6,
+            )
+            resp.raise_for_status()
+            return float(resp.json()["chart"]["result"][0]["meta"]["regularMarketPrice"])
+        except Exception:
+            continue
+    return None
+
+
+def _fetch_yf_historical(ticker: str, days: int = 30) -> dict[str, float]:
+    """Fetch daily historical closing prices for a Yahoo Finance ticker."""
+    for base_url in (_YAHOO_FINANCE_BASE, _YAHOO_FINANCE_BASE_ALT):
+        try:
+            resp = _requests.get(
+                f"{base_url}/{ticker}",
                 params={"interval": "1d", "range": "3mo"},
                 headers=_YF_HEADERS,
                 timeout=10,
@@ -599,77 +553,74 @@ def _fetch_gold_historical_rates(days: int = 30) -> dict[str, float]:
                 d = datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
                 rates[d] = round(float(close), 2)
             sorted_rates = dict(sorted(rates.items()))
-            recent = dict(list(sorted_rates.items())[-days:])
-            with _CACHE_LOCK:
-                _RATE_CACHE[cache_key] = {"data": recent, "fetched_at": now}
-            return recent
+            return dict(list(sorted_rates.items())[-days:])
         except Exception:
             continue
     return {}
 
 
 def _fetch_live_rate(pair: str) -> float | None:
-    if pair == "XAU/USD":
-        return _fetch_gold_rate()
     cache_key = f"rate:{pair}"
     now = datetime.now(timezone.utc).timestamp()
     with _CACHE_LOCK:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["rate"]
-    try:
-        base, quote = pair.split("/")
-        resp = _requests.get(
-            f"{_FRANKFURTER_BASE}/latest",
-            params={"from": base, "to": quote},
-            timeout=5,
-        )
-        resp.raise_for_status()
-        rate: float = resp.json()["rates"][quote]
+    if pair in _STOCK_TICKERS:
+        rate: float | None = _fetch_yf_rate(pair)
+    else:
+        try:
+            base, quote = pair.split("/")
+            resp = _requests.get(
+                f"{_FRANKFURTER_BASE}/latest",
+                params={"from": base, "to": quote},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            rate = resp.json()["rates"][quote]
+        except Exception:
+            rate = None
+    if rate:
         with _CACHE_LOCK:
             _RATE_CACHE[cache_key] = {"rate": rate, "fetched_at": now}
-        return rate
-    except Exception:
-        return None
+    return rate
 
 
 def _fetch_historical_rates(pair: str, days: int = 30) -> dict[str, float]:
-    if pair == "XAU/USD":
-        return _fetch_gold_historical_rates(days)
     cache_key = f"hist:{pair}:{days}"
     now = datetime.now(timezone.utc).timestamp()
     with _CACHE_LOCK:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["data"]
-    try:
-        base, quote = pair.split("/")
-        end_date = date.today()
-        start_date = end_date - timedelta(days=days + 15)
-        resp = _requests.get(
-            f"{_FRANKFURTER_BASE}/{start_date.isoformat()}..{end_date.isoformat()}",
-            params={"from": base, "to": quote},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        raw: dict[str, dict[str, float]] = resp.json().get("rates", {})
-        sorted_rates: dict[str, float] = {d: r[quote] for d, r in sorted(raw.items())}
-        recent = dict(list(sorted_rates.items())[-days:])
+    if pair in _STOCK_TICKERS:
+        data = _fetch_yf_historical(pair, days)
+    else:
+        try:
+            base, quote = pair.split("/")
+            end_date = date.today()
+            start_date = end_date - timedelta(days=days + 15)
+            resp = _requests.get(
+                f"{_FRANKFURTER_BASE}/{start_date.isoformat()}..{end_date.isoformat()}",
+                params={"from": base, "to": quote},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            raw: dict[str, dict[str, float]] = resp.json().get("rates", {})
+            sorted_rates: dict[str, float] = {d: r[quote] for d, r in sorted(raw.items())}
+            data = dict(list(sorted_rates.items())[-days:])
+        except Exception:
+            data = {}
+    if data:
         with _CACHE_LOCK:
-            _RATE_CACHE[cache_key] = {"data": recent, "fetched_at": now}
-        return recent
-    except Exception:
-        return {}
+            _RATE_CACHE[cache_key] = {"data": data, "fetched_at": now}
+    return data
 
 
 def _pair_pip_dec(pair: str) -> tuple[float, int]:
     """Return (pip_size, decimal_places) for the given trading pair."""
-    if pair == "XAU/USD":
-        return 1.0, 2
-    if pair == "USOIL":
+    if pair in _STOCK_TICKERS:
         return 0.01, 2
-    if pair == "XAG/USD":
-        return 0.001, 4
     if "JPY" in pair:
         return 0.01, 2
     return 0.0001, 4
@@ -723,11 +674,19 @@ def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[d
 
 
 _SUPPORTED_PAIRS = (
+    # ── Major pairs (USD) ──────────────────────────────────────────────────────
     "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD",
-    "EUR/GBP", "EUR/JPY", "EUR/AUD", "EUR/CAD",
-    "GBP/JPY", "GBP/CHF", "AUD/JPY",
-    "GBP/AUD", "GBP/CAD", "CAD/JPY", "CHF/JPY",
-    "XAU/USD", "XAG/USD", "USOIL",
+    # ── Minor / Cross pairs (no USD) ───────────────────────────────────────────
+    "EUR/GBP", "EUR/JPY", "EUR/AUD", "EUR/CAD", "EUR/CHF", "EUR/NZD",
+    "GBP/JPY", "GBP/CHF", "GBP/AUD", "GBP/CAD", "GBP/NZD",
+    "AUD/JPY", "AUD/CAD", "AUD/CHF", "AUD/NZD",
+    "NZD/JPY", "NZD/CAD", "NZD/CHF",
+    "CAD/JPY", "CHF/JPY",
+    # ── Exotic pairs ───────────────────────────────────────────────────────────
+    "USD/MXN", "USD/NOK", "USD/SEK", "USD/SGD", "USD/HKD",
+    "USD/TRY", "USD/ZAR", "USD/CNY",
+    # ── Stocks (real-time via Yahoo Finance) ───────────────────────────────────
+    "AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "META",
 )
 
 
@@ -747,30 +706,56 @@ def _gen_seq(seed: str, n: int = 30) -> list[tuple[str, str, int]]:
 _FEATURES_DEFAULT = ["RSI-14", "MACD", "EMA-20", "EMA-50", "News Sentiment", "CPI Delta", "PMI"]
 
 _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
-    "EUR/USD": {"direction": "BUY",  "confidence": 78.5, "entry_price": 1.0854, "take_profit": 1.0920, "stop_loss": 1.0820, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GBP/USD": {"direction": "SELL", "confidence": 65.2, "entry_price": 1.2634, "take_profit": 1.2560, "stop_loss": 1.2680, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "USD/JPY": {"direction": "HOLD", "confidence": 52.1, "entry_price": 151.42, "take_profit": 152.00, "stop_loss": 150.80, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "USD/CHF": {"direction": "BUY",  "confidence": 70.3, "entry_price": 0.9012, "take_profit": 0.9075, "stop_loss": 0.8978, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "AUD/USD": {"direction": "SELL", "confidence": 61.8, "entry_price": 0.6523, "take_profit": 0.6470, "stop_loss": 0.6555, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "USD/CAD": {"direction": "BUY",  "confidence": 68.4, "entry_price": 1.3654, "take_profit": 1.3730, "stop_loss": 1.3610, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "NZD/USD": {"direction": "HOLD", "confidence": 53.7, "entry_price": 0.6021, "take_profit": 0.6065, "stop_loss": 0.5990, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "EUR/GBP": {"direction": "BUY",  "confidence": 62.9, "entry_price": 0.8590, "take_profit": 0.8640, "stop_loss": 0.8558, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "EUR/JPY": {"direction": "BUY",  "confidence": 74.1, "entry_price": 163.45, "take_profit": 164.80, "stop_loss": 162.60, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "EUR/AUD": {"direction": "BUY",  "confidence": 63.2, "entry_price": 1.6624, "take_profit": 1.6720, "stop_loss": 1.6570, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "EUR/CAD": {"direction": "BUY",  "confidence": 66.7, "entry_price": 1.4820, "take_profit": 1.4920, "stop_loss": 1.4762, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GBP/JPY": {"direction": "SELL", "confidence": 67.5, "entry_price": 190.25, "take_profit": 188.90, "stop_loss": 191.20, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GBP/CHF": {"direction": "SELL", "confidence": 58.9, "entry_price": 1.1456, "take_profit": 1.1390, "stop_loss": 1.1500, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "AUD/JPY": {"direction": "HOLD", "confidence": 51.4, "entry_price": 98.65,  "take_profit": 99.30,  "stop_loss": 98.10,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "XAU/USD": {"direction": "BUY",  "confidence": 71.4, "entry_price": 3300.00,"take_profit": 3365.00,"stop_loss": 3263.00, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GBP/AUD": {"direction": "SELL", "confidence": 60.5, "entry_price": 2.0285, "take_profit": 2.0180, "stop_loss": 2.0340, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GBP/CAD": {"direction": "BUY",  "confidence": 64.8, "entry_price": 1.7412, "take_profit": 1.7520, "stop_loss": 1.7350, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "CAD/JPY": {"direction": "BUY",  "confidence": 58.3, "entry_price": 110.82, "take_profit": 112.00, "stop_loss": 110.10, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "CHF/JPY": {"direction": "HOLD", "confidence": 54.6, "entry_price": 168.42, "take_profit": 169.80, "stop_loss": 167.50, "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "XAG/USD": {"direction": "BUY",  "confidence": 66.2, "entry_price": 33.42,  "take_profit": 34.20,  "stop_loss": 32.90,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "USOIL":   {"direction": "SELL", "confidence": 63.7, "entry_price": 71.85,  "take_profit": 69.50,  "stop_loss": 73.20,  "generated_at": "2026-03-30T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Majors ─────────────────────────────────────────────────────────────────
+    "EUR/USD": {"direction": "BUY",  "confidence": 78.5, "entry_price": 1.0854, "take_profit": 1.0920, "stop_loss": 1.0820, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/USD": {"direction": "SELL", "confidence": 65.2, "entry_price": 1.2634, "take_profit": 1.2560, "stop_loss": 1.2680, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/JPY": {"direction": "HOLD", "confidence": 52.1, "entry_price": 149.82, "take_profit": 150.50, "stop_loss": 149.10, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/CHF": {"direction": "BUY",  "confidence": 70.3, "entry_price": 0.9012, "take_profit": 0.9075, "stop_loss": 0.8978, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AUD/USD": {"direction": "SELL", "confidence": 61.8, "entry_price": 0.6305, "take_profit": 0.6250, "stop_loss": 0.6340, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/CAD": {"direction": "BUY",  "confidence": 68.4, "entry_price": 1.4380, "take_profit": 1.4460, "stop_loss": 1.4330, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NZD/USD": {"direction": "HOLD", "confidence": 53.7, "entry_price": 0.5720, "take_profit": 0.5765, "stop_loss": 0.5690, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Minors / Crosses ───────────────────────────────────────────────────────
+    "EUR/GBP": {"direction": "BUY",  "confidence": 62.9, "entry_price": 0.8590, "take_profit": 0.8640, "stop_loss": 0.8558, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "EUR/JPY": {"direction": "BUY",  "confidence": 74.1, "entry_price": 162.50, "take_profit": 163.80, "stop_loss": 161.60, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "EUR/AUD": {"direction": "BUY",  "confidence": 63.2, "entry_price": 1.7210, "take_profit": 1.7310, "stop_loss": 1.7155, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "EUR/CAD": {"direction": "BUY",  "confidence": 66.7, "entry_price": 1.5610, "take_profit": 1.5720, "stop_loss": 1.5548, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "EUR/CHF": {"direction": "HOLD", "confidence": 55.4, "entry_price": 0.9368, "take_profit": 0.9410, "stop_loss": 0.9340, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "EUR/NZD": {"direction": "BUY",  "confidence": 60.8, "entry_price": 1.8950, "take_profit": 1.9060, "stop_loss": 1.8890, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/JPY": {"direction": "SELL", "confidence": 67.5, "entry_price": 189.30, "take_profit": 187.90, "stop_loss": 190.20, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/CHF": {"direction": "SELL", "confidence": 58.9, "entry_price": 1.1384, "take_profit": 1.1316, "stop_loss": 1.1430, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/AUD": {"direction": "SELL", "confidence": 60.5, "entry_price": 2.0040, "take_profit": 1.9930, "stop_loss": 2.0100, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/CAD": {"direction": "BUY",  "confidence": 64.8, "entry_price": 1.8190, "take_profit": 1.8300, "stop_loss": 1.8125, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GBP/NZD": {"direction": "BUY",  "confidence": 59.3, "entry_price": 2.2110, "take_profit": 2.2230, "stop_loss": 2.2045, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AUD/JPY": {"direction": "HOLD", "confidence": 51.4, "entry_price": 94.52,  "take_profit": 95.20,  "stop_loss": 93.90,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AUD/CAD": {"direction": "SELL", "confidence": 57.6, "entry_price": 0.9063, "take_profit": 0.9005, "stop_loss": 0.9095, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AUD/CHF": {"direction": "SELL", "confidence": 56.2, "entry_price": 0.5684, "take_profit": 0.5640, "stop_loss": 0.5712, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AUD/NZD": {"direction": "HOLD", "confidence": 52.8, "entry_price": 1.1022, "take_profit": 1.1070, "stop_loss": 1.0990, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NZD/JPY": {"direction": "SELL", "confidence": 63.1, "entry_price": 85.75,  "take_profit": 84.80,  "stop_loss": 86.35,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NZD/CAD": {"direction": "HOLD", "confidence": 54.2, "entry_price": 0.8228, "take_profit": 0.8275, "stop_loss": 0.8198, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NZD/CHF": {"direction": "SELL", "confidence": 55.9, "entry_price": 0.5153, "take_profit": 0.5115, "stop_loss": 0.5178, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "CAD/JPY": {"direction": "BUY",  "confidence": 58.3, "entry_price": 104.18, "take_profit": 105.40, "stop_loss": 103.45, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "CHF/JPY": {"direction": "HOLD", "confidence": 54.6, "entry_price": 166.42, "take_profit": 167.80, "stop_loss": 165.50, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Exotics ────────────────────────────────────────────────────────────────
+    "USD/MXN": {"direction": "BUY",  "confidence": 63.5, "entry_price": 20.3500,"take_profit": 20.5800,"stop_loss": 20.2200, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/NOK": {"direction": "BUY",  "confidence": 60.1, "entry_price": 10.6250,"take_profit": 10.7800,"stop_loss": 10.5400, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/SEK": {"direction": "BUY",  "confidence": 61.4, "entry_price": 10.3880,"take_profit": 10.5420,"stop_loss": 10.3000, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/SGD": {"direction": "HOLD", "confidence": 53.8, "entry_price": 1.3418, "take_profit": 1.3470, "stop_loss": 1.3388, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/HKD": {"direction": "HOLD", "confidence": 52.3, "entry_price": 7.7826, "take_profit": 7.7870, "stop_loss": 7.7790, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/TRY": {"direction": "BUY",  "confidence": 72.6, "entry_price": 38.4500,"take_profit": 39.2000,"stop_loss": 38.0500, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/ZAR": {"direction": "BUY",  "confidence": 65.9, "entry_price": 18.7200,"take_profit": 19.1000,"stop_loss": 18.5000, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "USD/CNY": {"direction": "BUY",  "confidence": 58.7, "entry_price": 7.2368, "take_profit": 7.2800, "stop_loss": 7.2100, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Stocks (real-time via Yahoo Finance) ───────────────────────────────────
+    "AAPL": {"direction": "HOLD", "confidence": 56.2, "entry_price": 215.00, "take_profit": 222.00, "stop_loss": 210.50, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "TSLA": {"direction": "SELL", "confidence": 63.8, "entry_price": 275.00, "take_profit": 258.00, "stop_loss": 285.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NVDA": {"direction": "BUY",  "confidence": 74.5, "entry_price": 880.00, "take_profit": 920.00, "stop_loss": 855.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AMZN": {"direction": "BUY",  "confidence": 67.3, "entry_price": 200.00, "take_profit": 210.00, "stop_loss": 194.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "MSFT": {"direction": "BUY",  "confidence": 70.8, "entry_price": 395.00, "take_profit": 415.00, "stop_loss": 383.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GOOGL": {"direction": "HOLD", "confidence": 55.1, "entry_price": 170.00, "take_profit": 178.00, "stop_loss": 165.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "META": {"direction": "BUY",  "confidence": 71.2, "entry_price": 580.00, "take_profit": 610.00, "stop_loss": 562.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
 }
 
 _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]] = {
+    # ── Majors ─────────────────────────────────────────────────────────────────
     "EUR/USD": (1.0680, 0.0001, [
         ("BUY","BUY",62),("SELL","SELL",-44),("BUY","BUY",53),("HOLD","BUY",29),
         ("BUY","BUY",40),("BUY","SELL",-30),("SELL","SELL",-50),("SELL","SELL",-30),
@@ -802,23 +787,47 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
         ("BUY","BUY",38),("HOLD","HOLD",4),
     ]),
     "USD/CHF": (0.8940, 0.0001, _gen_seq("USD/CHF")),
-    "AUD/USD": (0.6455, 0.0001, _gen_seq("AUD/USD")),
-    "USD/CAD": (1.3590, 0.0001, _gen_seq("USD/CAD")),
-    "NZD/USD": (0.5970, 0.0001, _gen_seq("NZD/USD")),
+    "AUD/USD": (0.6250, 0.0001, _gen_seq("AUD/USD")),
+    "USD/CAD": (1.4350, 0.0001, _gen_seq("USD/CAD")),
+    "NZD/USD": (0.5690, 0.0001, _gen_seq("NZD/USD")),
+    # ── Minors / Crosses ───────────────────────────────────────────────────────
     "EUR/GBP": (0.8540, 0.0001, _gen_seq("EUR/GBP")),
-    "EUR/JPY": (162.10, 0.01,   _gen_seq("EUR/JPY")),
-    "EUR/AUD": (1.6530, 0.0001, _gen_seq("EUR/AUD")),
-    "EUR/CAD": (1.4750, 0.0001, _gen_seq("EUR/CAD")),
-    "GBP/JPY": (189.40, 0.01,   _gen_seq("GBP/JPY")),
-    "GBP/CHF": (1.1410, 0.0001, _gen_seq("GBP/CHF")),
-    "AUD/JPY": (98.20,  0.01,   _gen_seq("AUD/JPY")),
-    "XAU/USD": (3300.00, 1.0,   _gen_seq("XAU/USD")),
-    "GBP/AUD": (2.0240, 0.0001, _gen_seq("GBP/AUD")),
-    "GBP/CAD": (1.7380, 0.0001, _gen_seq("GBP/CAD")),
-    "CAD/JPY": (110.40, 0.01,   _gen_seq("CAD/JPY")),
-    "CHF/JPY": (168.00, 0.01,   _gen_seq("CHF/JPY")),
-    "XAG/USD": (33.10,  0.001,  _gen_seq("XAG/USD")),
-    "USOIL":   (71.50,  0.01,   _gen_seq("USOIL")),
+    "EUR/JPY": (161.10, 0.01,   _gen_seq("EUR/JPY")),
+    "EUR/AUD": (1.7100, 0.0001, _gen_seq("EUR/AUD")),
+    "EUR/CAD": (1.5520, 0.0001, _gen_seq("EUR/CAD")),
+    "EUR/CHF": (0.9340, 0.0001, _gen_seq("EUR/CHF")),
+    "EUR/NZD": (1.8820, 0.0001, _gen_seq("EUR/NZD")),
+    "GBP/JPY": (188.40, 0.01,   _gen_seq("GBP/JPY")),
+    "GBP/CHF": (1.1340, 0.0001, _gen_seq("GBP/CHF")),
+    "GBP/AUD": (1.9920, 0.0001, _gen_seq("GBP/AUD")),
+    "GBP/CAD": (1.8120, 0.0001, _gen_seq("GBP/CAD")),
+    "GBP/NZD": (2.2040, 0.0001, _gen_seq("GBP/NZD")),
+    "AUD/JPY": (93.80,  0.01,   _gen_seq("AUD/JPY")),
+    "AUD/CAD": (0.9020, 0.0001, _gen_seq("AUD/CAD")),
+    "AUD/CHF": (0.5660, 0.0001, _gen_seq("AUD/CHF")),
+    "AUD/NZD": (1.0980, 0.0001, _gen_seq("AUD/NZD")),
+    "NZD/JPY": (85.20,  0.01,   _gen_seq("NZD/JPY")),
+    "NZD/CAD": (0.8190, 0.0001, _gen_seq("NZD/CAD")),
+    "NZD/CHF": (0.5130, 0.0001, _gen_seq("NZD/CHF")),
+    "CAD/JPY": (104.00, 0.01,   _gen_seq("CAD/JPY")),
+    "CHF/JPY": (165.80, 0.01,   _gen_seq("CHF/JPY")),
+    # ── Exotics ────────────────────────────────────────────────────────────────
+    "USD/MXN": (20.200, 0.0001, _gen_seq("USD/MXN")),
+    "USD/NOK": (10.580, 0.0001, _gen_seq("USD/NOK")),
+    "USD/SEK": (10.360, 0.0001, _gen_seq("USD/SEK")),
+    "USD/SGD": (1.3390, 0.0001, _gen_seq("USD/SGD")),
+    "USD/HKD": (7.7800, 0.0001, _gen_seq("USD/HKD")),
+    "USD/TRY": (38.200, 0.0001, _gen_seq("USD/TRY")),
+    "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
+    "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
+    # ── Stocks (pip=0.1 so seq deltas represent ~$2–6 daily dollar moves) ────────
+    "AAPL":  (210.00, 0.1, _gen_seq("AAPL")),
+    "TSLA":  (270.00, 0.1, _gen_seq("TSLA")),
+    "NVDA":  (860.00, 0.1, _gen_seq("NVDA")),
+    "AMZN":  (195.00, 0.1, _gen_seq("AMZN")),
+    "MSFT":  (388.00, 0.1, _gen_seq("MSFT")),
+    "GOOGL": (165.00, 0.1, _gen_seq("GOOGL")),
+    "META":  (570.00, 0.1, _gen_seq("META")),
 }
 
 def _make_news_items() -> list[dict[str, Any]]:
@@ -829,16 +838,18 @@ def _make_news_items() -> list[dict[str, Any]]:
         return (today - timedelta(hours=hours_ago, minutes=extra_minutes)).isoformat()
 
     return [
-        {"headline": "Federal Reserve signals cautious stance on rate cuts as inflation remains sticky", "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 15)},
-        {"headline": "EUR/USD consolidates ahead of Eurozone CPI data release",                          "sentiment": "neutral",  "source": "FXStreet",   "published_at": _ts(1)},
-        {"headline": "Bank of England holds rates steady, GBP/USD under pressure",                       "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 30)},
-        {"headline": "Japan's core CPI rises above expectations, BoJ hawkish bets increase",             "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2)},
-        {"headline": "US Non-Farm Payrolls beat forecasts, USD strengthens across the board",             "sentiment": "positive", "source": "MarketWatch","published_at": _ts(2, 30)},
-        {"headline": "Eurozone PMI unexpectedly contracts, raising recession fears",                      "sentiment": "negative", "source": "Reuters",    "published_at": _ts(3)},
-        {"headline": "GBP gains on positive UK retail sales data, trade balance improves",               "sentiment": "positive", "source": "FXStreet",   "published_at": _ts(3, 15)},
-        {"headline": "Dollar index holds above 104 as risk sentiment remains fragile",                    "sentiment": "neutral",  "source": "Bloomberg",  "published_at": _ts(4)},
-        {"headline": "ECB policymakers divided on pace of future rate reductions",                        "sentiment": "neutral",  "source": "WSJ",        "published_at": _ts(4, 30)},
-        {"headline": "Yen weakens as US-Japan yield differential widens further",                         "sentiment": "negative", "source": "Nikkei",     "published_at": _ts(5)},
+        {"headline": "Trump tariff shock: 10% blanket import levy triggers global market sell-off", "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 10)},
+        {"headline": "S&P 500 drops 4.8% as tariff fears hammer risk appetite; tech leads losses",  "sentiment": "negative", "source": "MarketWatch", "published_at": _ts(0, 30)},
+        {"headline": "USD surges on safe-haven demand; EUR/USD slides below 1.09 on trade war fears","sentiment": "negative", "source": "FXStreet",   "published_at": _ts(1)},
+        {"headline": "NVIDIA falls 7% amid chip export restrictions tied to new tariff framework",    "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 20)},
+        {"headline": "Bank of Japan holds rates at 0.5%; yen gains as investors flee equities",       "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2)},
+        {"headline": "Apple and Meta lead tech rout; Nasdaq-100 logs worst session since 2022",       "sentiment": "negative", "source": "WSJ",        "published_at": _ts(2, 30)},
+        {"headline": "ECB signals faster rate cuts if tariffs dent Eurozone growth outlook",          "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(3)},
+        {"headline": "AUD/USD hits 5-year low as commodity currencies crushed by trade war fears",   "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(3, 45)},
+        {"headline": "Tesla Q1 deliveries miss estimates by 15%; shares extend monthly decline",      "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(4, 15)},
+        {"headline": "Gold rises 1.2% to record $3,120/oz as investors seek safe-haven assets",      "sentiment": "positive", "source": "MarketWatch","published_at": _ts(5)},
+        {"headline": "Microsoft Azure revenue up 33% YoY; AI services offset macro headwinds",       "sentiment": "positive", "source": "WSJ",        "published_at": _ts(5, 30)},
+        {"headline": "Fed's Powell warns tariffs are 'highly uncertain'; rules out emergency cuts",   "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(6)},
     ]
 
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
@@ -1834,7 +1845,7 @@ async def forex_signals(pair: str = "EUR/USD"):
         signal["entry_price"] = live_rate
         signal["generated_at"] = datetime.now(timezone.utc).isoformat()
         signal["data_source"] = (
-            "Yahoo Finance (gold spot)" if pair == "XAU/USD" else "Frankfurter API (ECB)"
+            "Yahoo Finance" if pair in _STOCK_TICKERS else "Frankfurter API (ECB)"
         )
         signal["is_live"] = True
         if hist_rates:
@@ -1881,19 +1892,32 @@ async def forex_technical(pair: str = "EUR/USD"):
 
 @app.get("/api/forex/pairs")
 async def forex_pairs():
-    _COMMODITY_PAIRS = {"XAU/USD", "XAG/USD", "USOIL"}
-    major, cross, commodity = [], [], []
+    _MAJOR_CCYS = {"EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD", "USD"}
+    major: list[str] = []
+    minor: list[str] = []
+    exotic: list[str] = []
+    stocks: list[str] = []
     for p in _SUPPORTED_PAIRS:
-        if p in _COMMODITY_PAIRS:
-            commodity.append(p)
-        elif "/" in p and "USD" in p.split("/"):
-            major.append(p)
+        if p in _STOCK_TICKERS:
+            stocks.append(p)
+        elif "/" not in p:
+            stocks.append(p)
         else:
-            cross.append(p)
+            parts = p.split("/")
+            base, quote = parts[0], parts[1]
+            if "USD" in (base, quote):
+                other = base if quote == "USD" else quote
+                if other in _MAJOR_CCYS - {"USD"}:
+                    major.append(p)
+                else:
+                    exotic.append(p)
+            else:
+                minor.append(p)
     return JSONResponse({
         "major": major,
-        "cross": cross,
-        "commodity": commodity,
+        "minor": minor,
+        "exotic": exotic,
+        "stocks": stocks,
         "all": list(_SUPPORTED_PAIRS),
     })
 
