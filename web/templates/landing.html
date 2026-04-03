@@ -20,6 +20,8 @@
   <meta name="twitter:card" content="summary"/>
   <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Hub"/>
   <meta name="twitter:description" content="Free AI-powered forex signals for 21 currency pairs. No subscription, no sign-up required."/>
+  <link rel="preload" href="/static/css/forex.css" as="style"/>
+  <link rel="dns-prefetch" href="//api.frankfurter.app"/>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
   <style>
@@ -187,6 +189,103 @@
       justify-content: center;
       margin-bottom: 8px;
       flex-wrap: wrap;
+    }
+
+    /* ── Landing entrance animations ── */
+    @keyframes land-slide-up {
+      from { opacity: 0; transform: translateY(26px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes land-cta-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+      55%       { box-shadow: 0 0 0 9px rgba(88, 166, 255, 0.18); }
+    }
+    @keyframes land-float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-7px); }
+    }
+    @keyframes land-arrow-bounce {
+      0%, 100% { transform: translateY(0); opacity: 0.7; }
+      50%       { transform: translateY(6px); opacity: 1; }
+    }
+
+    /* Hero text entrance */
+    .landing-hero h1 {
+      animation: land-slide-up 0.5s ease both;
+    }
+    .landing-hero p {
+      animation: land-slide-up 0.5s 0.1s ease both;
+    }
+    .landing-cta-row {
+      animation: land-slide-up 0.5s 0.18s ease both;
+    }
+
+    /* Primary CTA glow pulse to draw visitors to the dashboard */
+    .landing-cta-row .btn-primary,
+    .landing-subscribe-banner .btn-primary,
+    .preview-blur-overlay .btn-primary {
+      animation: land-cta-glow 2.4s ease-in-out infinite;
+    }
+
+    /* Preview section entrance & float */
+    .landing-preview {
+      animation: land-slide-up 0.5s 0.28s ease both;
+    }
+    .preview-blur-wrap .fx-signal-card {
+      animation: land-float 5s ease-in-out 0.6s infinite;
+    }
+
+    /* Animated down-arrow in the preview overlay guides visitors to CTA */
+    .preview-blur-overlay::before {
+      content: "↓";
+      display: block;
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+      animation: land-arrow-bounce 1.3s ease-in-out infinite;
+    }
+
+    /* Feature cards staggered entrance */
+    .feature-card {
+      animation: land-slide-up 0.45s ease both;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .feature-card:nth-child(1) { animation-delay: 0.05s; }
+    .feature-card:nth-child(2) { animation-delay: 0.10s; }
+    .feature-card:nth-child(3) { animation-delay: 0.15s; }
+    .feature-card:nth-child(4) { animation-delay: 0.20s; }
+    .feature-card:nth-child(5) { animation-delay: 0.25s; }
+    .feature-card:nth-child(6) { animation-delay: 0.30s; }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(88, 166, 255, 0.12);
+    }
+
+    /* Subscribe banner entrance */
+    .landing-subscribe-banner {
+      animation: land-slide-up 0.5s 0.35s ease both;
+    }
+
+    /* Respect OS-level reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .landing-hero h1,
+      .landing-hero p,
+      .landing-cta-row,
+      .landing-preview,
+      .landing-subscribe-banner,
+      .feature-card {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+      .landing-cta-row .btn-primary,
+      .landing-subscribe-banner .btn-primary,
+      .preview-blur-overlay .btn-primary,
+      .preview-blur-wrap .fx-signal-card,
+      .preview-blur-overlay::before {
+        animation: none;
+      }
     }
   </style>
 </head>

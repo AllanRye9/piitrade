@@ -18,6 +18,7 @@ from typing import Any, Optional
 import requests as _requests
 from fastapi import FastAPI, Form, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -42,23 +43,29 @@ def _load_or_create_secret_key() -> str:
     env_key = os.environ.get("SECRET_KEY", "")
     if env_key:
         return env_key
-    _key_file = _DIR / ".secret_key"
-    if _key_file.exists():
-        stored = _key_file.read_text().strip()
-        if stored:
-            return stored
+    # Check candidate locations: app directory first, then /tmp for read-only filesystems
+    # (e.g. Vercel serverless, AWS Lambda) where the app directory is not writable.
+    _candidates = [_DIR / ".secret_key", Path("/tmp/.piitrade_secret_key")]
+    for _key_file in _candidates:
+        if _key_file.exists():
+            stored = _key_file.read_text().strip()
+            if stored:
+                return stored
     new_key = secrets.token_hex(32)
-    try:
-        _key_file.write_text(new_key)
-    except OSError as _e:
-        import warnings
-        warnings.warn(
-            f"PiiTrade: could not persist secret key to {_key_file} ({_e}). "
-            "Sessions will be invalidated on every server restart. "
-            "Set the SECRET_KEY environment variable to avoid this.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+    for _key_file in _candidates:
+        try:
+            _key_file.write_text(new_key)
+            return new_key
+        except OSError:
+            pass
+    import warnings
+    warnings.warn(
+        f"PiiTrade: could not persist secret key to {_candidates[0]} "
+        "(read-only filesystem). Sessions will be invalidated on every server restart. "
+        "Set the SECRET_KEY environment variable to avoid this.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
     return new_key
 
 
@@ -1135,8 +1142,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(_SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+class _CachedStaticFiles(StaticFiles):
+    """StaticFiles subclass that adds long-lived cache headers to all static files."""
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
 
 
