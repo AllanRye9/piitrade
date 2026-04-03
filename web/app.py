@@ -795,13 +795,13 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "USD/ZAR": {"direction": "BUY",  "confidence": 65.9, "entry_price": 18.7200,"take_profit": 19.1000,"stop_loss": 18.5000, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "USD/CNY": {"direction": "BUY",  "confidence": 58.7, "entry_price": 7.2368, "take_profit": 7.2800, "stop_loss": 7.2100, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     # ── Stocks (real-time via Yahoo Finance) ───────────────────────────────────
-    "AAPL": {"direction": "HOLD", "confidence": 56.2, "entry_price": 215.00, "take_profit": 222.00, "stop_loss": 210.50, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "TSLA": {"direction": "SELL", "confidence": 63.8, "entry_price": 275.00, "take_profit": 258.00, "stop_loss": 285.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "NVDA": {"direction": "BUY",  "confidence": 74.5, "entry_price": 880.00, "take_profit": 920.00, "stop_loss": 855.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "AMZN": {"direction": "BUY",  "confidence": 67.3, "entry_price": 200.00, "take_profit": 210.00, "stop_loss": 194.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "MSFT": {"direction": "BUY",  "confidence": 70.8, "entry_price": 395.00, "take_profit": 415.00, "stop_loss": 383.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "GOOGL": {"direction": "HOLD", "confidence": 55.1, "entry_price": 170.00, "take_profit": 178.00, "stop_loss": 165.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "META": {"direction": "BUY",  "confidence": 71.2, "entry_price": 580.00, "take_profit": 610.00, "stop_loss": 562.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AAPL": {"direction": "SELL", "confidence": 61.4, "entry_price": 198.00, "take_profit": 188.00, "stop_loss": 204.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "TSLA": {"direction": "SELL", "confidence": 65.2, "entry_price": 258.00, "take_profit": 240.00, "stop_loss": 268.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "NVDA": {"direction": "SELL", "confidence": 68.9, "entry_price": 106.00, "take_profit":  97.00, "stop_loss": 112.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "AMZN": {"direction": "HOLD", "confidence": 54.7, "entry_price": 192.00, "take_profit": 200.00, "stop_loss": 186.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "MSFT": {"direction": "HOLD", "confidence": 57.3, "entry_price": 388.00, "take_profit": 402.00, "stop_loss": 378.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "GOOGL": {"direction": "SELL", "confidence": 59.8, "entry_price": 162.00, "take_profit": 152.00, "stop_loss": 168.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "META": {"direction": "SELL", "confidence": 64.3, "entry_price": 538.00, "take_profit": 510.00, "stop_loss": 554.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     # ── Commodities (Yahoo Finance futures) ───────────────────────────────────
     "XAU/USD":   {"direction": "BUY",  "confidence": 76.8, "entry_price": 3120.00, "take_profit": 3180.00, "stop_loss": 3090.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "XAG/USD":   {"direction": "BUY",  "confidence": 64.3, "entry_price": 34.250,  "take_profit": 35.500,  "stop_loss": 33.600,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
@@ -893,13 +893,13 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "XRP/USD": (2.1000,   0.0001, _gen_seq("XRP/USD")),
     "SOL/USD": (118.00,   0.01,   _gen_seq("SOL/USD")),
     # ── Stocks (pip=0.01 matches _pair_pip_dec; seq deltas give ~$0.20–$0.60 daily moves) ──
-    "AAPL":  (210.00, 0.01, _gen_seq("AAPL")),
-    "TSLA":  (270.00, 0.01, _gen_seq("TSLA")),
-    "NVDA":  (860.00, 0.01, _gen_seq("NVDA")),
-    "AMZN":  (195.00, 0.01, _gen_seq("AMZN")),
+    "AAPL":  (198.00, 0.01, _gen_seq("AAPL")),
+    "TSLA":  (258.00, 0.01, _gen_seq("TSLA")),
+    "NVDA":  (106.00, 0.01, _gen_seq("NVDA")),
+    "AMZN":  (192.00, 0.01, _gen_seq("AMZN")),
     "MSFT":  (388.00, 0.01, _gen_seq("MSFT")),
-    "GOOGL": (165.00, 0.01, _gen_seq("GOOGL")),
-    "META":  (570.00, 0.01, _gen_seq("META")),
+    "GOOGL": (162.00, 0.01, _gen_seq("GOOGL")),
+    "META":  (538.00, 0.01, _gen_seq("META")),
 }
 
 def _make_news_items() -> list[dict[str, Any]]:
@@ -1319,6 +1319,18 @@ async def forex_hub(request: Request):
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
         return JSONResponse({"error": "An internal error occurred."}, status_code=500)
+
+
+@app.get("/methodology", response_class=HTMLResponse)
+async def methodology_page(request: Request):
+    _record_visit(_get_client_ip(request))
+    return templates.TemplateResponse(request, "methodology.html", _ctx(request))
+
+
+@app.get("/disclaimer", response_class=HTMLResponse)
+async def disclaimer_page(request: Request):
+    _record_visit(_get_client_ip(request))
+    return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
 
 
 # ─── Auth routes ──────────────────────────────────────────────────────────────
