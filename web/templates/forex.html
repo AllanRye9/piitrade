@@ -105,7 +105,7 @@
     <div class="fx-pair-bar">
       <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
       <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
-        <optgroup label="── Major Pairs (USD)" data-group="major">
+        <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
           <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
           <option value="GBP/USD">GBP/USD – British Pound / US Dollar</option>
           <option value="USD/JPY">USD/JPY – US Dollar / Japanese Yen</option>
@@ -114,7 +114,7 @@
           <option value="USD/CAD">USD/CAD – US Dollar / Canadian Dollar</option>
           <option value="NZD/USD">NZD/USD – New Zealand Dollar / US Dollar</option>
         </optgroup>
-        <optgroup label="── Minor / Cross Pairs" data-group="minor">
+        <optgroup id="optgroup-minor" label="── Minor / Cross Pairs" data-group="minor" data-requires-ecb="true">
           <option value="EUR/GBP">EUR/GBP – Euro / British Pound</option>
           <option value="EUR/JPY">EUR/JPY – Euro / Japanese Yen</option>
           <option value="EUR/AUD">EUR/AUD – Euro / Australian Dollar</option>
@@ -136,7 +136,7 @@
           <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
           <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
         </optgroup>
-        <optgroup label="── Exotic Pairs" data-group="exotic">
+        <optgroup id="optgroup-exotic" label="── Exotic Pairs" data-group="exotic" data-requires-ecb="true">
           <option value="USD/MXN">USD/MXN – US Dollar / Mexican Peso</option>
           <option value="USD/NOK">USD/NOK – US Dollar / Norwegian Krone</option>
           <option value="USD/SEK">USD/SEK – US Dollar / Swedish Krona</option>
@@ -179,6 +179,12 @@
   <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
     <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
     <div class="fx-signal-card" id="fx-signal-card">
+      <!-- Live data unavailable overlay (shown when pair feed is offline) -->
+      <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
+        <span class="signal-offline-icon">📡</span>
+        <div class="signal-offline-title">Live Data Unavailable</div>
+        <div class="signal-offline-msg">This pair's feed is currently offline. Data will appear once the live connection is restored.</div>
+      </div>
       <!-- Direction badge -->
       <div id="signal-direction" class="signal-direction-badge HOLD">
         <span id="direction-arrow">→</span>
