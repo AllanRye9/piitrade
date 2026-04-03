@@ -339,8 +339,6 @@
       <button class="fvg-filter-btn active" data-filter="approaching">📍 Approaching</button>
       <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
       <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
-      <button class="fvg-filter-btn" data-filter="all">🔍 All Active</button>
-      <button class="fvg-filter-btn" data-filter="passed">✅ Consumed</button>
       <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
     </div>
 
@@ -393,17 +391,41 @@
 
   <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
   <section id="section-sr-breaks">
-    <div class="fx-section-title">💥 Support &amp; Resistance Breakouts</div>
+    <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
     <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Pairs that have recently broken through a major support or resistance level,
-      confirming a directional move. Breakouts are identified when price moves
-      beyond the level with confirming momentum.
+      All trading pairs classified by their current relationship to major support and
+      resistance levels — from those approaching, to those touching, to confirmed breaks.
     </p>
     <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
-    <div id="sr-loading" class="ta-loading">Loading S/R breakout scanner…</div>
-    <div id="sr-list" style="display:none"></div>
+    <div id="sr-loading" class="ta-loading">Loading S/R scanner…</div>
+    <div id="sr-content" style="display:none">
+      <!-- Soon Touching -->
+      <div class="sr-group" data-sr-group="soon_touching">
+        <div class="fvg-group-title approaching">
+          <span class="fvg-group-icon">📍</span> Soon Touching
+          <span class="fvg-group-sub">Price is approaching a major S/R level — watch closely</span>
+        </div>
+        <div id="sr-soon-touching" class="fvg-list"></div>
+      </div>
+      <!-- Touched -->
+      <div class="sr-group" data-sr-group="touched">
+        <div class="fvg-group-title reached">
+          <span class="fvg-group-icon">🎯</span> Touched
+          <span class="fvg-group-sub">Price is right at the S/R level — potential reversal or breakout</span>
+        </div>
+        <div id="sr-touched" class="fvg-list"></div>
+      </div>
+      <!-- Broke -->
+      <div class="sr-group" data-sr-group="broke">
+        <div class="fvg-group-title rejected">
+          <span class="fvg-group-icon">💥</span> Broke
+          <span class="fvg-group-sub">Price has broken through the level with confirmed momentum</span>
+        </div>
+        <div id="sr-broke" class="fvg-list"></div>
+      </div>
+    </div>
     <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
-      No S/R breakouts detected at this time. Markets may be ranging.
+      No S/R activity detected at this time. Markets may be ranging.
     </div>
   </section>
 

@@ -1095,7 +1095,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* Support & Resistance */
-.sr-group { display: flex; flex-direction: column; gap: 5px; }
+.sr-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 28px; }
 .sr-group-title {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -1890,6 +1890,17 @@ a:hover { text-decoration: underline; }
 .fvg-row.fvg-rejected    { border-color: rgba(248,81,73,.35); }
 .fvg-row.fvg-passed      { opacity: .75; }
 
+/* Distance-to-zone badge shown on approaching items */
+.fvg-dist-badge {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(88,166,255,.15);
+  color: #58a6ff;
+  white-space: nowrap;
+}
+
 .fvg-status-icon { font-size: 1rem; }
 .fvg-pair   { font-weight: 600; color: var(--text); }
 .fvg-zone   { color: var(--text2); font-size: .82rem; font-family: monospace; }
@@ -2086,7 +2097,7 @@ a:hover { text-decoration: underline; }
 
 .fvg-row {
   display: grid;
-  grid-template-columns: 22px 80px auto auto auto auto auto;
+  grid-template-columns: 22px 80px auto auto auto auto auto auto;
   align-items: center;
   gap: 8px;
   background: var(--surface);
