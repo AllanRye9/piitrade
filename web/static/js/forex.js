@@ -355,6 +355,15 @@ function getPairDecimals(pair) {
   return 4;
 }
 
+/** Return the pip size for a pair, matching Python's _pair_pip_dec(). */
+function getPairPip(pair) {
+  if (pair === 'BTC/USD')  return 1.0;     // Bitcoin: whole-dollar pip
+  if (pair === 'XRP/USD')  return 0.0001;  // XRP: 4-decimal pip
+  if (pair === 'XAG/USD')  return 0.001;   // Silver: 3-decimal pip
+  if (isJpy(pair) || isStock(pair) || isCommodity(pair) || isCrypto(pair)) return 0.01; // 2-decimal pip
+  return 0.0001; // Standard forex: 4-decimal pip
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -374,53 +383,58 @@ async function loadSignal(pair) {
     const isNewSignal = previousDirection && signalData.direction !== previousDirection;
 
     renderSignal(signalData);
-    drawChart(signalData.history);
-    autoFillCalculator(signalData);
-    runCalculator();
-    loadTechnicalAnalysis(pair);
-    updateSuccessRateCard(pair, signalData);
 
-    // Gamification
-    gameState.signalsWatched++;
-    addXp(5, 'signal watched');
-    checkAndAwardBadge('first_signal', '👀', 'First Signal', gameState.signalsWatched >= 1);
-    checkAndAwardBadge('watched_10',   '🏅', '10 Signals Watched', gameState.signalsWatched >= 10);
-    checkAndAwardBadge('watched_50',   '��', '50 Signals Watched', gameState.signalsWatched >= 50);
-    checkAndAwardBadge('first_buy',    '🟢', 'First BUY',  signalData.direction === 'BUY');
-    checkAndAwardBadge('first_sell',   '🔴', 'First SELL', signalData.direction === 'SELL');
-    checkAndAwardBadge('high_conf',    '💎', 'High Confidence Signal', signalData.confidence >= 75);
+    // Only draw chart, update calculator, and fire notifications when live data is available
+    if (signalData.is_live !== false) {
+      drawChart(signalData.history);
+      autoFillCalculator(signalData);
+      runCalculator();
+      updateSuccessRateCard(pair, signalData);
 
-    if (isNewSignal) {
-      // New direction — streak broken, XP bonus
-      gameState.streak = 1;
-      addXp(20, 'new signal');
-      const dir = signalData.direction;
-      const soundType = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
-      playSignalSound(soundType);
-      const dirIcon = dir === 'BUY' ? '🟢' : dir === 'SELL' ? '🔴' : '🟡';
-      showToast(
-        `toast-${dir.toLowerCase()}`,
-        dirIcon,
-        `New ${dir} Signal – ${pair}`,
-        `Confidence: ${signalData.confidence}% · Entry: ${formatPrice(signalData.entry_price, pair)}`,
-        5000,
-      );
-      // Flash the signal card
-      const card = document.getElementById('fx-signal-card');
-      if (card) {
-        card.classList.remove('signal-updated');
-        card.offsetHeight;
-        card.classList.add('signal-updated');
+      // Gamification
+      gameState.signalsWatched++;
+      addXp(5, 'signal watched');
+      checkAndAwardBadge('first_signal', '👀', 'First Signal', gameState.signalsWatched >= 1);
+      checkAndAwardBadge('watched_10',   '🏅', '10 Signals Watched', gameState.signalsWatched >= 10);
+      checkAndAwardBadge('watched_50',   '🎖', '50 Signals Watched', gameState.signalsWatched >= 50);
+      checkAndAwardBadge('first_buy',    '🟢', 'First BUY',  signalData.direction === 'BUY');
+      checkAndAwardBadge('first_sell',   '🔴', 'First SELL', signalData.direction === 'SELL');
+      checkAndAwardBadge('high_conf',    '💎', 'High Confidence Signal', signalData.confidence >= 75);
+
+      if (isNewSignal) {
+        // New direction — streak broken, XP bonus
+        gameState.streak = 1;
+        addXp(20, 'new signal');
+        const dir = signalData.direction;
+        const soundType = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
+        playSignalSound(soundType);
+        const dirIcon = dir === 'BUY' ? '🟢' : dir === 'SELL' ? '🔴' : '🟡';
+        showToast(
+          `toast-${dir.toLowerCase()}`,
+          dirIcon,
+          `New ${dir} Signal – ${pair}`,
+          `Confidence: ${signalData.confidence}% · Entry: ${formatPrice(signalData.entry_price, pair)}`,
+          5000,
+        );
+        // Flash the signal card
+        const card = document.getElementById('fx-signal-card');
+        if (card) {
+          card.classList.remove('signal-updated');
+          card.offsetHeight;
+          card.classList.add('signal-updated');
+        }
+      } else {
+        gameState.streak = (gameState.streak || 0) + 1;
+        playSignalSound('refresh');
+        checkAndAwardBadge('streak_3', '🔥', '3-Signal Streak', gameState.streak >= 3);
+        checkAndAwardBadge('streak_5', '⚡', '5-Signal Streak', gameState.streak >= 5);
       }
-    } else {
-      gameState.streak = (gameState.streak || 0) + 1;
-      playSignalSound('refresh');
-      checkAndAwardBadge('streak_3', '🔥', '3-Signal Streak', gameState.streak >= 3);
-      checkAndAwardBadge('streak_5', '⚡', '5-Signal Streak', gameState.streak >= 5);
+
+      saveGameState();
+      updateGameBar();
     }
 
-    saveGameState();
-    updateGameBar();
+    loadTechnicalAnalysis(pair);
     previousDirection = signalData.direction;
     lastDirectionByPair[pair] = signalData.direction;
 
@@ -433,6 +447,23 @@ async function loadSignal(pair) {
 
 function renderSignal(data) {
   const dir = data.direction;
+  const isLive = data.is_live === true;
+
+  // Show/hide offline overlay – hide all signal content when data is not live
+  const offlineOverlay = document.getElementById('signal-offline-overlay');
+  const signalCard = document.getElementById('fx-signal-card');
+  if (offlineOverlay) offlineOverlay.hidden = isLive;
+  if (signalCard) signalCard.classList.toggle('signal-offline', !isLive);
+
+  // Don't populate fields with stale/static data when the feed is offline
+  if (!isLive) {
+    if (dataSourceBadge) {
+      dataSourceBadge.textContent = '🔴 Offline';
+      dataSourceBadge.className = 'fx-data-source static';
+      dataSourceBadge.title = data.data_source || 'Live feed unavailable';
+    }
+    return;
+  }
 
   // Direction badge
   directionBadge.textContent = dir;
@@ -463,9 +494,8 @@ function renderSignal(data) {
   // Last updated + data source badge
   lastUpdatedEl.textContent = `Updated: ${formatDate(data.generated_at)}`;
   if (dataSourceBadge) {
-    const isLive = data.is_live === true;
-    dataSourceBadge.textContent = isLive ? '🟢 Live' : '🟡 Cached';
-    dataSourceBadge.className = `fx-data-source ${isLive ? 'live' : 'static'}`;
+    dataSourceBadge.textContent = '🟢 Live';
+    dataSourceBadge.className = 'fx-data-source live';
     dataSourceBadge.title = data.data_source || '';
   }
 }
@@ -1073,14 +1103,26 @@ async function loadNews() {
 function renderNews(items) {
   if (newsLoadingEl) newsLoadingEl.style.display = 'none';
 
+  // Discard news items older than 48 hours
+  const NEWS_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+  const cutoff = Date.now() - NEWS_MAX_AGE_MS;
+  const recent = items.filter(item => {
+    try {
+      return new Date(item.published_at).getTime() >= cutoff;
+    } catch {
+      // Invalid or missing date — treat as stale so it won't be shown
+      return false;
+    }
+  });
+
   // Filter by active category
   const filtered = _activeNewsCat === 'all'
-    ? items
-    : items.filter(item => (item.category || 'forex') === _activeNewsCat);
+    ? recent
+    : recent.filter(item => (item.category || 'forex') === _activeNewsCat);
 
   // Detect new headlines (skip notification on the very first load)
-  const newItems = items.filter(item => !_knownNewsHeadlines.has(item.headline));
-  items.forEach(item => _knownNewsHeadlines.add(item.headline));
+  const newItems = recent.filter(item => !_knownNewsHeadlines.has(item.headline));
+  recent.forEach(item => _knownNewsHeadlines.add(item.headline));
 
   if (!_newsInitialLoad && newItems.length > 0) {
     playSignalSound('news');
@@ -1207,28 +1249,33 @@ document.querySelectorAll('.alerts-cat-tab').forEach(tab => {
   });
 });
 
-// ─── YF Live Status – Show/Hide Cached Pair Groups ───────────────────────────
+// ─── Live Feed Status – Show/Hide Cached Pair Groups ─────────────────────────
 (async function checkYfStatus() {
   try {
     const res = await fetch('/api/forex/pairs');
     if (!res.ok) return;
     const data = await res.json();
-    if (!data.yf_live) {
-      // Hide stocks, commodities, and crypto optgroups when YF is unavailable
-      ['optgroup-commodities', 'optgroup-crypto', 'optgroup-stocks'].forEach(id => {
-        const grp = document.getElementById(id);
-        if (grp) {
-          // Remove options so they cannot be selected even if the optgroup label is visible
-          grp.querySelectorAll('option').forEach(opt => opt.remove());
-          // Add a disabled placeholder to indicate data is unavailable
-          const placeholder = document.createElement('option');
-          placeholder.disabled = true;
-          placeholder.textContent = '⚠️ Live feed unavailable';
-          grp.appendChild(placeholder);
-        }
-      });
+
+    /** Replace all options in an optgroup with a single disabled placeholder. */
+    function markOffline(id) {
+      const grp = document.getElementById(id);
+      if (!grp) return;
+      grp.querySelectorAll('option').forEach(opt => opt.remove());
+      const placeholder = document.createElement('option');
+      placeholder.disabled = true;
+      placeholder.textContent = '⚠️ Live feed unavailable';
+      grp.appendChild(placeholder);
     }
-  } catch { /* silently ignore – forex pairs still work */ }
+
+    if (!data.yf_live) {
+      // Hide stocks, commodities, and crypto optgroups when Yahoo Finance is unavailable
+      ['optgroup-commodities', 'optgroup-crypto', 'optgroup-stocks'].forEach(markOffline);
+    }
+    if (!data.ecb_live) {
+      // Hide all forex (ECB/Frankfurter) optgroups when the ECB feed is unavailable
+      ['optgroup-major', 'optgroup-minor', 'optgroup-exotic'].forEach(markOffline);
+    }
+  } catch { /* silently ignore – avoid breaking the page on network failure */ }
 })();
 
 // ─── FVG Scanner ─────────────────────────────────────────────────────────────
@@ -1344,9 +1391,9 @@ function renderFvgScanner(grouped) {
             <span class="fvg-price-value">${fmt(item.current_price)}</span>
           </span>
           <span class="volatile-dir ${dirCls}">${dir}</span>
-          <button class="fvg-expand-btn" type="button" aria-expanded="false" aria-controls="${dropId}" title="Show all FVGs for ${escapeHtml(item.pair)}">
+          <button class="fvg-expand-btn" type="button" aria-expanded="false" aria-controls="${dropId}" title="Show zone details for ${escapeHtml(item.pair)}">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.5L1 3.5h10L6 8.5z"/></svg>
-            All FVGs
+            Zone Details
           </button>
           <div class="fvg-desc">${escapeHtml(item.description)}</div>
         </div>
@@ -1380,7 +1427,7 @@ function renderFvgScanner(grouped) {
 /** Render all active FVGs for a pair in the dropdown panel, including magnitude data. */
 function renderFvgDropdown(dropEl, pair, fvgs) {
   const dec = getPairDecimals(pair);
-  const pip = dec === 2 ? 0.01 : 0.0001;
+  const pip = getPairPip(pair);
   const fmt = v => Number(v).toFixed(dec);
   if (!fvgs || fvgs.length === 0) {
     dropEl.innerHTML = '<div class="fvg-drop-empty">No FVGs available for this pair.</div>';

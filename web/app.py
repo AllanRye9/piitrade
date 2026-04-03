@@ -2012,6 +2012,8 @@ async def forex_pairs():
                 minor.append(p)
     # Check if Yahoo Finance is available (determines if stocks/commodities/crypto can be shown)
     yf_live = _fetch_live_rate("AAPL") is not None
+    # Check if Frankfurter/ECB API is available (determines if forex pairs can be shown)
+    ecb_live = _fetch_live_rate("EUR/USD") is not None
     return JSONResponse({
         "major": major,
         "minor": minor,
@@ -2021,6 +2023,7 @@ async def forex_pairs():
         "stocks": stocks,
         "all": list(_SUPPORTED_PAIRS),
         "yf_live": yf_live,
+        "ecb_live": ecb_live,
     })
 
 
