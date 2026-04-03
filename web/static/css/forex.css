@@ -2271,3 +2271,6 @@ a:hover { text-decoration: underline; }
 
 /* FVG group visibility toggled by filter */
 .fvg-group.fx-hidden { display: none; }
+
+/* S/R group visibility toggled by filter */
+.sr-group.fx-hidden { display: none; }
