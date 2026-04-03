@@ -2209,17 +2209,25 @@ async def forex_fvg_scanner():
         "rejected": [],
     }
     pair_fvgs: dict[str, list[dict[str, Any]]] = {}
+    # Track which pairs already have an entry in each bucket so only one entry
+    # per pair per status category is shown (the closest / most relevant one).
+    seen_in_bucket: dict[str, set[str]] = {k: set() for k in grouped}
     for pair in _SUPPORTED_PAIRS:
-        prices = _get_prices_for_pair(pair, 30)
         live_rate = _fetch_live_rate(pair)
+        # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
+        # unavailable — static fallback prices would not match market conditions.
+        if pair in _YF_PAIRS and live_rate is None:
+            continue
+        prices = _get_prices_for_pair(pair, 30)
         current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
         ta = _build_technical_analysis(pair, current_price)
         entries = _classify_fvg_status(pair, current_price, ta["fvg"], prices)
         for entry in entries:
             bucket = entry.get("status", "")
-            if bucket in grouped:
+            if bucket in grouped and pair not in seen_in_bucket[bucket]:
                 entry["direction"] = _FOREX_SIGNALS[pair]["direction"]
                 grouped[bucket].append(entry)
+                seen_in_bucket[bucket].add(pair)
         # Annotate each raw FVG with live current_price and zone midpoint so
         # the frontend can show distinct prices per FVG in the dropdown.
         _pip, dec = _pair_pip_dec(pair)
@@ -2261,9 +2269,16 @@ async def forex_sr_breakouts():
         "touched": [],
         "broke": [],
     }
+    # Track which pairs already have an entry in each status group so only the
+    # closest level per pair per group is displayed (avoids duplicate pair rows).
+    seen_in_sr: dict[str, set[str]] = {k: set() for k in sr_groups}
     for pair in _SUPPORTED_PAIRS:
-        prices = _get_prices_for_pair(pair, 30)
         live_rate = _fetch_live_rate(pair)
+        # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
+        # unavailable — static fallback prices would not match market conditions.
+        if pair in _YF_PAIRS and live_rate is None:
+            continue
+        prices = _get_prices_for_pair(pair, 30)
         current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
         ta = _build_technical_analysis(pair, current_price)
         sr = ta["support_resistance"]
@@ -2271,12 +2286,15 @@ async def forex_sr_breakouts():
             pair, current_price, prices,
             sr["support"], sr["resistance"],
         )
+        # Sort by proximity so the closest level is considered first for each pair
+        items.sort(key=lambda x: x.get("dist", 1.0))
         for item in items:
             item["direction"] = _FOREX_SIGNALS[pair]["direction"]
             item["confidence"] = _FOREX_SIGNALS[pair]["confidence"]
             status = item.get("status", "")
-            if status in sr_groups:
+            if status in sr_groups and pair not in seen_in_sr[status]:
                 sr_groups[status].append(item)
+                seen_in_sr[status].add(pair)
     # Sort each group by proximity – closest to level first
     for group_items in sr_groups.values():
         group_items.sort(key=lambda x: x.get("dist", 1.0))
@@ -2303,11 +2321,16 @@ async def forex_pattern_scanner():
     - ``direction``   : ``'BUY'`` | ``'SELL'`` | ``'HOLD'``
     - ``description`` : detailed explanation
     """
-    patterns: list[dict[str, Any]] = []
+    # Collect all raw pattern candidates then deduplicate to one per pair.
+    _all_candidates: list[dict[str, Any]] = []
 
     for pair in _SUPPORTED_PAIRS:
-        prices = _get_prices_for_pair(pair, 30)
         live_rate = _fetch_live_rate(pair)
+        # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
+        # unavailable — static fallback prices would not match market conditions.
+        if pair in _YF_PAIRS and live_rate is None:
+            continue
+        prices = _get_prices_for_pair(pair, 30)
         current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
         signal = _FOREX_SIGNALS[pair]
         direction = signal["direction"]
@@ -2317,7 +2340,7 @@ async def forex_pattern_scanner():
         # ── Change of Character (CHoCH) — trend reversal formation ────────────
         for choch in ta.get("choch", []):
             choch_dir = "BUY" if choch["type"] == "bullish" else "SELL"
-            patterns.append({
+            _all_candidates.append({
                 "pair": pair,
                 "type": "choch",
                 "label": "Change of Character (CHoCH)",
@@ -2333,7 +2356,7 @@ async def forex_pattern_scanner():
         # ── Break of Structure (BOS) — momentum continuation ──────────────────
         for bos in ta.get("bos", []):
             bos_dir = "BUY" if bos["type"] == "bullish" else "SELL"
-            patterns.append({
+            _all_candidates.append({
                 "pair": pair,
                 "type": "bos",
                 "label": "Break of Structure (BOS)",
@@ -2353,7 +2376,7 @@ async def forex_pattern_scanner():
             fvg_dir = direction  # inherit pair signal direction
 
             if status == "rejected":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "fvg_rejection",
                     "label": "FVG Order Block Rejection",
@@ -2368,7 +2391,7 @@ async def forex_pattern_scanner():
                     ),
                 })
             elif status == "reached":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "fvg_inside",
                     "label": "Price Inside FVG Zone",
@@ -2382,7 +2405,7 @@ async def forex_pattern_scanner():
                     ),
                 })
             elif status == "approaching":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "fvg_approach",
                     "label": "Approaching FVG Zone",
@@ -2408,7 +2431,7 @@ async def forex_pattern_scanner():
             sr_dir = "BUY" if is_res else "SELL"
 
             if sr_status == "broke":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "sr_broke",
                     "label": "S/R Breakout Formation",
@@ -2421,7 +2444,7 @@ async def forex_pattern_scanner():
                     ),
                 })
             elif sr_status == "touched":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "sr_touched",
                     "label": "Key Level Touch",
@@ -2434,7 +2457,7 @@ async def forex_pattern_scanner():
                     ),
                 })
             elif sr_status == "soon_touching":
-                patterns.append({
+                _all_candidates.append({
                     "pair": pair,
                     "type": "sr_approaching",
                     "label": "Approaching Key Level",
@@ -2448,7 +2471,7 @@ async def forex_pattern_scanner():
 
         # ── Strong directional signal (high-confidence) ────────────────────────
         if confidence >= 0.80 and direction in ("BUY", "SELL"):
-            patterns.append({
+            _all_candidates.append({
                 "pair": pair,
                 "type": "strong_signal",
                 "label": "Strong Directional Signal",
@@ -2461,9 +2484,17 @@ async def forex_pattern_scanner():
                 ),
             })
 
-    # Sort: high → medium → low, then alphabetically within each group
+    # Deduplicate: keep only the highest-impact pattern per pair.  Sort candidates
+    # so the highest-impact entry per pair is always encountered first, then iterate
+    # and keep only the first occurrence of each pair.
     IMPACT_ORDER = {"high": 0, "medium": 1, "low": 2}
-    patterns.sort(key=lambda p: (IMPACT_ORDER.get(p["impact"], 3), p["pair"]))
+    _all_candidates.sort(key=lambda p: (IMPACT_ORDER.get(p["impact"], 3), p["pair"]))
+    seen_pairs: set[str] = set()
+    patterns: list[dict[str, Any]] = []
+    for candidate in _all_candidates:
+        if candidate["pair"] not in seen_pairs:
+            patterns.append(candidate)
+            seen_pairs.add(candidate["pair"])
 
     return JSONResponse({
         "patterns": patterns,

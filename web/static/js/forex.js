@@ -1391,9 +1391,9 @@ function renderFvgScanner(grouped) {
             <span class="fvg-price-value">${fmt(item.current_price)}</span>
           </span>
           <span class="volatile-dir ${dirCls}">${dir}</span>
-          <button class="fvg-expand-btn" type="button" aria-expanded="false" aria-controls="${dropId}" title="Show zone details for ${escapeHtml(item.pair)}">
+          <button class="fvg-expand-btn" type="button" aria-expanded="false" aria-controls="${dropId}" title="Show FVG details for ${escapeHtml(item.pair)}">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.5L1 3.5h10L6 8.5z"/></svg>
-            Zone Details
+            More
           </button>
           <div class="fvg-desc">${escapeHtml(item.description)}</div>
         </div>
@@ -1623,7 +1623,7 @@ function buildSrRow(item, idx) {
   const cls   = isResistance ? 'buy' : 'sell';
   const icon  = isResistance ? '▲' : '▼';
   const srLabel = isResistance ? 'Resistance' : 'Support';
-  const dec   = (item.pair && (item.pair.includes('JPY') || isStock(item.pair))) ? 2 : 4;
+  const dec   = getPairDecimals(item.pair);
   const fmt   = v => Number(v).toFixed(dec);
   const svgStatus = isResistance ? 'resistance' : 'support';
   const distBadge = item.dist != null ? ` <span class="fvg-dist-badge">${(item.dist * 100).toFixed(3)}%</span>` : '';
@@ -1807,7 +1807,7 @@ function updateTechCurrentPrice(pair) {
       const time  = document.getElementById('ta-price-updated');
       const badge = document.getElementById('ta-live-price-badge');
       if (!el) return;
-      const dec    = (pair.includes('JPY') || isStock(pair)) ? 2 : 4;
+      const dec    = getPairDecimals(pair);
       el.textContent    = Number(data.current_price).toFixed(dec);
       if (pairL) pairL.textContent  = pair;
       if (time)  time.textContent   = `Updated: ${new Date().toLocaleTimeString()}`;
