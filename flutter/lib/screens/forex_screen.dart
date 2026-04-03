@@ -265,6 +265,7 @@ class _ForexScreenState extends State<ForexScreen>
   void dispose() {
     _refreshTimer?.cancel();
     _tabController.dispose();
+    _api.dispose();
     _balanceCtrl.dispose();
     _riskPctCtrl.dispose();
     _entryCtrl.dispose();
