@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Forex Signal Hub – PiiTrade (Free)</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade free AI forex signal dashboard. Real-time buy/sell/hold signals for 21 currency pairs: EUR/USD, GBP/USD, USD/JPY, XAU/USD gold, silver, oil and more. Includes risk calculator, technical analysis, FVG scanner, volatility scanner, and signal alerts. No login required."/>
-  <meta name="keywords" content="forex signals dashboard, free forex signals, AI trading signals, EUR/USD, GBP/USD, USD/JPY, XAU/USD, gold signals, risk calculator, technical analysis, FVG, volatility scanner, trend reversal, forex alerts"/>
+  <meta name="description" content="PiiTrade free AI trading signal dashboard. Real-time buy/sell/hold signals for 42 forex pairs and top stocks. Majors, minors, exotics, AAPL, NVDA, TSLA and more. Includes risk calculator, technical analysis, FVG scanner, volatility scanner, and signal alerts. No login required."/>
+  <meta name="keywords" content="forex signals dashboard, free forex signals, AI trading signals, EUR/USD, GBP/USD, USD/JPY, stock signals, AAPL, NVDA, TSLA, risk calculator, technical analysis, FVG, volatility scanner, trend reversal, forex alerts"/>
   <meta name="robots" content="index, follow"/>
   <meta name="author" content="PiiTrade"/>
   <link rel="canonical" href="https://piitrade.onrender.com/forex"/>
   <!-- Open Graph -->
   <meta property="og:type" content="website"/>
   <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
-  <meta property="og:description" content="Free real-time AI forex signals for 21 currency pairs. Risk calculator, technical analysis, FVG scanner, volatility scanner – all free, no account needed."/>
+  <meta property="og:description" content="Free real-time AI trading signals for 42 forex pairs and top stocks. Risk calculator, technical analysis, FVG scanner, volatility scanner – all free, no account needed."/>
   <meta property="og:url" content="https://piitrade.onrender.com/forex"/>
   <meta property="og:site_name" content="PiiTrade"/>
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary"/>
   <meta name="twitter:title" content="PiiTrade – Free AI Forex Dashboard"/>
-  <meta name="twitter:description" content="Free AI-powered forex signals for 21 pairs. No sign-up required."/>
+  <meta name="twitter:description" content="Free AI-powered trading signals for 42 forex pairs and top stocks. No sign-up required."/>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
 </head>
@@ -87,7 +87,7 @@
   <div>
     <strong>Disclaimer:</strong> Price predictions are for informational purposes only. 
     Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research, 
-    and consult a licensed financial advisor before making any trading decisions. Forex and commodity trading 
+    and consult a licensed financial advisor before making any trading decisions. Forex and stock trading 
     involves significant risk of loss.
   </div>
   <button class="global-disclaimer-close" type="button" aria-label="Close disclaimer">✕</button>
@@ -113,23 +113,46 @@
           <option value="USD/CAD">USD/CAD – US Dollar / Canadian Dollar</option>
           <option value="NZD/USD">NZD/USD – New Zealand Dollar / US Dollar</option>
         </optgroup>
-        <optgroup label="── Cross / Hybrid Pairs">
+        <optgroup label="── Minor / Cross Pairs">
           <option value="EUR/GBP">EUR/GBP – Euro / British Pound</option>
           <option value="EUR/JPY">EUR/JPY – Euro / Japanese Yen</option>
           <option value="EUR/AUD">EUR/AUD – Euro / Australian Dollar</option>
           <option value="EUR/CAD">EUR/CAD – Euro / Canadian Dollar</option>
+          <option value="EUR/CHF">EUR/CHF – Euro / Swiss Franc</option>
+          <option value="EUR/NZD">EUR/NZD – Euro / New Zealand Dollar</option>
           <option value="GBP/JPY">GBP/JPY – British Pound / Japanese Yen</option>
           <option value="GBP/CHF">GBP/CHF – British Pound / Swiss Franc</option>
           <option value="GBP/AUD">GBP/AUD – British Pound / Australian Dollar</option>
           <option value="GBP/CAD">GBP/CAD – British Pound / Canadian Dollar</option>
+          <option value="GBP/NZD">GBP/NZD – British Pound / New Zealand Dollar</option>
           <option value="AUD/JPY">AUD/JPY – Australian Dollar / Japanese Yen</option>
+          <option value="AUD/CAD">AUD/CAD – Australian Dollar / Canadian Dollar</option>
+          <option value="AUD/CHF">AUD/CHF – Australian Dollar / Swiss Franc</option>
+          <option value="AUD/NZD">AUD/NZD – Australian Dollar / New Zealand Dollar</option>
+          <option value="NZD/JPY">NZD/JPY – New Zealand Dollar / Japanese Yen</option>
+          <option value="NZD/CAD">NZD/CAD – New Zealand Dollar / Canadian Dollar</option>
+          <option value="NZD/CHF">NZD/CHF – New Zealand Dollar / Swiss Franc</option>
           <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
           <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
         </optgroup>
-        <optgroup label="── Commodities">
-          <option value="XAU/USD">XAU/USD – Gold / US Dollar</option>
-          <option value="XAG/USD">XAG/USD – Silver / US Dollar</option>
-          <option value="USOIL">USOIL – US Crude Oil (WTI)</option>
+        <optgroup label="── Exotic Pairs">
+          <option value="USD/MXN">USD/MXN – US Dollar / Mexican Peso</option>
+          <option value="USD/NOK">USD/NOK – US Dollar / Norwegian Krone</option>
+          <option value="USD/SEK">USD/SEK – US Dollar / Swedish Krona</option>
+          <option value="USD/SGD">USD/SGD – US Dollar / Singapore Dollar</option>
+          <option value="USD/HKD">USD/HKD – US Dollar / Hong Kong Dollar</option>
+          <option value="USD/TRY">USD/TRY – US Dollar / Turkish Lira</option>
+          <option value="USD/ZAR">USD/ZAR – US Dollar / South African Rand</option>
+          <option value="USD/CNY">USD/CNY – US Dollar / Chinese Yuan</option>
+        </optgroup>
+        <optgroup label="── Stocks (Real-Time)">
+          <option value="AAPL">AAPL – Apple Inc.</option>
+          <option value="TSLA">TSLA – Tesla Inc.</option>
+          <option value="NVDA">NVDA – NVIDIA Corporation</option>
+          <option value="AMZN">AMZN – Amazon.com Inc.</option>
+          <option value="MSFT">MSFT – Microsoft Corporation</option>
+          <option value="GOOGL">GOOGL – Alphabet Inc.</option>
+          <option value="META">META – Meta Platforms Inc.</option>
         </optgroup>
       </select>
       <button id="btn-refresh" class="fx-refresh-btn" type="button" title="Refresh signal">
@@ -584,16 +607,37 @@
           <label><input type="checkbox" value="EUR/JPY"/> EUR/JPY</label>
           <label><input type="checkbox" value="EUR/AUD"/> EUR/AUD</label>
           <label><input type="checkbox" value="EUR/CAD"/> EUR/CAD</label>
+          <label><input type="checkbox" value="EUR/CHF"/> EUR/CHF</label>
+          <label><input type="checkbox" value="EUR/NZD"/> EUR/NZD</label>
           <label><input type="checkbox" value="GBP/JPY"/> GBP/JPY</label>
           <label><input type="checkbox" value="GBP/CHF"/> GBP/CHF</label>
           <label><input type="checkbox" value="GBP/AUD"/> GBP/AUD</label>
           <label><input type="checkbox" value="GBP/CAD"/> GBP/CAD</label>
+          <label><input type="checkbox" value="GBP/NZD"/> GBP/NZD</label>
           <label><input type="checkbox" value="AUD/JPY"/> AUD/JPY</label>
+          <label><input type="checkbox" value="AUD/CAD"/> AUD/CAD</label>
+          <label><input type="checkbox" value="AUD/CHF"/> AUD/CHF</label>
+          <label><input type="checkbox" value="AUD/NZD"/> AUD/NZD</label>
+          <label><input type="checkbox" value="NZD/JPY"/> NZD/JPY</label>
+          <label><input type="checkbox" value="NZD/CAD"/> NZD/CAD</label>
+          <label><input type="checkbox" value="NZD/CHF"/> NZD/CHF</label>
           <label><input type="checkbox" value="CAD/JPY"/> CAD/JPY</label>
           <label><input type="checkbox" value="CHF/JPY"/> CHF/JPY</label>
-          <label><input type="checkbox" value="XAU/USD"/> XAU/USD</label>
-          <label><input type="checkbox" value="XAG/USD"/> XAG/USD</label>
-          <label><input type="checkbox" value="USOIL"/> USOIL</label>
+          <label><input type="checkbox" value="USD/MXN"/> USD/MXN</label>
+          <label><input type="checkbox" value="USD/NOK"/> USD/NOK</label>
+          <label><input type="checkbox" value="USD/SEK"/> USD/SEK</label>
+          <label><input type="checkbox" value="USD/SGD"/> USD/SGD</label>
+          <label><input type="checkbox" value="USD/HKD"/> USD/HKD</label>
+          <label><input type="checkbox" value="USD/TRY"/> USD/TRY</label>
+          <label><input type="checkbox" value="USD/ZAR"/> USD/ZAR</label>
+          <label><input type="checkbox" value="USD/CNY"/> USD/CNY</label>
+          <label><input type="checkbox" value="AAPL"/> AAPL</label>
+          <label><input type="checkbox" value="TSLA"/> TSLA</label>
+          <label><input type="checkbox" value="NVDA"/> NVDA</label>
+          <label><input type="checkbox" value="AMZN"/> AMZN</label>
+          <label><input type="checkbox" value="MSFT"/> MSFT</label>
+          <label><input type="checkbox" value="GOOGL"/> GOOGL</label>
+          <label><input type="checkbox" value="META"/> META</label>
         </div>
         <div class="subscribe-status" id="subscribe-status" role="status"></div>
       </form>
@@ -609,7 +653,7 @@
     <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
     <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
   </div>
-  <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute financial advice.</div>
+  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex &amp; Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
 </footer>
 
 <script src="/static/js/forex.js"></script>
