@@ -2277,6 +2277,9 @@ a:hover { text-decoration: underline; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    S/R Break Row – Mobile Responsiveness
+   Note: !important is required here because .sr-break-row (above) already uses
+   !important to override the base .volatile-row grid. The media query must
+   use the same specificity strategy to win the cascade on small screens.
    ═════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 680px) {

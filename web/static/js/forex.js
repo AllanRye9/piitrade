@@ -1351,11 +1351,11 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
     let targetText;
     if (f.type === 'bullish') {
       targetText = currentPrice != null && currentPrice < f.bottom
-        ? `If price enters → target: ${fmt(f.top)} (+${((f.top - currentPrice) / pip).toFixed(1)} pips)`
+        ? `If price enters → target: ${fmt(f.top)} (+${((f.top - currentPrice) / pip).toFixed(1)} pips up)`
         : `Zone top: ${fmt(f.top)}`;
     } else {
       targetText = currentPrice != null && currentPrice > f.top
-        ? `If price enters → target: ${fmt(f.bottom)} (${((currentPrice - f.bottom) / pip).toFixed(1)} pips)`
+        ? `If price enters → target: ${fmt(f.bottom)} (−${((currentPrice - f.bottom) / pip).toFixed(1)} pips down)`
         : `Zone bottom: ${fmt(f.bottom)}`;
     }
 
