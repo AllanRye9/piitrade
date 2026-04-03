@@ -841,7 +841,7 @@ def _classify_fvg_status(
     - **approaching**: price is outside the zone but within a 1 % proximity threshold.
     - All other FVGs (too far away) are excluded from the result.
     """
-    PROXIMITY_PCT = 0.01  # 1 % of current price
+    PROXIMITY_PCT = 0.005  # 0.5 % of current price – only very close zones shown
     results: list[dict[str, Any]] = []
     recent_trend = (prices[-1] - prices[-5]) if len(prices) >= 5 else 0.0
 
@@ -850,6 +850,10 @@ def _classify_fvg_status(
         bottom = fvg["bottom"]
         filled = fvg.get("filled", False)
         fvg_type = fvg["type"]
+        # dist = 0.0 means price is at/inside the zone (reached) or zone was already
+        # consumed (passed).  For approaching/rejected items the value is computed
+        # in the else-branch below.
+        dist = 0.0
 
         if filled:
             status = "passed"
@@ -881,6 +885,7 @@ def _classify_fvg_status(
             "filled": filled,
             "status": status,
             "current_price": current_price,
+            "dist": round(dist, 6),
             "created": fvg.get("created", ""),
             "description": fvg.get("description", ""),
         })
@@ -926,6 +931,95 @@ def _detect_sr_breakout(
                 "current_price": current_price,
                 "description": f"Price broke below support {level} — bearish breakdown confirmed",
             })
+
+    return results
+
+
+def _classify_sr_levels(
+    pair: str,
+    current_price: float,
+    prices: list[float],
+    support_levels: list[float],
+    resistance_levels: list[float],
+) -> list[dict[str, Any]]:
+    """Classify each S/R level into one of three states.
+
+    States
+    ------
+    - **soon_touching**: Price is approaching the level (within 0.3 % proximity)
+      but has not yet reached it.
+    - **touched**: Price is right at the level (within 0.05 % of it) without a
+      confirmed break — potential reversal or breakout forming.
+    - **broke**: Price has moved beyond the level with confirming 5-bar momentum
+      — breakout confirmed.
+    """
+    SOON_PCT    = 0.003   # 0.3 % – approaching range
+    TOUCHED_PCT = 0.0005  # 0.05 % – at-level range
+    BROKE_PCT   = 0.0005  # 0.05 % – minimum buffer past level to call a break
+    results: list[dict[str, Any]] = []
+    recent_trend = (prices[-1] - prices[-5]) if len(prices) >= 5 else 0.0
+
+    for level in resistance_levels:
+        soon_margin    = level * SOON_PCT
+        touched_margin = level * TOUCHED_PCT
+        broke_buffer   = level * BROKE_PCT
+        dist = abs(current_price - level) / (current_price or 1)
+
+        if current_price > level + broke_buffer and recent_trend > 0:
+            status = "broke"
+            sr_type = "resistance_break"
+            desc = f"Price broke above resistance {level:.5g} — bullish breakout confirmed"
+        elif abs(current_price - level) <= touched_margin:
+            status = "touched"
+            sr_type = "resistance_touch"
+            desc = f"Price is right at resistance {level:.5g} — watching for breakout or rejection"
+        elif level - soon_margin < current_price < level:
+            status = "soon_touching"
+            sr_type = "resistance_approach"
+            desc = f"Price approaching resistance {level:.5g} — potential breakout zone ahead"
+        else:
+            continue
+
+        results.append({
+            "pair": pair,
+            "type": sr_type,
+            "status": status,
+            "level": level,
+            "current_price": current_price,
+            "description": desc,
+            "dist": round(dist, 6),
+        })
+
+    for level in support_levels:
+        soon_margin    = level * SOON_PCT
+        touched_margin = level * TOUCHED_PCT
+        broke_buffer   = level * BROKE_PCT
+        dist = abs(current_price - level) / (current_price or 1)
+
+        if current_price < level - broke_buffer and recent_trend < 0:
+            status = "broke"
+            sr_type = "support_break"
+            desc = f"Price broke below support {level:.5g} — bearish breakdown confirmed"
+        elif abs(current_price - level) <= touched_margin:
+            status = "touched"
+            sr_type = "support_touch"
+            desc = f"Price is right at support {level:.5g} — watching for bounce or breakdown"
+        elif level < current_price < level + soon_margin:
+            status = "soon_touching"
+            sr_type = "support_approach"
+            desc = f"Price approaching support {level:.5g} — potential bounce zone ahead"
+        else:
+            continue
+
+        results.append({
+            "pair": pair,
+            "type": sr_type,
+            "status": status,
+            "level": level,
+            "current_price": current_price,
+            "description": desc,
+            "dist": round(dist, 6),
+        })
 
     return results
 
@@ -1933,6 +2027,8 @@ async def forex_fvg_scanner():
             }
             for fvg in ta["fvg"]
         ]
+    # Sort approaching list so the closest zone (smallest dist) appears first
+    grouped["approaching"].sort(key=lambda x: x.get("dist", 1.0))
     return JSONResponse({
         "grouped": grouped,
         "pair_fvgs": pair_fvgs,
@@ -1944,24 +2040,39 @@ async def forex_fvg_scanner():
 
 @app.get("/api/forex/sr-breakouts")
 async def forex_sr_breakouts():
-    """Return pairs that have recently broken through major support or resistance."""
-    results: list[dict[str, Any]] = []
+    """Return all pairs classified by their relationship to major S/R levels.
+
+    Returns three groups:
+    - **soon_touching**: price is approaching a level (within 0.3 %).
+    - **touched**: price is right at the level (within 0.05 %).
+    - **broke**: price has broken through with momentum confirmation.
+    """
+    sr_groups: dict[str, list[dict[str, Any]]] = {
+        "soon_touching": [],
+        "touched": [],
+        "broke": [],
+    }
     for pair in _SUPPORTED_PAIRS:
         prices = _get_prices_for_pair(pair, 30)
         live_rate = _fetch_live_rate(pair)
         current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
         ta = _build_technical_analysis(pair, current_price)
         sr = ta["support_resistance"]
-        breakouts = _detect_sr_breakout(
+        items = _classify_sr_levels(
             pair, current_price, prices,
             sr["support"], sr["resistance"],
         )
-        for b in breakouts:
-            b["direction"] = _FOREX_SIGNALS[pair]["direction"]
-            b["confidence"] = _FOREX_SIGNALS[pair]["confidence"]
-        results.extend(breakouts)
+        for item in items:
+            item["direction"] = _FOREX_SIGNALS[pair]["direction"]
+            item["confidence"] = _FOREX_SIGNALS[pair]["confidence"]
+            status = item.get("status", "")
+            if status in sr_groups:
+                sr_groups[status].append(item)
+    # Sort each group by proximity – closest to level first
+    for group_items in sr_groups.values():
+        group_items.sort(key=lambda x: x.get("dist", 1.0))
     return JSONResponse({
-        "breakouts": results,
+        "sr_groups": sr_groups,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     })
 

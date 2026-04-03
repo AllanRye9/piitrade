@@ -1132,6 +1132,8 @@ function showSubscribeStatus(type, msg) {
 let fvgLoaded = false;
 let _fvgPairFvgs = {};        // pair → all FVGs (from API response)
 let _currentFvgFilter = 'approaching';  // default filter
+// Track which pairs were approaching last poll to detect zone entry transitions
+let _prevFvgApproaching = new Set();
 
 const FVG_STATUS_CONFIG = {
   approaching: { icon: '📍', label: 'Approaching', cls: 'fvg-approaching' },
@@ -1175,13 +1177,24 @@ async function loadFvgScanner() {
     renderFvgScanner(data.grouped);
     applyFvgFilter(_currentFvgFilter);
 
-    // Sound alert if any pairs have reached or are being rejected at an FVG
-    const alertCount = (data.grouped.reached || []).length + (data.grouped.rejected || []).length;
-    if (alertCount > 0) {
+    // Detect pairs that were approaching and have now entered the FVG zone
+    const currentReached = new Set((data.grouped.reached || []).map(i => i.pair));
+    const enteredZone = [..._prevFvgApproaching].filter(p => currentReached.has(p));
+    if (enteredZone.length > 0) {
       playSignalSound('fvg');
-      showToast('toast-info', '🌀', 'FVG Alert',
-        `${alertCount} pair${alertCount > 1 ? 's' : ''} at FVG zone`, 5000);
+      showToast('toast-info', '🎯', 'Price Entered FVG Zone!',
+        `${enteredZone.join(', ')} — price is now inside the FVG zone`, 6000);
+    } else {
+      // Generic alert for any newly reached pairs
+      const alertCount = (data.grouped.reached || []).length;
+      if (alertCount > 0 && _prevFvgApproaching.size === 0) {
+        playSignalSound('fvg');
+        showToast('toast-info', '🌀', 'FVG Alert',
+          `${alertCount} pair${alertCount > 1 ? 's' : ''} inside FVG zone`, 5000);
+      }
     }
+    // Update tracking set for next poll
+    _prevFvgApproaching = new Set((data.grouped.approaching || []).map(i => i.pair));
   } catch (err) {
     loadingEl.textContent = 'Could not load FVG scanner data.';
     console.error('FVG scanner failed:', err);
@@ -1209,11 +1222,16 @@ function renderFvgScanner(grouped) {
       const rowId  = `fvg-row-${status}-${idx}`;
       const dropId = `fvg-drop-${status}-${idx}`;
       const pairKey = item.pair;
+      // Show distance indicator for approaching items (how close price is to zone)
+      const distBadge = (status === 'approaching' && item.dist != null)
+        ? `<span class="fvg-dist-badge" title="Distance to zone">${(item.dist * 100).toFixed(3)}% away</span>`
+        : '';
       return `
         <div class="fvg-row ${cfg.cls || ''}" id="${rowId}" style="animation-delay:${idx * 50}ms" data-pair="${escapeHtml(pairKey)}" data-drop="${dropId}">
           <span class="fvg-status-svg-wrap">${buildStatusSvg(status)}</span>
           <span class="fvg-pair">${escapeHtml(item.pair)}</span>
           <span class="fvg-type-badge ${item.fvg_type}">${item.fvg_type.toUpperCase()} FVG</span>
+          ${distBadge}
           <span class="fvg-zone">
             <span class="fvg-zone-label">Zone:</span>
             <span class="fvg-zone-prices">${fmt(item.bottom)} – ${fmt(item.top)}</span>
@@ -1256,7 +1274,7 @@ function renderFvgScanner(grouped) {
   if (contentEl) contentEl.style.display = 'block';
 }
 
-/** Render all FVGs for a pair in the dropdown panel. */
+/** Render all active FVGs for a pair in the dropdown panel. */
 function renderFvgDropdown(dropEl, pair, fvgs) {
   const dec = getPairDecimals(pair);
   const fmt = v => Number(v).toFixed(dec);
@@ -1264,18 +1282,17 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
     dropEl.innerHTML = '<div class="fvg-drop-empty">No FVGs available for this pair.</div>';
     return;
   }
-  // Separate active (unfilled) from consumed (filled)
-  const active   = fvgs.filter(f => !f.filled);
-  const consumed = fvgs.filter(f => f.filled);
+  // Only show active (unfilled) FVGs — consumed zones are excluded
+  const active = fvgs.filter(f => !f.filled);
   // Current market price is the same for all FVGs of a pair — show it once in the header
   const marketPrice = fvgs[0] ? fmt(fvgs[0].current_price) : '—';
-  const renderGroup = (items, isConsumed) => items.map(f => {
+  const renderGroup = items => items.map(f => {
     const typeIcon = f.type === 'bullish' ? '▲' : '▼';
     const typeCls  = f.type === 'bullish' ? 'bullish' : 'bearish';
     // Each FVG has a unique midpoint (centre of the gap) — use it as the FVG price
     const midVal = f.mid != null ? f.mid : ((f.top + f.bottom) / 2);
     return `
-      <div class="fvg-drop-item ${isConsumed ? 'fvg-drop-item--consumed' : ''}">
+      <div class="fvg-drop-item">
         <span class="fvg-type-badge ${typeCls}">${typeIcon} ${f.type.toUpperCase()} FVG</span>
         <span class="fvg-drop-zone">
           <span class="fvg-zone-label">Zone:</span>
@@ -1285,9 +1302,7 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
           <span class="fvg-zone-label">Mid:</span>
           <span class="fvg-price-value">${fmt(midVal)}</span>
         </span>
-        <span class="fvg-drop-status ${isConsumed ? 'fvg-drop-status--consumed' : 'fvg-drop-status--active'}">
-          ${isConsumed ? '✅ Consumed' : '⚡ Active'}
-        </span>
+        <span class="fvg-drop-status fvg-drop-status--active">⚡ Active</span>
         <span class="fvg-drop-date">${escapeHtml(f.created)}</span>
         <div class="fvg-drop-desc">${escapeHtml(f.description)}</div>
       </div>`;
@@ -1296,11 +1311,10 @@ function renderFvgDropdown(dropEl, pair, fvgs) {
   dropEl.innerHTML = `
     <div class="fvg-dropdown-inner">
       <div class="fvg-drop-header">
-        📊 All FVGs for ${escapeHtml(pair)}
+        📊 Active FVGs for ${escapeHtml(pair)}
         <span class="fvg-drop-market-price">Market: <strong>${marketPrice}</strong></span>
       </div>
-      ${active.length > 0 ? `<div class="fvg-drop-section-title">⚡ Active</div>${renderGroup(active, false)}` : ''}
-      ${consumed.length > 0 ? `<div class="fvg-drop-section-title fvg-drop-section-title--consumed">✅ Consumed (Filled)</div>${renderGroup(consumed, true)}` : ''}
+      ${active.length > 0 ? renderGroup(active) : '<div class="fvg-drop-empty">No active FVGs for this pair.</div>'}
     </div>`;
 }
 
@@ -1309,12 +1323,12 @@ function applyFvgFilter(filter) {
   _currentFvgFilter = filter;
   document.querySelectorAll('#fvg-content .fvg-group').forEach(group => {
     const groupName = group.dataset.group;
-    if (filter === 'all') {
-      // Show approaching, reached, rejected (active groups); hide passed (consumed)
-      group.classList.toggle('fx-hidden', groupName === 'passed');
-    } else {
-      group.classList.toggle('fx-hidden', groupName !== filter);
+    // Never show the passed (consumed) group — it has been removed from the UI
+    if (groupName === 'passed') {
+      group.classList.add('fx-hidden');
+      return;
     }
+    group.classList.toggle('fx-hidden', groupName !== filter);
   });
   // Update active button state
   document.querySelectorAll('.fvg-filter-btn').forEach(btn => {
@@ -1339,13 +1353,13 @@ if (refreshFvgBtn) {
 let srBreakoutsLoaded = false;
 
 async function loadSrBreakouts() {
-  const loadingEl = document.getElementById('sr-loading');
-  const listEl    = document.getElementById('sr-list');
-  const emptyEl   = document.getElementById('sr-empty');
-  if (!loadingEl || !listEl) return;
+  const loadingEl  = document.getElementById('sr-loading');
+  const contentEl  = document.getElementById('sr-content');
+  const emptyEl    = document.getElementById('sr-empty');
+  if (!loadingEl) return;
 
   loadingEl.style.display = 'block';
-  listEl.style.display    = 'none';
+  if (contentEl) contentEl.style.display = 'none';
   if (emptyEl) emptyEl.style.display = 'none';
 
   try {
@@ -1353,53 +1367,72 @@ async function loadSrBreakouts() {
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     srBreakoutsLoaded = true;
-    renderSrBreakouts(data.breakouts || []);
+    renderSrBreakouts(data.sr_groups || {});
 
-    if ((data.breakouts || []).length > 0) {
+    const brokeCount = (data.sr_groups?.broke || []).length;
+    if (brokeCount > 0) {
       playSignalSound('breakout');
       showToast('toast-info', '💥', 'S/R Breakout Detected',
-        `${data.breakouts.length} breakout${data.breakouts.length > 1 ? 's' : ''} found`, 5000);
+        `${brokeCount} breakout${brokeCount > 1 ? 's' : ''} confirmed`, 5000);
     }
   } catch (err) {
-    if (loadingEl) loadingEl.textContent = 'Could not load S/R breakout data.';
-    console.error('S/R breakout scanner failed:', err);
+    if (loadingEl) loadingEl.textContent = 'Could not load S/R data.';
+    console.error('S/R scanner failed:', err);
   }
 }
 
-function renderSrBreakouts(breakouts) {
-  const loadingEl = document.getElementById('sr-loading');
-  const listEl    = document.getElementById('sr-list');
-  const emptyEl   = document.getElementById('sr-empty');
+/** Build a row for an S/R level item. */
+function buildSrRow(item, idx) {
+  const isResistance = item.type.startsWith('resistance');
+  const cls   = isResistance ? 'buy' : 'sell';
+  const icon  = isResistance ? '▲' : '▼';
+  const srLabel = isResistance ? 'Resistance' : 'Support';
+  const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
+  const fmt   = v => Number(v).toFixed(dec);
+  const svgStatus = isResistance ? 'resistance' : 'support';
+  const distBadge = item.dist != null ? ` <span class="fvg-dist-badge">${(item.dist * 100).toFixed(3)}%</span>` : '';
+  return `
+    <div class="volatile-row sr-break-row" style="animation-delay:${idx * 60}ms">
+      <span class="fvg-status-svg-wrap">${buildStatusSvg(svgStatus)}</span>
+      <span class="volatile-pair">${escapeHtml(item.pair)}</span>
+      <span class="sr-break-label ${cls}">${icon} ${srLabel}</span>
+      <span class="sr-break-level">Level: <strong>${fmt(item.level)}</strong>${distBadge}</span>
+      <span class="sr-break-price">Price: <strong>${fmt(item.current_price)}</strong></span>
+      <div class="sr-break-desc" style="grid-column:1/-1;font-size:.82rem;color:var(--text2);margin-top:4px">${escapeHtml(item.description)}</div>
+    </div>`;
+}
+
+function renderSrBreakouts(srGroups) {
+  const loadingEl  = document.getElementById('sr-loading');
+  const contentEl  = document.getElementById('sr-content');
+  const emptyEl    = document.getElementById('sr-empty');
 
   if (loadingEl) loadingEl.style.display = 'none';
 
-  if (!breakouts || breakouts.length === 0) {
+  const totalItems = Object.values(srGroups).reduce((acc, arr) => acc + arr.length, 0);
+  if (totalItems === 0) {
     if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
 
-  listEl.innerHTML = breakouts.map((item, idx) => {
-    const isResistance = item.type === 'resistance_break';
-    const cls   = isResistance ? 'buy' : 'sell';
-    const icon  = isResistance ? '▲' : '▼';
-    const label = isResistance ? 'Resistance Break' : 'Support Break';
-    const dec   = (item.pair && (item.pair.includes('JPY') || item.pair.startsWith('XAU'))) ? 2 : 4;
-    const fmt   = v => Number(v).toFixed(dec);
-    const svgStatus = isResistance ? 'resistance' : 'support';
-    return `
-      <div class="volatile-row sr-break-row" style="animation-delay:${idx * 60}ms">
-        <span class="fvg-status-svg-wrap">${buildStatusSvg(svgStatus)}</span>
-        <span class="volatile-pair">${escapeHtml(item.pair)}</span>
-        <span class="sr-break-label ${cls}">${icon} ${label}</span>
-        <span class="sr-break-level">Level: <strong>${fmt(item.level)}</strong></span>
-        <span class="sr-break-price">Price: <strong>${fmt(item.current_price)}</strong></span>
-        <div class="sr-break-desc" style="grid-column:1/-1;font-size:.82rem;color:var(--text2);margin-top:4px">${escapeHtml(item.description)}</div>
-      </div>`;
-  }).join('');
+  // Populate each group container
+  const groupMap = {
+    soon_touching: document.getElementById('sr-soon-touching'),
+    touched:       document.getElementById('sr-touched'),
+    broke:         document.getElementById('sr-broke'),
+  };
 
-  listEl.style.display = 'flex';
-  listEl.style.flexDirection = 'column';
-  listEl.style.gap = '8px';
+  Object.entries(groupMap).forEach(([key, listEl]) => {
+    if (!listEl) return;
+    const items = srGroups[key] || [];
+    if (items.length === 0) {
+      listEl.innerHTML = '<div class="fvg-empty">No pairs in this category right now.</div>';
+    } else {
+      listEl.innerHTML = items.map((item, idx) => buildSrRow(item, idx)).join('');
+    }
+  });
+
+  if (contentEl) contentEl.style.display = 'block';
 }
 
 const refreshSrBtn = document.getElementById('btn-refresh-sr');
