@@ -326,9 +326,11 @@ function isJpy(pair) {
   return pair && pair.includes('JPY');
 }
 
+// Explicit set of stock tickers — must stay in sync with _STOCK_TICKERS in web/app.py
+const STOCK_TICKERS = new Set(['AAPL', 'TSLA', 'NVDA', 'AMZN', 'MSFT', 'GOOGL', 'META']);
+
 function isStock(pair) {
-  // Stocks have no '/' in their ticker symbol
-  return pair && !pair.includes('/');
+  return pair && STOCK_TICKERS.has(pair);
 }
 
 function getPairDecimals(pair) {

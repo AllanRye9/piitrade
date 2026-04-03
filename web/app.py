@@ -820,14 +820,14 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/TRY": (38.200, 0.0001, _gen_seq("USD/TRY")),
     "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
-    # ── Stocks (pip=0.1 so seq deltas represent ~$2–6 daily dollar moves) ────────
-    "AAPL":  (210.00, 0.1, _gen_seq("AAPL")),
-    "TSLA":  (270.00, 0.1, _gen_seq("TSLA")),
-    "NVDA":  (860.00, 0.1, _gen_seq("NVDA")),
-    "AMZN":  (195.00, 0.1, _gen_seq("AMZN")),
-    "MSFT":  (388.00, 0.1, _gen_seq("MSFT")),
-    "GOOGL": (165.00, 0.1, _gen_seq("GOOGL")),
-    "META":  (570.00, 0.1, _gen_seq("META")),
+    # ── Stocks (pip=0.01 matches _pair_pip_dec; seq deltas give ~$0.20–$0.60 daily moves) ──
+    "AAPL":  (210.00, 0.01, _gen_seq("AAPL")),
+    "TSLA":  (270.00, 0.01, _gen_seq("TSLA")),
+    "NVDA":  (860.00, 0.01, _gen_seq("NVDA")),
+    "AMZN":  (195.00, 0.01, _gen_seq("AMZN")),
+    "MSFT":  (388.00, 0.01, _gen_seq("MSFT")),
+    "GOOGL": (165.00, 0.01, _gen_seq("GOOGL")),
+    "META":  (570.00, 0.01, _gen_seq("META")),
 }
 
 def _make_news_items() -> list[dict[str, Any]]:
@@ -1899,8 +1899,6 @@ async def forex_pairs():
     stocks: list[str] = []
     for p in _SUPPORTED_PAIRS:
         if p in _STOCK_TICKERS:
-            stocks.append(p)
-        elif "/" not in p:
             stocks.append(p)
         else:
             parts = p.split("/")
