@@ -141,7 +141,7 @@ function SignalTab({ pair, signal, loading, error }) {
   const conf = signal.confidence ?? 50
   const accuracy = signal.accuracy_30d ?? signal.accuracy ?? null
 
-  const bars = signal.history_accuracy || Array.from({ length: 30 }, (_, i) => ({ day: i + 1, acc: 55 + Math.random() * 30 }))
+  const bars = (signal.history || []).slice(-30)
 
   return (
     <div className="space-y-3">
@@ -163,7 +163,7 @@ function SignalTab({ pair, signal, loading, error }) {
           <div className="text-right">
             <p className="text-text-muted text-xs mb-0.5">Model: LightGBM</p>
             {accuracy !== null && (
-              <p className="text-lg font-bold text-text-primary">{(accuracy * 100).toFixed(1)}% <span className="text-xs font-normal text-text-muted">30d acc</span></p>
+              <p className="text-lg font-bold text-text-primary">{typeof accuracy === 'number' ? accuracy.toFixed(1) : accuracy}% <span className="text-xs font-normal text-text-muted">30d acc</span></p>
             )}
           </div>
         </div>
@@ -202,26 +202,27 @@ function SignalTab({ pair, signal, loading, error }) {
       {/* Historical accuracy mini-chart */}
       <div className="bg-bg-card border border-border-default rounded-lg p-3">
         <p className="text-text-secondary text-xs mb-2">Historical Accuracy (last 30 data points)</p>
-        <div className="flex items-end gap-0.5 h-16">
-          {bars.slice(0, 30).map((b, i) => {
-            const pct = b.acc ?? (50 + Math.random() * 40)
-            return (
+        {bars.length === 0 ? (
+          <p className="text-text-muted text-xs">No historical data available</p>
+        ) : (
+          <div className="flex items-end gap-0.5 h-16">
+            {bars.map((b, i) => (
               <div
                 key={i}
-                className="flex-1 rounded-sm bg-accent-blue/40 hover:bg-accent-blue transition-colors"
-                style={{ height: `${Math.min(100, pct)}%` }}
-                title={`${typeof pct === 'number' ? pct.toFixed(1) : pct}%`}
+                className={`flex-1 rounded-sm transition-colors ${b.correct ? 'bg-accent-green/60 hover:bg-accent-green' : 'bg-accent-red/40 hover:bg-accent-red'}`}
+                style={{ height: b.correct ? '80%' : '30%' }}
+                title={b.correct ? `${b.day}: Correct` : `${b.day}: Incorrect`}
               />
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 // ─── Risk Calc Tab ────────────────────────────────────────────────────────────
-function RiskCalcTab({ pair }) {
+function RiskCalcTab() {
   const [balance, setBalance] = useState(10000)
   const [riskPct, setRiskPct] = useState(1)
   const [entry, setEntry] = useState('')
@@ -323,7 +324,11 @@ function TechnicalTab({ pair }) {
 
   const sr = data.support_resistance || data.sr || {}
   const fvg = data.fvg_zones || data.fvg || []
-  const indicators = data.indicators || {}
+  const bos = data.bos || []
+  const choch = data.choch || []
+
+  const supportLevels = Array.isArray(sr.support) ? sr.support : (sr.support != null ? [sr.support] : [])
+  const resistanceLevels = Array.isArray(sr.resistance) ? sr.resistance : (sr.resistance != null ? [sr.resistance] : [])
 
   return (
     <div className="space-y-3">
@@ -332,41 +337,38 @@ function TechnicalTab({ pair }) {
         <div className="bg-bg-card border border-border-default rounded-xl p-3">
           <h3 className="text-text-primary text-sm font-semibold mb-3">Support & Resistance</h3>
           <div className="space-y-2">
-            {sr.resistance && (
-              <div className="flex justify-between items-center py-2 px-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
-                <span className="text-accent-red text-sm">Resistance</span>
-                <span className="font-mono text-sm text-text-primary">{sr.resistance}</span>
+            {resistanceLevels.map((lvl, i) => (
+              <div key={`res-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
+                <span className="text-accent-red text-sm">Resistance {i + 1}</span>
+                <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
-            )}
-            {sr.pivot && (
-              <div className="flex justify-between items-center py-2 px-3 bg-accent-yellow/10 border border-accent-yellow/20 rounded-lg">
-                <span className="text-accent-yellow text-sm">Pivot</span>
-                <span className="font-mono text-sm text-text-primary">{sr.pivot}</span>
+            ))}
+            {supportLevels.map((lvl, i) => (
+              <div key={`sup-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-green/10 border border-accent-green/20 rounded-lg">
+                <span className="text-accent-green text-sm">Support {i + 1}</span>
+                <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
-            )}
-            {sr.support && (
-              <div className="flex justify-between items-center py-2 px-3 bg-accent-green/10 border border-accent-green/20 rounded-lg">
-                <span className="text-accent-green text-sm">Support</span>
-                <span className="font-mono text-sm text-text-primary">{sr.support}</span>
-              </div>
-            )}
-            {!sr.resistance && !sr.support && !sr.pivot && (
+            ))}
+            {!resistanceLevels.length && !supportLevels.length && (
               <p className="text-text-muted text-sm">No S/R data available</p>
             )}
           </div>
         </div>
 
-        {/* Indicators */}
+        {/* BOS / CHoCH */}
         <div className="bg-bg-card border border-border-default rounded-xl p-3">
-          <h3 className="text-text-primary text-sm font-semibold mb-3">Indicators</h3>
+          <h3 className="text-text-primary text-sm font-semibold mb-3">Market Structure</h3>
           <div className="space-y-2">
-            {Object.entries(indicators).slice(0, 6).map(([k, v]) => (
-              <div key={k} className="flex justify-between items-center py-1.5 border-b border-border-subtle last:border-0">
-                <span className="text-text-secondary text-sm">{k.toUpperCase()}</span>
-                <span className="font-mono text-sm text-text-primary">{typeof v === 'number' ? v.toFixed(4) : String(v)}</span>
+            {[...bos.map(b => ({ ...b, label: 'BOS' })), ...choch.map(c => ({ ...c, label: 'CHoCH' }))].slice(0, 6).map((item, i) => (
+              <div key={i} className="flex justify-between items-center py-1.5 border-b border-border-subtle last:border-0">
+                <div>
+                  <span className={`text-xs font-semibold uppercase mr-1 ${item.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>{item.label}</span>
+                  <span className="text-text-secondary text-xs">{item.type}</span>
+                </div>
+                <span className="font-mono text-sm text-text-primary">{typeof item.level === 'number' ? item.level.toFixed(5) : item.level}</span>
               </div>
             ))}
-            {!Object.keys(indicators).length && <p className="text-text-muted text-sm">No indicator data</p>}
+            {!bos.length && !choch.length && <p className="text-text-muted text-sm">No market structure data</p>}
           </div>
         </div>
       </div>
@@ -379,10 +381,10 @@ function TechnicalTab({ pair }) {
             {fvg.slice(0, 5).map((zone, i) => (
               <div key={i} className="flex justify-between items-center py-2 px-3 bg-bg-secondary rounded-lg">
                 <span className={`text-sm font-medium ${zone.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>
-                  {zone.type?.toUpperCase() || 'FVG'}
+                  {zone.type?.toUpperCase() || 'FVG'}{zone.filled ? ' (Filled)' : ''}
                 </span>
                 <span className="font-mono text-xs text-text-secondary">
-                  {zone.low} – {zone.high}
+                  {zone.bottom ?? zone.low} – {zone.top ?? zone.high}
                 </span>
               </div>
             ))}
@@ -412,7 +414,12 @@ function FVGTab() {
   if (error) return <ErrorBox msg={error} />
   if (!data) return <EmptyState title="No FVG data" desc="FVG scanner data unavailable." />
 
-  const items = Array.isArray(data) ? data : data.fvg_zones || data.zones || []
+  const grouped = data.grouped || {}
+  const items = Array.isArray(data)
+    ? data
+    : Object.entries(grouped).flatMap(([status, list]) =>
+        (list || []).map(item => ({ ...item, status }))
+      )
 
   return (
     <div className="space-y-3">
@@ -428,9 +435,10 @@ function FVGTab() {
                 <span className={`text-xs font-semibold uppercase ${statusColor}`}>{status}</span>
               </div>
               <div className="space-y-1 text-sm">
-                {zone.high && <div className="flex justify-between"><span className="text-text-muted">High</span><span className="font-mono text-text-primary">{zone.high}</span></div>}
-                {zone.low && <div className="flex justify-between"><span className="text-text-muted">Low</span><span className="font-mono text-text-primary">{zone.low}</span></div>}
-                {zone.type && <div className="flex justify-between"><span className="text-text-muted">Type</span><span className={zone.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}>{zone.type}</span></div>}
+                {(zone.top != null) && <div className="flex justify-between"><span className="text-text-muted">High</span><span className="font-mono text-text-primary">{zone.top}</span></div>}
+                {(zone.bottom != null) && <div className="flex justify-between"><span className="text-text-muted">Low</span><span className="font-mono text-text-primary">{zone.bottom}</span></div>}
+                {zone.fvg_type || zone.type ? <div className="flex justify-between"><span className="text-text-muted">Type</span><span className={( zone.fvg_type || zone.type) === 'bullish' ? 'text-accent-green' : 'text-accent-red'}>{zone.fvg_type || zone.type}</span></div> : null}
+                {zone.direction && <div className="flex justify-between"><span className="text-text-muted">Signal</span><span className={dirColor(zone.direction)}>{zone.direction}</span></div>}
               </div>
             </div>
           )
@@ -457,7 +465,12 @@ function SRTab() {
 
   if (loading) return <LoadingSpinner />
   if (error) return <ErrorBox msg={error} />
-  const items = Array.isArray(data) ? data : data?.breakouts || []
+  const srGroups = data?.sr_groups || {}
+  const items = Array.isArray(data)
+    ? data
+    : Object.entries(srGroups).flatMap(([status, list]) =>
+        (list || []).map(item => ({ ...item, status }))
+      )
 
   return (
     <div>
@@ -468,7 +481,7 @@ function SRTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-default">
-                {['Pair', 'Level', 'Type', 'Direction', 'Time'].map((h) => (
+                {['Pair', 'Level', 'Type', 'Status', 'Direction'].map((h) => (
                   <th key={h} className="text-left py-3 px-4 text-text-muted font-medium">{h}</th>
                 ))}
               </tr>
@@ -477,12 +490,14 @@ function SRTab() {
               {items.map((b, i) => (
                 <tr key={i} className="border-b border-border-subtle hover:bg-bg-card transition-colors">
                   <td className="py-3 px-4 text-text-primary font-medium">{b.pair || '—'}</td>
-                  <td className="py-3 px-4 font-mono text-text-secondary">{b.level || '—'}</td>
+                  <td className="py-3 px-4 font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</td>
                   <td className="py-3 px-4">
-                    <span className={`text-xs font-semibold uppercase ${b.type === 'support' ? 'text-accent-green' : 'text-accent-red'}`}>{b.type || '—'}</span>
+                    <span className={`text-xs font-semibold uppercase ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>{b.type || '—'}</span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`text-xs font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>{b.status || '—'}</span>
                   </td>
                   <td className={`py-3 px-4 font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</td>
-                  <td className="py-3 px-4 text-text-muted">{b.time || b.timestamp || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -510,7 +525,7 @@ function VolatileTab() {
   }, [timeframe])
 
   const items = Array.isArray(data) ? data : data?.pairs || []
-  const maxVol = items.length ? Math.max(...items.map((p) => p.volatility || 0)) : 1
+  const maxVol = items.length ? Math.max(...items.map((p) => p.volatility_pct || p.volatility || 0)) : 1
 
   return (
     <div className="space-y-3">
@@ -536,12 +551,12 @@ function VolatileTab() {
                   <span className="text-text-muted text-xs font-medium w-5">{i + 1}</span>
                   <span className="text-text-primary font-medium">{p.pair || p.symbol || '—'}</span>
                 </div>
-                <span className="text-accent-yellow font-mono text-sm">{typeof p.volatility === 'number' ? p.volatility.toFixed(2) : p.volatility || '—'}%</span>
+                <span className="text-accent-yellow font-mono text-sm">{typeof (p.volatility_pct ?? p.volatility) === 'number' ? (p.volatility_pct ?? p.volatility).toFixed(2) : (p.volatility_pct ?? p.volatility) || '—'}%</span>
               </div>
               <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
                 <div
                   className="h-full bg-accent-yellow rounded-full transition-all"
-                  style={{ width: `${maxVol > 0 ? ((p.volatility || 0) / maxVol) * 100 : 0}%` }}
+                  style={{ width: `${maxVol > 0 ? (((p.volatility_pct ?? p.volatility) || 0) / maxVol) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -567,7 +582,7 @@ function ReversalTab() {
       .finally(() => setLoading(false))
   }, [])
 
-  const items = Array.isArray(data) ? data : data?.reversals || []
+  const items = Array.isArray(data) ? data : data?.pairs || data?.reversals || []
 
   return (
     <div className="space-y-3">
@@ -577,7 +592,7 @@ function ReversalTab() {
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center justify-between">
           <div>
             <p className="text-text-primary font-medium">{r.pair || r.symbol || '—'}</p>
-            <p className="text-text-muted text-xs">{r.pattern || r.type || 'Reversal'}</p>
+            <p className="text-text-muted text-xs">{r.reversal_type || r.pattern || r.type || 'Reversal'}{r.strength != null ? ` — strength: ${r.strength}%` : ''}</p>
           </div>
           <div className={`flex items-center gap-2 font-semibold ${dirColor(r.direction)}`}>
             <DirIcon dir={r.direction} size={16} />
@@ -598,9 +613,11 @@ function SuccessTab({ allPairs }) {
     if (!allPairs.length) return
     setLoading(true)
     const top10 = allPairs.slice(0, 10)
-    Promise.allSettled(top10.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? Math.random() * 0.2 + 0.6 }))))
+    Promise.allSettled(top10.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? null }))))
       .then((settled) => {
-        const list = settled.filter((s) => s.status === 'fulfilled').map((s) => s.value)
+        const list = settled
+          .filter((s) => s.status === 'fulfilled' && s.value.acc != null)
+          .map((s) => s.value)
         list.sort((a, b) => b.acc - a.acc)
         setResults(list)
       })
@@ -617,10 +634,10 @@ function SuccessTab({ allPairs }) {
           <div className="flex-1">
             <div className="flex justify-between items-center mb-1">
               <span className="text-text-primary font-medium">{r.pair}</span>
-              <span className="text-accent-green font-semibold">{(r.acc * 100).toFixed(1)}%</span>
+              <span className="text-accent-green font-semibold">{typeof r.acc === 'number' ? r.acc.toFixed(1) : r.acc}%</span>
             </div>
             <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-accent-green rounded-full" style={{ width: `${r.acc * 100}%` }} />
+              <div className="h-full bg-accent-green rounded-full" style={{ width: `${Math.min(r.acc ?? 0, 100)}%` }} />
             </div>
           </div>
         </div>
@@ -655,12 +672,17 @@ function ScannerTab() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-text-primary text-sm font-medium">{p.pair || '—'}</p>
-              <p className="text-text-muted text-xs mt-0.5">{p.timeframe || p.tf || ''}</p>
+              <p className="text-text-muted text-xs mt-0.5">{p.description || p.timeframe || p.tf || ''}</p>
             </div>
-            <div className="text-right">
-              <span className={`text-sm font-semibold ${p.type?.toLowerCase().includes('bull') || p.direction === 'BUY' ? 'text-accent-green' : p.type?.toLowerCase().includes('bear') || p.direction === 'SELL' ? 'text-accent-red' : 'text-accent-yellow'}`}>
-                {p.pattern || p.type || 'Pattern'}
+            <div className="text-right space-y-1">
+              <span className={`text-sm font-semibold block ${p.type?.toLowerCase().includes('bull') || p.direction === 'BUY' ? 'text-accent-green' : p.type?.toLowerCase().includes('bear') || p.direction === 'SELL' ? 'text-accent-red' : 'text-accent-yellow'}`}>
+                {p.label || p.pattern || p.type || 'Pattern'}
               </span>
+              {p.impact && (
+                <span className={`text-xs font-semibold uppercase px-1.5 py-0.5 rounded ${p.impact === 'high' ? 'bg-accent-red/10 text-accent-red' : p.impact === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-blue/10 text-accent-blue'}`}>
+                  {p.impact}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -927,7 +949,7 @@ export default function ForexDashboard() {
     <div className="min-h-screen bg-bg-primary py-3 px-3">
       <div className="max-w-5xl mx-auto space-y-3">
         {/* Top ad */}
-        <AdBanner placement="top" ads={ads} />
+        <AdBanner placement="banner-top" ads={ads} />
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -985,9 +1007,9 @@ export default function ForexDashboard() {
               </span>
             </span>
           )}
-          {(signal?.price || signal?.current_price) && (
+          {(signal?.price || signal?.current_price || signal?.entry_price) && (
             <span className="text-text-muted text-xs font-mono">
-              {signal.price ? `$${signal.price}` : `$${signal.current_price}`}
+              {signal.price ? `$${signal.price}` : signal.current_price ? `$${signal.current_price}` : `$${signal.entry_price}`}
             </span>
           )}
         </div>
@@ -1041,7 +1063,7 @@ export default function ForexDashboard() {
         </AnimatePresence>
 
         {/* Bottom ad */}
-        <AdBanner placement="bottom" ads={ads} />
+        <AdBanner placement="banner-bottom" ads={ads} />
       </div>
     </div>
   )
