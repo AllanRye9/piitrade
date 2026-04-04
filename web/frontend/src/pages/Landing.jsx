@@ -345,7 +345,7 @@ export default function Landing() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Live Signal Preview</h2>
-            <p className="text-text-secondary">See the latest forex signals — updated in real time.</p>
+            <p className="text-text-secondary">See the latest Forex signals — updated in real time.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">

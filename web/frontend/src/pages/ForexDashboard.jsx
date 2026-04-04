@@ -899,7 +899,7 @@ export default function ForexDashboard() {
         prevDirRef.current = dir
       }
     } catch (err) {
-      setSignalError(err?.response?.data?.detail || 'Failed to fetch signal. Check your connection.')
+      setSignalError(err?.response?.data?.detail || 'Failed to fetch signal. Please try again.')
     } finally {
       setSignalLoading(false)
     }
