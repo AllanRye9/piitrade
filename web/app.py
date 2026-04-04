@@ -1269,9 +1269,11 @@ class _CachedStaticFiles(StaticFiles):
 
 app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 
-# Mount the React build output (Vite builds to static/dist)
+# React SPA disabled – the Jinja2 HTML templates are served directly.
+# Setting _REACT_INDEX to a non-existent path ensures all _REACT_INDEX.exists()
+# checks return False without touching each route handler individually.
 _REACT_DIST_DIR = _STATIC_DIR / "dist"
-_REACT_INDEX = _REACT_DIST_DIR / "index.html"
+_REACT_INDEX = _REACT_DIST_DIR / "__disabled__"  # intentionally non-existent
 
 # Vite generates hashed asset filenames and references them as /assets/...
 # Mount that path so the browser can load the JS bundle and CSS.
@@ -1378,9 +1380,7 @@ async def forex_hub(request: Request):
 @app.get("/methodology", response_class=HTMLResponse)
 async def methodology_page(request: Request):
     _record_visit(_get_client_ip(request))
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
-    return RedirectResponse(url="/", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+    return templates.TemplateResponse(request, "methodology.html", _ctx(request))
 
 
 @app.get("/disclaimer", response_class=HTMLResponse)
