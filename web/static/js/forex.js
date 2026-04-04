@@ -1899,6 +1899,7 @@ const PAIR_META = {
   const resultsBox    = document.getElementById('pair-search-results');
   const searchCount   = document.getElementById('pair-search-count');
   const catBar        = document.getElementById('pair-search-cats');
+  const searchWrap    = document.querySelector('.pair-search-wrap');
   if (!searchInput || !resultsBox) return;
 
   const CAT_LABELS = {
@@ -1968,16 +1969,22 @@ const PAIR_META = {
     });
   }
 
-  /** Highlight matching substring inside text, returning safe HTML. */
+  /** Highlight all occurrences of the matching substring inside text, returning safe HTML. */
   function highlightMatch(text, q) {
     if (!q) return escapeHtml(text);
-    const idx = text.toLowerCase().indexOf(q.toLowerCase());
-    if (idx === -1) return escapeHtml(text);
-    return (
-      escapeHtml(text.slice(0, idx)) +
-      `<mark class="pair-search-highlight">${escapeHtml(text.slice(idx, idx + q.length))}</mark>` +
-      escapeHtml(text.slice(idx + q.length))
-    );
+    const lowerText = text.toLowerCase();
+    const lowerQ = q.toLowerCase();
+    const matchLen = lowerQ.length;
+    let result = '';
+    let pos = 0;
+    let idx;
+    while ((idx = lowerText.indexOf(lowerQ, pos)) !== -1) {
+      result += escapeHtml(text.slice(pos, idx));
+      result += `<mark class="pair-search-highlight">${escapeHtml(text.slice(idx, idx + matchLen))}</mark>`;
+      pos = idx + matchLen;
+    }
+    result += escapeHtml(text.slice(pos));
+    return result;
   }
 
   function matchesPair(pair, q) {
@@ -2014,9 +2021,14 @@ const PAIR_META = {
     }
 
     if (matches.length === 0) {
-      const noText = q
-        ? `No pairs match "<strong>${escapeHtml(q)}</strong>"${catFiltered ? ` in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>` : ''}`
-        : `No pairs in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
+      let noText;
+      if (q && catFiltered) {
+        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>" in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
+      } else if (q) {
+        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>"`;
+      } else {
+        noText = `No pairs in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
+      }
       resultsBox.innerHTML = `<div class="pair-search-no-results">${noText}</div>`;
       resultsBox.hidden = false;
       if (catBar) catBar.hidden = false;
@@ -2157,12 +2169,11 @@ const PAIR_META = {
 
   // Close on outside click
   document.addEventListener('click', (e) => {
-    const wrap = document.querySelector('.pair-search-wrap');
     if (
       !searchInput.contains(e.target) &&
       !resultsBox.contains(e.target) &&
       !(catBar && catBar.contains(e.target)) &&
-      !(wrap && wrap.contains(e.target))
+      !(searchWrap && searchWrap.contains(e.target))
     ) {
       hideResults();
     }
