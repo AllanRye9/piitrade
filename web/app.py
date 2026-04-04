@@ -15,11 +15,14 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Optional
 
+import shutil
+import uuid
+
 import requests as _requests
-from fastapi import FastAPI, Form, Request, status
+from fastapi import FastAPI, File, Form, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -474,6 +477,21 @@ def _find_username_by_customer(customer_id: str) -> Optional[str]:
             if user.get("customer_id") == customer_id:
                 return username
     return None
+
+
+# ─── Ads store ────────────────────────────────────────────────────────────────
+# id -> {id, title, image_url, link_url, placement, active, created_at}
+_ADS: dict[str, dict[str, Any]] = {}
+_ADS_LOCK = Lock()
+_ADS_UPLOADS_DIR = _STATIC_DIR / "uploads" / "ads"
+
+
+def _ensure_ads_dir() -> None:
+    """Create the uploads/ads directory if it doesn't exist."""
+    _ADS_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+_ensure_ads_dir()
 
 def _get_current_user(request: Request) -> Optional[str]:
     return request.session.get("username")
@@ -1244,6 +1262,11 @@ class _CachedStaticFiles(StaticFiles):
         return response
 
 app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
+
+# Mount the React build output (Vite builds to static/dist)
+_REACT_DIST_DIR = _STATIC_DIR / "dist"
+_REACT_INDEX = _REACT_DIST_DIR / "index.html"
+
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
 
 
@@ -1260,11 +1283,26 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
     }
 
 
-# ─── Page routes ──────────────────────────────────────────────────────────────
+# ─── Page routes – React SPA ──────────────────────────────────────────────────
+# The React SPA (built to static/dist/) handles all client-side routing.
+# Track visits for analytics and fall back to the legacy Jinja2 templates when
+# the React build is not present (e.g. development without a prior build step).
+
+def _serve_react_or_template(request: Request, template: str, **kwargs):
+    """Serve the React SPA index.html if the build exists, else a legacy template."""
+    _record_visit(_get_client_ip(request))
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    return templates.TemplateResponse(request, template, _ctx(request, **kwargs))
+
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Landing page: shows EUR/USD preview signal."""
+    """Landing page."""
+    if _REACT_INDEX.exists():
+        _record_visit(_get_client_ip(request))
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    # Legacy fallback
     _record_visit(_get_client_ip(request))
     try:
         pair = "EUR/USD"
@@ -1307,20 +1345,27 @@ async def index(request: Request):
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
     _record_visit(_get_client_ip(request))
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     try:
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
         return JSONResponse({"error": "An internal error occurred."}, status_code=500)
 
 
-@app.get("/methodology")
-async def methodology_redirect():
+@app.get("/methodology", response_class=HTMLResponse)
+async def methodology_page(request: Request):
+    _record_visit(_get_client_ip(request))
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     return RedirectResponse(url="/", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page(request: Request):
     _record_visit(_get_client_ip(request))
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
 
 
@@ -1328,6 +1373,8 @@ async def disclaimer_page(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     if _get_current_user(request):
         return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse(request, "login.html", _ctx(request, error=None))
@@ -1531,6 +1578,8 @@ async def api_auth_login(request: Request):
     if result:
         matched_username, user = result
         if _hash_password(password, user["salt"]) == user["password_hash"]:
+            # Set session cookie so the React SPA stays authenticated
+            request.session["username"] = matched_username
             return JSONResponse({
                 "success": True,
                 "username": matched_username,
@@ -1709,6 +1758,153 @@ async def api_auth_recovery_reset(request: Request):
         _USERS[username]["recovery_token"] = None
 
     return JSONResponse({"success": True, "message": "Password reset successfully! You can now log in."})
+
+
+# ─── Auth: session status & logout (React SPA) ────────────────────────────────
+
+@app.get("/api/auth/me")
+async def api_auth_me(request: Request):
+    """Return the current authenticated user, or 401 if not logged in."""
+    username = _get_current_user(request)
+    if not username:
+        return JSONResponse({"error": "Not authenticated."}, status_code=401)
+    with _USERS_LOCK:
+        user = dict(_USERS.get(username, {}))
+    return JSONResponse({
+        "username": username,
+        "email": user.get("email", ""),
+        "role": user.get("role", "user"),
+        "subscription_status": user.get("subscription_status", "inactive"),
+        "plan": user.get("plan"),
+        "subscription_end": user.get("subscription_end"),
+    })
+
+
+@app.post("/api/auth/logout")
+async def api_auth_logout(request: Request):
+    """Clear the session (React SPA logout)."""
+    request.session.clear()
+    return JSONResponse({"success": True})
+
+
+# ─── Ads API (public: list active; admin: full CRUD) ──────────────────────────
+
+ALLOWED_AD_PLACEMENTS = {"banner-top", "banner-bottom", "sidebar", "inline"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
+MAX_AD_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+@app.get("/api/ads/active")
+async def ads_active():
+    """Return all active ads (public endpoint for the frontend)."""
+    with _ADS_LOCK:
+        active = [dict(ad) for ad in _ADS.values() if ad.get("active")]
+    return JSONResponse(active)
+
+
+@app.get("/api/admin/ads")
+async def admin_list_ads(request: Request):
+    """Admin: list all ads."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Forbidden."}, status_code=403)
+    with _ADS_LOCK:
+        ads = [dict(ad) for ad in _ADS.values()]
+    return JSONResponse(ads)
+
+
+@app.post("/api/admin/ads")
+async def admin_create_ad(
+    request: Request,
+    image: UploadFile = File(...),
+    link_url: str = Form(...),
+    title: str = Form(""),
+    placement: str = Form("inline"),
+    active: str = Form("true"),
+):
+    """Admin: upload a new ad (image + metadata)."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Forbidden."}, status_code=403)
+
+    # Validate placement
+    placement = placement.strip().lower()
+    if placement not in ALLOWED_AD_PLACEMENTS:
+        return JSONResponse({"error": f"Invalid placement. Allowed: {', '.join(ALLOWED_AD_PLACEMENTS)}"}, status_code=400)
+
+    # Validate link URL
+    link_url = link_url.strip()
+    if not link_url.startswith(("http://", "https://")):
+        return JSONResponse({"error": "link_url must start with http:// or https://"}, status_code=400)
+
+    # Validate image type
+    content_type = image.content_type or ""
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        return JSONResponse({"error": "Only JPEG, PNG, GIF, WebP, or SVG images are allowed."}, status_code=400)
+
+    # Read and size-check image
+    image_data = await image.read()
+    if len(image_data) > MAX_AD_IMAGE_SIZE:
+        return JSONResponse({"error": "Image must be smaller than 5 MB."}, status_code=400)
+
+    # Save image
+    _ensure_ads_dir()
+    ext = Path(image.filename or "ad.jpg").suffix.lower() or ".jpg"
+    safe_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+    if ext not in safe_extensions:
+        ext = ".jpg"
+    ad_id = str(uuid.uuid4())
+    filename = f"{ad_id}{ext}"
+    dest = _ADS_UPLOADS_DIR / filename
+    dest.write_bytes(image_data)
+
+    ad: dict[str, Any] = {
+        "id": ad_id,
+        "title": title.strip()[:200],
+        "image_url": f"/static/uploads/ads/{filename}",
+        "link_url": link_url,
+        "placement": placement,
+        "active": active.lower() not in ("false", "0", "no"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    with _ADS_LOCK:
+        _ADS[ad_id] = ad
+
+    return JSONResponse(dict(ad), status_code=201)
+
+
+@app.patch("/api/admin/ads/{ad_id}")
+async def admin_toggle_ad(request: Request, ad_id: str):
+    """Admin: toggle an ad's active status."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Forbidden."}, status_code=403)
+    with _ADS_LOCK:
+        if ad_id not in _ADS:
+            return JSONResponse({"error": "Ad not found."}, status_code=404)
+        _ADS[ad_id]["active"] = not _ADS[ad_id]["active"]
+        updated = dict(_ADS[ad_id])
+    return JSONResponse(updated)
+
+
+@app.delete("/api/admin/ads/{ad_id}")
+async def admin_delete_ad(request: Request, ad_id: str):
+    """Admin: permanently delete an ad and its uploaded image."""
+    if not _is_admin(request):
+        return JSONResponse({"error": "Forbidden."}, status_code=403)
+    with _ADS_LOCK:
+        ad = _ADS.pop(ad_id, None)
+    if not ad:
+        return JSONResponse({"error": "Ad not found."}, status_code=404)
+    # Delete the image file (safe: only filenames stored under uploads/ads/)
+    image_url: str = ad.get("image_url", "")
+    if image_url.startswith("/static/uploads/ads/"):
+        filename = Path(image_url).name
+        # Prevent path traversal: only allow simple filenames
+        if filename and "/" not in filename and "\\" not in filename:
+            img_path = _ADS_UPLOADS_DIR / filename
+            try:
+                img_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+    return JSONResponse({"success": True})
 
 
 # ─── Admin dashboard ──────────────────────────────────────────────────────────
@@ -2511,6 +2707,20 @@ async def profile_page(request: Request):
     plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
     sub_active = _is_subscription_active(username)
 
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    if _REACT_INDEX.exists():
+        _record_visit(_get_client_ip(request))
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    username = _get_current_user(request)
+    if not username:
+        return RedirectResponse(url="/login?next=/profile", status_code=status.HTTP_302_FOUND)
+    with _USERS_LOCK:
+        user = dict(_USERS.get(username, {}))
+
+    plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
+    sub_active = _is_subscription_active(username)
+
     return templates.TemplateResponse(
         request, "profile.html",
         _ctx(
@@ -2525,6 +2735,34 @@ async def profile_page(request: Request):
             stripe_available=False,
         ),
     )
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_react_page(request: Request):
+    """React admin dashboard route."""
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    return RedirectResponse(url="/const", status_code=status.HTTP_302_FOUND)
+
+
+# ─── React SPA catch-all ─────────────────────────────────────────────────────
+# Must be the LAST route. Any path not matched by an API endpoint above
+# is handled by the React SPA (client-side routing).
+
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def spa_catch_all(request: Request, full_path: str):
+    """Serve the React SPA index.html for all unmatched GET routes.
+
+    Falls back gracefully when the React build is not present.
+    """
+    # Skip paths that look like static asset requests to avoid hiding 404s
+    if full_path.startswith(("static/", "api/", "_next/")):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404)
+    if _REACT_INDEX.exists():
+        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
 
 if __name__ == "__main__":
     import uvicorn
