@@ -500,6 +500,7 @@ def _session_id(request: Request) -> str:
 _FRANKFURTER_BASE = "https://api.frankfurter.app"
 _YAHOO_FINANCE_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
 _YAHOO_FINANCE_BASE_ALT = "https://query2.finance.yahoo.com/v8/finance/chart"
+_COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 _RATE_CACHE: dict[str, dict] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL_SECONDS = 300
@@ -517,7 +518,7 @@ _STOCK_TICKERS: frozenset[str] = frozenset({"AAPL", "TSLA", "NVDA", "AMZN", "MSF
 # Commodity pairs served via Yahoo Finance futures tickers
 _COMMODITY_PAIRS: frozenset[str] = frozenset({"XAU/USD", "XAG/USD", "WTI/USD", "BRENT/USD"})
 
-# Crypto pairs served via Yahoo Finance crypto tickers
+# Crypto pairs served via CoinGecko (with YF as fallback)
 _CRYPTO_PAIRS: frozenset[str] = frozenset({"BTC/USD", "ETH/USD", "BNB/USD", "XRP/USD", "SOL/USD"})
 
 # All pairs requiring Yahoo Finance (stocks + commodities + crypto)
@@ -538,13 +539,75 @@ _YF_TICKER_MAP: dict[str, str] = {
     "XAG/USD": "SI=F",    # Silver futures
     "WTI/USD": "CL=F",    # WTI Crude Oil futures
     "BRENT/USD": "BZ=F",  # Brent Crude Oil futures
-    # Crypto
+    # Crypto (fallback only – CoinGecko tried first)
     "BTC/USD": "BTC-USD",
     "ETH/USD": "ETH-USD",
     "BNB/USD": "BNB-USD",
     "XRP/USD": "XRP-USD",
     "SOL/USD": "SOL-USD",
 }
+
+# CoinGecko coin IDs for crypto pairs
+_COINGECKO_ID_MAP: dict[str, str] = {
+    "BTC/USD": "bitcoin",
+    "ETH/USD": "ethereum",
+    "BNB/USD": "binancecoin",
+    "XRP/USD": "ripple",
+    "SOL/USD": "solana",
+}
+
+# Shared CoinGecko batch cache: id → price, refreshed together
+_COINGECKO_CACHE: dict[str, float] = {}
+_COINGECKO_CACHE_TIME: float = 0.0
+_COINGECKO_CACHE_LOCK = Lock()
+_COINGECKO_CACHE_TTL = 60  # refresh at most once per minute
+
+
+def _fetch_coingecko_batch() -> dict[str, float]:
+    """Fetch current USD prices for all tracked crypto coins via CoinGecko.
+
+    Returns a mapping of CoinGecko coin ID → USD price.
+    Results are cached for ``_COINGECKO_CACHE_TTL`` seconds.
+    """
+    import time as _time
+
+    now = _time.time()
+    with _COINGECKO_CACHE_LOCK:
+        if now - _COINGECKO_CACHE_TIME < _COINGECKO_CACHE_TTL and _COINGECKO_CACHE:
+            return dict(_COINGECKO_CACHE)
+
+    ids = ",".join(_COINGECKO_ID_MAP.values())
+    try:
+        resp = _requests.get(
+            f"{_COINGECKO_BASE}/simple/price",
+            params={"ids": ids, "vs_currencies": "usd"},
+            timeout=6,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        prices: dict[str, float] = {
+            coin_id: float(v["usd"])
+            for coin_id, v in data.items()
+            if "usd" in v
+        }
+        with _COINGECKO_CACHE_LOCK:
+            _COINGECKO_CACHE.clear()
+            _COINGECKO_CACHE.update(prices)
+            import time as _t
+            _COINGECKO_CACHE_TIME = _t.time()
+        return prices
+    except Exception:
+        with _COINGECKO_CACHE_LOCK:
+            return dict(_COINGECKO_CACHE)  # return stale cache on error
+
+
+def _fetch_coingecko_rate(pair: str) -> float | None:
+    """Return current USD price for a crypto pair via CoinGecko."""
+    coin_id = _COINGECKO_ID_MAP.get(pair)
+    if not coin_id:
+        return None
+    prices = _fetch_coingecko_batch()
+    return prices.get(coin_id)
 
 
 def _fetch_yf_rate(ticker: str) -> float | None:
@@ -598,9 +661,16 @@ def _fetch_live_rate(pair: str) -> float | None:
         entry = _RATE_CACHE.get(cache_key)
         if entry and now - entry["fetched_at"] < _CACHE_TTL_SECONDS:
             return entry["rate"]
-    if pair in _YF_PAIRS:
+    rate: float | None = None
+    if pair in _CRYPTO_PAIRS:
+        # Try CoinGecko first (free, no auth, reliable) then fall back to Yahoo Finance
+        rate = _fetch_coingecko_rate(pair)
+        if rate is None:
+            yf_ticker = _YF_TICKER_MAP.get(pair, pair)
+            rate = _fetch_yf_rate(yf_ticker)
+    elif pair in _YF_PAIRS:
         yf_ticker = _YF_TICKER_MAP.get(pair, pair)
-        rate: float | None = _fetch_yf_rate(yf_ticker)
+        rate = _fetch_yf_rate(yf_ticker)
     else:
         try:
             base, quote = pair.split("/")
@@ -1915,7 +1985,7 @@ async def forex_signals(pair: str = "EUR/USD"):
         elif pair in _COMMODITY_PAIRS:
             signal["data_source"] = "Yahoo Finance (Futures)"
         elif pair in _CRYPTO_PAIRS:
-            signal["data_source"] = "Yahoo Finance (Crypto)"
+            signal["data_source"] = "CoinGecko (Live)"
         else:
             signal["data_source"] = "Frankfurter API (ECB)"
         signal["is_live"] = True
@@ -1988,10 +2058,14 @@ async def forex_pairs():
                     exotic.append(p)
             else:
                 minor.append(p)
-    # Check if Yahoo Finance is available (determines if stocks/commodities/crypto can be shown)
+    # Check if Yahoo Finance is available (determines if stocks/commodities can be shown)
     yf_live = _fetch_live_rate("AAPL") is not None
+    # Check crypto availability via CoinGecko (primary) or Yahoo Finance (fallback)
+    crypto_live = _fetch_live_rate("BTC/USD") is not None
     # Check if Frankfurter/ECB API is available (determines if forex pairs can be shown)
     ecb_live = _fetch_live_rate("EUR/USD") is not None
+    # yf_live covers stocks+commodities; crypto uses its own flag but shares the
+    # yf_live check in the frontend for backwards compatibility
     return JSONResponse({
         "major": major,
         "minor": minor,
@@ -2000,8 +2074,10 @@ async def forex_pairs():
         "crypto": crypto,
         "stocks": stocks,
         "all": list(_SUPPORTED_PAIRS),
-        "yf_live": yf_live,
+        "yf_live": yf_live or crypto_live,  # true if any non-forex live feed works
         "ecb_live": ecb_live,
+        "crypto_live": crypto_live,
+        "stocks_live": yf_live,
     })
 
 

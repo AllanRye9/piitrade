@@ -1310,24 +1310,24 @@ document.querySelectorAll('.alerts-cat-tab').forEach(tab => {
     if (!res.ok) return;
     const data = await res.json();
 
-    /** Replace all options in an optgroup with a single disabled placeholder. */
-    function markOffline(id) {
+    /** Completely remove an optgroup from the dropdown when live data is unavailable. */
+    function removeOfflineGroup(id) {
       const grp = document.getElementById(id);
       if (!grp) return;
-      grp.querySelectorAll('option').forEach(opt => opt.remove());
-      const placeholder = document.createElement('option');
-      placeholder.disabled = true;
-      placeholder.textContent = '⚠️ Live feed unavailable';
-      grp.appendChild(placeholder);
+      grp.remove();
     }
 
-    if (!data.yf_live) {
-      // Hide stocks, commodities, and crypto optgroups when Yahoo Finance is unavailable
-      ['optgroup-commodities', 'optgroup-crypto', 'optgroup-stocks'].forEach(markOffline);
+    if (!data.stocks_live) {
+      // Completely remove stocks and commodities optgroups when Yahoo Finance is unavailable
+      ['optgroup-commodities', 'optgroup-stocks'].forEach(removeOfflineGroup);
+    }
+    if (!data.crypto_live) {
+      // Completely remove crypto optgroup when neither CoinGecko nor Yahoo Finance is live
+      removeOfflineGroup('optgroup-crypto');
     }
     if (!data.ecb_live) {
-      // Hide all forex (ECB/Frankfurter) optgroups when the ECB feed is unavailable
-      ['optgroup-major', 'optgroup-minor', 'optgroup-exotic'].forEach(markOffline);
+      // Completely remove forex (ECB/Frankfurter) optgroups when the ECB feed is unavailable
+      ['optgroup-major', 'optgroup-minor', 'optgroup-exotic'].forEach(removeOfflineGroup);
     }
   } catch { /* silently ignore – avoid breaking the page on network failure */ }
 })();
@@ -1830,9 +1830,10 @@ function hidePageLoader() {
   }
 }
 
-// ─── Advanced Pair Search Bar ─────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// (Search bar removed)
 
-/** Metadata for search: symbol → { name, category } */
+/** Metadata for search: symbol → { name, category } (kept for internal use) */
 const PAIR_META = {
   // Majors
   'EUR/USD': { name: 'Euro / US Dollar',            cat: 'major' },
@@ -1893,292 +1894,7 @@ const PAIR_META = {
   'META':  { name: 'Meta Platforms Inc.', cat: 'stock' },
 };
 
-(function initPairSearch() {
-  const searchInput   = document.getElementById('pair-search');
-  const searchClear   = document.getElementById('pair-search-clear');
-  const resultsBox    = document.getElementById('pair-search-results');
-  const searchCount   = document.getElementById('pair-search-count');
-  const catBar        = document.getElementById('pair-search-cats');
-  const searchWrap    = document.querySelector('.pair-search-wrap');
-  if (!searchInput || !resultsBox) return;
-
-  const CAT_LABELS = {
-    major: 'Major Forex', minor: 'Minor / Cross', exotic: 'Exotic Forex',
-    commodity: 'Commodities', crypto: 'Cryptocurrencies', stock: 'Stocks',
-  };
-
-  // Extended aliases for advanced matching
-  const ALIASES = {
-    gold:       p => p === 'XAU/USD',
-    silver:     p => p === 'XAG/USD',
-    oil:        p => p === 'WTI/USD' || p === 'BRENT/USD',
-    crude:      p => p === 'WTI/USD' || p === 'BRENT/USD',
-    brent:      p => p === 'BRENT/USD',
-    wti:        p => p === 'WTI/USD',
-    bitcoin:    p => p === 'BTC/USD',
-    btc:        p => p === 'BTC/USD',
-    ethereum:   p => p === 'ETH/USD',
-    eth:        p => p === 'ETH/USD',
-    ripple:     p => p === 'XRP/USD',
-    xrp:        p => p === 'XRP/USD',
-    solana:     p => p === 'SOL/USD',
-    sol:        p => p === 'SOL/USD',
-    bnb:        p => p === 'BNB/USD',
-    binance:    p => p === 'BNB/USD',
-    apple:      p => p === 'AAPL',
-    tesla:      p => p === 'TSLA',
-    nvidia:     p => p === 'NVDA',
-    amazon:     p => p === 'AMZN',
-    microsoft:  p => p === 'MSFT',
-    google:     p => p === 'GOOGL',
-    alphabet:   p => p === 'GOOGL',
-    meta:       p => p === 'META',
-    facebook:   p => p === 'META',
-    forex:      p => ['major','minor','exotic'].includes((PAIR_META[p]||{}).cat),
-    fx:         p => ['major','minor','exotic'].includes((PAIR_META[p]||{}).cat),
-    euro:       p => p.startsWith('EUR'),
-    pound:      p => p.startsWith('GBP') || p.includes('/GBP'),
-    sterling:   p => p.startsWith('GBP') || p.includes('/GBP'),
-    dollar:     p => p.includes('USD'),
-    usd:        p => p.includes('USD'),
-    yen:        p => p.includes('JPY'),
-    jpy:        p => p.includes('JPY'),
-    franc:      p => p.includes('CHF'),
-    chf:        p => p.includes('CHF'),
-    aussie:     p => p.includes('AUD'),
-    aud:        p => p.includes('AUD'),
-    cad:        p => p.includes('CAD'),
-    nzd:        p => p.includes('NZD'),
-    kiwi:       p => p.includes('NZD'),
-    loonie:     p => p.includes('CAD'),
-  };
-
-  let focusedIdx   = -1;
-  let resultItems  = [];
-  let activeCat    = 'all';
-
-  // Category filter chip state
-  if (catBar) {
-    catBar.querySelectorAll('.pair-search-cat-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeCat = btn.dataset.cat;
-        catBar.querySelectorAll('.pair-search-cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        showResults(searchInput.value);
-      });
-    });
-  }
-
-  /** Highlight all occurrences of the matching substring inside text, returning safe HTML. */
-  function highlightMatch(text, q) {
-    if (!q) return escapeHtml(text);
-    const lowerText = text.toLowerCase();
-    const lowerQ = q.toLowerCase();
-    const matchLen = lowerQ.length;
-    let result = '';
-    let pos = 0;
-    let idx;
-    while ((idx = lowerText.indexOf(lowerQ, pos)) !== -1) {
-      result += escapeHtml(text.slice(pos, idx));
-      result += `<mark class="pair-search-highlight">${escapeHtml(text.slice(idx, idx + matchLen))}</mark>`;
-      pos = idx + matchLen;
-    }
-    result += escapeHtml(text.slice(pos));
-    return result;
-  }
-
-  function matchesPair(pair, q) {
-    if (!q) return true;
-    const meta = PAIR_META[pair] || { name: pair, cat: 'minor' };
-    if (pair.toLowerCase().includes(q)) return true;
-    if (meta.name.toLowerCase().includes(q)) return true;
-    if (meta.cat.toLowerCase().includes(q)) return true;
-    const aliasFn = ALIASES[q];
-    if (aliasFn && aliasFn(pair)) return true;
-    return false;
-  }
-
-  function showResults(query) {
-    const q = query.trim().toLowerCase();
-    const catFiltered = activeCat !== 'all';
-
-    if (!q && !catFiltered) { hideResults(); return; }
-
-    let matches = ALL_PAIRS.filter(pair => {
-      const meta = PAIR_META[pair] || { name: pair, cat: 'minor' };
-      const catOk = !catFiltered || meta.cat === activeCat;
-      return catOk && matchesPair(pair, q);
-    });
-
-    // Update count badge
-    if (searchCount) {
-      if (matches.length > 0) {
-        searchCount.textContent = matches.length + ' pair' + (matches.length !== 1 ? 's' : '');
-        searchCount.hidden = false;
-      } else {
-        searchCount.hidden = true;
-      }
-    }
-
-    if (matches.length === 0) {
-      let noText;
-      if (q && catFiltered) {
-        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>" in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
-      } else if (q) {
-        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>"`;
-      } else {
-        noText = `No pairs in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
-      }
-      resultsBox.innerHTML = `<div class="pair-search-no-results">${noText}</div>`;
-      resultsBox.hidden = false;
-      if (catBar) catBar.hidden = false;
-      focusedIdx = -1;
-      resultItems = [];
-      return;
-    }
-
-    // Group by category
-    const grouped = {};
-    matches.forEach(pair => {
-      const cat = (PAIR_META[pair] || {}).cat || 'minor';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(pair);
-    });
-
-    const catOrder = ['major', 'minor', 'exotic', 'commodity', 'crypto', 'stock'];
-    let html = '';
-    let allItems = [];
-
-    catOrder.forEach(cat => {
-      if (!grouped[cat] || grouped[cat].length === 0) return;
-      const count = grouped[cat].length;
-      html += `<div class="pair-search-group-label">
-        ${escapeHtml(CAT_LABELS[cat] || cat)}
-        <span class="pair-search-group-count">${count}</span>
-      </div>`;
-      grouped[cat].forEach(pair => {
-        const meta = PAIR_META[pair] || { name: pair, cat };
-        allItems.push(pair);
-        html += `
-          <div class="pair-search-item" role="option" data-pair="${escapeHtml(pair)}" tabindex="-1">
-            <span class="pair-search-item-symbol">${highlightMatch(pair, q)}</span>
-            <span class="pair-search-item-name">${highlightMatch(meta.name, q)}</span>
-            <span class="pair-search-item-cat ${escapeHtml(meta.cat)}">${escapeHtml(meta.cat)}</span>
-          </div>`;
-      });
-    });
-
-    resultsBox.innerHTML = html;
-    resultsBox.hidden = false;
-    if (catBar) catBar.hidden = false;
-    resultItems = allItems;
-    focusedIdx = -1;
-
-    // Attach click handlers
-    resultsBox.querySelectorAll('.pair-search-item').forEach(item => {
-      item.addEventListener('click', () => {
-        selectPair(item.dataset.pair);
-      });
-    });
-  }
-
-  function hideResults() {
-    resultsBox.hidden = true;
-    if (catBar) catBar.hidden = true;
-    if (searchCount) searchCount.hidden = true;
-    focusedIdx = -1;
-    resultItems = [];
-    // Reset category filter
-    activeCat = 'all';
-    if (catBar) {
-      catBar.querySelectorAll('.pair-search-cat-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.cat === 'all');
-      });
-    }
-  }
-
-  function selectPair(pair) {
-    if (!pairSelect) return;
-    // Find and select the option
-    let found = false;
-    for (const opt of pairSelect.options) {
-      if (opt.value === pair) { opt.selected = true; found = true; break; }
-    }
-    if (!found) return;
-    // Trigger change event
-    pairSelect.dispatchEvent(new Event('change'));
-    // Clear search
-    searchInput.value = '';
-    if (searchClear) searchClear.hidden = true;
-    hideResults();
-    // Scroll to the signal section
-    const signalSection = document.getElementById('section-signal');
-    if (signalSection) signalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function updateClearBtn() {
-    if (searchClear) searchClear.hidden = !searchInput.value;
-  }
-
-  // Keyboard navigation
-  searchInput.addEventListener('keydown', (e) => {
-    const items = resultsBox.querySelectorAll('.pair-search-item');
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      focusedIdx = Math.max(focusedIdx - 1, -1);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (focusedIdx >= 0 && resultItems[focusedIdx]) {
-        selectPair(resultItems[focusedIdx]);
-      } else if (resultItems.length === 1) {
-        selectPair(resultItems[0]);
-      }
-      return;
-    } else if (e.key === 'Escape') {
-      hideResults();
-      searchInput.blur();
-      return;
-    }
-    items.forEach((item, i) => {
-      item.classList.toggle('focused', i === focusedIdx);
-      if (i === focusedIdx) item.scrollIntoView({ block: 'nearest' });
-    });
-  });
-
-  searchInput.addEventListener('input', () => {
-    showResults(searchInput.value);
-    updateClearBtn();
-  });
-
-  searchInput.addEventListener('focus', () => {
-    if (searchInput.value.trim()) showResults(searchInput.value);
-  });
-
-  // Clear button
-  if (searchClear) {
-    searchClear.addEventListener('click', () => {
-      searchInput.value = '';
-      searchClear.hidden = true;
-      hideResults();
-      searchInput.focus();
-    });
-  }
-
-  // Close on outside click
-  document.addEventListener('click', (e) => {
-    if (
-      !searchInput.contains(e.target) &&
-      !resultsBox.contains(e.target) &&
-      !(catBar && catBar.contains(e.target)) &&
-      !(searchWrap && searchWrap.contains(e.target))
-    ) {
-      hideResults();
-    }
-  });
-})();
+// (pair search removed)
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 // Restore gamification state
