@@ -487,8 +487,14 @@ _ADS_UPLOADS_DIR = _STATIC_DIR / "uploads" / "ads"
 
 
 def _ensure_ads_dir() -> None:
-    """Create the uploads/ads directory if it doesn't exist."""
-    _ADS_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    """Create the uploads/ads directory if it doesn't exist.
+
+    Silently ignores errors on read-only filesystems (e.g. Vercel).
+    """
+    try:
+        _ADS_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
 
 
 _ensure_ads_dir()
