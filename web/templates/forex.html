@@ -4,33 +4,33 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <title>AI Signal Dashboard – PiiTrade (Free) | Forex, Crypto, Commodities &amp; Stocks</title>
+  <title>AI Forex Signal Dashboard – PiiTrade (Free) | Currency Pair Signals</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade free AI trading signal dashboard. Real-time buy/sell/hold signals for 51 pairs — forex majors, minors, exotics, gold (XAU/USD), silver (XAG/USD), WTI oil, BTC, ETH, XRP, SOL, and top stocks. Risk calculator, FVG scanner, S/R breakout scanner, volatility scanner. No login required."/>
-  <meta name="keywords" content="forex signals free, free AI trading signals, EUR/USD signal, GBP/USD signal, gold XAU/USD signal, Bitcoin BTC signal, Ethereum ETH signal, XRP signal, Solana SOL signal, crypto signals free, stock signals, AAPL signal, NVDA signal, TSLA signal, risk calculator, technical analysis, FVG fair value gap, volatility scanner, market structure BOS CHoCH, trend reversal, market alerts 2026"/>
+  <meta name="description" content="PiiTrade free AI forex signal dashboard. Real-time buy/sell/hold signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner, volatility scanner. No login required."/>
+  <meta name="keywords" content="forex signals free, free AI forex signals, EUR/USD signal, GBP/USD signal, USD/JPY signal, risk calculator, technical analysis, FVG fair value gap, volatility scanner, market structure BOS CHoCH, trend reversal, forex alerts 2026"/>
   <meta name="robots" content="index, follow"/>
   <meta name="author" content="PiiTrade"/>
   <link rel="canonical" href="https://piitrade.onrender.com/forex"/>
   <!-- Open Graph -->
   <meta property="og:type" content="website"/>
-  <meta property="og:title" content="PiiTrade – Free AI Signal Dashboard | Forex, Crypto, Commodities &amp; Stocks"/>
-  <meta property="og:description" content="Free real-time AI trading signals for 51 pairs — forex, crypto (BTC, ETH, XRP, SOL), commodities (gold, silver, WTI oil), and top US stocks. Risk calculator, FVG scanner, S/R breakout scanner – all free, no account needed."/>
+  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
+  <meta property="og:description" content="Free real-time AI trading signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner – all free, no account needed."/>
   <meta property="og:url" content="https://piitrade.onrender.com/forex"/>
   <meta property="og:site_name" content="PiiTrade"/>
-  <meta property="og:image" content="https://piitrade.onrender.com/static/og-preview.png"/>
+  <meta property="og:image" content="https://piitrade.onrender.com/static/trader.png"/>
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="PiiTrade – Free AI Signal Dashboard"/>
-  <meta name="twitter:description" content="Free AI-powered signals for 51 pairs: forex, crypto, commodities &amp; stocks. Risk calc, FVG scanner, volatility scanner. No sign-up required."/>
-  <meta name="twitter:image" content="https://piitrade.onrender.com/static/og-preview.png"/>
+  <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
+  <meta name="twitter:description" content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required."/>
+  <meta name="twitter:image" content="https://piitrade.onrender.com/static/trader.png"/>
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "PiiTrade AI Signal Dashboard",
+    "name": "PiiTrade AI Forex Signal Dashboard",
     "url": "https://piitrade.onrender.com/forex",
-    "description": "Free real-time AI trading signal dashboard for 51 pairs including forex, crypto, commodities, and stocks. Features include risk calculator, FVG scanner, support/resistance breakout scanner, volatility scanner, and 30-day accuracy history.",
+    "description": "Free real-time AI forex signal dashboard for 35 pairs. Features include risk calculator, FVG scanner, support/resistance breakout scanner, volatility scanner, and 30-day accuracy history.",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Any",
     "offers": {
@@ -47,7 +47,7 @@
   }
   </script>
   <link rel="stylesheet" href="/static/css/forex.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
+  <link rel="icon" type="image/png" href="/static/trader.png"/>
 </head>
 <body>
 
@@ -59,9 +59,9 @@
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
   <div class="brand">
-    <span>📊</span>
+    <img src="/static/trader.png" alt="PiiTrade" style="height:26px;width:26px;object-fit:contain;border-radius:4px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Signal Hub – Forex · Crypto · Commodities · Stocks</span>
+    <span class="brand-sub">AI Forex Signal Hub</span>
   </div>
   <nav class="fx-nav">
     <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds" aria-pressed="true">🔔</button>
@@ -126,6 +126,27 @@
 <!-- ═══════════════════════════════ TOAST CONTAINER ═══════════════════════ -->
 <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
+<!-- ═══════════════════════════════ PAGE WRAPPER ════════════════════════════ -->
+<div class="page-wrapper">
+
+<!-- ═══════════════════════════════ LEFT AD (Taptap) ════════════════════════ -->
+<aside class="ad-col ad-col-left" aria-label="Taptap advertisement">
+  <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Try Taptap Send">
+    <div class="ad-logo">💸</div>
+    <div class="ad-name">Taptap</div>
+    <div class="ad-tag">Send Money Globally</div>
+    <span class="ad-btn ad-btn-taptap">Visit →</span>
+  </a>
+  <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Best Rates" style="animation-delay:0.3s">
+    <div class="ad-logo">🌍</div>
+    <div class="ad-name">Taptap</div>
+    <div class="ad-tag">Best Exchange Rates</div>
+    <span class="ad-btn ad-btn-taptap">Learn More</span>
+  </a>
+</aside>
+
+<div class="main-content">
+
 <!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
 <main class="fx-main">
 
@@ -174,28 +195,6 @@
           <option value="USD/TRY">USD/TRY – US Dollar / Turkish Lira</option>
           <option value="USD/ZAR">USD/ZAR – US Dollar / South African Rand</option>
           <option value="USD/CNY">USD/CNY – US Dollar / Chinese Yuan</option>
-        </optgroup>
-        <optgroup id="optgroup-commodities" label="── Commodities (Live)" data-group="commodities" data-requires-yf="true">
-          <option value="XAU/USD">XAU/USD – Gold / US Dollar</option>
-          <option value="XAG/USD">XAG/USD – Silver / US Dollar</option>
-          <option value="WTI/USD">WTI/USD – WTI Crude Oil / US Dollar</option>
-          <option value="BRENT/USD">BRENT/USD – Brent Crude Oil / US Dollar</option>
-        </optgroup>
-        <optgroup id="optgroup-crypto" label="── Crypto (Live)" data-group="crypto" data-requires-yf="true">
-          <option value="BTC/USD">BTC/USD – Bitcoin / US Dollar</option>
-          <option value="ETH/USD">ETH/USD – Ethereum / US Dollar</option>
-          <option value="BNB/USD">BNB/USD – BNB / US Dollar</option>
-          <option value="XRP/USD">XRP/USD – XRP / US Dollar</option>
-          <option value="SOL/USD">SOL/USD – Solana / US Dollar</option>
-        </optgroup>
-        <optgroup id="optgroup-stocks" label="── Stocks (Live)" data-group="stocks" data-requires-yf="true">
-          <option value="AAPL">AAPL – Apple Inc.</option>
-          <option value="TSLA">TSLA – Tesla Inc.</option>
-          <option value="NVDA">NVDA – NVIDIA Corporation</option>
-          <option value="AMZN">AMZN – Amazon.com Inc.</option>
-          <option value="MSFT">MSFT – Microsoft Corporation</option>
-          <option value="GOOGL">GOOGL – Alphabet Inc.</option>
-          <option value="META">META – Meta Platforms Inc.</option>
         </optgroup>
       </select>
       <button id="btn-refresh" class="fx-refresh-btn" type="button" title="Refresh signal">
@@ -308,7 +307,7 @@
             <option value="1.5">1 : 1.5</option>
             <option value="2" selected>1 : 2</option>
             <option value="2.5">1 : 2.5</option>
-            <option value="3">1 : 3</option>
+            <option value="3">1 : 3.00</option>
           </select>
         </div>
         <div class="risk-group">
@@ -633,9 +632,6 @@
     <div class="news-cat-tabs" role="tablist" aria-label="News categories">
       <button class="news-cat-tab active" data-cat="all" role="tab" aria-selected="true">🌐 All</button>
       <button class="news-cat-tab" data-cat="forex" role="tab" aria-selected="false">💱 Forex</button>
-      <button class="news-cat-tab" data-cat="stocks" role="tab" aria-selected="false">📈 Stocks</button>
-      <button class="news-cat-tab" data-cat="commodities" role="tab" aria-selected="false">🏅 Commodities</button>
-      <button class="news-cat-tab" data-cat="crypto" role="tab" aria-selected="false">₿ Crypto</button>
     </div>
     <div class="fx-news-wrap">
       <div id="news-loading">Loading headlines…</div>
@@ -720,22 +716,6 @@
           <label><input type="checkbox" value="USD/TRY"/> USD/TRY</label>
           <label><input type="checkbox" value="USD/ZAR"/> USD/ZAR</label>
           <label><input type="checkbox" value="USD/CNY"/> USD/CNY</label>
-          <label><input type="checkbox" value="XAU/USD"/> XAU/USD</label>
-          <label><input type="checkbox" value="XAG/USD"/> XAG/USD</label>
-          <label><input type="checkbox" value="WTI/USD"/> WTI/USD</label>
-          <label><input type="checkbox" value="BRENT/USD"/> BRENT/USD</label>
-          <label><input type="checkbox" value="BTC/USD"/> BTC/USD</label>
-          <label><input type="checkbox" value="ETH/USD"/> ETH/USD</label>
-          <label><input type="checkbox" value="BNB/USD"/> BNB/USD</label>
-          <label><input type="checkbox" value="XRP/USD"/> XRP/USD</label>
-          <label><input type="checkbox" value="SOL/USD"/> SOL/USD</label>
-          <label><input type="checkbox" value="AAPL"/> AAPL</label>
-          <label><input type="checkbox" value="TSLA"/> TSLA</label>
-          <label><input type="checkbox" value="NVDA"/> NVDA</label>
-          <label><input type="checkbox" value="AMZN"/> AMZN</label>
-          <label><input type="checkbox" value="MSFT"/> MSFT</label>
-          <label><input type="checkbox" value="GOOGL"/> GOOGL</label>
-          <label><input type="checkbox" value="META"/> META</label>
         </div>
         <div class="subscribe-status" id="subscribe-status" role="status"></div>
       </form>
@@ -744,14 +724,33 @@
 
 </main>
 
+</div><!-- /.main-content -->
+
+<!-- ═══════════════════════════════ RIGHT AD (Exness) ═══════════════════════ -->
+<aside class="ad-col ad-col-right" aria-label="Exness advertisement">
+  <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Trade with Exness">
+    <div class="ad-logo">📈</div>
+    <div class="ad-name">Exness</div>
+    <div class="ad-tag">Trade Forex CFDs</div>
+    <span class="ad-btn ad-btn-exness">Trade Now</span>
+  </a>
+  <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Exness – Low Spreads" style="animation-delay:0.3s">
+    <div class="ad-logo">💹</div>
+    <div class="ad-name">Exness</div>
+    <div class="ad-tag">Low Spreads &amp; Fast</div>
+    <span class="ad-btn ad-btn-exness">Open Account</span>
+  </a>
+</aside>
+
+</div><!-- /.page-wrapper -->
+
 <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
-<footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
-  <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+<footer style="text-align:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
+  <div style="display:flex;gap:14px;justify-content:center;margin-bottom:5px;flex-wrap:wrap">
     <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
-    <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
     <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
   </div>
-  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
+  <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute financial advice.</div>
 </footer>
 
 <script src="/static/js/forex.js"></script>
