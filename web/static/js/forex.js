@@ -790,12 +790,14 @@ function pipValuePerStdLot(pair, entryPriceVal) {
 function autoFillCalculator(data) {
   if (data.entry_price) calcEntry.value = data.entry_price;
   if (data.stop_loss)   calcSl.value    = data.stop_loss;
-  // If a specific RR target is selected, auto-calculate TP; otherwise use signal TP
+  // If RR target is 'auto', fill TP from the signal data.
+  // For a specific RR ratio, leave TP blank so runCalculator() computes it
+  // from Entry, SL, and the selected RR (it also writes back to calcTp).
   const rrTargetVal = calcRrTarget ? calcRrTarget.value : 'auto';
-  if (rrTargetVal === 'auto') {
-    if (data.take_profit) calcTp.value = data.take_profit;
+  if (rrTargetVal === 'auto' && data.take_profit) {
+    calcTp.value = data.take_profit;
   }
-  // Always run the calculator after auto-fill to update displayed results
+  // Always run the calculator after auto-fill to update all displayed results.
   runCalculator();
 }
 
