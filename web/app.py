@@ -1314,7 +1314,7 @@ async def forex_hub(request: Request):
 
 
 @app.get("/methodology")
-async def methodology_page():
+async def methodology_redirect():
     return RedirectResponse(url="/", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 
