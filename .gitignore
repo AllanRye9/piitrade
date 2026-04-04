@@ -6,7 +6,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
@@ -56,6 +56,11 @@ training_data/exports/
 # Web app – uploaded files and generated caches
 web/uploads/
 web/.env
+web/static/uploads/
+
+# React frontend – node_modules and dev build artifacts
+web/frontend/node_modules/
+# Do NOT ignore web/static/dist/ – the built React assets are committed
 
 # Web app – secret key file (auto-generated at runtime, must not be committed)
 web/.secret_key
