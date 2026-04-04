@@ -1014,12 +1014,6 @@ const ALL_PAIRS = [
   // Exotics
   'USD/MXN', 'USD/NOK', 'USD/SEK', 'USD/SGD', 'USD/HKD',
   'USD/TRY', 'USD/ZAR', 'USD/CNY',
-  // Commodities
-  'XAU/USD', 'XAG/USD', 'WTI/USD', 'BRENT/USD',
-  // Crypto
-  'BTC/USD', 'ETH/USD', 'BNB/USD', 'XRP/USD', 'SOL/USD',
-  // Stocks
-  'AAPL', 'TSLA', 'NVDA', 'AMZN', 'MSFT', 'GOOGL', 'META',
 ];
 
 /**
@@ -1317,14 +1311,6 @@ document.querySelectorAll('.alerts-cat-tab').forEach(tab => {
       grp.remove();
     }
 
-    if (!data.stocks_live) {
-      // Completely remove stocks and commodities optgroups when Yahoo Finance is unavailable
-      ['optgroup-commodities', 'optgroup-stocks'].forEach(removeOfflineGroup);
-    }
-    if (!data.crypto_live) {
-      // Completely remove crypto optgroup when neither CoinGecko nor Yahoo Finance is live
-      removeOfflineGroup('optgroup-crypto');
-    }
     if (!data.ecb_live) {
       // Completely remove forex (ECB/Frankfurter) optgroups when the ECB feed is unavailable
       ['optgroup-major', 'optgroup-minor', 'optgroup-exotic'].forEach(removeOfflineGroup);
@@ -1873,25 +1859,6 @@ const PAIR_META = {
   'USD/TRY': { name: 'US Dollar / Turkish Lira',         cat: 'exotic' },
   'USD/ZAR': { name: 'US Dollar / South African Rand',   cat: 'exotic' },
   'USD/CNY': { name: 'US Dollar / Chinese Yuan',         cat: 'exotic' },
-  // Commodities
-  'XAU/USD':   { name: 'Gold / US Dollar',   cat: 'commodity' },
-  'XAG/USD':   { name: 'Silver / US Dollar', cat: 'commodity' },
-  'WTI/USD':   { name: 'WTI Crude Oil',      cat: 'commodity' },
-  'BRENT/USD': { name: 'Brent Crude Oil',    cat: 'commodity' },
-  // Crypto
-  'BTC/USD': { name: 'Bitcoin / US Dollar',  cat: 'crypto' },
-  'ETH/USD': { name: 'Ethereum / US Dollar', cat: 'crypto' },
-  'BNB/USD': { name: 'Binance Coin / USD',   cat: 'crypto' },
-  'XRP/USD': { name: 'Ripple / US Dollar',   cat: 'crypto' },
-  'SOL/USD': { name: 'Solana / US Dollar',   cat: 'crypto' },
-  // Stocks
-  'AAPL':  { name: 'Apple Inc.',          cat: 'stock' },
-  'TSLA':  { name: 'Tesla Inc.',          cat: 'stock' },
-  'NVDA':  { name: 'NVIDIA Corp.',        cat: 'stock' },
-  'AMZN':  { name: 'Amazon.com Inc.',     cat: 'stock' },
-  'MSFT':  { name: 'Microsoft Corp.',     cat: 'stock' },
-  'GOOGL': { name: 'Alphabet (Google)',   cat: 'stock' },
-  'META':  { name: 'Meta Platforms Inc.', cat: 'stock' },
 };
 
 // (pair search removed)

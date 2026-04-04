@@ -87,25 +87,31 @@ a:hover { text-decoration: underline; }
 .fx-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
+  height: 44px;
   position: sticky;
   top: 0;
   z-index: 100;
-  animation: header-slide-down 0.4s cubic-bezier(.22,1,.36,1) both;
+  animation: header-slide-down 0.35s cubic-bezier(.22,1,.36,1) both;
+  transition: box-shadow 0.2s;
+}
+.fx-header:hover {
+  box-shadow: 0 2px 12px rgba(88,166,255,0.08);
 }
 
 .fx-header .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.15rem;
+  gap: 8px;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text);
+  transition: opacity 0.2s;
 }
+.fx-header .brand:hover { opacity: .85; }
 
 .fx-nav {
   display: flex;
@@ -153,7 +159,7 @@ a:hover { text-decoration: underline; }
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 56px;
+  top: 44px;
   z-index: 90;
   display: flex;
   align-items: stretch;
@@ -198,9 +204,9 @@ a:hover { text-decoration: underline; }
   color: var(--text2);
   cursor: pointer;
   font-family: inherit;
-  font-size: 0.87rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  padding: 12px 18px;
+  padding: 9px 14px;
   white-space: nowrap;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
   flex-shrink: 0;
@@ -2989,3 +2995,94 @@ canvas {
   margin-top: 2px;
 }
 
+
+/* ── Page wrapper with ad columns ── */
+.page-wrapper {
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - 44px);
+  position: relative;
+}
+.ad-col {
+  width: 4.5%;
+  min-width: 52px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 44px;
+  max-height: calc(100vh - 44px);
+  overflow: hidden;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.main-content { flex: 1; min-width: 0; }
+
+/* Ad card animations */
+@keyframes ad-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ad-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(88,166,255,0); }
+  50%       { box-shadow: 0 0 8px 2px rgba(88,166,255,0.18); }
+}
+@keyframes ad-glow-pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
+  50%       { box-shadow: 0 0 8px 2px rgba(63,185,80,0.2); }
+}
+.ad-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  text-decoration: none;
+  font-size: .65rem;
+  color: var(--text2);
+  width: 100%;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  animation: ad-fade-in 0.6s ease both;
+}
+.ad-card:hover {
+  transform: translateY(-3px) scale(1.03);
+  text-decoration: none;
+}
+.ad-card-taptap {
+  border-color: #3a7bd5;
+  animation: ad-fade-in 0.6s ease both, ad-glow-pulse 3s ease-in-out 1s infinite;
+}
+.ad-card-taptap:hover { border-color: #5a9bf5; }
+.ad-card-exness {
+  border-color: var(--accent2);
+  animation: ad-fade-in 0.6s 0.2s ease both, ad-glow-pulse-green 3s ease-in-out 1.2s infinite;
+}
+.ad-card-exness:hover { border-color: #5dde72; }
+.ad-logo { font-size: 1.2rem; margin-bottom: 3px; line-height: 1; }
+.ad-name { font-weight: 700; font-size: .68rem; color: var(--text); margin-bottom: 2px; word-break: break-word; }
+.ad-tag  { font-size: .6rem; color: var(--text2); line-height: 1.2; }
+.ad-btn {
+  margin-top: 5px;
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: .6rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.ad-btn-taptap  { background: #3a7bd5; color: #fff; }
+.ad-btn-exness  { background: var(--accent2); color: #000; }
+.ad-btn:hover { opacity: .85; }
+
+@media (max-width: 700px) {
+  .ad-col { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-card { animation: none; opacity: 1; transform: none; }
+}
