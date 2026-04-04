@@ -82,7 +82,7 @@ const features = [
   {
     icon: ChevronRight,
     title: 'Crypto & Stocks Soon',
-    desc: 'Crypto, commodities, and stocks signals are coming. Forex AI signals are live now — free.',
+    desc: 'Crypto, commodities, and stocks signals are on their way — free AI tools for every asset, every day.',
     color: 'text-accent-blue',
     bg: 'bg-accent-blue/10',
   },
@@ -98,8 +98,8 @@ const stats = [
 const previewSignals = [
   { pair: 'EUR/USD', dir: 'BUY', conf: 78, entry: '1.0842' },
   { pair: 'GBP/JPY', dir: 'SELL', conf: 65, entry: '196.34' },
-  { pair: 'XAU/USD', dir: 'HOLD', conf: 55, entry: '2341.20' },
-  { pair: 'BTC/USD', dir: 'BUY', conf: 82, entry: '67,400' },
+  { pair: 'AUD/USD', dir: 'BUY', conf: 71, entry: '0.6541' },
+  { pair: 'USD/JPY', dir: 'HOLD', conf: 58, entry: '154.82' },
 ]
 
 function SignalBadge({ dir }) {
@@ -440,6 +440,44 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Roadmap */}
+      <section className="py-20 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-6">
+            🗺️ What's Coming Next
+          </h2>
+          <div className="bg-bg-card border border-border-default rounded-2xl p-8 space-y-4 text-left">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">📈</span>
+              <p className="text-text-secondary leading-relaxed">
+                <span className="text-accent-green font-semibold">Forex signals are live today,</span>{' '}
+                free for all traders on their way.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">₿</span>
+              <p className="text-text-secondary leading-relaxed">
+                <span className="text-accent-yellow font-semibold">Crypto markets join us next,</span>{' '}
+                AI signals — no complex text.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">📊</span>
+              <p className="text-text-secondary leading-relaxed">
+                <span className="text-accent-purple font-semibold">Stocks and commodities join the floor,</span>{' '}
+                professional tools, and so much more.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-4 bg-bg-secondary">
         <motion.div
@@ -452,7 +490,8 @@ export default function Landing() {
             Ready to Trade Smarter?
           </h2>
           <p className="text-text-secondary text-lg mb-8">
-            Access all 35 forex pairs with AI-powered signals. No account required. Crypto &amp; stocks coming soon.
+            Thirty-five forex pairs, signals live and free — powered by AI for traders like you and me.
+            No account needed, no paywalls in sight — just open the dashboard and trade it right.
           </p>
           <Link
             to="/forex"

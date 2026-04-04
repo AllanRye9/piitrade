@@ -78,21 +78,21 @@ function addXP(state, amount) {
 }
 
 const TABS = [
-  { id: 'signal', label: 'Signal', icon: Zap },
-  { id: 'risk', label: 'Risk Calc', icon: Target },
-  { id: 'technical', label: 'Technical', icon: BarChart2 },
-  { id: 'fvg', label: 'FVG', icon: Layers },
-  { id: 'sr', label: 'S/R Breaks', icon: AlertTriangle },
-  { id: 'volatile', label: 'Volatile', icon: Flame },
-  { id: 'reversal', label: 'Reversal', icon: RefreshCw },
-  { id: 'success', label: 'Success', icon: Star },
-  { id: 'scanner', label: 'Scanner', icon: Search },
-  { id: 'news', label: 'News', icon: Newspaper },
-  { id: 'alerts', label: 'Alerts', icon: Bell },
+  { id: 'signal', label: '📊 Signal', icon: Zap },
+  { id: 'risk', label: '📐 Risk Calc', icon: Target },
+  { id: 'technical', label: '🔍 Technical', icon: BarChart2 },
+  { id: 'fvg', label: '🌀 FVG', icon: Layers },
+  { id: 'sr', label: '💥 S/R Breaks', icon: AlertTriangle },
+  { id: 'volatile', label: '🔥 Volatile', icon: Flame },
+  { id: 'reversal', label: '🔄 Reversal', icon: RefreshCw },
+  { id: 'success', label: '🏆 Success', icon: Star },
+  { id: 'scanner', label: '🔮 Scanner', icon: Search },
+  { id: 'news', label: '📰 News', icon: Newspaper },
+  { id: 'alerts', label: '🔔 Alerts', icon: Bell },
 ]
 
-const CATEGORIES = ['All', 'Forex', 'Crypto', 'Commodities', 'Stocks']
-const UPCOMING_CATEGORIES = new Set(['Crypto', 'Commodities', 'Stocks'])
+const MAJOR_PAIRS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
+const MINOR_PAIRS = new Set(['EUR/GBP', 'EUR/JPY', 'EUR/AUD', 'EUR/CAD', 'EUR/CHF', 'EUR/NZD', 'GBP/JPY', 'GBP/CHF', 'GBP/AUD', 'GBP/CAD', 'GBP/NZD', 'AUD/JPY', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD', 'NZD/JPY', 'NZD/CAD', 'NZD/CHF', 'CAD/JPY', 'CHF/JPY'])
 
 // Fallback pairs if API is unreachable
 const FALLBACK_PAIRS = [
@@ -144,56 +144,52 @@ function SignalTab({ pair, signal, loading, error }) {
   const bars = signal.history_accuracy || Array.from({ length: 30 }, (_, i) => ({ day: i + 1, acc: 55 + Math.random() * 30 }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Main signal card */}
       <motion.div
         key={dir}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className={`border rounded-2xl p-6 ${dirBg(dir)} ${dirGlow(dir)}`}
+        className={`border rounded-xl p-3 ${dirBg(dir)} ${dirGlow(dir)}`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-text-muted text-sm mb-1">Signal for {pair}</p>
-            <div className={`flex items-center gap-3 ${dirColor(dir)}`}>
-              <DirIcon dir={dir} size={32} />
-              <span className="text-5xl font-bold">{dir.toUpperCase()}</span>
+            <p className="text-text-muted text-xs mb-1">Signal for {pair}</p>
+            <div className={`flex items-center gap-2 ${dirColor(dir)}`}>
+              <DirIcon dir={dir} size={24} />
+              <span className="text-3xl font-bold">{dir.toUpperCase()}</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-text-muted text-xs mb-1">Model</p>
-            <p className="text-text-secondary text-sm">LightGBM</p>
+            <p className="text-text-muted text-xs mb-0.5">Model: LightGBM</p>
             {accuracy !== null && (
-              <>
-                <p className="text-text-muted text-xs mt-2 mb-1">30-day accuracy</p>
-                <p className="text-xl font-bold text-text-primary">{(accuracy * 100).toFixed(1)}%</p>
-              </>
+              <p className="text-lg font-bold text-text-primary">{(accuracy * 100).toFixed(1)}% <span className="text-xs font-normal text-text-muted">30d acc</span></p>
             )}
           </div>
         </div>
       </motion.div>
 
       {/* Levels */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {[
           { label: 'Entry', value: signal.entry_price ?? signal.entry ?? '—', color: 'text-text-primary' },
           { label: 'Take Profit', value: signal.take_profit ?? signal.tp ?? '—', color: 'text-accent-green' },
           { label: 'Stop Loss', value: signal.stop_loss ?? signal.sl ?? '—', color: 'text-accent-red' },
         ].map((item) => (
-          <div key={item.label} className="bg-bg-card border border-border-default rounded-xl p-4">
-            <p className="text-text-muted text-xs mb-1">{item.label}</p>
-            <p className={`text-xl font-bold font-mono ${item.color}`}>{item.value}</p>
+          <div key={item.label} className="bg-bg-card border border-border-default rounded-lg p-3">
+            <p className="text-text-muted text-xs mb-0.5">{item.label}</p>
+            <p className={`text-lg font-bold font-mono ${item.color}`}>{item.value}</p>
           </div>
         ))}
       </div>
 
       {/* Confidence meter */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4">
-        <div className="flex justify-between text-sm text-text-secondary mb-2">
+      <div className="bg-bg-card border border-border-default rounded-lg p-3">
+        <div className="flex justify-between text-xs text-text-secondary mb-1.5">
           <span>Confidence</span>
           <span className="font-semibold">{conf}%</span>
         </div>
-        <div className="h-3 bg-bg-secondary rounded-full overflow-hidden">
+        <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${conf}%` }}
@@ -204,9 +200,9 @@ function SignalTab({ pair, signal, loading, error }) {
       </div>
 
       {/* Historical accuracy mini-chart */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4">
-        <p className="text-text-secondary text-sm mb-3">Historical Accuracy (last 30 data points)</p>
-        <div className="flex items-end gap-0.5 h-20">
+      <div className="bg-bg-card border border-border-default rounded-lg p-3">
+        <p className="text-text-secondary text-xs mb-2">Historical Accuracy (last 30 data points)</p>
+        <div className="flex items-end gap-0.5 h-16">
           {bars.slice(0, 30).map((b, i) => {
             const pct = b.acc ?? (50 + Math.random() * 40)
             return (
@@ -238,19 +234,19 @@ function RiskCalcTab({ pair }) {
   const margin = positionSize !== '—' ? (parseFloat(positionSize) * 1000 * 0.02).toFixed(2) : '—'
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <div className="bg-bg-card border border-border-default rounded-xl p-5 space-y-4">
+    <div className="space-y-3 max-w-md">
+      <div className="bg-bg-card border border-border-default rounded-xl p-3 space-y-3">
         <div>
-          <label className="text-text-secondary text-sm mb-1 block">Account Balance ($)</label>
+          <label className="text-text-secondary text-xs mb-1 block">Account Balance ($)</label>
           <input
             type="number"
             value={balance}
             onChange={(e) => setBalance(parseFloat(e.target.value) || 0)}
-            className="w-full bg-bg-secondary border border-border-default rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue"
+            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
           />
         </div>
         <div>
-          <label className="text-text-secondary text-sm mb-1 block">Risk % — {riskPct}%</label>
+          <label className="text-text-secondary text-xs mb-1 block">Risk % — {riskPct}%</label>
           <input
             type="range" min="0.1" max="5" step="0.1"
             value={riskPct}
@@ -258,46 +254,46 @@ function RiskCalcTab({ pair }) {
             className="w-full accent-blue-400"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-text-secondary text-sm mb-1 block">Entry Price</label>
+            <label className="text-text-secondary text-xs mb-1 block">Entry Price</label>
             <input
               type="number" step="0.00001" value={entry}
               onChange={(e) => setEntry(e.target.value)}
               placeholder="1.08420"
-              className="w-full bg-bg-secondary border border-border-default rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue placeholder-text-muted"
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue placeholder-text-muted"
             />
           </div>
           <div>
-            <label className="text-text-secondary text-sm mb-1 block">Stop Loss</label>
+            <label className="text-text-secondary text-xs mb-1 block">Stop Loss</label>
             <input
               type="number" step="0.00001" value={sl}
               onChange={(e) => setSl(e.target.value)}
               placeholder="1.08000"
-              className="w-full bg-bg-secondary border border-border-default rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue placeholder-text-muted"
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue placeholder-text-muted"
             />
           </div>
         </div>
         <div>
-          <label className="text-text-secondary text-sm mb-1 block">Pip Value ($)</label>
+          <label className="text-text-secondary text-xs mb-1 block">Pip Value ($)</label>
           <input
             type="number" value={pipValue}
             onChange={(e) => setPipValue(parseFloat(e.target.value) || 10)}
-            className="w-full bg-bg-secondary border border-border-default rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue"
+            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {[
           { label: 'Risk Amount', value: `$${riskAmount.toFixed(2)}`, color: 'text-accent-red' },
           { label: 'Position Size (lots)', value: positionSize, color: 'text-accent-green' },
           { label: 'Pips at Risk', value: pips > 0 ? pips.toFixed(1) : '—', color: 'text-accent-yellow' },
           { label: 'Margin Needed', value: margin !== '—' ? `$${margin}` : '—', color: 'text-accent-blue' },
         ].map((item) => (
-          <div key={item.label} className="bg-bg-card border border-border-default rounded-xl p-4">
-            <p className="text-text-muted text-xs mb-1">{item.label}</p>
-            <p className={`text-2xl font-bold font-mono ${item.color}`}>{item.value}</p>
+          <div key={item.label} className="bg-bg-card border border-border-default rounded-lg p-3">
+            <p className="text-text-muted text-xs mb-0.5">{item.label}</p>
+            <p className={`text-lg font-bold font-mono ${item.color}`}>{item.value}</p>
           </div>
         ))}
       </div>
@@ -330,11 +326,11 @@ function TechnicalTab({ pair }) {
   const indicators = data.indicators || {}
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* S/R */}
-        <div className="bg-bg-card border border-border-default rounded-xl p-5">
-          <h3 className="text-text-primary font-semibold mb-4">Support & Resistance</h3>
+        <div className="bg-bg-card border border-border-default rounded-xl p-3">
+          <h3 className="text-text-primary text-sm font-semibold mb-3">Support & Resistance</h3>
           <div className="space-y-2">
             {sr.resistance && (
               <div className="flex justify-between items-center py-2 px-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
@@ -361,8 +357,8 @@ function TechnicalTab({ pair }) {
         </div>
 
         {/* Indicators */}
-        <div className="bg-bg-card border border-border-default rounded-xl p-5">
-          <h3 className="text-text-primary font-semibold mb-4">Indicators</h3>
+        <div className="bg-bg-card border border-border-default rounded-xl p-3">
+          <h3 className="text-text-primary text-sm font-semibold mb-3">Indicators</h3>
           <div className="space-y-2">
             {Object.entries(indicators).slice(0, 6).map(([k, v]) => (
               <div key={k} className="flex justify-between items-center py-1.5 border-b border-border-subtle last:border-0">
@@ -377,8 +373,8 @@ function TechnicalTab({ pair }) {
 
       {/* FVG Zones */}
       {fvg.length > 0 && (
-        <div className="bg-bg-card border border-border-default rounded-xl p-5">
-          <h3 className="text-text-primary font-semibold mb-4">FVG Zones</h3>
+        <div className="bg-bg-card border border-border-default rounded-xl p-3">
+          <h3 className="text-text-primary text-sm font-semibold mb-2">FVG Zones</h3>
           <div className="space-y-2">
             {fvg.slice(0, 5).map((zone, i) => (
               <div key={i} className="flex justify-between items-center py-2 px-3 bg-bg-secondary rounded-lg">
@@ -419,14 +415,14 @@ function FVGTab() {
   const items = Array.isArray(data) ? data : data.fvg_zones || data.zones || []
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {items.length === 0 && <EmptyState title="No FVG zones" desc="No fair value gaps detected." />}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {items.map((zone, i) => {
           const status = zone.status || 'active'
           const statusColor = status === 'approaching' ? 'text-accent-yellow' : status === 'reached' ? 'text-accent-green' : status === 'rejected' ? 'text-accent-red' : 'text-accent-blue'
           return (
-            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4">
+            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-text-primary font-medium">{zone.pair || `Zone ${i + 1}`}</span>
                 <span className={`text-xs font-semibold uppercase ${statusColor}`}>{status}</span>
@@ -517,13 +513,13 @@ function VolatileTab() {
   const maxVol = items.length ? Math.max(...items.map((p) => p.volatility || 0)) : 1
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex gap-2">
         {['1h', '4h', '24h'].map((tf) => (
           <button
             key={tf}
             onClick={() => setTimeframe(tf)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${timeframe === tf ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${timeframe === tf ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
           >
             {tf}
           </button>
@@ -532,9 +528,9 @@ function VolatileTab() {
       {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No data" desc="Volatility data not available." />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {items.slice(0, 20).map((p, i) => (
-            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4">
+            <div key={i} className="bg-bg-card border border-border-default rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-3">
                   <span className="text-text-muted text-xs font-medium w-5">{i + 1}</span>
@@ -578,7 +574,7 @@ function ReversalTab() {
       {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No reversals" desc="No reversal signals detected." />
       ) : items.map((r, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4 flex items-center justify-between">
+        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center justify-between">
           <div>
             <p className="text-text-primary font-medium">{r.pair || r.symbol || '—'}</p>
             <p className="text-text-muted text-xs">{r.pattern || r.type || 'Reversal'}</p>
@@ -616,7 +612,7 @@ function SuccessTab({ allPairs }) {
       {loading ? <LoadingSpinner /> : results.length === 0 ? (
         <EmptyState title="No data" desc="Accuracy data unavailable." />
       ) : results.map((r, i) => (
-        <div key={r.pair} className="bg-bg-card border border-border-default rounded-xl p-4 flex items-center gap-4">
+        <div key={r.pair} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center gap-3">
           <span className="text-text-muted font-bold w-6 text-center">{i + 1}</span>
           <div className="flex-1">
             <div className="flex justify-between items-center mb-1">
@@ -655,10 +651,10 @@ function ScannerTab() {
       {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No patterns" desc="No patterns detected in the scanner." />
       ) : items.map((p, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4">
+        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-text-primary font-medium">{p.pair || '—'}</p>
+              <p className="text-text-primary text-sm font-medium">{p.pair || '—'}</p>
               <p className="text-text-muted text-xs mt-0.5">{p.timeframe || p.tf || ''}</p>
             </div>
             <div className="text-right">
@@ -701,7 +697,7 @@ function NewsTab() {
           <p className="text-text-muted text-sm">Market news feed is currently empty.</p>
         </div>
       ) : items.map((n, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-5 hover:border-accent-blue/30 transition-all">
+        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 hover:border-accent-blue/30 transition-all">
           <div className="flex gap-3">
             <div className="flex-1">
               <a href={n.url || '#'} target="_blank" rel="noopener noreferrer" className="text-text-primary font-medium hover:text-accent-blue transition-colors">
@@ -746,10 +742,10 @@ function AlertsTab() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Economic calendar */}
       <div>
-        <h3 className="text-text-primary font-semibold mb-4">Upcoming Economic Events</h3>
+        <h3 className="text-text-primary text-sm font-semibold mb-3">Upcoming Economic Events</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -778,8 +774,8 @@ function AlertsTab() {
       </div>
 
       {/* Subscribe */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-6 max-w-md">
-        <h3 className="text-text-primary font-semibold mb-2">Get Signal Alerts</h3>
+      <div className="bg-bg-card border border-border-default rounded-xl p-4 max-w-md">
+        <h3 className="text-text-primary text-sm font-semibold mb-2">Get Signal Alerts</h3>
         <p className="text-text-secondary text-sm mb-4">Subscribe for email alerts on high-confidence signals.</p>
         {status === 'success' ? (
           <div className="px-4 py-3 bg-accent-green/10 border border-accent-green/30 rounded-lg text-accent-green text-sm">
@@ -819,22 +815,22 @@ function Gamebar() {
   }, [])
 
   return (
-    <div className="bg-bg-card border border-border-default rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center text-white font-bold text-sm">
+    <div className="bg-bg-card border border-border-default rounded-xl p-2 flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center text-white font-bold text-xs">
           {game.level}
         </div>
         <div>
-          <p className="text-text-primary text-sm font-semibold">Level {game.level} Trader</p>
-          <p className="text-text-muted text-xs">{game.xp} XP total</p>
+          <p className="text-text-primary text-xs font-semibold">Lv.{game.level} Trader</p>
+          <p className="text-text-muted text-xs">{game.xp} XP</p>
         </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between text-xs text-text-muted mb-1">
-          <span>XP Progress</span>
+      <div className="flex-1 min-w-[80px]">
+        <div className="flex justify-between text-xs text-text-muted mb-0.5">
+          <span>XP</span>
           <span>{xpInLevel}/{xpToNext}</span>
         </div>
-        <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
+        <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
           <motion.div
             animate={{ width: `${(xpInLevel / xpToNext) * 100}%` }}
             className="h-full bg-gradient-to-r from-accent-blue to-accent-purple rounded-full"
@@ -842,15 +838,15 @@ function Gamebar() {
           />
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Flame size={14} className="text-accent-yellow" />
-        <span className="text-text-secondary text-sm">{game.streak} streak</span>
+      <div className="flex items-center gap-1">
+        <Flame size={12} className="text-accent-yellow" />
+        <span className="text-text-secondary text-xs">{game.streak} streak</span>
       </div>
       {game.badges.length > 0 && (
         <div className="flex gap-1">
           {game.badges.map((b) => (
-            <span key={b} className="flex items-center gap-1 px-2 py-0.5 bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-xs rounded-full">
-              <Award size={10} />
+            <span key={b} className="flex items-center gap-1 px-1.5 py-0.5 bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-xs rounded-full">
+              <Award size={8} />
               {b}
             </span>
           ))}
@@ -864,9 +860,6 @@ function Gamebar() {
 export default function ForexDashboard() {
   const { ads } = useAds()
   const [allPairsData, setAllPairsData] = useState(null)
-  const [pairsLoading, setPairsLoading] = useState(true)
-  const [category, setCategory] = useState('All')
-  const [search, setSearch] = useState('')
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
   const [activeTab, setActiveTab] = useState('signal')
   const [signal, setSignal] = useState(null)
@@ -878,11 +871,9 @@ export default function ForexDashboard() {
 
   // Load all pairs — API returns {major, minor, exotic, all, ecb_live}
   useEffect(() => {
-    setPairsLoading(true)
     getPairs()
       .then((data) => setAllPairsData(data))
       .catch(() => setAllPairsData(null))
-      .finally(() => setPairsLoading(false))
   }, [])
 
   // Fetch signal when pair changes
@@ -911,210 +902,146 @@ export default function ForexDashboard() {
     return () => clearInterval(interval)
   }, [fetchSignal])
 
-  // Build flat pair list — use `all` key from API response, fall back to hardcoded list
-  const forexPairs = (allPairsData?.all && allPairsData.all.length > 0)
+  // Build flat pair list — filtered to strings only
+  const forexPairs = ((allPairsData?.all && allPairsData.all.length > 0)
     ? allPairsData.all
     : FALLBACK_PAIRS
-
-  const isUpcoming = UPCOMING_CATEGORIES.has(category)
-  const activePairs = (category === 'All' || category === 'Forex') ? forexPairs : []
-  const displayPairs = activePairs.filter((p) =>
-    typeof p === 'string' && p.toLowerCase().includes(search.toLowerCase())
-  )
+  ).filter((p) => typeof p === 'string' && p.length > 0)
 
   const scrollTabs = (dir) => {
     if (tabsRef.current) tabsRef.current.scrollBy({ left: dir * 120, behavior: 'smooth' })
   }
 
+  // Build select optgroups
+  const majorList = allPairsData?.major
+    ? allPairsData.major.filter((p) => typeof p === 'string' && p.length > 0)
+    : forexPairs.filter((p) => MAJOR_PAIRS.has(p))
+  const minorList = allPairsData?.minor
+    ? allPairsData.minor.filter((p) => typeof p === 'string' && p.length > 0)
+    : forexPairs.filter((p) => MINOR_PAIRS.has(p))
+  const exoticList = allPairsData?.exotic
+    ? allPairsData.exotic.filter((p) => typeof p === 'string' && p.length > 0)
+    : forexPairs.filter((p) => !MAJOR_PAIRS.has(p) && !MINOR_PAIRS.has(p))
+
   return (
-    <div className="min-h-screen bg-bg-primary py-4 px-3">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-bg-primary py-3 px-3">
+      <div className="max-w-5xl mx-auto space-y-3">
+        {/* Top ad */}
+        <AdBanner placement="top" ads={ads} />
+
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4"
-        >
-          <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-0.5">Forex Dashboard</h1>
-          <p className="text-text-secondary text-xs">AI-powered signals for {forexPairs.length} forex pairs</p>
-        </motion.div>
-
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Left: Pair selector — compact */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:w-44 flex-shrink-0 space-y-2"
-          >
-            {/* Category tabs */}
-            <div className="flex flex-wrap gap-1">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`relative px-2 py-0.5 rounded text-xs font-medium transition-all ${category === cat ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
-                >
-                  {cat}
-                  {UPCOMING_CATEGORIES.has(cat) && (
-                    <span className="ml-1 text-accent-yellow" title="Coming soon">·</span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Search */}
-            {!isUpcoming && (
-              <div className="relative">
-                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search pairs…"
-                  className="w-full bg-bg-card border border-border-default rounded-lg pl-7 pr-3 py-1.5 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue"
-                />
-              </div>
-            )}
-
-            {/* Pair list */}
-            {isUpcoming ? (
-              <div className="bg-bg-card border border-border-default rounded-xl p-4 text-center">
-                <p className="text-accent-yellow text-xs font-semibold mb-1">Coming Soon</p>
-                <p className="text-text-muted text-xs">{category} signals are under development.</p>
-              </div>
-            ) : (
-              <div className="bg-bg-card border border-border-default rounded-xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 260px)' }}>
-                {pairsLoading ? (
-                  <p className="text-text-muted text-xs text-center py-6">Loading…</p>
-                ) : displayPairs.length === 0 ? (
-                  <p className="text-text-muted text-xs text-center py-6">No pairs found</p>
-                ) : displayPairs.map((pair) => (
-                  <button
-                    key={pair}
-                    onClick={() => setSelectedPair(pair)}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors border-b border-border-subtle last:border-0 ${selectedPair === pair ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
-                  >
-                    {pair}
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.div>
-
-          {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-3">
-            {/* Gamebar */}
-            <Gamebar />
-
-            {isUpcoming ? (
-              <div className="bg-bg-card border border-border-default rounded-xl p-10 flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-full bg-accent-yellow/10 flex items-center justify-center mb-4">
-                  <Zap size={28} className="text-accent-yellow" />
-                </div>
-                <h2 className="text-text-primary font-bold text-xl mb-2">{category} — Coming Soon</h2>
-                <p className="text-text-secondary text-sm max-w-sm">
-                  We're working hard to bring AI-powered signals for {category.toLowerCase()} markets.
-                  Switch to <strong className="text-accent-blue">Forex</strong> to access live signals now.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Selected pair header */}
-                <div className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-accent-blue/10 flex items-center justify-center">
-                      <TrendingUp size={14} className="text-accent-blue" />
-                    </div>
-                    <div>
-                      <p className="text-text-primary font-bold">{selectedPair}</p>
-                      <p className="text-text-muted text-xs">
-                        {signal?.price ? `$${signal.price}` : signal?.current_price ? `$${signal.current_price}` : 'Loading…'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {signal && (
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${dirBg(signal.signal || signal.direction)}`}>
-                        <span className={dirColor(signal.signal || signal.direction)}>
-                          {(signal.signal || signal.direction || '—').toUpperCase()}
-                        </span>
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setSoundEnabled(!soundEnabled)}
-                      className="p-1.5 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-text-primary transition-colors"
-                      title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
-                    >
-                      {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
-                    </button>
-                    <button
-                      onClick={fetchSignal}
-                      disabled={signalLoading}
-                      className="p-1.5 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-accent-blue transition-colors"
-                    >
-                      <RefreshCw size={13} className={signalLoading ? 'animate-spin' : ''} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tab navigation */}
-                <div className="relative flex items-center gap-1">
-                  <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
-                    <ChevronLeft size={13} />
-                  </button>
-                  <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5">
-                    {TABS.map((tab) => {
-                      const Icon = tab.icon
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
-                        >
-                          <Icon size={11} />
-                          {tab.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
-                    <ChevronRight size={13} />
-                  </button>
-                </div>
-
-                {/* Tab content */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.2 }}
-                    className="bg-bg-secondary border border-border-default rounded-xl p-4 min-h-64"
-                  >
-                    {activeTab === 'signal' && <SignalTab pair={selectedPair} signal={signal} loading={signalLoading} error={signalError} />}
-                    {activeTab === 'risk' && <RiskCalcTab pair={selectedPair} />}
-                    {activeTab === 'technical' && <TechnicalTab pair={selectedPair} />}
-                    {activeTab === 'fvg' && <FVGTab />}
-                    {activeTab === 'sr' && <SRTab />}
-                    {activeTab === 'volatile' && <VolatileTab />}
-                    {activeTab === 'reversal' && <ReversalTab />}
-                    {activeTab === 'success' && <SuccessTab allPairs={forexPairs} />}
-                    {activeTab === 'scanner' && <ScannerTab />}
-                    {activeTab === 'news' && <NewsTab />}
-                    {activeTab === 'alerts' && <AlertsTab />}
-                  </motion.div>
-                </AnimatePresence>
-              </>
-            )}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold text-text-primary">📊 PiiTrade — Forex Signal Hub</h1>
+            <p className="text-text-muted text-xs">AI-powered signals for {forexPairs.length} forex pairs</p>
           </div>
-
-          {/* Sidebar ad */}
-          <div className="hidden lg:block w-44 flex-shrink-0">
-            <div className="sticky top-24">
-              <AdBanner placement="sidebar" ads={ads} />
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary transition-colors"
+              title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+            >
+              {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            </button>
+            <button
+              onClick={fetchSignal}
+              disabled={signalLoading}
+              className="p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-accent-blue transition-colors"
+              title="Refresh signal"
+            >
+              <RefreshCw size={13} className={signalLoading ? 'animate-spin' : ''} />
+            </button>
           </div>
         </div>
+
+        {/* Pair selector row */}
+        <div className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-wrap items-center gap-3">
+          <label className="text-text-secondary text-sm font-medium flex-shrink-0">Trading Pair:</label>
+          <select
+            value={selectedPair}
+            onChange={(e) => setSelectedPair(e.target.value)}
+            className="bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
+          >
+            {majorList.length > 0 && (
+              <optgroup label="Major">
+                {majorList.map((p) => <option key={p} value={p}>{p}</option>)}
+              </optgroup>
+            )}
+            {minorList.length > 0 && (
+              <optgroup label="Minor">
+                {minorList.map((p) => <option key={p} value={p}>{p}</option>)}
+              </optgroup>
+            )}
+            {exoticList.length > 0 && (
+              <optgroup label="Exotic">
+                {exoticList.map((p) => <option key={p} value={p}>{p}</option>)}
+              </optgroup>
+            )}
+          </select>
+          {signal && (
+            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${dirBg(signal.signal || signal.direction)}`}>
+              <span className={dirColor(signal.signal || signal.direction)}>
+                {(signal.signal || signal.direction || '—').toUpperCase()}
+              </span>
+            </span>
+          )}
+          {(signal?.price || signal?.current_price) && (
+            <span className="text-text-muted text-xs font-mono">
+              {signal.price ? `$${signal.price}` : `$${signal.current_price}`}
+            </span>
+          )}
+        </div>
+
+        {/* Gamebar */}
+        <Gamebar />
+
+        {/* Tab navigation */}
+        <div className="relative flex items-center gap-1">
+          <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+            <ChevronLeft size={13} />
+          </button>
+          <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+            <ChevronRight size={13} />
+          </button>
+        </div>
+
+        {/* Tab content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className="bg-bg-secondary border border-border-default rounded-xl p-3 min-h-64"
+          >
+            {activeTab === 'signal' && <SignalTab pair={selectedPair} signal={signal} loading={signalLoading} error={signalError} />}
+            {activeTab === 'risk' && <RiskCalcTab pair={selectedPair} />}
+            {activeTab === 'technical' && <TechnicalTab pair={selectedPair} />}
+            {activeTab === 'fvg' && <FVGTab />}
+            {activeTab === 'sr' && <SRTab />}
+            {activeTab === 'volatile' && <VolatileTab />}
+            {activeTab === 'reversal' && <ReversalTab />}
+            {activeTab === 'success' && <SuccessTab allPairs={forexPairs} />}
+            {activeTab === 'scanner' && <ScannerTab />}
+            {activeTab === 'news' && <NewsTab />}
+            {activeTab === 'alerts' && <AlertsTab />}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Bottom ad */}
+        <AdBanner placement="bottom" ads={ads} />
       </div>
     </div>
   )
