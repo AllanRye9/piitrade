@@ -1845,12 +1845,18 @@ async def admin_create_ad(
     if len(image_data) > MAX_AD_IMAGE_SIZE:
         return JSONResponse({"error": "Image must be smaller than 5 MB."}, status_code=400)
 
+    # Determine file extension from validated content_type (never trust client filename)
+    _CONTENT_TYPE_TO_EXT: dict[str, str] = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/gif": ".gif",
+        "image/webp": ".webp",
+        "image/svg+xml": ".svg",
+    }
+    ext = _CONTENT_TYPE_TO_EXT.get(content_type, ".jpg")
+
     # Save image
     _ensure_ads_dir()
-    ext = Path(image.filename or "ad.jpg").suffix.lower() or ".jpg"
-    safe_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
-    if ext not in safe_extensions:
-        ext = ".jpg"
     ad_id = str(uuid.uuid4())
     filename = f"{ad_id}{ext}"
     dest = _ADS_UPLOADS_DIR / filename

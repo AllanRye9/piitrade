@@ -244,7 +244,7 @@ function RiskCalcTab({ pair }) {
             type="range" min="0.1" max="5" step="0.1"
             value={riskPct}
             onChange={(e) => setRiskPct(parseFloat(e.target.value))}
-            className="w-full accent-accent-blue"
+            className="w-full accent-blue-400"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
