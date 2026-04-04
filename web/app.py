@@ -1269,9 +1269,11 @@ class _CachedStaticFiles(StaticFiles):
 
 app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 
-# React SPA disabled – serving Jinja2 HTML templates instead
+# React SPA disabled – the Jinja2 HTML templates are served directly.
+# Setting _REACT_INDEX to a non-existent path ensures all _REACT_INDEX.exists()
+# checks return False without touching each route handler individually.
 _REACT_DIST_DIR = _STATIC_DIR / "dist"
-_REACT_INDEX = _REACT_DIST_DIR / "__disabled__"
+_REACT_INDEX = _REACT_DIST_DIR / "__disabled__"  # intentionally non-existent
 
 # Vite generates hashed asset filenames and references them as /assets/...
 # Mount that path so the browser can load the JS bundle and CSS.
