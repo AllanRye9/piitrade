@@ -1897,6 +1897,9 @@ const PAIR_META = {
   const searchInput   = document.getElementById('pair-search');
   const searchClear   = document.getElementById('pair-search-clear');
   const resultsBox    = document.getElementById('pair-search-results');
+  const searchCount   = document.getElementById('pair-search-count');
+  const catBar        = document.getElementById('pair-search-cats');
+  const searchWrap    = document.querySelector('.pair-search-wrap');
   if (!searchInput || !resultsBox) return;
 
   const CAT_LABELS = {
@@ -1904,34 +1907,131 @@ const PAIR_META = {
     commodity: 'Commodities', crypto: 'Cryptocurrencies', stock: 'Stocks',
   };
 
-  let focusedIdx = -1;
-  let resultItems = [];
+  // Extended aliases for advanced matching
+  const ALIASES = {
+    gold:       p => p === 'XAU/USD',
+    silver:     p => p === 'XAG/USD',
+    oil:        p => p === 'WTI/USD' || p === 'BRENT/USD',
+    crude:      p => p === 'WTI/USD' || p === 'BRENT/USD',
+    brent:      p => p === 'BRENT/USD',
+    wti:        p => p === 'WTI/USD',
+    bitcoin:    p => p === 'BTC/USD',
+    btc:        p => p === 'BTC/USD',
+    ethereum:   p => p === 'ETH/USD',
+    eth:        p => p === 'ETH/USD',
+    ripple:     p => p === 'XRP/USD',
+    xrp:        p => p === 'XRP/USD',
+    solana:     p => p === 'SOL/USD',
+    sol:        p => p === 'SOL/USD',
+    bnb:        p => p === 'BNB/USD',
+    binance:    p => p === 'BNB/USD',
+    apple:      p => p === 'AAPL',
+    tesla:      p => p === 'TSLA',
+    nvidia:     p => p === 'NVDA',
+    amazon:     p => p === 'AMZN',
+    microsoft:  p => p === 'MSFT',
+    google:     p => p === 'GOOGL',
+    alphabet:   p => p === 'GOOGL',
+    meta:       p => p === 'META',
+    facebook:   p => p === 'META',
+    forex:      p => ['major','minor','exotic'].includes((PAIR_META[p]||{}).cat),
+    fx:         p => ['major','minor','exotic'].includes((PAIR_META[p]||{}).cat),
+    euro:       p => p.startsWith('EUR'),
+    pound:      p => p.startsWith('GBP') || p.includes('/GBP'),
+    sterling:   p => p.startsWith('GBP') || p.includes('/GBP'),
+    dollar:     p => p.includes('USD'),
+    usd:        p => p.includes('USD'),
+    yen:        p => p.includes('JPY'),
+    jpy:        p => p.includes('JPY'),
+    franc:      p => p.includes('CHF'),
+    chf:        p => p.includes('CHF'),
+    aussie:     p => p.includes('AUD'),
+    aud:        p => p.includes('AUD'),
+    cad:        p => p.includes('CAD'),
+    nzd:        p => p.includes('NZD'),
+    kiwi:       p => p.includes('NZD'),
+    loonie:     p => p.includes('CAD'),
+  };
+
+  let focusedIdx   = -1;
+  let resultItems  = [];
+  let activeCat    = 'all';
+
+  // Category filter chip state
+  if (catBar) {
+    catBar.querySelectorAll('.pair-search-cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCat = btn.dataset.cat;
+        catBar.querySelectorAll('.pair-search-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showResults(searchInput.value);
+      });
+    });
+  }
+
+  /** Highlight all occurrences of the matching substring inside text, returning safe HTML. */
+  function highlightMatch(text, q) {
+    if (!q) return escapeHtml(text);
+    const lowerText = text.toLowerCase();
+    const lowerQ = q.toLowerCase();
+    const matchLen = lowerQ.length;
+    let result = '';
+    let pos = 0;
+    let idx;
+    while ((idx = lowerText.indexOf(lowerQ, pos)) !== -1) {
+      result += escapeHtml(text.slice(pos, idx));
+      result += `<mark class="pair-search-highlight">${escapeHtml(text.slice(idx, idx + matchLen))}</mark>`;
+      pos = idx + matchLen;
+    }
+    result += escapeHtml(text.slice(pos));
+    return result;
+  }
+
+  function matchesPair(pair, q) {
+    if (!q) return true;
+    const meta = PAIR_META[pair] || { name: pair, cat: 'minor' };
+    if (pair.toLowerCase().includes(q)) return true;
+    if (meta.name.toLowerCase().includes(q)) return true;
+    if (meta.cat.toLowerCase().includes(q)) return true;
+    const aliasFn = ALIASES[q];
+    if (aliasFn && aliasFn(pair)) return true;
+    return false;
+  }
 
   function showResults(query) {
     const q = query.trim().toLowerCase();
-    if (!q) { hideResults(); return; }
+    const catFiltered = activeCat !== 'all';
 
-    const matches = ALL_PAIRS.filter(pair => {
+    if (!q && !catFiltered) { hideResults(); return; }
+
+    let matches = ALL_PAIRS.filter(pair => {
       const meta = PAIR_META[pair] || { name: pair, cat: 'minor' };
-      return (
-        pair.toLowerCase().includes(q) ||
-        meta.name.toLowerCase().includes(q) ||
-        meta.cat.toLowerCase().includes(q) ||
-        // Common aliases
-        (q === 'gold'   && pair === 'XAU/USD') ||
-        (q === 'silver' && pair === 'XAG/USD') ||
-        (q === 'oil'    && (pair === 'WTI/USD' || pair === 'BRENT/USD')) ||
-        (q === 'bitcoin' && pair === 'BTC/USD') ||
-        (q === 'eth'    && pair === 'ETH/USD') ||
-        (q === 'ethereum' && pair === 'ETH/USD') ||
-        (q === 'forex'  && ['major','minor','exotic'].includes((PAIR_META[pair]||{}).cat)) ||
-        (q === 'fx'     && ['major','minor','exotic'].includes((PAIR_META[pair]||{}).cat))
-      );
+      const catOk = !catFiltered || meta.cat === activeCat;
+      return catOk && matchesPair(pair, q);
     });
 
+    // Update count badge
+    if (searchCount) {
+      if (matches.length > 0) {
+        searchCount.textContent = matches.length + ' pair' + (matches.length !== 1 ? 's' : '');
+        searchCount.hidden = false;
+      } else {
+        searchCount.hidden = true;
+      }
+    }
+
     if (matches.length === 0) {
-      resultsBox.innerHTML = `<div class="pair-search-no-results">No pairs match "<strong>${escapeHtml(q)}</strong>"</div>`;
+      let noText;
+      if (q && catFiltered) {
+        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>" in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
+      } else if (q) {
+        noText = `No pairs match "<strong>${escapeHtml(q)}</strong>"`;
+      } else {
+        noText = `No pairs in <em>${escapeHtml(CAT_LABELS[activeCat] || activeCat)}</em>`;
+      }
+      resultsBox.innerHTML = `<div class="pair-search-no-results">${noText}</div>`;
       resultsBox.hidden = false;
+      if (catBar) catBar.hidden = false;
       focusedIdx = -1;
       resultItems = [];
       return;
@@ -1951,14 +2051,18 @@ const PAIR_META = {
 
     catOrder.forEach(cat => {
       if (!grouped[cat] || grouped[cat].length === 0) return;
-      html += `<div class="pair-search-group-label">${escapeHtml(CAT_LABELS[cat] || cat)}</div>`;
+      const count = grouped[cat].length;
+      html += `<div class="pair-search-group-label">
+        ${escapeHtml(CAT_LABELS[cat] || cat)}
+        <span class="pair-search-group-count">${count}</span>
+      </div>`;
       grouped[cat].forEach(pair => {
         const meta = PAIR_META[pair] || { name: pair, cat };
         allItems.push(pair);
         html += `
           <div class="pair-search-item" role="option" data-pair="${escapeHtml(pair)}" tabindex="-1">
-            <span class="pair-search-item-symbol">${escapeHtml(pair)}</span>
-            <span class="pair-search-item-name">${escapeHtml(meta.name)}</span>
+            <span class="pair-search-item-symbol">${highlightMatch(pair, q)}</span>
+            <span class="pair-search-item-name">${highlightMatch(meta.name, q)}</span>
             <span class="pair-search-item-cat ${escapeHtml(meta.cat)}">${escapeHtml(meta.cat)}</span>
           </div>`;
       });
@@ -1966,6 +2070,7 @@ const PAIR_META = {
 
     resultsBox.innerHTML = html;
     resultsBox.hidden = false;
+    if (catBar) catBar.hidden = false;
     resultItems = allItems;
     focusedIdx = -1;
 
@@ -1979,8 +2084,17 @@ const PAIR_META = {
 
   function hideResults() {
     resultsBox.hidden = true;
+    if (catBar) catBar.hidden = true;
+    if (searchCount) searchCount.hidden = true;
     focusedIdx = -1;
     resultItems = [];
+    // Reset category filter
+    activeCat = 'all';
+    if (catBar) {
+      catBar.querySelectorAll('.pair-search-cat-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.cat === 'all');
+      });
+    }
   }
 
   function selectPair(pair) {
@@ -2025,6 +2139,7 @@ const PAIR_META = {
       return;
     } else if (e.key === 'Escape') {
       hideResults();
+      searchInput.blur();
       return;
     }
     items.forEach((item, i) => {
@@ -2054,7 +2169,12 @@ const PAIR_META = {
 
   // Close on outside click
   document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+    if (
+      !searchInput.contains(e.target) &&
+      !resultsBox.contains(e.target) &&
+      !(catBar && catBar.contains(e.target)) &&
+      !(searchWrap && searchWrap.contains(e.target))
+    ) {
       hideResults();
     }
   });

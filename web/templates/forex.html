@@ -138,14 +138,25 @@
         type="search"
         id="pair-search"
         class="pair-search-input"
-        placeholder="Search pairs… (e.g. EUR, Gold, BTC, crypto)"
+        placeholder="Search pairs… (e.g. EUR, Gold, BTC, crypto, major)"
         autocomplete="off"
         aria-label="Search trading pairs"
         spellcheck="false"
       />
+      <span id="pair-search-count" class="pair-search-count" hidden></span>
       <button class="pair-search-clear" id="pair-search-clear" type="button" aria-label="Clear search" hidden>✕</button>
     </div>
-    <!-- Search results dropdown -->
+    <!-- Category filter chips -->
+    <div id="pair-search-cats" class="pair-search-cats" hidden>
+      <button class="pair-search-cat-btn active" data-cat="all" type="button">All</button>
+      <button class="pair-search-cat-btn" data-cat="major" type="button">Major</button>
+      <button class="pair-search-cat-btn" data-cat="minor" type="button">Minor</button>
+      <button class="pair-search-cat-btn" data-cat="exotic" type="button">Exotic</button>
+      <button class="pair-search-cat-btn" data-cat="commodity" type="button">Commodities</button>
+      <button class="pair-search-cat-btn" data-cat="crypto" type="button">Crypto</button>
+      <button class="pair-search-cat-btn" data-cat="stock" type="button">Stocks</button>
+    </div>
+    <!-- Search results panel -->
     <div id="pair-search-results" class="pair-search-results" hidden role="listbox" aria-label="Matching trading pairs"></div>
 
     <div class="fx-pair-bar">
