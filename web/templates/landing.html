@@ -56,6 +56,8 @@
   }
   </script>
   <link rel="preload" href="/static/css/forex.css" as="style"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="dns-prefetch" href="//api.frankfurter.app"/>
   <link rel="stylesheet" href="/static/css/forex.css"/>
   <link rel="icon" type="image/png" href="/static/trader.png"/>
@@ -63,37 +65,118 @@
     /* ── Landing-specific overrides ── */
     .landing-hero {
       text-align: center;
-      padding: 16px 16px 10px;
+      padding: 36px 24px 16px;
+      position: relative;
+    }
+    .landing-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse at center, rgba(88,166,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .landing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(88,166,255,0.1);
+      border: 1px solid rgba(88,166,255,0.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .04em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+    .landing-badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: live-pulse 1.8s ease-in-out infinite;
     }
     .landing-hero h1 {
-      font-size: 1.7rem;
-      font-weight: 700;
+      font-size: clamp(1.7rem, 4vw, 2.4rem);
+      font-weight: 800;
       color: var(--text);
-      margin: 0 0 6px;
+      margin: 0 0 10px;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    .landing-hero h1 span {
+      color: #58a6ff;
+      background: linear-gradient(90deg, #58a6ff, #a371f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .landing-hero p {
-      font-size: .92rem;
+      font-size: .95rem;
       color: var(--text2);
-      max-width: 520px;
-      margin: 0 auto 14px;
-      line-height: 1.45;
+      max-width: 560px;
+      margin: 0 auto 18px;
+      line-height: 1.6;
     }
     .landing-cta-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
     .landing-cta-row .btn-primary {
-      font-size: .9rem;
-      padding: 8px 18px;
+      font-size: .95rem;
+      padding: 10px 24px;
       text-decoration: none;
+      font-weight: 700;
     }
     .landing-cta-row .btn-outline {
-      font-size: .9rem;
-      padding: 8px 18px;
+      font-size: .95rem;
+      padding: 10px 24px;
       text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text2);
+    }
+    .landing-cta-row .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    /* Stats bar */
+    .landing-stats {
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 680px;
+      margin: 0 auto 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .stat-item {
+      flex: 1;
+      min-width: 100px;
+      padding: 14px 16px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .stat-label {
+      font-size: .7rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 3px;
     }
     .landing-preview {
       max-width: 480px;
@@ -211,108 +294,7 @@
       flex-wrap: wrap;
     }
 
-    /* ── Page wrapper with ad columns ── */
-    .page-wrapper {
-      display: flex;
-      align-items: flex-start;
-      min-height: 100vh;
-      position: relative;
-    }
-    .ad-col {
-      width: 4.5%;
-      min-width: 52px;
-      flex-shrink: 0;
-      position: sticky;
-      top: 44px;
-      max-height: calc(100vh - 44px);
-      overflow: hidden;
-      padding: 10px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .ad-col-left  { left: 0; }
-    .ad-col-right { right: 0; }
-    .main-content { flex: 1; min-width: 0; }
-
-    /* Ad card styles */
-    @keyframes ad-fade-in {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes ad-glow-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(88,166,255,0); }
-      50%       { box-shadow: 0 0 8px 2px rgba(88,166,255,0.18); }
-    }
-    @keyframes ad-glow-pulse-green {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
-      50%       { box-shadow: 0 0 8px 2px rgba(63,185,80,0.2); }
-    }
-    .ad-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 4px;
-      text-align: center;
-      text-decoration: none;
-      font-size: .65rem;
-      color: var(--text2);
-      width: 100%;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      animation: ad-fade-in 0.6s ease both;
-    }
-    .ad-card:hover {
-      transform: translateY(-3px) scale(1.03);
-      text-decoration: none;
-    }
-    .ad-card-taptap {
-      border-color: #3a7bd5;
-      animation: ad-fade-in 0.6s ease both, ad-glow-pulse 3s ease-in-out 1s infinite;
-    }
-    .ad-card-taptap:hover { border-color: #5a9bf5; }
-    .ad-card-exness {
-      border-color: var(--accent2);
-      animation: ad-fade-in 0.6s 0.2s ease both, ad-glow-pulse-green 3s ease-in-out 1.2s infinite;
-    }
-    .ad-card-exness:hover { border-color: #5dde72; }
-    .ad-logo {
-      font-size: 1.2rem;
-      margin-bottom: 3px;
-      line-height: 1;
-    }
-    .ad-name {
-      font-weight: 700;
-      font-size: .68rem;
-      color: var(--text);
-      margin-bottom: 2px;
-      word-break: break-word;
-    }
-    .ad-tag {
-      font-size: .6rem;
-      color: var(--text2);
-      line-height: 1.2;
-    }
-    .ad-btn {
-      margin-top: 5px;
-      display: inline-block;
-      padding: 3px 7px;
-      border-radius: 6px;
-      font-size: .6rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: opacity 0.2s;
-    }
-    .ad-btn-taptap  { background: #3a7bd5; color: #fff; }
-    .ad-btn-exness  { background: var(--accent2); color: #000; }
-    .ad-btn:hover { opacity: .85; }
-
-    @media (max-width: 700px) {
-      .ad-col { display: none; }
-    }
+    /* ── Page wrapper with ad columns — uses forex.css base, no overrides needed ── */
 
     /* ── Landing entrance animations ── */
     @keyframes land-slide-up {
@@ -335,6 +317,7 @@
     .landing-hero h1 { animation: land-slide-up 0.5s ease both; }
     .landing-hero p  { animation: land-slide-up 0.5s 0.1s ease both; }
     .landing-cta-row { animation: land-slide-up 0.5s 0.18s ease both; }
+    .landing-stats   { animation: land-slide-up 0.5s 0.22s ease both; }
 
     .landing-cta-row .btn-primary,
     .landing-subscribe-banner .btn-primary,
@@ -375,7 +358,7 @@
     .landing-subscribe-banner { animation: land-slide-up 0.5s 0.35s ease both; }
 
     @media (prefers-reduced-motion: reduce) {
-      .landing-hero h1, .landing-hero p, .landing-cta-row,
+      .landing-hero h1, .landing-hero p, .landing-cta-row, .landing-stats,
       .landing-preview, .landing-subscribe-banner, .feature-card,
       .ad-card { animation: none; opacity: 1; transform: none; }
       .landing-cta-row .btn-primary, .landing-subscribe-banner .btn-primary,
@@ -388,15 +371,21 @@
 
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
-  <div class="brand">
-    <img src="/static/trader.png" alt="PiiTrade" style="height:26px;width:26px;object-fit:contain;border-radius:4px;"/>
+  <a href="/" class="brand">
+    <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
     <span class="brand-sub">AI Forex Signal Hub</span>
-  </div>
+    <span class="brand-live">LIVE</span>
+  </a>
   <nav class="fx-nav">
+    <a href="/forex">Dashboard</a>
+    <a href="/disclaimer">Disclaimer</a>
     {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
+    {% else %}
+      <a href="/login" class="btn-outline">Login</a>
+      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>
@@ -406,13 +395,13 @@
 <!-- ═══════════════════════════════ LEFT AD (Taptap) ════════════════════════ -->
 <aside class="ad-col ad-col-left" aria-label="Taptap advertisement">
   <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Try Taptap Send">
-    <div class="ad-logo">💸</div>
+    <div class="ad-img ad-img-taptap">💸</div>
     <div class="ad-name">Taptap</div>
     <div class="ad-tag">Send Money Globally</div>
     <span class="ad-btn ad-btn-taptap">Visit →</span>
   </a>
   <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Taptap – Fast Transfers" style="animation-delay:0.3s">
-    <div class="ad-logo">🌍</div>
+    <div class="ad-img ad-img-taptap">🌍</div>
     <div class="ad-name">Taptap</div>
     <div class="ad-tag">Best Exchange Rates</div>
     <span class="ad-btn ad-btn-taptap">Learn More</span>
@@ -423,14 +412,34 @@
 
 <!-- ═══════════════════════════════ HERO ════════════════════════════════════ -->
 <div class="landing-hero">
-  <h1>Free AI-Powered Forex Signals – 35 Currency Pairs</h1>
+  <div class="landing-badge">AI-Powered · 35 Pairs · Real-Time</div>
+  <h1>Free Forex Signals for<br><span>35 Currency Pairs</span></h1>
   <p>
     Institutional-grade buy, sell, and hold signals for forex majors, minors, and exotics — delivered in real time.
-    Powered by LightGBM models trained on 10+ years of price data and macroeconomic indicators.
+    Powered by LightGBM models trained on 10+ years of price data.
     <strong>Completely free. No sign-up required.</strong>
   </p>
   <div class="landing-cta-row">
     <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
+    <a href="/disclaimer" class="btn-outline">Risk Disclaimer</a>
+  </div>
+  <div class="landing-stats">
+    <div class="stat-item">
+      <div class="stat-value">35</div>
+      <div class="stat-label">Forex Pairs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">AI</div>
+      <div class="stat-label">Powered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">Free</div>
+      <div class="stat-label">Always</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">24/7</div>
+      <div class="stat-label">Real-Time</div>
+    </div>
   </div>
 </div>
 
@@ -565,15 +574,15 @@
 <!-- ═══════════════════════════════ RIGHT AD (Exness) ═══════════════════════ -->
 <aside class="ad-col ad-col-right" aria-label="Exness advertisement">
   <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Trade with Exness">
-    <div class="ad-logo">📈</div>
+    <div class="ad-img ad-img-exness">📈</div>
     <div class="ad-name">Exness</div>
     <div class="ad-tag">Trade Forex CFDs</div>
     <span class="ad-btn ad-btn-exness">Trade Now</span>
   </a>
   <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Exness – Low Spreads" style="animation-delay:0.3s">
-    <div class="ad-logo">💹</div>
+    <div class="ad-img ad-img-exness">💹</div>
     <div class="ad-name">Exness</div>
-    <div class="ad-tag">Low Spreads &amp; Fast Execution</div>
+    <div class="ad-tag">Low Spreads &amp; Fast</div>
     <span class="ad-btn ad-btn-exness">Open Account</span>
   </a>
 </aside>

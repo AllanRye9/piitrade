@@ -106,12 +106,13 @@
 
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
-  <div class="brand">
-    <span>📊</span>
+  <a href="/" class="brand">
+    <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Signal Hub – Forex · Crypto · Commodities · Stocks</span>
-  </div>
+    <span class="brand-sub">AI Forex Signal Hub</span>
+  </a>
   <nav class="fx-nav">
+    <a href="/">Home</a>
     <a href="/forex">Dashboard</a>
     {% if current_user %}
       {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
@@ -127,13 +128,13 @@
 <!-- LEFT AD (Taptap) -->
 <aside class="ad-col ad-col-left" aria-label="Taptap advertisement">
   <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Try Taptap Send">
-    <div class="ad-logo">💸</div>
+    <div class="ad-img ad-img-taptap">💸</div>
     <div class="ad-name">Taptap</div>
     <div class="ad-tag">Send Money Globally</div>
     <span class="ad-btn ad-btn-taptap">Visit →</span>
   </a>
   <a href="https://taptap.io" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-taptap" title="Taptap – Best Rates" style="animation-delay:0.3s">
-    <div class="ad-logo">🌍</div>
+    <div class="ad-img ad-img-taptap">🌍</div>
     <div class="ad-name">Taptap</div>
     <div class="ad-tag">Best Exchange Rates</div>
     <span class="ad-btn ad-btn-taptap">Learn More</span>
@@ -356,15 +357,15 @@ tscv = TimeSeriesSplit(n_splits=5)
 <!-- RIGHT AD (Exness) -->
 <aside class="ad-col ad-col-right" aria-label="Exness advertisement">
   <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Trade with Exness">
-    <div class="ad-logo">📈</div>
+    <div class="ad-img ad-img-exness">📈</div>
     <div class="ad-name">Exness</div>
     <div class="ad-tag">Trade Forex CFDs</div>
     <span class="ad-btn ad-btn-exness">Trade Now</span>
   </a>
   <a href="https://www.exness.com" target="_blank" rel="noopener noreferrer" class="ad-card ad-card-exness" title="Exness – Low Spreads" style="animation-delay:0.3s">
-    <div class="ad-logo">💹</div>
+    <div class="ad-img ad-img-exness">💹</div>
     <div class="ad-name">Exness</div>
-    <div class="ad-tag">Low Spreads &amp; Fast Execution</div>
+    <div class="ad-tag">Low Spreads &amp; Fast</div>
     <span class="ad-btn ad-btn-exness">Open Account</span>
   </a>
 </aside>
