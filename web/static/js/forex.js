@@ -220,6 +220,10 @@ function activateTab(targetSection) {
     const isActive = tab.dataset.section === targetSection;
     tab.classList.toggle('active', isActive);
     tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    // Scroll active tab into view within the tab bar
+    if (isActive) {
+      tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
   });
 
   // Show / hide sections
@@ -258,6 +262,31 @@ document.querySelectorAll('.fx-tab').forEach(tab => {
   });
 });
 
+// ─── Tab scroll arrows ────────────────────────────────────────────────────────
+(function initTabScrollArrows() {
+  const tabsNav   = document.getElementById('fx-tabs-nav');
+  const btnLeft   = document.getElementById('tab-scroll-left');
+  const btnRight  = document.getElementById('tab-scroll-right');
+  if (!tabsNav || !btnLeft || !btnRight) return;
+
+  const SCROLL_STEP = 160;
+
+  function updateArrows() {
+    const canScrollLeft  = tabsNav.scrollLeft > 4;
+    const canScrollRight = tabsNav.scrollLeft < tabsNav.scrollWidth - tabsNav.clientWidth - 4;
+    btnLeft.classList.toggle('visible',  canScrollLeft);
+    btnRight.classList.toggle('visible', canScrollRight);
+  }
+
+  btnLeft.addEventListener('click',  () => { tabsNav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' }); });
+  btnRight.addEventListener('click', () => { tabsNav.scrollBy({ left:  SCROLL_STEP, behavior: 'smooth' }); });
+  tabsNav.addEventListener('scroll', updateArrows, { passive: true });
+
+  // Run once on load and on resize
+  updateArrows();
+  window.addEventListener('resize', updateArrows, { passive: true });
+})();
+
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const pairSelect      = document.getElementById('pair-select');
 const lastUpdatedEl   = document.getElementById('last-updated');
@@ -286,6 +315,7 @@ const calcRiskPct   = document.getElementById('calc-risk-pct');
 const calcEntry     = document.getElementById('calc-entry');
 const calcSl        = document.getElementById('calc-sl');
 const calcTp        = document.getElementById('calc-tp');
+const calcRrTarget  = document.getElementById('calc-rr-target');
 const calcLeverage  = document.getElementById('calc-leverage');
 const calcLotType   = document.getElementById('calc-lot-type');
 
@@ -760,7 +790,15 @@ function pipValuePerStdLot(pair, entryPriceVal) {
 function autoFillCalculator(data) {
   if (data.entry_price) calcEntry.value = data.entry_price;
   if (data.stop_loss)   calcSl.value    = data.stop_loss;
-  if (data.take_profit) calcTp.value    = data.take_profit;
+  // If RR target is 'auto', fill TP from the signal data.
+  // For a specific RR ratio, leave TP blank so runCalculator() computes it
+  // from Entry, SL, and the selected RR (it also writes back to calcTp).
+  const rrTargetVal = calcRrTarget ? calcRrTarget.value : 'auto';
+  if (rrTargetVal === 'auto' && data.take_profit) {
+    calcTp.value = data.take_profit;
+  }
+  // Always run the calculator after auto-fill to update all displayed results.
+  runCalculator();
 }
 
 function runCalculator() {
@@ -768,9 +806,25 @@ function runCalculator() {
   const riskPct   = parseFloat(calcRiskPct.value)  || 0;
   const entry     = parseFloat(calcEntry.value)    || 0;
   const sl        = parseFloat(calcSl.value)       || 0;
-  const tp        = parseFloat(calcTp.value)       || 0;
   const leverage  = parseFloat(calcLeverage.value) || 100;
   const lotType   = calcLotType.value;
+
+  // RR target: auto uses whatever is in the TP field; otherwise calculate TP from RR
+  const rrTargetVal = calcRrTarget ? calcRrTarget.value : 'auto';
+  let tp = parseFloat(calcTp.value) || 0;
+
+  if (rrTargetVal !== 'auto' && entry && sl) {
+    const rrRatio = parseFloat(rrTargetVal);
+    const riskDist = Math.abs(entry - sl);
+    // Determine direction: if SL < entry → BUY, else SELL
+    const isBuy = entry > sl;
+    tp = isBuy ? entry + riskDist * rrRatio : entry - riskDist * rrRatio;
+    // Update the TP input field to reflect the auto-calculated value
+    if (calcTp) {
+      const dec = getPairDecimals(currentPair);
+      calcTp.value = tp.toFixed(dec);
+    }
+  }
 
   const lotMultiplier = lotType === 'standard' ? 1 : lotType === 'mini' ? 0.1 : 0.01;
 
@@ -822,7 +876,7 @@ function runCalculator() {
 }
 
 // Attach calculator listeners
-[calcBalance, calcRiskPct, calcEntry, calcSl, calcTp, calcLeverage, calcLotType]
+[calcBalance, calcRiskPct, calcEntry, calcSl, calcTp, calcRrTarget, calcLeverage, calcLotType]
   .forEach(el => { if (el) el.addEventListener('input', runCalculator); });
 
 // ─── Technical Analysis ───────────────────────────────────────────────────────
@@ -1775,6 +1829,236 @@ function hidePageLoader() {
     loadingOverlay.classList.add('hidden');
   }
 }
+
+// ─── Advanced Pair Search Bar ─────────────────────────────────────────────────
+
+/** Metadata for search: symbol → { name, category } */
+const PAIR_META = {
+  // Majors
+  'EUR/USD': { name: 'Euro / US Dollar',            cat: 'major' },
+  'GBP/USD': { name: 'British Pound / US Dollar',   cat: 'major' },
+  'USD/JPY': { name: 'US Dollar / Japanese Yen',    cat: 'major' },
+  'USD/CHF': { name: 'US Dollar / Swiss Franc',     cat: 'major' },
+  'AUD/USD': { name: 'Australian Dollar / USD',     cat: 'major' },
+  'USD/CAD': { name: 'US Dollar / Canadian Dollar', cat: 'major' },
+  'NZD/USD': { name: 'New Zealand Dollar / USD',    cat: 'major' },
+  // Minors
+  'EUR/GBP': { name: 'Euro / British Pound',        cat: 'minor' },
+  'EUR/JPY': { name: 'Euro / Japanese Yen',         cat: 'minor' },
+  'EUR/AUD': { name: 'Euro / Australian Dollar',    cat: 'minor' },
+  'EUR/CAD': { name: 'Euro / Canadian Dollar',      cat: 'minor' },
+  'EUR/CHF': { name: 'Euro / Swiss Franc',          cat: 'minor' },
+  'EUR/NZD': { name: 'Euro / New Zealand Dollar',   cat: 'minor' },
+  'GBP/JPY': { name: 'British Pound / Yen',         cat: 'minor' },
+  'GBP/CHF': { name: 'British Pound / Swiss Franc', cat: 'minor' },
+  'GBP/AUD': { name: 'British Pound / AUD',         cat: 'minor' },
+  'GBP/CAD': { name: 'British Pound / CAD',         cat: 'minor' },
+  'GBP/NZD': { name: 'British Pound / NZD',         cat: 'minor' },
+  'AUD/JPY': { name: 'Australian Dollar / Yen',     cat: 'minor' },
+  'AUD/CAD': { name: 'Australian Dollar / CAD',     cat: 'minor' },
+  'AUD/CHF': { name: 'Australian Dollar / CHF',     cat: 'minor' },
+  'AUD/NZD': { name: 'Australian Dollar / NZD',     cat: 'minor' },
+  'NZD/JPY': { name: 'New Zealand Dollar / Yen',    cat: 'minor' },
+  'NZD/CAD': { name: 'New Zealand Dollar / CAD',    cat: 'minor' },
+  'NZD/CHF': { name: 'New Zealand Dollar / CHF',    cat: 'minor' },
+  'CAD/JPY': { name: 'Canadian Dollar / Yen',       cat: 'minor' },
+  'CHF/JPY': { name: 'Swiss Franc / Japanese Yen',  cat: 'minor' },
+  // Exotics
+  'USD/MXN': { name: 'US Dollar / Mexican Peso',         cat: 'exotic' },
+  'USD/NOK': { name: 'US Dollar / Norwegian Krone',      cat: 'exotic' },
+  'USD/SEK': { name: 'US Dollar / Swedish Krona',        cat: 'exotic' },
+  'USD/SGD': { name: 'US Dollar / Singapore Dollar',     cat: 'exotic' },
+  'USD/HKD': { name: 'US Dollar / Hong Kong Dollar',     cat: 'exotic' },
+  'USD/TRY': { name: 'US Dollar / Turkish Lira',         cat: 'exotic' },
+  'USD/ZAR': { name: 'US Dollar / South African Rand',   cat: 'exotic' },
+  'USD/CNY': { name: 'US Dollar / Chinese Yuan',         cat: 'exotic' },
+  // Commodities
+  'XAU/USD':   { name: 'Gold / US Dollar',   cat: 'commodity' },
+  'XAG/USD':   { name: 'Silver / US Dollar', cat: 'commodity' },
+  'WTI/USD':   { name: 'WTI Crude Oil',      cat: 'commodity' },
+  'BRENT/USD': { name: 'Brent Crude Oil',    cat: 'commodity' },
+  // Crypto
+  'BTC/USD': { name: 'Bitcoin / US Dollar',  cat: 'crypto' },
+  'ETH/USD': { name: 'Ethereum / US Dollar', cat: 'crypto' },
+  'BNB/USD': { name: 'Binance Coin / USD',   cat: 'crypto' },
+  'XRP/USD': { name: 'Ripple / US Dollar',   cat: 'crypto' },
+  'SOL/USD': { name: 'Solana / US Dollar',   cat: 'crypto' },
+  // Stocks
+  'AAPL':  { name: 'Apple Inc.',          cat: 'stock' },
+  'TSLA':  { name: 'Tesla Inc.',          cat: 'stock' },
+  'NVDA':  { name: 'NVIDIA Corp.',        cat: 'stock' },
+  'AMZN':  { name: 'Amazon.com Inc.',     cat: 'stock' },
+  'MSFT':  { name: 'Microsoft Corp.',     cat: 'stock' },
+  'GOOGL': { name: 'Alphabet (Google)',   cat: 'stock' },
+  'META':  { name: 'Meta Platforms Inc.', cat: 'stock' },
+};
+
+(function initPairSearch() {
+  const searchInput   = document.getElementById('pair-search');
+  const searchClear   = document.getElementById('pair-search-clear');
+  const resultsBox    = document.getElementById('pair-search-results');
+  if (!searchInput || !resultsBox) return;
+
+  const CAT_LABELS = {
+    major: 'Major Forex', minor: 'Minor / Cross', exotic: 'Exotic Forex',
+    commodity: 'Commodities', crypto: 'Cryptocurrencies', stock: 'Stocks',
+  };
+
+  let focusedIdx = -1;
+  let resultItems = [];
+
+  function showResults(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { hideResults(); return; }
+
+    const matches = ALL_PAIRS.filter(pair => {
+      const meta = PAIR_META[pair] || { name: pair, cat: 'minor' };
+      return (
+        pair.toLowerCase().includes(q) ||
+        meta.name.toLowerCase().includes(q) ||
+        meta.cat.toLowerCase().includes(q) ||
+        // Common aliases
+        (q === 'gold'   && pair === 'XAU/USD') ||
+        (q === 'silver' && pair === 'XAG/USD') ||
+        (q === 'oil'    && (pair === 'WTI/USD' || pair === 'BRENT/USD')) ||
+        (q === 'bitcoin' && pair === 'BTC/USD') ||
+        (q === 'eth'    && pair === 'ETH/USD') ||
+        (q === 'ethereum' && pair === 'ETH/USD') ||
+        (q === 'forex'  && ['major','minor','exotic'].includes((PAIR_META[pair]||{}).cat)) ||
+        (q === 'fx'     && ['major','minor','exotic'].includes((PAIR_META[pair]||{}).cat))
+      );
+    });
+
+    if (matches.length === 0) {
+      resultsBox.innerHTML = `<div class="pair-search-no-results">No pairs match "<strong>${escapeHtml(q)}</strong>"</div>`;
+      resultsBox.hidden = false;
+      focusedIdx = -1;
+      resultItems = [];
+      return;
+    }
+
+    // Group by category
+    const grouped = {};
+    matches.forEach(pair => {
+      const cat = (PAIR_META[pair] || {}).cat || 'minor';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(pair);
+    });
+
+    const catOrder = ['major', 'minor', 'exotic', 'commodity', 'crypto', 'stock'];
+    let html = '';
+    let allItems = [];
+
+    catOrder.forEach(cat => {
+      if (!grouped[cat] || grouped[cat].length === 0) return;
+      html += `<div class="pair-search-group-label">${escapeHtml(CAT_LABELS[cat] || cat)}</div>`;
+      grouped[cat].forEach(pair => {
+        const meta = PAIR_META[pair] || { name: pair, cat };
+        allItems.push(pair);
+        html += `
+          <div class="pair-search-item" role="option" data-pair="${escapeHtml(pair)}" tabindex="-1">
+            <span class="pair-search-item-symbol">${escapeHtml(pair)}</span>
+            <span class="pair-search-item-name">${escapeHtml(meta.name)}</span>
+            <span class="pair-search-item-cat ${escapeHtml(meta.cat)}">${escapeHtml(meta.cat)}</span>
+          </div>`;
+      });
+    });
+
+    resultsBox.innerHTML = html;
+    resultsBox.hidden = false;
+    resultItems = allItems;
+    focusedIdx = -1;
+
+    // Attach click handlers
+    resultsBox.querySelectorAll('.pair-search-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectPair(item.dataset.pair);
+      });
+    });
+  }
+
+  function hideResults() {
+    resultsBox.hidden = true;
+    focusedIdx = -1;
+    resultItems = [];
+  }
+
+  function selectPair(pair) {
+    if (!pairSelect) return;
+    // Find and select the option
+    let found = false;
+    for (const opt of pairSelect.options) {
+      if (opt.value === pair) { opt.selected = true; found = true; break; }
+    }
+    if (!found) return;
+    // Trigger change event
+    pairSelect.dispatchEvent(new Event('change'));
+    // Clear search
+    searchInput.value = '';
+    if (searchClear) searchClear.hidden = true;
+    hideResults();
+    // Scroll to the signal section
+    const signalSection = document.getElementById('section-signal');
+    if (signalSection) signalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function updateClearBtn() {
+    if (searchClear) searchClear.hidden = !searchInput.value;
+  }
+
+  // Keyboard navigation
+  searchInput.addEventListener('keydown', (e) => {
+    const items = resultsBox.querySelectorAll('.pair-search-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusedIdx = Math.max(focusedIdx - 1, -1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (focusedIdx >= 0 && resultItems[focusedIdx]) {
+        selectPair(resultItems[focusedIdx]);
+      } else if (resultItems.length === 1) {
+        selectPair(resultItems[0]);
+      }
+      return;
+    } else if (e.key === 'Escape') {
+      hideResults();
+      return;
+    }
+    items.forEach((item, i) => {
+      item.classList.toggle('focused', i === focusedIdx);
+      if (i === focusedIdx) item.scrollIntoView({ block: 'nearest' });
+    });
+  });
+
+  searchInput.addEventListener('input', () => {
+    showResults(searchInput.value);
+    updateClearBtn();
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim()) showResults(searchInput.value);
+  });
+
+  // Clear button
+  if (searchClear) {
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.hidden = true;
+      hideResults();
+      searchInput.focus();
+    });
+  }
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+      hideResults();
+    }
+  });
+})();
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 // Restore gamification state

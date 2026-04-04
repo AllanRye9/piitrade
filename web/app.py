@@ -799,14 +799,14 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "TSLA": {"direction": "SELL", "confidence": 65.2, "entry_price": 258.00, "take_profit": 240.00, "stop_loss": 268.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "NVDA": {"direction": "SELL", "confidence": 68.9, "entry_price": 106.00, "take_profit":  97.00, "stop_loss": 112.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "AMZN": {"direction": "HOLD", "confidence": 54.7, "entry_price": 192.00, "take_profit": 200.00, "stop_loss": 186.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "MSFT": {"direction": "HOLD", "confidence": 57.3, "entry_price": 388.00, "take_profit": 402.00, "stop_loss": 378.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "MSFT": {"direction": "HOLD", "confidence": 57.3, "entry_price": 370.00, "take_profit": 384.00, "stop_loss": 361.00, "generated_at": "2026-04-04T05:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "GOOGL": {"direction": "SELL", "confidence": 59.8, "entry_price": 162.00, "take_profit": 152.00, "stop_loss": 168.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "META": {"direction": "SELL", "confidence": 64.3, "entry_price": 538.00, "take_profit": 510.00, "stop_loss": 554.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     # ── Commodities (Yahoo Finance futures) ───────────────────────────────────
-    "XAU/USD":   {"direction": "BUY",  "confidence": 76.8, "entry_price": 3120.00, "take_profit": 3180.00, "stop_loss": 3090.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "XAG/USD":   {"direction": "BUY",  "confidence": 64.3, "entry_price": 34.250,  "take_profit": 35.500,  "stop_loss": 33.600,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "WTI/USD":   {"direction": "SELL", "confidence": 62.1, "entry_price": 71.50,   "take_profit": 68.00,   "stop_loss": 73.50,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
-    "BRENT/USD": {"direction": "SELL", "confidence": 60.5, "entry_price": 75.20,   "take_profit": 71.50,   "stop_loss": 77.30,   "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XAU/USD":   {"direction": "BUY",  "confidence": 76.8, "entry_price": 3295.00, "take_profit": 3360.00, "stop_loss": 3260.00, "generated_at": "2026-04-04T05:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "XAG/USD":   {"direction": "BUY",  "confidence": 64.3, "entry_price": 33.100,  "take_profit": 34.200,  "stop_loss": 32.500,  "generated_at": "2026-04-04T05:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "WTI/USD":   {"direction": "SELL", "confidence": 62.1, "entry_price": 62.30,   "take_profit": 59.00,   "stop_loss": 64.20,   "generated_at": "2026-04-04T05:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "BRENT/USD": {"direction": "SELL", "confidence": 60.5, "entry_price": 65.60,   "take_profit": 62.00,   "stop_loss": 67.50,   "generated_at": "2026-04-04T05:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     # ── Crypto (Yahoo Finance) ─────────────────────────────────────────────────
     "BTC/USD": {"direction": "HOLD", "confidence": 58.4, "entry_price": 82500.00, "take_profit": 87000.00, "stop_loss": 79000.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "ETH/USD": {"direction": "SELL", "confidence": 63.7, "entry_price": 1790.00,  "take_profit": 1650.00,  "stop_loss": 1870.00,  "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
@@ -882,10 +882,10 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
     # ── Commodities (pip=0.01 for gold/oil, 0.001 for silver) ─────────────────
-    "XAU/USD":   (3050.00, 0.01,  _gen_seq("XAU/USD")),
+    "XAU/USD":   (3295.00, 0.01,  _gen_seq("XAU/USD")),
     "XAG/USD":   (33.000,  0.001, _gen_seq("XAG/USD")),
-    "WTI/USD":   (70.00,   0.01,  _gen_seq("WTI/USD")),
-    "BRENT/USD": (74.00,   0.01,  _gen_seq("BRENT/USD")),
+    "WTI/USD":   (62.00,   0.01,  _gen_seq("WTI/USD")),
+    "BRENT/USD": (65.50,   0.01,  _gen_seq("BRENT/USD")),
     # ── Crypto (pip=1.0 for BTC, 0.01 for others, 0.0001 for XRP) ─────────────
     "BTC/USD": (80000.00, 1.0,    _gen_seq("BTC/USD")),
     "ETH/USD": (1750.00,  0.01,   _gen_seq("ETH/USD")),
@@ -897,7 +897,7 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "TSLA":  (258.00, 0.01, _gen_seq("TSLA")),
     "NVDA":  (106.00, 0.01, _gen_seq("NVDA")),
     "AMZN":  (192.00, 0.01, _gen_seq("AMZN")),
-    "MSFT":  (388.00, 0.01, _gen_seq("MSFT")),
+    "MSFT":  (370.00, 0.01, _gen_seq("MSFT")),
     "GOOGL": (162.00, 0.01, _gen_seq("GOOGL")),
     "META":  (538.00, 0.01, _gen_seq("META")),
 }
