@@ -1363,6 +1363,7 @@ a:hover { text-decoration: underline; }
 .brand-title {
   font-weight: 800;
   font-size: 1.1rem;
+  color: var(--text);
   background: linear-gradient(90deg, #e6edf3 0%, #58a6ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
