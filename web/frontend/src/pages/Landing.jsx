@@ -46,53 +46,53 @@ function AnimatedCounter({ target, suffix = '', duration = 2 }) {
 const features = [
   {
     icon: Globe,
-    title: '51 Trading Pairs',
-    desc: '35 forex, 5 crypto, 4 commodities, and 7 stocks — all in one dashboard.',
+    title: '35 Forex Pairs',
+    desc: 'Major, minor, and exotic forex pairs — all in one unified dashboard with live signals.',
     color: 'text-accent-blue',
     bg: 'bg-accent-blue/10',
   },
   {
     icon: Zap,
     title: 'ML-Powered Signals',
-    desc: 'LightGBM model trained on 10+ years of market data for accurate predictions.',
+    desc: 'LightGBM model trained on 10+ years of market data for accurate BUY/SELL/HOLD predictions.',
     color: 'text-accent-green',
     bg: 'bg-accent-green/10',
   },
   {
     icon: BarChart2,
     title: 'Real-Time Prices',
-    desc: 'Live market data refreshed continuously. Always know where the market stands.',
+    desc: 'Live market data refreshed continuously. Always know where the forex market stands.',
     color: 'text-accent-purple',
     bg: 'bg-accent-purple/10',
   },
   {
     icon: Shield,
     title: 'Risk Calculator',
-    desc: 'Built-in position sizing and risk management tools to protect your capital.',
+    desc: 'Built-in position sizing and risk management tools to protect your trading capital.',
     color: 'text-accent-yellow',
     bg: 'bg-accent-yellow/10',
   },
   {
     icon: TrendingUp,
     title: '11 Analysis Tools',
-    desc: 'FVG scanner, S/R breakouts, pattern scanner, reversals and more.',
+    desc: 'FVG scanner, S/R breakouts, pattern scanner, volatility rankings, reversals and more.',
     color: 'text-accent-red',
     bg: 'bg-accent-red/10',
   },
   {
     icon: ChevronRight,
-    title: '100% Free',
-    desc: 'No subscriptions, no paywalls. Professional-grade signals for everyone.',
+    title: 'Crypto & Stocks Soon',
+    desc: 'Crypto, commodities, and stocks signals are coming. Forex AI signals are live now — free.',
     color: 'text-accent-blue',
     bg: 'bg-accent-blue/10',
   },
 ]
 
 const stats = [
-  { value: 51, suffix: '', label: 'Trading Pairs' },
-  { value: 35, suffix: '+', label: 'Forex Pairs' },
-  { value: 10, suffix: '+', label: 'Years Training Data' },
+  { value: 35, suffix: '', label: 'Forex Pairs' },
   { value: 11, suffix: '', label: 'Analysis Tools' },
+  { value: 10, suffix: '+', label: 'Years Training Data' },
+  { value: 100, suffix: '%', label: 'Free Forever' },
 ]
 
 const previewSignals = [
@@ -185,7 +185,7 @@ export default function Landing() {
             </h1>
 
             <p className="text-text-secondary text-lg leading-relaxed mb-8 max-w-lg">
-              Real-time buy/sell/hold signals for 51 trading pairs — powered by LightGBM trained on 10+ years of market data. No subscriptions, no paywalls.
+              Real-time buy/sell/hold signals for 35 forex pairs — powered by LightGBM trained on 10+ years of market data. Crypto & stocks coming soon. No subscriptions, no paywalls.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -345,7 +345,7 @@ export default function Landing() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Live Signal Preview</h2>
-            <p className="text-text-secondary">See the latest signals across all pairs — updated in real time.</p>
+            <p className="text-text-secondary">See the latest forex signals — updated in real time.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
@@ -452,7 +452,7 @@ export default function Landing() {
             Ready to Trade Smarter?
           </h2>
           <p className="text-text-secondary text-lg mb-8">
-            Access all 51 trading pairs with AI-powered signals. No account required.
+            Access all 35 forex pairs with AI-powered signals. No account required. Crypto &amp; stocks coming soon.
           </p>
           <Link
             to="/forex"
