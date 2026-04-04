@@ -92,6 +92,17 @@ const TABS = [
 ]
 
 const CATEGORIES = ['All', 'Forex', 'Crypto', 'Commodities', 'Stocks']
+const UPCOMING_CATEGORIES = new Set(['Crypto', 'Commodities', 'Stocks'])
+
+// Fallback pairs if API is unreachable
+const FALLBACK_PAIRS = [
+  'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD',
+  'EUR/GBP', 'EUR/JPY', 'EUR/AUD', 'EUR/CAD', 'EUR/CHF', 'EUR/NZD',
+  'GBP/JPY', 'GBP/CHF', 'GBP/AUD', 'GBP/CAD', 'GBP/NZD',
+  'AUD/JPY', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD',
+  'NZD/JPY', 'NZD/CAD', 'NZD/CHF', 'CAD/JPY', 'CHF/JPY',
+  'USD/MXN', 'USD/NOK', 'USD/SEK', 'USD/SGD', 'USD/HKD', 'USD/TRY', 'USD/ZAR', 'USD/CNY',
+]
 
 // ─── sub-components ─────────────────────────────────────────────────────────
 function LoadingSpinner() {
@@ -298,17 +309,20 @@ function RiskCalcTab({ pair }) {
 function TechnicalTab({ pair }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!pair) return
     setLoading(true)
+    setError(null)
     getTechnical(pair)
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load technical data.'))
       .finally(() => setLoading(false))
   }, [pair])
 
   if (loading) return <LoadingSpinner />
+  if (error) return <ErrorBox msg={error} />
   if (!data) return <EmptyState title="No technical data" desc="Technical analysis unavailable for this pair." />
 
   const sr = data.support_resistance || data.sr || {}
@@ -387,16 +401,19 @@ function TechnicalTab({ pair }) {
 function FVGTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getFvgScanner()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load FVG data.'))
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return <LoadingSpinner />
+  if (error) return <ErrorBox msg={error} />
   if (!data) return <EmptyState title="No FVG data" desc="FVG scanner data unavailable." />
 
   const items = Array.isArray(data) ? data : data.fvg_zones || data.zones || []
@@ -431,16 +448,19 @@ function FVGTab() {
 function SRTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getSrBreakouts()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load S/R breakout data.'))
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return <LoadingSpinner />
+  if (error) return <ErrorBox msg={error} />
   const items = Array.isArray(data) ? data : data?.breakouts || []
 
   return (
@@ -482,12 +502,14 @@ function VolatileTab() {
   const [timeframe, setTimeframe] = useState('24h')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getVolatile(timeframe)
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load volatility data.'))
       .finally(() => setLoading(false))
   }, [timeframe])
 
@@ -507,7 +529,7 @@ function VolatileTab() {
           </button>
         ))}
       </div>
-      {loading ? <LoadingSpinner /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No data" desc="Volatility data not available." />
       ) : (
         <div className="space-y-3">
@@ -538,12 +560,14 @@ function VolatileTab() {
 function ReversalTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getReversals()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load reversal data.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -551,7 +575,7 @@ function ReversalTab() {
 
   return (
     <div className="space-y-3">
-      {loading ? <LoadingSpinner /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No reversals" desc="No reversal signals detected." />
       ) : items.map((r, i) => (
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4 flex items-center justify-between">
@@ -613,12 +637,14 @@ function SuccessTab({ allPairs }) {
 function ScannerTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getPatternScanner()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load pattern scanner data.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -626,7 +652,7 @@ function ScannerTab() {
 
   return (
     <div className="space-y-3">
-      {loading ? <LoadingSpinner /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No patterns" desc="No patterns detected in the scanner." />
       ) : items.map((p, i) => (
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-4">
@@ -651,12 +677,14 @@ function ScannerTab() {
 function NewsTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getNews()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setError('Failed to load market news.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -664,7 +692,7 @@ function NewsTab() {
 
   return (
     <div className="space-y-4">
-      {loading ? <LoadingSpinner /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
             <Newspaper size={32} className="text-text-muted" />
@@ -835,23 +863,26 @@ function Gamebar() {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ForexDashboard() {
   const { ads } = useAds()
-  const [allPairsData, setAllPairsData] = useState({})
+  const [allPairsData, setAllPairsData] = useState(null)
+  const [pairsLoading, setPairsLoading] = useState(true)
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
   const [activeTab, setActiveTab] = useState('signal')
   const [signal, setSignal] = useState(null)
-  const [signalLoading, setSignalLoading] = useState(false)
+  const [signalLoading, setSignalLoading] = useState(true)
   const [signalError, setSignalError] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
 
-  // Load all pairs
+  // Load all pairs — API returns {major, minor, exotic, all, ecb_live}
   useEffect(() => {
+    setPairsLoading(true)
     getPairs()
-      .then(setAllPairsData)
-      .catch(() => setAllPairsData({}))
+      .then((data) => setAllPairsData(data))
+      .catch(() => setAllPairsData(null))
+      .finally(() => setPairsLoading(false))
   }, [])
 
   // Fetch signal when pair changes
@@ -868,7 +899,7 @@ export default function ForexDashboard() {
         prevDirRef.current = dir
       }
     } catch (err) {
-      setSignalError(err?.response?.data?.detail || 'Failed to fetch signal')
+      setSignalError(err?.response?.data?.detail || 'Failed to fetch signal. Please try again.')
     } finally {
       setSignalLoading(false)
     }
@@ -880,11 +911,15 @@ export default function ForexDashboard() {
     return () => clearInterval(interval)
   }, [fetchSignal])
 
-  // Build flat pair list
-  const allPairs = Object.values(allPairsData).flat()
-  const categoryPairs = category === 'All' ? allPairs : allPairsData[category.toLowerCase()] || allPairsData[category] || []
-  const displayPairs = (categoryPairs.length ? categoryPairs : allPairs).filter((p) =>
-    p.toLowerCase().includes(search.toLowerCase())
+  // Build flat pair list — use `all` key from API response, fall back to hardcoded list
+  const forexPairs = (allPairsData?.all && allPairsData.all.length > 0)
+    ? allPairsData.all
+    : FALLBACK_PAIRS
+
+  const isUpcoming = UPCOMING_CATEGORIES.has(category)
+  const activePairs = (category === 'All' || category === 'Forex') ? forexPairs : []
+  const displayPairs = activePairs.filter((p) =>
+    typeof p === 'string' && p.toLowerCase().includes(search.toLowerCase())
   )
 
   const scrollTabs = (dir) => {
@@ -892,24 +927,24 @@ export default function ForexDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary py-6 px-4">
+    <div className="min-h-screen bg-bg-primary py-4 px-3">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="mb-4"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">Forex Dashboard</h1>
-          <p className="text-text-secondary text-sm">AI-powered signals for 51 trading pairs</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-0.5">Forex Dashboard</h1>
+          <p className="text-text-secondary text-xs">AI-powered signals for {forexPairs.length} forex pairs</p>
         </motion.div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Pair selector */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Left: Pair selector — compact */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="lg:w-64 flex-shrink-0 space-y-4"
+            className="lg:w-44 flex-shrink-0 space-y-2"
           >
             {/* Category tabs */}
             <div className="flex flex-wrap gap-1">
@@ -917,135 +952,164 @@ export default function ForexDashboard() {
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${category === cat ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
+                  className={`relative px-2 py-0.5 rounded text-xs font-medium transition-all ${category === cat ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
                 >
                   {cat}
+                  {UPCOMING_CATEGORIES.has(cat) && (
+                    <span className="ml-1 text-accent-yellow" title="Coming soon">·</span>
+                  )}
                 </button>
               ))}
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search pairs..."
-                className="w-full bg-bg-card border border-border-default rounded-lg pl-9 pr-4 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue"
-              />
-            </div>
+            {!isUpcoming && (
+              <div className="relative">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search pairs…"
+                  className="w-full bg-bg-card border border-border-default rounded-lg pl-7 pr-3 py-1.5 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue"
+                />
+              </div>
+            )}
 
             {/* Pair list */}
-            <div className="bg-bg-card border border-border-default rounded-xl overflow-hidden max-h-96 overflow-y-auto">
-              {displayPairs.length === 0 ? (
-                <p className="text-text-muted text-xs text-center py-8">No pairs found</p>
-              ) : displayPairs.map((pair) => (
-                <button
-                  key={pair}
-                  onClick={() => setSelectedPair(pair)}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-border-subtle last:border-0 ${selectedPair === pair ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
-                >
-                  {pair}
-                </button>
-              ))}
-            </div>
+            {isUpcoming ? (
+              <div className="bg-bg-card border border-border-default rounded-xl p-4 text-center">
+                <p className="text-accent-yellow text-xs font-semibold mb-1">Coming Soon</p>
+                <p className="text-text-muted text-xs">{category} signals are under development.</p>
+              </div>
+            ) : (
+              <div className="bg-bg-card border border-border-default rounded-xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 260px)' }}>
+                {pairsLoading ? (
+                  <p className="text-text-muted text-xs text-center py-6">Loading…</p>
+                ) : displayPairs.length === 0 ? (
+                  <p className="text-text-muted text-xs text-center py-6">No pairs found</p>
+                ) : displayPairs.map((pair) => (
+                  <button
+                    key={pair}
+                    onClick={() => setSelectedPair(pair)}
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors border-b border-border-subtle last:border-0 ${selectedPair === pair ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
+                  >
+                    {pair}
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-4">
+          <div className="flex-1 min-w-0 space-y-3">
             {/* Gamebar */}
             <Gamebar />
 
-            {/* Selected pair header */}
-            <div className="bg-bg-card border border-border-default rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent-blue/10 flex items-center justify-center">
-                  <TrendingUp size={16} className="text-accent-blue" />
+            {isUpcoming ? (
+              <div className="bg-bg-card border border-border-default rounded-xl p-10 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full bg-accent-yellow/10 flex items-center justify-center mb-4">
+                  <Zap size={28} className="text-accent-yellow" />
                 </div>
-                <div>
-                  <p className="text-text-primary font-bold text-lg">{selectedPair}</p>
-                  <p className="text-text-muted text-xs">
-                    {signal?.price ? `$${signal.price}` : signal?.current_price ? `$${signal.current_price}` : 'Loading...'}
-                  </p>
-                </div>
+                <h2 className="text-text-primary font-bold text-xl mb-2">{category} — Coming Soon</h2>
+                <p className="text-text-secondary text-sm max-w-sm">
+                  We're working hard to bring AI-powered signals for {category.toLowerCase()} markets.
+                  Switch to <strong className="text-accent-blue">Forex</strong> to access live signals now.
+                </p>
               </div>
-              <div className="flex items-center gap-3">
-                {signal && (
-                  <span className={`text-sm font-bold px-3 py-1 rounded-lg border ${dirBg(signal.signal || signal.direction)}`}>
-                    <span className={dirColor(signal.signal || signal.direction)}>
-                      {(signal.signal || signal.direction || '—').toUpperCase()}
-                    </span>
-                  </span>
-                )}
-                <button
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="p-2 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-text-primary transition-colors"
-                  title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
-                >
-                  {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-                </button>
-                <button
-                  onClick={fetchSignal}
-                  disabled={signalLoading}
-                  className="p-2 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-accent-blue transition-colors"
-                >
-                  <RefreshCw size={14} className={signalLoading ? 'animate-spin' : ''} />
-                </button>
-              </div>
-            </div>
-
-            {/* Tab navigation */}
-            <div className="relative flex items-center gap-2">
-              <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
-                <ChevronLeft size={14} />
-              </button>
-              <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-1">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon
-                  return (
+            ) : (
+              <>
+                {/* Selected pair header */}
+                <div className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-accent-blue/10 flex items-center justify-center">
+                      <TrendingUp size={14} className="text-accent-blue" />
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-bold">{selectedPair}</p>
+                      <p className="text-text-muted text-xs">
+                        {signal?.price ? `$${signal.price}` : signal?.current_price ? `$${signal.current_price}` : 'Loading…'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {signal && (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${dirBg(signal.signal || signal.direction)}`}>
+                        <span className={dirColor(signal.signal || signal.direction)}>
+                          {(signal.signal || signal.direction || '—').toUpperCase()}
+                        </span>
+                      </span>
+                    )}
                     <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+                      onClick={() => setSoundEnabled(!soundEnabled)}
+                      className="p-1.5 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-text-primary transition-colors"
+                      title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
                     >
-                      <Icon size={12} />
-                      {tab.label}
+                      {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
                     </button>
-                  )
-                })}
-              </div>
-              <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
-                <ChevronRight size={14} />
-              </button>
-            </div>
+                    <button
+                      onClick={fetchSignal}
+                      disabled={signalLoading}
+                      className="p-1.5 rounded-lg bg-bg-secondary border border-border-default text-text-muted hover:text-accent-blue transition-colors"
+                    >
+                      <RefreshCw size={13} className={signalLoading ? 'animate-spin' : ''} />
+                    </button>
+                  </div>
+                </div>
 
-            {/* Tab content */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.2 }}
-                className="bg-bg-secondary border border-border-default rounded-xl p-5 min-h-64"
-              >
-                {activeTab === 'signal' && <SignalTab pair={selectedPair} signal={signal} loading={signalLoading} error={signalError} />}
-                {activeTab === 'risk' && <RiskCalcTab pair={selectedPair} />}
-                {activeTab === 'technical' && <TechnicalTab pair={selectedPair} />}
-                {activeTab === 'fvg' && <FVGTab />}
-                {activeTab === 'sr' && <SRTab />}
-                {activeTab === 'volatile' && <VolatileTab />}
-                {activeTab === 'reversal' && <ReversalTab />}
-                {activeTab === 'success' && <SuccessTab allPairs={allPairs} />}
-                {activeTab === 'scanner' && <ScannerTab />}
-                {activeTab === 'news' && <NewsTab />}
-                {activeTab === 'alerts' && <AlertsTab />}
-              </motion.div>
-            </AnimatePresence>
+                {/* Tab navigation */}
+                <div className="relative flex items-center gap-1">
+                  <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+                    <ChevronLeft size={13} />
+                  </button>
+                  <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5">
+                    {TABS.map((tab) => {
+                      const Icon = tab.icon
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+                        >
+                          <Icon size={11} />
+                          {tab.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+
+                {/* Tab content */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="bg-bg-secondary border border-border-default rounded-xl p-4 min-h-64"
+                  >
+                    {activeTab === 'signal' && <SignalTab pair={selectedPair} signal={signal} loading={signalLoading} error={signalError} />}
+                    {activeTab === 'risk' && <RiskCalcTab pair={selectedPair} />}
+                    {activeTab === 'technical' && <TechnicalTab pair={selectedPair} />}
+                    {activeTab === 'fvg' && <FVGTab />}
+                    {activeTab === 'sr' && <SRTab />}
+                    {activeTab === 'volatile' && <VolatileTab />}
+                    {activeTab === 'reversal' && <ReversalTab />}
+                    {activeTab === 'success' && <SuccessTab allPairs={forexPairs} />}
+                    {activeTab === 'scanner' && <ScannerTab />}
+                    {activeTab === 'news' && <NewsTab />}
+                    {activeTab === 'alerts' && <AlertsTab />}
+                  </motion.div>
+                </AnimatePresence>
+              </>
+            )}
           </div>
 
           {/* Sidebar ad */}
-          <div className="hidden lg:block w-48 flex-shrink-0">
+          <div className="hidden lg:block w-44 flex-shrink-0">
             <div className="sticky top-24">
               <AdBanner placement="sidebar" ads={ads} />
             </div>
