@@ -1708,6 +1708,11 @@ pairSelect.addEventListener('change', () => {
   resetAutoRefresh();
   // Keep live technical price in sync when pair changes
   if (_techPriceTimer !== null) startTechPricePolling();
+  // Pulse the select element to confirm the change visually
+  pairSelect.classList.remove('pair-changed');
+  void pairSelect.offsetWidth; // reflow to restart animation
+  pairSelect.classList.add('pair-changed');
+  pairSelect.addEventListener('animationend', () => pairSelect.classList.remove('pair-changed'), { once: true });
 });
 
 refreshBtn.addEventListener('click', () => {

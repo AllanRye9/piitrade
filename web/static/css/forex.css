@@ -312,7 +312,7 @@ a:hover { text-decoration: underline; }
 .fx-main {
   max-width: 960px;
   margin: 0 auto;
-  padding: 24px 16px 64px;
+  padding: 24px 4.5% 64px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -361,8 +361,28 @@ a:hover { text-decoration: underline; }
   font-family: inherit;
   cursor: pointer;
   min-width: 140px;
+  animation: pair-select-entrance 0.5s cubic-bezier(.22,1,.36,1) both;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .fx-pair-select:focus { outline: 2px solid var(--accent); }
+.fx-pair-select:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+@keyframes pair-select-entrance {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pair-select-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+  50%       { box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.2); }
+}
+
+.fx-pair-select.pair-changed {
+  animation: pair-select-pulse 0.5s ease;
+}
 
 .fx-last-updated {
   font-size: 0.8rem;
@@ -987,7 +1007,7 @@ a:hover { text-decoration: underline; }
   .toast-container { right: 10px; top: 110px; }
   .toast { min-width: 180px; max-width: calc(100vw - 20px); }
   .fx-header { padding: 0 12px; }
-  .fx-main { padding: 16px 12px 80px; gap: 20px; }
+  .fx-main { padding: 16px 4.5% 80px; gap: 20px; }
   .fx-tab { padding: 10px 12px; font-size: 0.82rem; }
   .fx-section-title { font-size: 1rem; }
 }
@@ -995,6 +1015,13 @@ a:hover { text-decoration: underline; }
 @media (max-width: 400px) {
   .toast { min-width: 0; width: calc(100vw - 20px); }
   .fx-tab { padding: 8px 10px; font-size: 0.78rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-pair-select,
+  .fx-pair-select.pair-changed {
+    animation: none;
+  }
 }
 
 /* ── Risk Management Calculator ── */
