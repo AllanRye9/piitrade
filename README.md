@@ -19,7 +19,7 @@ AI and machine-learning backed **Forex-only** trading signal platform delivering
 - **Development Roadmap**: upcoming features publicly displayed on landing page
 - **Whitepaper**: AI pipeline documentation linked from landing page
 - **Compact Header**: sticky, animated, minimal vertical space
-- **Margin Ads**: 4.5% left (Taptap) and 4.5% right (Exness) animated ad columns
+- **Margin Ads**: 2.25% left (Taptap) and 2.25% right (Exness) animated ad columns
 - trader.png used as site favicon and branding icon
 - Flutter mobile app (Android & iOS)
 
