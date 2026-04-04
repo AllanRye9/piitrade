@@ -1273,6 +1273,12 @@ app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 _REACT_DIST_DIR = _STATIC_DIR / "dist"
 _REACT_INDEX = _REACT_DIST_DIR / "index.html"
 
+# Vite generates hashed asset filenames and references them as /assets/...
+# Mount that path so the browser can load the JS bundle and CSS.
+_REACT_ASSETS_DIR = _REACT_DIST_DIR / "assets"
+if _REACT_ASSETS_DIR.exists():
+    app.mount("/assets", _CachedStaticFiles(directory=_REACT_ASSETS_DIR), name="react-assets")
+
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
 
 
@@ -1293,6 +1299,16 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
 # The React SPA (built to static/dist/) handles all client-side routing.
 # Track visits for analytics and fall back to the legacy Jinja2 templates when
 # the React build is not present (e.g. development without a prior build step).
+
+
+@app.get("/trader.png")
+async def favicon_png():
+    """Serve the site favicon referenced by the React index.html."""
+    _favicon = _STATIC_DIR / "trader.png"
+    if not _favicon.exists():
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return FileResponse(str(_favicon), media_type="image/png")
+
 
 def _serve_react_or_template(request: Request, template: str, **kwargs):
     """Serve the React SPA index.html if the build exists, else a legacy template."""
