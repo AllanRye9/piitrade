@@ -903,42 +903,8 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
 }
 
 def _make_news_items() -> list[dict[str, Any]]:
-    """Build the news list with timestamps relative to the current UTC day."""
-    today = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-
-    def _ts(hours_ago: int, extra_minutes: int = 0) -> str:
-        return (today - timedelta(hours=hours_ago, minutes=extra_minutes)).isoformat()
-
-    return [
-        # ── Forex ──────────────────────────────────────────────────────────────
-        {"headline": "USD surges on safe-haven demand; EUR/USD slides below 1.09 on trade war fears", "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(1),     "category": "forex"},
-        {"headline": "Bank of Japan holds rates at 0.5%; yen gains as investors flee equities",        "sentiment": "positive", "source": "Nikkei",     "published_at": _ts(2),     "category": "forex"},
-        {"headline": "ECB signals faster rate cuts if tariffs dent Eurozone growth outlook",           "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(3),     "category": "forex"},
-        {"headline": "AUD/USD hits 5-year low as commodity currencies crushed by trade war fears",    "sentiment": "negative", "source": "FXStreet",   "published_at": _ts(3, 45), "category": "forex"},
-        {"headline": "GBP/USD rebounds after UK inflation data surprises to the upside",               "sentiment": "positive", "source": "Bloomberg",  "published_at": _ts(5),     "category": "forex"},
-        {"headline": "Fed's Powell warns tariffs are 'highly uncertain'; rules out emergency cuts",    "sentiment": "neutral",  "source": "Reuters",    "published_at": _ts(6),     "category": "forex"},
-        {"headline": "Dollar index DXY climbs to 104.8 as risk-off mood sweeps global markets",       "sentiment": "negative", "source": "MarketWatch","published_at": _ts(7),     "category": "forex"},
-        # ── Stocks ─────────────────────────────────────────────────────────────
-        {"headline": "S&P 500 drops 4.8% as tariff fears hammer risk appetite; tech leads losses",   "sentiment": "negative", "source": "MarketWatch", "published_at": _ts(0, 30), "category": "stocks"},
-        {"headline": "Trump tariff shock: 10% blanket import levy triggers global market sell-off",   "sentiment": "negative", "source": "Reuters",     "published_at": _ts(0, 10), "category": "stocks"},
-        {"headline": "NVIDIA falls 7% amid chip export restrictions tied to new tariff framework",     "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(1, 20), "category": "stocks"},
-        {"headline": "Apple and Meta lead tech rout; Nasdaq-100 logs worst session since 2022",        "sentiment": "negative", "source": "WSJ",        "published_at": _ts(2, 30), "category": "stocks"},
-        {"headline": "Tesla Q1 deliveries miss estimates by 15%; shares extend monthly decline",       "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(4, 15), "category": "stocks"},
-        {"headline": "Microsoft Azure revenue up 33% YoY; AI services offset macro headwinds",        "sentiment": "positive", "source": "WSJ",        "published_at": _ts(5, 30), "category": "stocks"},
-        {"headline": "Amazon AWS beats estimates as enterprise cloud spending accelerates in Q1",      "sentiment": "positive", "source": "Reuters",    "published_at": _ts(8),     "category": "stocks"},
-        # ── Commodities ────────────────────────────────────────────────────────
-        {"headline": "Gold rises 1.2% to record $3,120/oz as investors seek safe-haven assets",       "sentiment": "positive", "source": "MarketWatch","published_at": _ts(5),     "category": "commodities"},
-        {"headline": "Silver outperforms gold; XAG/USD breaks $34 on industrial demand surge",        "sentiment": "positive", "source": "Kitco",      "published_at": _ts(6, 30), "category": "commodities"},
-        {"headline": "WTI crude oil falls 3.2% on demand fears; OPEC+ output talks stall",            "sentiment": "negative", "source": "Reuters",    "published_at": _ts(4),     "category": "commodities"},
-        {"headline": "Brent crude drops below $76 as tariff shock rattles energy markets globally",    "sentiment": "negative", "source": "Bloomberg",  "published_at": _ts(2, 15), "category": "commodities"},
-        {"headline": "Gold ETF inflows hit 18-month high as institutions pile into safe havens",       "sentiment": "positive", "source": "FT",         "published_at": _ts(9),     "category": "commodities"},
-        # ── Crypto ─────────────────────────────────────────────────────────────
-        {"headline": "Bitcoin drops 6% to $82,500 as risk-off sentiment sweeps crypto markets",       "sentiment": "negative", "source": "CoinDesk",   "published_at": _ts(1, 30), "category": "crypto"},
-        {"headline": "Ethereum falls below $1,800 amid broad market deleveraging and ETF outflows",   "sentiment": "negative", "source": "CoinTelegraph","published_at": _ts(3),    "category": "crypto"},
-        {"headline": "XRP surges 8% as Ripple wins key SEC ruling; legal uncertainty lifts",          "sentiment": "positive", "source": "Reuters",    "published_at": _ts(4, 45), "category": "crypto"},
-        {"headline": "Solana DeFi TVL hits new all-time high despite broader crypto weakness",         "sentiment": "positive", "source": "DeFi Pulse", "published_at": _ts(7, 15), "category": "crypto"},
-        {"headline": "BNB chain transaction volumes drop 12% amid declining retail sentiment",        "sentiment": "negative", "source": "CoinDesk",   "published_at": _ts(8, 30), "category": "crypto"},
-    ]
+    """Return live news items. Empty until a real news feed is integrated."""
+    return []
 
 _FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
 _PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
