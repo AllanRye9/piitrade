@@ -19,7 +19,7 @@ import shutil
 import uuid
 
 import requests as _requests
-from fastapi import FastAPI, File, Form, Request, UploadFile, status
+from fastapi import FastAPI, Form, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
@@ -478,26 +478,6 @@ def _find_username_by_customer(customer_id: str) -> Optional[str]:
                 return username
     return None
 
-
-# ─── Ads store ────────────────────────────────────────────────────────────────
-# id -> {id, title, image_url, link_url, placement, active, created_at}
-_ADS: dict[str, dict[str, Any]] = {}
-_ADS_LOCK = Lock()
-_ADS_UPLOADS_DIR = _STATIC_DIR / "uploads" / "ads"
-
-
-def _ensure_ads_dir() -> None:
-    """Create the uploads/ads directory if it doesn't exist.
-
-    Silently ignores errors on read-only filesystems (e.g. Vercel).
-    """
-    try:
-        _ADS_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        pass
-
-
-_ensure_ads_dir()
 
 def _get_current_user(request: Request) -> Optional[str]:
     return request.session.get("username")
@@ -1806,132 +1786,6 @@ async def api_auth_me(request: Request):
 async def api_auth_logout(request: Request):
     """Clear the session (React SPA logout)."""
     request.session.clear()
-    return JSONResponse({"success": True})
-
-
-# ─── Ads API (public: list active; admin: full CRUD) ──────────────────────────
-
-ALLOWED_AD_PLACEMENTS = {"banner-top", "banner-bottom", "sidebar", "inline"}
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
-MAX_AD_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
-
-
-@app.get("/api/ads/active")
-async def ads_active():
-    """Return all active ads (public endpoint for the frontend)."""
-    with _ADS_LOCK:
-        active = [dict(ad) for ad in _ADS.values() if ad.get("active")]
-    return JSONResponse(active)
-
-
-@app.get("/api/admin/ads")
-async def admin_list_ads(request: Request):
-    """Admin: list all ads."""
-    if not _is_admin(request):
-        return JSONResponse({"error": "Forbidden."}, status_code=403)
-    with _ADS_LOCK:
-        ads = [dict(ad) for ad in _ADS.values()]
-    return JSONResponse(ads)
-
-
-@app.post("/api/admin/ads")
-async def admin_create_ad(
-    request: Request,
-    image: UploadFile = File(...),
-    link_url: str = Form(...),
-    title: str = Form(""),
-    placement: str = Form("inline"),
-    active: str = Form("true"),
-):
-    """Admin: upload a new ad (image + metadata)."""
-    if not _is_admin(request):
-        return JSONResponse({"error": "Forbidden."}, status_code=403)
-
-    # Validate placement
-    placement = placement.strip().lower()
-    if placement not in ALLOWED_AD_PLACEMENTS:
-        return JSONResponse({"error": f"Invalid placement. Allowed: {', '.join(ALLOWED_AD_PLACEMENTS)}"}, status_code=400)
-
-    # Validate link URL
-    link_url = link_url.strip()
-    if not link_url.startswith(("http://", "https://")):
-        return JSONResponse({"error": "link_url must start with http:// or https://"}, status_code=400)
-
-    # Validate image type
-    content_type = image.content_type or ""
-    if content_type not in ALLOWED_IMAGE_TYPES:
-        return JSONResponse({"error": "Only JPEG, PNG, GIF, WebP, or SVG images are allowed."}, status_code=400)
-
-    # Read and size-check image
-    image_data = await image.read()
-    if len(image_data) > MAX_AD_IMAGE_SIZE:
-        return JSONResponse({"error": "Image must be smaller than 5 MB."}, status_code=400)
-
-    # Determine file extension from validated content_type (never trust client filename)
-    _CONTENT_TYPE_TO_EXT: dict[str, str] = {
-        "image/jpeg": ".jpg",
-        "image/png": ".png",
-        "image/gif": ".gif",
-        "image/webp": ".webp",
-        "image/svg+xml": ".svg",
-    }
-    ext = _CONTENT_TYPE_TO_EXT.get(content_type, ".jpg")
-
-    # Save image
-    _ensure_ads_dir()
-    ad_id = str(uuid.uuid4())
-    filename = f"{ad_id}{ext}"
-    dest = _ADS_UPLOADS_DIR / filename
-    dest.write_bytes(image_data)
-
-    ad: dict[str, Any] = {
-        "id": ad_id,
-        "title": title.strip()[:200],
-        "image_url": f"/static/uploads/ads/{filename}",
-        "link_url": link_url,
-        "placement": placement,
-        "active": active.lower() not in ("false", "0", "no"),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    with _ADS_LOCK:
-        _ADS[ad_id] = ad
-
-    return JSONResponse(dict(ad), status_code=201)
-
-
-@app.patch("/api/admin/ads/{ad_id}")
-async def admin_toggle_ad(request: Request, ad_id: str):
-    """Admin: toggle an ad's active status."""
-    if not _is_admin(request):
-        return JSONResponse({"error": "Forbidden."}, status_code=403)
-    with _ADS_LOCK:
-        if ad_id not in _ADS:
-            return JSONResponse({"error": "Ad not found."}, status_code=404)
-        _ADS[ad_id]["active"] = not _ADS[ad_id]["active"]
-        updated = dict(_ADS[ad_id])
-    return JSONResponse(updated)
-
-
-@app.delete("/api/admin/ads/{ad_id}")
-async def admin_delete_ad(request: Request, ad_id: str):
-    """Admin: permanently delete an ad and its uploaded image."""
-    if not _is_admin(request):
-        return JSONResponse({"error": "Forbidden."}, status_code=403)
-    with _ADS_LOCK:
-        ad = _ADS.pop(ad_id, None)
-    if not ad:
-        return JSONResponse({"error": "Ad not found."}, status_code=404)
-    # Delete the image file (safe: only filenames stored under uploads/ads/)
-    image_url: str = ad.get("image_url", "")
-    if image_url.startswith("/static/uploads/ads/"):
-        filename = Path(image_url).name
-        # Prevent path traversal: only allow simple filenames
-        if filename and "/" not in filename and "\\" not in filename:
-            img_path = _ADS_UPLOADS_DIR / filename
-            try:
-                img_path.unlink(missing_ok=True)
-            except OSError:
-                pass
     return JSONResponse({"success": True})
 
 
