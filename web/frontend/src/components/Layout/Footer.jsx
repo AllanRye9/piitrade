@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendingUp, ExternalLink, Globe } from 'lucide-react'
+import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,42 +19,57 @@ export default function Footer() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-50px' }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+
           {/* Brand */}
-          <motion.div variants={itemVariants}>
-            <Link to="/" className="flex items-center gap-2 mb-3">
+          <motion.div variants={itemVariants} className="lg:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center">
                 <TrendingUp size={16} className="text-white" />
               </div>
               <span className="text-xl font-bold text-text-primary">PiiTrade</span>
             </Link>
-            <p className="text-text-secondary text-sm leading-relaxed">
-              AI-powered forex signals for 51 trading pairs. Completely free. Powered by LightGBM machine learning.
+            <p className="text-text-secondary text-sm leading-relaxed mb-3">
+              PiiTrade is a free, AI-driven forex signal platform delivering real-time predictions across
+              51 currency pairs. Built on cutting-edge LightGBM machine learning models, we help traders
+              make data-informed decisions with confidence.
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <a href="#" className="text-text-muted hover:text-accent-blue transition-colors duration-200">
-                <ExternalLink size={16} />
+            <p className="text-text-muted text-xs leading-relaxed mb-4">
+              Trusted by thousands of traders worldwide. No subscriptions, no paywalls — just powerful signals.
+            </p>
+            <div className="flex items-center gap-3 mt-2">
+              <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer"
+                className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Partner: Exness">
+                <ExternalLink size={15} />
               </a>
-              <a href="#" className="text-text-muted hover:text-accent-blue transition-colors duration-200">
-                <Globe size={16} />
+              <a href="#" className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Website">
+                <Globe size={15} />
+              </a>
+              <a href="mailto:support@piitrade.com" className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Contact us">
+                <Mail size={15} />
               </a>
             </div>
           </motion.div>
 
-          {/* Links */}
+          {/* Navigation */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">Navigation</h4>
-            <ul className="space-y-2">
+            <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+              <BookOpen size={14} className="text-accent-blue" /> Navigation
+            </h4>
+            <ul className="space-y-2.5">
               {[
-                { label: 'Dashboard', path: '/forex' },
+                { label: 'Home', path: '/' },
+                { label: 'Live Dashboard', path: '/forex' },
                 { label: 'Methodology', path: '/methodology' },
+                { label: 'Roadmap', path: '/roadmap' },
                 { label: 'Disclaimer', path: '/disclaimer' },
                 { label: 'Login', path: '/login' },
               ].map((l) => (
                 <li key={l.path}>
-                  <Link to={l.path} className="text-text-secondary hover:text-accent-blue transition-all duration-200 text-sm hover:translate-x-1 inline-block">
+                  <Link to={l.path}
+                    className="text-text-secondary hover:text-accent-blue transition-all duration-200 text-sm hover:translate-x-1 inline-block">
                     {l.label}
                   </Link>
                 </li>
@@ -62,19 +77,71 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Disclaimer */}
+          {/* Features */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">Risk Warning</h4>
+            <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+              <BrainCircuit size={14} className="text-accent-blue" /> What We Offer
+            </h4>
+            <ul className="space-y-2.5">
+              {[
+                { icon: BarChart2, text: 'AI-Powered Forex Signals' },
+                { icon: TrendingUp, text: '51 Currency Pairs Covered' },
+                { icon: Clock, text: 'Real-Time Market Updates' },
+                { icon: Shield, text: 'Risk Management Tools' },
+                { icon: BrainCircuit, text: 'LightGBM ML Models' },
+                { icon: Globe, text: 'Technical Analysis Suite' },
+              ].map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-2 text-text-secondary text-sm">
+                  <Icon size={13} className="text-accent-blue flex-shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Risk Warning */}
+          <motion.div variants={itemVariants}>
+            <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+              <Shield size={14} className="text-red-400" /> Risk Warning
+            </h4>
+            <p className="text-text-muted text-xs leading-relaxed mb-3">
+              Trading forex and CFDs involves significant risk of loss and may not be suitable for all investors.
+              Leverage can work against you. PiiTrade signals are for <span className="text-text-secondary font-medium">informational purposes only</span> and
+              do not constitute financial advice or investment recommendations.
+            </p>
+            <p className="text-text-muted text-xs leading-relaxed mb-3">
+              Past performance is not indicative of future results. You should carefully consider your
+              investment objectives, level of experience, and risk appetite before investing.
+            </p>
             <p className="text-text-muted text-xs leading-relaxed">
-              Trading forex involves significant risk of loss. PiiTrade signals are for informational purposes only and do not constitute financial advice. Past performance does not guarantee future results. Never trade with money you cannot afford to lose.
+              Never trade with funds you cannot afford to lose. Seek independent financial advice if necessary.
             </p>
           </motion.div>
         </div>
 
-        <div className="border-t border-border-default mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-text-muted text-xs">© {new Date().getFullYear()} PiiTrade. All rights reserved.</p>
-          <p className="text-text-muted text-xs">Not financial advice. Trade responsibly.</p>
-        </div>
+        {/* Partner strip */}
+        <motion.div variants={itemVariants} className="border-t border-border-default mt-10 pt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-text-muted text-xs">Proud Partner:</span>
+              <a
+                href="https://www.exness.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 transition-colors text-xs font-semibold"
+              >
+                <img src="/exness.jpg" alt="Exness" className="h-5 w-auto object-contain rounded" />
+                Exness — Ultra-Low Spreads
+                <ExternalLink size={10} className="opacity-60" />
+              </a>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3 text-text-muted text-xs">
+              <span>© {new Date().getFullYear()} PiiTrade. All rights reserved.</span>
+              <span className="hidden sm:inline text-border-default">|</span>
+              <span>Not financial advice. Trade responsibly.</span>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </footer>
   )
