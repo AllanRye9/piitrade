@@ -8,6 +8,8 @@
   --ease-hover: ease-out;
   --ease-page: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-modal: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ad-strip-height: 28px;
+  --page-margin-x: 2.25%;
 }
 
 /* ─── PART 13: PERFORMANCE – Reduced Motion ─── */

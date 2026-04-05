@@ -2,7 +2,7 @@ import { ExternalLink } from 'lucide-react'
 
 export default function TopAdStrip() {
   return (
-    <div className="w-full bg-bg-secondary/80 border-b border-border-subtle overflow-hidden h-7 flex items-center flex-shrink-0">
+    <div className="w-full bg-bg-secondary/80 border-b border-border-subtle overflow-hidden flex items-center flex-shrink-0" style={{ height: 'var(--ad-strip-height)' }}>
       <div className="ad-marquee whitespace-nowrap flex items-center gap-8 text-[11px]">
         {/* Duplicate content for seamless loop */}
         {[0, 1].map((copy) => (

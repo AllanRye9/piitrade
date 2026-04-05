@@ -348,7 +348,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
-    <div className="min-h-screen bg-bg-primary py-20" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
+    <div className="min-h-screen bg-bg-primary py-20" style={{ paddingLeft: 'var(--page-margin-x)', paddingRight: 'var(--page-margin-x)' }}>
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

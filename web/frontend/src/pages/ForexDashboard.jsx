@@ -944,7 +944,7 @@ export default function ForexDashboard() {
     : forexPairs.filter((p) => !MAJOR_PAIRS.has(p) && !MINOR_PAIRS.has(p))
 
   return (
-    <div className="min-h-screen bg-bg-primary py-3" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
+    <div className="min-h-screen bg-bg-primary py-3" style={{ paddingLeft: 'var(--page-margin-x)', paddingRight: 'var(--page-margin-x)' }}>
       <div className="max-w-5xl mx-auto space-y-3">
         {/* Price Ticker */}
         <PriceTicker />

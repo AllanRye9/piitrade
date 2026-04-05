@@ -24,8 +24,8 @@ export default function Layout({ children }) {
       <ScrollProgressBar />
       <Navbar />
 
-      {/* Main content – full width, pt accounts for ad strip (h-7 = 28px) + navbar */}
-      <main className="flex-1 min-w-0" style={{ paddingTop: 'calc(4rem + 28px)' }}>
+      {/* Main content – full width, pt accounts for ad strip + navbar */}
+      <main className="flex-1 min-w-0" style={{ paddingTop: 'calc(4rem + var(--ad-strip-height))' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

@@ -44,11 +44,12 @@ export default function Navbar() {
         duration: 0.6,
         ease: [0.34, 1.3, 0.55, 1],
       }}
-      className={`fixed top-7 left-0 right-0 z-50 transition-all duration-300 will-change-transform ${
+      className={`fixed left-0 right-0 z-50 transition-all duration-300 will-change-transform ${
         scrolled
           ? 'glass shadow-lg shadow-black/20'
           : 'bg-transparent'
       }`}
+      style={{ top: 'var(--ad-strip-height)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
