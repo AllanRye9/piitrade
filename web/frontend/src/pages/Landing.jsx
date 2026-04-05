@@ -265,7 +265,7 @@ export default function Landing() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative hidden sm:block"
+            className="relative"
           >
             <motion.div
               animate={{ y: [0, -10, 0] }}

@@ -200,15 +200,10 @@ body { background: var(--bg-primary, #0d1117); color: var(--text-primary, #e6edf
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ─── Theme transition ─── */
-*, *::before, *::after {
+/* ─── Theme transition — only on background/color properties ─── */
+body, .bg-bg-primary, .bg-bg-secondary, .bg-bg-card, .glass,
+[class*="bg-bg-"], [class*="text-text-"], [class*="border-border-"] {
   transition-property: background-color, border-color, color;
   transition-duration: 0.25s;
   transition-timing-function: ease;
-}
-/* Reset transition for animations to not interfere */
-.animate-shimmer, .animate-ticker, .animate-gradient-shift,
-.animate-pulse-dot, .animate-float, .animate-glow,
-.animate-spin, [class*="animate-"] {
-  transition: none;
 }

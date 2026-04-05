@@ -33,7 +33,7 @@ function PartnerCardItem({ partner }) {
     <motion.a
       href={partner.href}
       target="_blank"
-      rel="noopener noreferrer sponsored"
+      rel="noopener noreferrer"
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
