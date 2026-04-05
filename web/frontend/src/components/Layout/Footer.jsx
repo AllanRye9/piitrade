@@ -146,7 +146,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 transition-colors text-xs font-semibold"
               >
-                <img src="/exness.jpg" alt="Exness" className="h-5 w-auto object-contain rounded" />
+                <img src="/img/exness.png" alt="Exness" className="h-5 w-auto object-contain rounded" />
                 Exness — Ultra-Low Spreads
                 <ExternalLink size={10} className="opacity-60" />
               </a>

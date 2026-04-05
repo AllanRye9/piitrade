@@ -1283,22 +1283,40 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
 # the React build is not present (e.g. development without a prior build step).
 
 
-@app.get("/trader.png")
+@app.get("/img/trader.png")
 async def favicon_png():
     """Serve the site favicon referenced by the React index.html."""
-    _favicon = _STATIC_DIR / "trader.png"
+    _favicon = _DIR.parent / "img" / "trader.png"
     if not _favicon.exists():
         return JSONResponse({"error": "Not found"}, status_code=404)
     return FileResponse(str(_favicon), media_type="image/png")
 
 
-@app.get("/exness.png")
+@app.get("/img/exness.png")
 async def exness_banner_image():
-    """Serve the Exness banner image used in the shared header."""
-    _banner = _DIR.parent / "exness.png"
+    """Serve the primary Exness banner image used in the shared header."""
+    _banner = _DIR.parent / "img" / "exness.png"
     if not _banner.exists():
         return JSONResponse({"error": "Not found"}, status_code=404)
-    return FileResponse(str(_banner), media_type="image/jpeg")
+    return FileResponse(str(_banner), media_type="image/png")
+
+
+@app.get("/img/exness2.png")
+async def exness_banner_image_2():
+    """Serve alternate Exness banner image used in header rotation."""
+    _banner = _DIR.parent / "img" / "exness2.png"
+    if not _banner.exists():
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return FileResponse(str(_banner), media_type="image/png")
+
+
+@app.get("/img/exness3.png")
+async def exness_banner_image_3():
+    """Serve alternate Exness banner image used in header rotation."""
+    _banner = _DIR.parent / "img" / "exness3.png"
+    if not _banner.exists():
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return FileResponse(str(_banner), media_type="image/png")
 
 
 def _serve_react_or_template(request: Request, template: str, **kwargs):

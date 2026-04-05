@@ -20,7 +20,7 @@ AI and machine-learning backed **Forex-only** trading signal platform delivering
 - **Whitepaper**: AI pipeline documentation linked from landing page
 - **Compact Header**: sticky, animated, minimal vertical space
 - **Margin Ads**: 2.25% left (Taptap) and 2.25% right (Exness) animated ad columns
-- trader.png used as site favicon and branding icon
+- img/trader.png used as site favicon and branding icon
 - Flutter mobile app (Android & iOS)
 
 ## What Was Removed
@@ -75,7 +75,7 @@ piitrade/
 │   │   ├── forex.html     # Forex-only signal dashboard
 │   │   └── disclaimer.html
 │   └── static/
-│       ├── trader.png     # Site favicon/logo
+│       ├── img/trader.png     # Site favicon/logo
 │       ├── css/forex.css
 │       └── js/forex.js
 ├── flutter/          # Mobile app (Android & iOS)

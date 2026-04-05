@@ -164,7 +164,7 @@ export default function Navbar() {
               title="Exness — Trade Smarter"
             >
               <img
-                src="/exness.png"
+                src="/img/exness.png"
                 alt="Exness"
                 className="h-full w-full object-contain object-center"
                 draggable="false"

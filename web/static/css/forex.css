@@ -1375,9 +1375,10 @@ a:hover { text-decoration: underline; }
 .brand-sub {
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 1 1 760px;
   min-width: 0;
-  height: 100%;
+  max-width: 760px;
+  height: 50px;
   font-size: 0.75rem;
   color: var(--text2);
   font-weight: 400;
@@ -1395,29 +1396,43 @@ a:hover { text-decoration: underline; }
 
 .brand-sub a {
   display: flex;
-  align-items: center;
-  height: 100%;
+  align-items: stretch;
+  height: 50px;
   width: 100%;
+  max-width: 760px;
+  background: #ffd400;
   border: 1px solid rgba(88, 166, 255, 0.42);
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 0 10px rgba(88, 166, 255, 0.25);
+  overflow: hidden;
+  gap: 0;
   animation: exness-blink 1.2s ease-in-out infinite;
 }
 
-.brand-sub img {
+.brand-sub .exness-slide {
+  flex: 1 1 0;
   display: block;
-  width: 100%;
   height: 100%;
-  object-fit: contain;
+  min-width: 0;
+  object-fit: cover;
+  object-position: center 54%;
+}
+
+.brand-sub .exness-slide-1,
+.brand-sub .exness-slide-2,
+.brand-sub .exness-slide-3 {
+  opacity: 1;
 }
 
 @keyframes exness-blink {
   0%, 100% {
     border-color: rgba(88, 166, 255, 0.42);
+    border-radius: 6px;
     box-shadow: 0 0 10px rgba(88, 166, 255, 0.25);
   }
   50% {
     border-color: rgba(88, 166, 255, 0.95);
+    border-radius: 6px;
     box-shadow: 0 0 24px rgba(88, 166, 255, 0.9);
   }
 }
@@ -3075,5 +3090,7 @@ canvas {
 .main-content { flex: 1; min-width: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .brand-sub a { animation: none; }
+  .brand-sub a {
+    animation: none;
+  }
 }

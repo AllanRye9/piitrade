@@ -705,7 +705,7 @@ class _ForexScreenState extends State<ForexScreen>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: Image.asset(
-                  'assets/images/exness.png',
+                  'assets/images/img/exness.png',
                   fit: BoxFit.contain,
                   height: kToolbarHeight,
                 ),
