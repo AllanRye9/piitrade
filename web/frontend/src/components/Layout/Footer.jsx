@@ -54,7 +54,7 @@ export default function Footer() {
                 { label: 'Login', path: '/login' },
               ].map((l) => (
                 <li key={l.path}>
-                  <Link to={l.path} className="text-text-secondary hover:text-accent-blue transition-colors duration-200 text-sm hover:translate-x-1 inline-block">
+                  <Link to={l.path} className="text-text-secondary hover:text-accent-blue transition-all duration-200 text-sm hover:translate-x-1 inline-block">
                     {l.label}
                   </Link>
                 </li>

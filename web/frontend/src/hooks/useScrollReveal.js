@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
  * Elements animate once when they enter the viewport (PART 10.1).
  *
  * @param {Object} options
- * @param {string} options.threshold - Intersection threshold (default 0.1)
+ * @param {number} options.threshold - Intersection threshold (default 0.1)
  * @param {string} options.rootMargin - Root margin (default '-50px')
  * @returns {{ ref, isVisible }}
  */

@@ -294,9 +294,3 @@ body { background: #0d1117; color: #e6edf3; }
   display: none;
 }
 
-/* ─── PART 12.1: Theme Transition ─── */
-*, *::before, *::after {
-  transition-property: background-color, border-color;
-  transition-duration: 0s;
-}
-
