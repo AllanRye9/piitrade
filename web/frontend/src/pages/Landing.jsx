@@ -140,7 +140,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         {/* Background grid */}
         <div
           className="absolute inset-0 opacity-20"
@@ -292,7 +292,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4" ref={featuresRef}>
+      <section className="py-24" ref={featuresRef} style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -336,7 +336,7 @@ export default function Landing() {
       </section>
 
       {/* Live Preview / Subscribe */}
-      <section className="py-24 px-4 bg-bg-secondary">
+      <section className="py-24 bg-bg-secondary" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -422,7 +422,7 @@ export default function Landing() {
       </section>
 
       {/* Stats */}
-      <section className="py-24 px-4">
+      <section className="py-24" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {stats.map((s, i) => (
@@ -442,7 +442,7 @@ export default function Landing() {
       </section>
 
       {/* Roadmap */}
-      <section className="py-20 px-4">
+      <section className="py-20" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -480,7 +480,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-4 bg-bg-secondary">
+      <section className="py-24 bg-bg-secondary" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

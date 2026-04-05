@@ -294,3 +294,17 @@ body { background: #0d1117; color: #e6edf3; }
   display: none;
 }
 
+/* ─── Top Ad Marquee ─── */
+.ad-marquee {
+  display: flex;
+  animation: ad-scroll 30s linear infinite;
+  will-change: transform;
+}
+.ad-marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes ad-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+

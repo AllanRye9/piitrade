@@ -31,7 +31,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-bg-primary">
+    <div className="min-h-screen flex items-center justify-center bg-bg-primary" style={{ paddingLeft: '2.25%', paddingRight: '2.25%' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

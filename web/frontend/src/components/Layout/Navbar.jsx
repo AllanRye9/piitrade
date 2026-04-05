@@ -38,13 +38,13 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
       transition={{
-        duration: 0.5,
+        duration: 0.6,
         ease: [0.34, 1.3, 0.55, 1],
       }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 will-change-transform ${
+      className={`fixed top-7 left-0 right-0 z-50 transition-all duration-300 will-change-transform ${
         scrolled
           ? 'glass shadow-lg shadow-black/20'
           : 'bg-transparent'
@@ -59,52 +59,70 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <motion.div
-              className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center"
-              style={{
-                scale: isCompact ? 0.9 : 1,
-                transition: 'scale 0.3s ease',
+              initial={{ rotate: -180, scale: 0 }}
+              animate={{ rotate: 0, scale: isCompact ? 0.9 : 1 }}
+              transition={{
+                rotate: { duration: 0.6, ease: [0.34, 1.3, 0.55, 1] },
+                scale: { duration: 0.3, ease: 'easeOut' },
               }}
+              className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center"
             >
               <TrendingUp size={16} className="text-white" />
             </motion.div>
-            <span className="text-xl font-bold bg-gradient-to-r from-accent-blue via-accent-purple to-accent-blue bg-[length:200%_auto] animate-shimmer bg-clip-text text-transparent">
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-xl font-bold bg-gradient-to-r from-accent-blue via-accent-purple to-accent-blue bg-[length:200%_auto] animate-shimmer bg-clip-text text-transparent"
+            >
               PiiTrade
-            </span>
+            </motion.span>
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
+            {navLinks.map((link, i) => {
               const isActive = location.pathname === link.path
               return (
-                <Link
+                <motion.div
                   key={link.path}
-                  to={link.path}
-                  className={`nav-link relative px-4 py-2 font-medium transition-all duration-200 text-text-secondary hover:text-text-primary hover:bg-text-primary/5 rounded-lg ${
-                    isCompact ? 'text-xs' : 'text-sm'
-                  }`}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.15 + i * 0.08 }}
                 >
-                  {isActive && (
-                    <motion.span
-                      layoutId="navbar-underline"
-                      className="absolute inset-0 bg-accent-blue/10 rounded-lg"
-                      transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
-                    />
-                  )}
-                  <span className={`relative z-10 ${isActive ? 'text-accent-blue' : ''}`}>
-                    {link.label}
-                  </span>
-                  {/* Active page glow indicator */}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-blue rounded-full shadow-[0_0_8px_rgba(88,166,255,0.6)]" />
-                  )}
-                </Link>
+                  <Link
+                    to={link.path}
+                    className={`nav-link relative px-4 py-2 font-medium transition-all duration-200 text-text-secondary hover:text-text-primary hover:bg-text-primary/5 rounded-lg ${
+                      isCompact ? 'text-xs' : 'text-sm'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="navbar-underline"
+                        className="absolute inset-0 bg-accent-blue/10 rounded-lg"
+                        transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
+                      />
+                    )}
+                    <span className={`relative z-10 ${isActive ? 'text-accent-blue' : ''}`}>
+                      {link.label}
+                    </span>
+                    {/* Active page glow indicator */}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-blue rounded-full shadow-[0_0_8px_rgba(88,166,255,0.6)]" />
+                    )}
+                  </Link>
+                </motion.div>
               )
             })}
           </div>
 
           {/* Right side */}
-          <div className="hidden md:flex items-center gap-3">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="hidden md:flex items-center gap-3"
+          >
             {user ? (
               <Link
                 to="/profile"
@@ -121,7 +139,7 @@ export default function Navbar() {
                 Login
               </Link>
             )}
-          </div>
+          </motion.div>
 
           {/* Mobile hamburger */}
           <motion.button
