@@ -21,6 +21,8 @@ wheels/
 # Un-ignore the Flutter app's lib/ directory (the rule above is for Python venvs)
 !flutter/lib/
 *.egg
+.secret_key
+.node_modules
 
 # Virtual Environment
 venv/
