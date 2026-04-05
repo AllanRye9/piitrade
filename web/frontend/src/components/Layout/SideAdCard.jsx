@@ -35,6 +35,8 @@ export default function SideAdCard({ side = 'left', ad }) {
 
   const href = ad?.link_url || d.href
   const headline = ad?.title || d.headline
+  const description = ad?.description || d.description
+  const cta = ad?.cta || ad?.button_text || d.cta
   const imageUrl = ad?.image_url || null
 
   return (
@@ -84,13 +86,13 @@ export default function SideAdCard({ side = 'left', ad }) {
         <p className="text-white/90 font-semibold text-[11px] leading-tight">{headline}</p>
 
         {/* Description */}
-        <p className="text-white/50 text-[10px] leading-snug">{d.description}</p>
+        <p className="text-white/50 text-[10px] leading-snug">{description}</p>
 
         {/* CTA */}
         <span
           className={`mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${d.btnClass}`}
         >
-          {d.cta}
+          {cta}
           <ExternalLink size={9} />
         </span>
       </a>
