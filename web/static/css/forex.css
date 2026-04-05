@@ -3161,7 +3161,7 @@ canvas {
 .ad-btn-exness  { background: var(--accent2); color: #000; }
 .ad-btn:hover { opacity: .85; }
 .ad-risk-note {
-  font-size: .55rem;
+  font-size: .75rem;
   color: var(--text2);
   text-align: center;
   line-height: 1.4;
