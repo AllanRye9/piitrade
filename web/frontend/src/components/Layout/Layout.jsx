@@ -13,7 +13,6 @@ export default function Layout({ children }) {
   const [pageReady, setPageReady] = useState(false)
 
   useEffect(() => {
-    // Staggered page load: start invisible, then reveal
     const timer = setTimeout(() => setPageReady(true), 100)
     return () => clearTimeout(timer)
   }, [])
@@ -23,9 +22,9 @@ export default function Layout({ children }) {
       <TopAdStrip />
       <ScrollProgressBar />
       <Navbar />
-
-      {/* Main content – full width, pt accounts for ad strip + navbar */}
-      <main className="flex-1 min-w-0" style={{ paddingTop: 'calc(4rem + var(--ad-strip-height))' }}>
+      <main className="flex-1 min-w-0 pt-16">
+        {/* Top blank canvas — appears at the top of every page */}
+        <div className="mx-auto" style={{ width: '90%', height: '18px' }} />
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -42,7 +41,6 @@ export default function Layout({ children }) {
           </motion.div>
         </AnimatePresence>
       </main>
-
       <Footer />
       <BackToTop />
       <ToastContainer />

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Database, Cpu, TrendingUp, AlertTriangle, BookOpen, LineChart } from 'lucide-react'
+import PartnerCards from '../components/PartnerCard'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -159,6 +160,12 @@ export default function Methodology() {
             </div>
           </div>
         </motion.div>
+
+        {/* Partner cards */}
+        <div className="pt-4 border-t border-border-default">
+          <p className="text-text-muted text-xs uppercase tracking-widest font-semibold mb-3 text-center">Our Partners</p>
+          <PartnerCards />
+        </div>
       </div>
     </div>
   )
