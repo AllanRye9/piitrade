@@ -35,7 +35,7 @@ const sections = [
 
 export default function Disclaimer() {
   return (
-    <div className="min-h-screen bg-bg-primary pt-20 pb-16 px-4">
+    <div className="min-h-screen bg-bg-primary pt-20 pb-16" style={{ paddingLeft: 'var(--page-margin-x)', paddingRight: 'var(--page-margin-x)' }}>
       <div className="max-w-3xl mx-auto">
         {/* Hero */}
         <motion.div

@@ -6,6 +6,7 @@ import Footer from './Footer'
 import ScrollProgressBar from './ScrollProgressBar'
 import BackToTop from './BackToTop'
 import ToastContainer from './ToastContainer'
+import TopAdStrip from './TopAdStrip'
 
 export default function Layout({ children }) {
   const location = useLocation()
@@ -18,6 +19,7 @@ export default function Layout({ children }) {
 
   return (
     <div className={`min-h-screen flex flex-col bg-bg-primary transition-opacity duration-400 ${pageReady ? 'opacity-100' : 'opacity-0'}`}>
+      <TopAdStrip />
       <ScrollProgressBar />
       <Navbar />
       <main className="flex-1 min-w-0 pt-16">
