@@ -10,6 +10,7 @@ import {
   getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe,
 } from '../utils/api'
 import PriceTicker from '../components/PriceTicker'
+import PartnerCards from '../components/PartnerCard'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 function dirColor(dir) {
@@ -932,6 +933,13 @@ export default function ForexDashboard() {
     if (tabsRef.current) tabsRef.current.scrollBy({ left: dir * 120, behavior: 'smooth' })
   }
 
+  // Auto-scroll active tab into view when changed
+  useEffect(() => {
+    if (!tabsRef.current) return
+    const activeEl = tabsRef.current.querySelector('[data-active="true"]')
+    if (activeEl) activeEl.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' })
+  }, [activeTab])
+
   // Build select optgroups
   const majorList = allPairsData?.major
     ? allPairsData.major.filter((p) => typeof p === 'string' && p.length > 0)
@@ -1027,13 +1035,14 @@ export default function ForexDashboard() {
 
         {/* Tab navigation */}
         <div className="relative flex items-center gap-1">
-          <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+          <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary flex">
             <ChevronLeft size={13} />
           </button>
           <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
+                data-active={activeTab === tab.id ? 'true' : undefined}
                 onClick={() => setActiveTab(tab.id)}
                 className={`btn-interactive px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary shadow-sm shadow-accent-blue/30' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
               >
@@ -1041,7 +1050,7 @@ export default function ForexDashboard() {
               </button>
             ))}
           </div>
-          <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary hidden sm:flex">
+          <button onClick={() => scrollTabs(1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary flex">
             <ChevronRight size={13} />
           </button>
         </div>
@@ -1069,6 +1078,12 @@ export default function ForexDashboard() {
             {activeTab === 'alerts' && <AlertsTab />}
           </motion.div>
         </AnimatePresence>
+
+        {/* Partner cards */}
+        <div className="pt-4 border-t border-border-default">
+          <p className="text-text-muted text-xs uppercase tracking-widest font-semibold mb-3 text-center">Our Partners</p>
+          <PartnerCards />
+        </div>
       </div>
     </div>
   )

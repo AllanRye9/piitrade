@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { AlertTriangle, Scale, BookOpen, DollarSign } from 'lucide-react'
+import PartnerCards from '../components/PartnerCard'
 
 const sections = [
   {
@@ -90,6 +91,12 @@ export default function Disclaimer() {
             By using PiiTrade you acknowledge that you have read, understood, and agree to be bound by this disclaimer. PiiTrade reserves the right to update this disclaimer at any time without prior notice. Last updated: {new Date().getFullYear()}.
           </p>
         </motion.div>
+
+        {/* Partner cards */}
+        <div className="mt-8 pt-6 border-t border-border-default">
+          <p className="text-text-muted text-xs uppercase tracking-widest font-semibold mb-3 text-center">Our Partners</p>
+          <PartnerCards />
+        </div>
       </div>
     </div>
   )

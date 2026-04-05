@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, TrendingUp, User } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { Menu, X, TrendingUp } from 'lucide-react'
+import { useTheme, THEMES } from '../../context/ThemeContext'
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -11,9 +11,61 @@ const navLinks = [
   { label: 'Disclaimer', path: '/disclaimer' },
 ]
 
+function ThemePicker() {
+  const { theme, setTheme } = useTheme()
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const current = THEMES.find((t) => t.id === theme) || THEMES[0]
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-card border border-border-default hover:border-accent-blue/50 text-sm text-text-secondary hover:text-text-primary transition-all duration-200"
+        title="Change theme"
+        aria-label="Change theme"
+      >
+        <span className="text-base leading-none">{current.icon}</span>
+        <span className="hidden sm:inline text-xs font-medium">{current.label}</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-36 rounded-xl bg-bg-card border border-border-default shadow-xl z-50 overflow-hidden"
+          >
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => { setTheme(t.id); setOpen(false) }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors duration-150 ${
+                  theme === t.id
+                    ? 'bg-accent-blue/10 text-accent-blue font-semibold'
+                    : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                }`}
+              >
+                <span className="text-base">{t.icon}</span>
+                {t.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function Navbar() {
   const location = useLocation()
-  const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [scrollDirection, setScrollDirection] = useState('up')
@@ -40,30 +92,18 @@ export default function Navbar() {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{
-        duration: 0.5,
-        ease: [0.34, 1.3, 0.55, 1],
-      }}
+      transition={{ duration: 0.5, ease: [0.34, 1.3, 0.55, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 will-change-transform ${
-        scrolled
-          ? 'glass shadow-lg shadow-black/20'
-          : 'bg-transparent'
+        scrolled ? 'glass shadow-lg shadow-black/20' : 'bg-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className={`flex items-center justify-between transition-all duration-300 ${
-            isCompact ? 'h-14' : 'h-16'
-          }`}
-        >
+        <div className={`flex items-center justify-between transition-all duration-300 ${isCompact ? 'h-14' : 'h-16'}`}>
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
             <motion.div
               className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center"
-              style={{
-                scale: isCompact ? 0.9 : 1,
-                transition: 'scale 0.3s ease',
-              }}
+              style={{ scale: isCompact ? 0.9 : 1, transition: 'scale 0.3s ease' }}
             >
               <TrendingUp size={16} className="text-white" />
             </motion.div>
@@ -72,7 +112,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path
@@ -94,7 +134,6 @@ export default function Navbar() {
                   <span className={`relative z-10 ${isActive ? 'text-accent-blue' : ''}`}>
                     {link.label}
                   </span>
-                  {/* Active page glow indicator */}
                   {isActive && (
                     <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-blue rounded-full shadow-[0_0_8px_rgba(88,166,255,0.6)]" />
                   )}
@@ -103,39 +142,21 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Right side */}
-          <div className="hidden md:flex items-center gap-3">
-            {user ? (
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-card border border-border-default hover:border-accent-blue/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-sm"
-              >
-                <User size={14} className="text-accent-blue" />
-                <span className="text-text-primary">{user.username || 'Account'}</span>
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="px-4 py-2 rounded-lg bg-accent-blue text-bg-primary text-sm font-semibold hover:bg-blue-400 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile hamburger */}
-          <motion.button
-            onClick={() => setMenuOpen(!menuOpen)}
-            whileTap={{ scale: 0.9 }}
-            className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-card transition-all"
-          >
-            <motion.div
-              animate={{ rotate: menuOpen ? 90 : 0 }}
-              transition={{ duration: 0.2 }}
+          {/* Right side: theme picker */}
+          <div className="flex items-center gap-2">
+            <ThemePicker />
+            {/* Mobile hamburger */}
+            <motion.button
+              onClick={() => setMenuOpen(!menuOpen)}
+              whileTap={{ scale: 0.9 }}
+              className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-card transition-all"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </motion.div>
-          </motion.button>
+              <motion.div animate={{ rotate: menuOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                {menuOpen ? <X size={20} /> : <Menu size={20} />}
+              </motion.div>
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -143,7 +164,6 @@ export default function Navbar() {
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
@@ -171,6 +191,7 @@ export default function Navbar() {
                     >
                       <Link
                         to={link.path}
+                        onClick={() => setMenuOpen(false)}
                         className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
                           isActive
                             ? 'bg-accent-blue/10 text-accent-blue'
@@ -182,29 +203,6 @@ export default function Navbar() {
                     </motion.div>
                   )
                 })}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="pt-2 border-t border-border-default"
-                >
-                  {user ? (
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-card"
-                    >
-                      <User size={14} />
-                      {user.username || 'Account'}
-                    </Link>
-                  ) : (
-                    <Link
-                      to="/login"
-                      className="block w-full text-center px-4 py-3 rounded-lg bg-accent-blue text-bg-primary text-sm font-semibold"
-                    >
-                      Login
-                    </Link>
-                  )}
-                </motion.div>
               </div>
             </motion.div>
           </>

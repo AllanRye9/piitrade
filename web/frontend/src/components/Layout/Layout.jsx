@@ -12,7 +12,6 @@ export default function Layout({ children }) {
   const [pageReady, setPageReady] = useState(false)
 
   useEffect(() => {
-    // Staggered page load: start invisible, then reveal
     const timer = setTimeout(() => setPageReady(true), 100)
     return () => clearTimeout(timer)
   }, [])
@@ -21,8 +20,6 @@ export default function Layout({ children }) {
     <div className={`min-h-screen flex flex-col bg-bg-primary transition-opacity duration-400 ${pageReady ? 'opacity-100' : 'opacity-0'}`}>
       <ScrollProgressBar />
       <Navbar />
-
-      {/* Main content – full width */}
       <main className="flex-1 min-w-0 pt-16">
         <AnimatePresence mode="wait">
           <motion.div
@@ -40,7 +37,6 @@ export default function Layout({ children }) {
           </motion.div>
         </AnimatePresence>
       </main>
-
       <Footer />
       <BackToTop />
       <ToastContainer />
