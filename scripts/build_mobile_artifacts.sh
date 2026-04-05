@@ -119,7 +119,7 @@ ensure_android_sdk() {
   fi
 
   echo "[step] Installing Android SDK packages"
-  yes | android_sdkmanager --licenses >/dev/null
+  yes 2>/dev/null | android_sdkmanager --licenses >/dev/null || true
   android_sdkmanager --install \
     "platform-tools" \
     "platforms;android-$ANDROID_PLATFORM_VERSION" \
@@ -164,6 +164,12 @@ build_ios() {
   if [[ "$HOST_OS" != "Darwin" ]]; then
     echo "[error] iOS build requires macOS runner (Darwin)." >&2
     exit 1
+  fi
+
+  # Generate Xcode project files if they are missing (e.g. not committed to repo)
+  if [[ ! -d "$FLUTTER_DIR/ios/Runner.xcodeproj" ]]; then
+    echo "[step] Generating missing iOS project files"
+    run_flutter create --platforms=ios .
   fi
 
   echo "[step] Installing CocoaPods dependencies"

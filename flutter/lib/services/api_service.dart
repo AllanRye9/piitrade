@@ -97,6 +97,15 @@ class ApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Returns detected chart patterns from the pattern scanner.
+  Future<Map<String, dynamic>> getForexPatternScanner() async {
+    final response = await _client
+        .get(Uri.parse('$_base/api/forex/pattern-scanner'))
+        .timeout(_kRequestTimeout);
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   /// Subscribes [email] to signal alerts for the given [pairs].
   Future<Map<String, dynamic>> subscribeForexAlerts({
     required String email,

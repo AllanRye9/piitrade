@@ -201,6 +201,11 @@ class _ForexScreenState extends State<ForexScreen>
   bool _loadingSr = false;
   String? _srError;
 
+  // Pattern scanner
+  List<dynamic> _patterns = [];
+  bool _loadingPatterns = false;
+  String? _patternError;
+
   // Gamification
   _GameState _game = _GameState();
   SharedPreferences? _prefs;
@@ -239,7 +244,7 @@ class _ForexScreenState extends State<ForexScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 10, vsync: this);
+    _tabController = TabController(length: 11, vsync: this);
     _api = ApiService(widget.serverUrl);
     _loadPrefs();
     _loadSignal();
@@ -248,6 +253,7 @@ class _ForexScreenState extends State<ForexScreen>
     _loadReversals();
     _loadFvgScanner();
     _loadSrBreakouts();
+    _loadPatternScanner();
     // Auto-refresh signal data periodically
     _refreshTimer = Timer.periodic(_kAutoRefreshInterval, (_) {
       if (!mounted) return;
@@ -259,6 +265,7 @@ class _ForexScreenState extends State<ForexScreen>
       _loadReversals().ignore();
       _loadFvgScanner().ignore();
       _loadSrBreakouts().ignore();
+      _loadPatternScanner().ignore();
     });
   }
 
@@ -407,6 +414,24 @@ class _ForexScreenState extends State<ForexScreen>
     } catch (e) {
       if (mounted) {
         setState(() { _srError = e.toString(); _loadingSr = false; });
+      }
+    }
+  }
+
+  Future<void> _loadPatternScanner() async {
+    setState(() { _loadingPatterns = true; _patternError = null; });
+    try {
+      final data = await _api.getForexPatternScanner();
+      if (mounted) {
+        final raw = data['patterns'] ?? data;
+        setState(() {
+          _patterns = (raw is List) ? raw : [];
+          _loadingPatterns = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _patternError = e.toString(); _loadingPatterns = false; });
       }
     }
   }
@@ -645,6 +670,7 @@ class _ForexScreenState extends State<ForexScreen>
                 _buildVolatileTab(cs),
                 _buildReversalTab(cs),
                 _buildSuccessTab(cs),
+                _buildScannerTab(cs),
                 _buildNewsTab(cs),
                 _buildAlertsTab(cs),
               ],
@@ -665,10 +691,10 @@ class _ForexScreenState extends State<ForexScreen>
           const SizedBox(width: 8),
           const Text('📈', style: TextStyle(fontSize: 20)),
           const SizedBox(width: 6),
-          Text(
+          const Text(
             'AI Forex Signal Hub',
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 8),
           // Exness banner — flexible width, fills space up to notifications icon
@@ -677,10 +703,10 @@ class _ForexScreenState extends State<ForexScreen>
               // TODO: open Exness partner URL via url_launcher when integrated
               onTap: null,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(6),
                 child: Image.asset(
-                  'assets/images/exness.jpg',
-                  fit: BoxFit.cover,
+                  'assets/images/exness.png',
+                  fit: BoxFit.contain,
                   height: kToolbarHeight,
                 ),
               ),
@@ -690,8 +716,8 @@ class _ForexScreenState extends State<ForexScreen>
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_outlined),
+        const IconButton(
+          icon: Icon(Icons.notifications_none_outlined),
           tooltip: 'Notifications',
           // TODO: implement notification panel
           onPressed: null,
@@ -861,6 +887,7 @@ class _ForexScreenState extends State<ForexScreen>
           Tab(text: '🔥 Volatile'),
           Tab(text: '🔄 Reversal'),
           Tab(text: '🏆 Success Rates'),
+          Tab(text: '🔮 Scanner'),
           Tab(text: '📰 News'),
           Tab(text: '🔔 Alerts'),
         ],
@@ -2337,7 +2364,139 @@ class _ForexScreenState extends State<ForexScreen>
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // Tab 9 – News
+  // Tab 9 – Pattern Scanner
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildScannerTab(ColorScheme cs) {
+    if (_loadingPatterns) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_patternError != null) {
+      return _buildErrorCard(_patternError!, _loadPatternScanner, cs);
+    }
+    if (_patterns.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🔮', style: TextStyle(fontSize: 40)),
+            const SizedBox(height: 12),
+            Text('No patterns detected',
+                style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text('No chart patterns found in the current scanner.',
+                style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.45),
+                    fontSize: 13)),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadPatternScanner,
+      color: cs.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _patterns.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) {
+          if (i == 0) {
+            return const Text('🔮 Pattern Scanner',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600));
+          }
+          final p = _patterns[i - 1] as Map<String, dynamic>? ?? {};
+          final pair       = p['pair'] as String? ?? '—';
+          final label      = p['label'] as String?
+                          ?? p['pattern'] as String?
+                          ?? p['type'] as String? ?? 'Pattern';
+          final desc       = p['description'] as String?
+                          ?? p['timeframe'] as String?
+                          ?? p['tf'] as String? ?? '';
+          final impact     = p['impact'] as String? ?? '';
+          final direction  = p['direction'] as String?
+                          ?? (label.toLowerCase().contains('bull') ? 'BUY'
+                            : label.toLowerCase().contains('bear') ? 'SELL'
+                            : null);
+          final dirColor   = direction == 'BUY'  ? _kBuyColor
+                           : direction == 'SELL' ? _kSellColor
+                           : _kHoldColor;
+
+          Color impactColor;
+          switch (impact.toLowerCase()) {
+            case 'high':   impactColor = _kSellColor; break;
+            case 'medium': impactColor = _kHoldColor; break;
+            default:       impactColor = _kBlueAccent;
+          }
+
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _kCardBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kBorderColor),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(pair,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 14)),
+                      if (desc.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(desc,
+                            style: TextStyle(
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                                fontSize: 12)),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(label,
+                        style: TextStyle(
+                            color: dirColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13)),
+                    if (impact.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: impactColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                              color: impactColor.withValues(alpha: 0.4)),
+                        ),
+                        child: Text(impact.toUpperCase(),
+                            style: TextStyle(
+                                color: impactColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 10 – News
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildNewsTab(ColorScheme cs) {
@@ -2425,7 +2584,7 @@ class _ForexScreenState extends State<ForexScreen>
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // Tab 10 – Alerts
+  // Tab 11 – Alerts
   // ══════════════════════════════════════════════════════════════════════════════
 
   Widget _buildAlertsTab(ColorScheme cs) {
