@@ -267,6 +267,34 @@ export default function Landing() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="relative hidden lg:block"
           >
+            {/* Trader image — decorative backdrop */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, delay: 0.6, ease: 'easeOut' }}
+            >
+              <motion.img
+                src="/img/trader.png"
+                alt=""
+                className="w-72 h-72 object-cover rounded-full"
+                style={{
+                  opacity: 0.35,
+                  maskImage: 'radial-gradient(circle at center, black 40%, transparent 75%)',
+                  WebkitMaskImage: 'radial-gradient(circle at center, black 40%, transparent 75%)',
+                }}
+                animate={{
+                  scale: [1, 1.04, 1],
+                  filter: [
+                    'drop-shadow(0 0 18px rgba(88,166,255,0.25))',
+                    'drop-shadow(0 0 36px rgba(88,166,255,0.55))',
+                    'drop-shadow(0 0 18px rgba(88,166,255,0.25))',
+                  ],
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </motion.div>
+
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
