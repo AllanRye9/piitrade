@@ -276,7 +276,7 @@ export default function Landing() {
             >
               <motion.img
                 src="/img/trader.png"
-                alt="Trader"
+                alt=""
                 className="w-72 h-72 object-cover rounded-full"
                 style={{
                   opacity: 0.35,
