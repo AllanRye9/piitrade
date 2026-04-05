@@ -1292,10 +1292,10 @@ async def favicon_png():
     return FileResponse(str(_favicon), media_type="image/png")
 
 
-@app.get("/exness.jpg")
+@app.get("/exness.png")
 async def exness_banner_image():
     """Serve the Exness banner image used in the shared header."""
-    _banner = _DIR.parent / "exness.jpg"
+    _banner = _DIR.parent / "exness.png"
     if not _banner.exists():
         return JSONResponse({"error": "Not found"}, status_code=404)
     return FileResponse(str(_banner), media_type="image/jpeg")
