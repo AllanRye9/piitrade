@@ -132,14 +132,14 @@ export default function Navbar() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`relative px-4 py-2 font-medium transition-all duration-200 text-text-secondary hover:text-text-primary hover:bg-text-primary/5 rounded-lg no-underline ${
+                    className={`relative px-4 py-2 font-medium transition-all duration-200 text-text-secondary hover:text-text-primary hover:bg-text-primary/5 rounded-md no-underline ${
                       isCompact ? 'text-xs' : 'text-sm'
                     }`}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="navbar-underline"
-                        className="absolute inset-0 bg-accent-blue/10 rounded-lg"
+                        className="absolute inset-0 bg-accent-blue/10 rounded-md"
                         transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
                       />
                     )}
@@ -164,9 +164,9 @@ export default function Navbar() {
               title="Exness — Trade Smarter"
             >
               <img
-                src="/exness.jpg"
+                src="/exness.png"
                 alt="Exness"
-                className="h-full w-full object-cover object-center"
+                className="h-full w-full object-contain object-center"
                 draggable="false"
               />
             </a>
@@ -250,7 +250,7 @@ export default function Navbar() {
                         <Link
                           to={link.path}
                           onClick={() => setMenuOpen(false)}
-                          className={`block px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200 no-underline ${
+                          className={`block px-4 py-3 rounded-md text-sm font-medium transition-colors duration-200 no-underline ${
                             isActive
                               ? 'bg-accent-blue/10 text-accent-blue'
                               : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
