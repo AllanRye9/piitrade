@@ -1,17 +1,12 @@
-import { useEffect, useState, useCallback, createContext, useContext } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react'
 
-// Toast context for global access
-const ToastContext = createContext(null)
-
-export function useToast() {
-  return useContext(ToastContext)
-}
-
-let toastListeners = []
+const toastListeners = []
 let toastId = 0
 
+/** Call this function from anywhere to show a toast notification */
+// eslint-disable-next-line react-refresh/only-export-components
 export function showToast(message, type = 'info', duration = 3000) {
   const id = ++toastId
   toastListeners.forEach((fn) => fn({ id, message, type, duration }))
@@ -58,7 +53,8 @@ export default function ToastContainer() {
   useEffect(() => {
     toastListeners.push(addToast)
     return () => {
-      toastListeners = toastListeners.filter((fn) => fn !== addToast)
+      const idx = toastListeners.indexOf(addToast)
+      if (idx > -1) toastListeners.splice(idx, 1)
     }
   }, [addToast])
 

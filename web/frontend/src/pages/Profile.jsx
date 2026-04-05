@@ -83,7 +83,7 @@ export default function Profile() {
               {isAdmin && (
                 <button
                   onClick={() => navigate('/admin')}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-accent-purple/10 border border-accent-purple/30 text-accent-purple rounded-xl hover:bg-accent-purple/20 transition-all font-medium"
+                  className="btn-interactive flex items-center justify-center gap-2 px-6 py-3 bg-accent-purple/10 border border-accent-purple/30 text-accent-purple rounded-xl hover:bg-accent-purple/20 font-medium"
                 >
                   <Shield size={16} />
                   Admin Panel
@@ -91,7 +91,7 @@ export default function Profile() {
               )}
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl hover:bg-accent-red/20 transition-all font-medium"
+                className="btn-interactive flex items-center justify-center gap-2 px-6 py-3 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl hover:bg-accent-red/20 font-medium"
               >
                 <LogOut size={16} />
                 Sign Out

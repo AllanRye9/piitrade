@@ -63,8 +63,9 @@ export default function Disclaimer() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`border rounded-2xl p-6 ${s.bg}`}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                whileHover={{ y: -4, transition: { duration: 0.25 } }}
+                className={`border rounded-2xl p-6 card-hover ${s.bg}`}
               >
                 <div className="flex items-start gap-3">
                   <Icon size={20} className={`${s.color} mt-0.5 flex-shrink-0`} />
