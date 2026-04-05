@@ -659,21 +659,43 @@ class _ForexScreenState extends State<ForexScreen>
     return AppBar(
       backgroundColor: const Color(0xFF0d1117),
       elevation: 0,
-      title: const Row(
-        mainAxisSize: MainAxisSize.min,
+      titleSpacing: 0,
+      title: Row(
         children: [
-          Text('📈', style: TextStyle(fontSize: 22)),
-          SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              'AI Forex Signal Hub',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          const SizedBox(width: 8),
+          const Text('📈', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: 6),
+          Text(
+            'AI Forex Signal Hub',
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(width: 8),
+          // Exness banner — flexible width, fills space up to the bell icon
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                // Open Exness partner link
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  'assets/images/exness.jpg',
+                  fit: BoxFit.cover,
+                  height: kToolbarHeight,
+                ),
+              ),
             ),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none_outlined),
+          tooltip: 'Notifications',
+          onPressed: () {},
+        ),
         IconButton(
           icon: _loadingSignal
               ? const SizedBox(

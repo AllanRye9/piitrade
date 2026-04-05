@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, TrendingUp } from 'lucide-react'
+import { Menu, X, TrendingUp, Bell } from 'lucide-react'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 
 const navLinks = [
@@ -110,7 +110,7 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`flex items-center justify-between transition-all duration-300 ${isCompact ? 'h-14' : 'h-16'}`}>
+          <div className={`flex items-center gap-3 transition-all duration-300 ${isCompact ? 'h-14' : 'h-16'}`}>
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
               <motion.div
@@ -125,7 +125,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav links — hidden on mobile & tablet, shown on lg+ */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path
                 return (
@@ -154,8 +154,32 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* Right side: theme picker + hamburger */}
-            <div className="flex items-center gap-2">
+            {/* Exness banner — flexible width, fills space between nav and bell icon */}
+            <a
+              href="https://www.exness.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-0 self-stretch flex items-center overflow-hidden"
+              aria-label="Exness — Sponsored"
+              title="Exness — Trade Smarter"
+            >
+              <img
+                src="/exness.jpg"
+                alt="Exness"
+                className="h-full w-full object-cover object-center"
+                draggable="false"
+              />
+            </a>
+
+            {/* Right side: bell + theme picker + hamburger */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                className="p-2 rounded-lg text-text-secondary hover:text-accent-blue hover:bg-bg-card transition-all relative"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell size={18} />
+              </button>
               <ThemePicker />
               {/* Hamburger — visible on mobile & tablet (below lg) */}
               <motion.button
