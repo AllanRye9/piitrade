@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, Zap, BarChart2, Globe, Shield, ChevronRight, ArrowRight } from 'lucide-react'
+import {
+  TrendingUp, TrendingDown, Minus, Zap, BarChart2, Globe, Shield,
+  ChevronRight, ArrowRight, CheckCircle, Users, Star, Clock, Lock,
+  Activity, DollarSign, BookOpen
+} from 'lucide-react'
 import { subscribe } from '../utils/api'
+import PartnerCards from '../components/PartnerCard'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -80,7 +85,7 @@ const features = [
   {
     icon: ChevronRight,
     title: 'Crypto & Stocks Soon',
-    desc: 'Crypto, commodities, and stocks signals are on their way — free AI tools for every asset, every day.',
+    desc: 'Crypto, commodities, and stocks signals on the way — free AI tools for every asset.',
     color: 'text-accent-blue',
     bg: 'bg-accent-blue/10',
   },
@@ -98,6 +103,42 @@ const previewSignals = [
   { pair: 'GBP/JPY', dir: 'SELL', conf: 65, entry: '196.34' },
   { pair: 'AUD/USD', dir: 'BUY', conf: 71, entry: '0.6541' },
   { pair: 'USD/JPY', dir: 'HOLD', conf: 58, entry: '154.82' },
+]
+
+const howItWorks = [
+  {
+    step: '01',
+    icon: Activity,
+    title: 'AI Analyses the Market',
+    desc: 'Our LightGBM model processes 40+ technical indicators — RSI, MACD, Bollinger Bands, ATR, and more — across 35 pairs in real time.',
+    color: 'text-accent-blue',
+    bg: 'bg-accent-blue/10',
+  },
+  {
+    step: '02',
+    icon: Zap,
+    title: 'Signal is Generated',
+    desc: 'The model outputs a BUY, SELL, or HOLD signal with a confidence score, auto-calculated take-profit, and stop-loss levels.',
+    color: 'text-accent-green',
+    bg: 'bg-accent-green/10',
+  },
+  {
+    step: '03',
+    icon: DollarSign,
+    title: 'You Trade Smarter',
+    desc: 'Use the built-in Risk Calculator to size your position, set your alerts, and execute trades with confidence.',
+    color: 'text-accent-purple',
+    bg: 'bg-accent-purple/10',
+  },
+]
+
+const trustPoints = [
+  { icon: Lock, text: 'No account required — open & free forever' },
+  { icon: BookOpen, text: 'Transparent methodology — see exactly how signals work' },
+  { icon: Clock, text: 'Signals refreshed continuously throughout the day' },
+  { icon: Users, text: 'Built for traders of all experience levels' },
+  { icon: Star, text: '100% free — no premium tier, no hidden fees' },
+  { icon: CheckCircle, text: 'Works on all devices — desktop, tablet, and mobile' },
 ]
 
 function SignalBadge({ dir }) {
@@ -139,18 +180,17 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
+      {/* ── Hero ── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20">
         {/* Background grid */}
         <div
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-20 pointer-events-none"
           style={{
             backgroundImage:
               'linear-gradient(rgba(88,166,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(88,166,255,0.15) 1px, transparent 1px)',
             backgroundSize: '50px 50px',
           }}
         />
-        {/* Gradient orbs with ambient animation */}
         <motion.div
           animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
@@ -162,8 +202,8 @@ export default function Landing() {
           className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent-purple/5 blur-3xl pointer-events-none"
         />
 
-        <div className="relative z-10 max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left */}
+        <div className="relative z-10 max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center w-full">
+          {/* Left content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -182,7 +222,7 @@ export default function Landing() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               <span className="text-text-primary">AI-Powered</span>
               <br />
-              <span className="bg-gradient-to-r from-accent-blue via-accent-purple to-accent-green bg-[length:200%_auto] gradient-animated bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-accent-blue via-accent-purple to-accent-green bg-[length:200%_auto] animate-shimmer bg-clip-text text-transparent">
                 Forex Signals
               </span>
               <br />
@@ -193,29 +233,39 @@ export default function Landing() {
               Real-time buy/sell/hold signals for 35 forex pairs — powered by LightGBM trained on 10+ years of market data. Crypto & stocks coming soon. No subscriptions, no paywalls.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Link
                 to="/forex"
-                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
+                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
               >
                 View Live Signals
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/methodology"
-                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 border border-border-default text-text-primary rounded-lg hover:border-accent-blue/50 hover:text-accent-blue"
+                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 border border-border-default text-text-primary rounded-xl hover:border-accent-blue/50 hover:text-accent-blue"
               >
                 Learn Methodology
               </Link>
             </div>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-3">
+              {['No Account Needed', '100% Free', 'Live Data'].map((badge) => (
+                <span key={badge} className="inline-flex items-center gap-1.5 text-xs text-text-muted">
+                  <CheckCircle size={12} className="text-accent-green" />
+                  {badge}
+                </span>
+              ))}
+            </div>
           </motion.div>
 
-          {/* Right — floating signal preview */}
+          {/* Right — floating signal card */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative"
+            className="relative hidden sm:block"
           >
             <motion.div
               animate={{ y: [0, -10, 0] }}
@@ -247,8 +297,7 @@ export default function Landing() {
                 </div>
                 <div>
                   <div className="flex justify-between text-xs text-text-muted mb-1">
-                    <span>Confidence</span>
-                    <span>78%</span>
+                    <span>Confidence</span><span>78%</span>
                   </div>
                   <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
                     <motion.div
@@ -262,7 +311,6 @@ export default function Landing() {
               </div>
             </motion.div>
 
-            {/* Floating mini cards */}
             {previewSignals.slice(1).map((s, i) => (
               <motion.div
                 key={s.pair}
@@ -279,7 +327,6 @@ export default function Landing() {
           </motion.div>
         </div>
 
-        {/* Scroll indicator */}
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -291,7 +338,27 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Features */}
+      {/* ── Stats Banner ── */}
+      <section className="py-12 px-4 bg-bg-secondary border-y border-border-default">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <AnimatedCounter target={s.value} suffix={s.suffix} />
+                <p className="text-text-secondary text-sm mt-2">{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
       <section className="py-24 px-4" ref={featuresRef}>
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -335,8 +402,53 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Live Preview / Subscribe */}
-      <section className="py-24 px-4 bg-bg-secondary">
+      {/* ── How It Works ── */}
+      <section className="py-24 px-4 bg-bg-secondary border-y border-border-default">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">How It Works</h2>
+            <p className="text-text-secondary text-lg max-w-xl mx-auto">
+              From raw market data to actionable signal — in three simple steps.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connector line for desktop */}
+            <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-accent-blue/30 via-accent-green/30 to-accent-purple/30" />
+
+            {howItWorks.map((step, i) => {
+              const Icon = step.icon
+              return (
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                  className="flex flex-col items-center text-center relative"
+                >
+                  <div className={`w-20 h-20 rounded-2xl ${step.bg} flex items-center justify-center mb-4 relative z-10`}>
+                    <Icon size={32} className={step.color} />
+                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-bg-card border border-border-default flex items-center justify-center text-xs font-bold text-text-muted">
+                      {step.step}
+                    </span>
+                  </div>
+                  <h3 className="text-text-primary font-semibold text-lg mb-2">{step.title}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{step.desc}</p>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Live Signal Preview ── */}
+      <section className="py-24 px-4">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -357,7 +469,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-bg-card border border-border-default rounded-xl p-4"
+                className="bg-bg-card border border-border-default rounded-xl p-4 hover:border-accent-blue/30 transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -382,33 +494,100 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Subscribe */}
+          <div className="text-center">
+            <Link
+              to="/forex"
+              className="btn-interactive inline-flex items-center gap-2 px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 group"
+            >
+              View All 35 Pairs
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Partners / Sponsors ── */}
+      <section className="py-16 px-4 bg-bg-secondary border-y border-border-default">
+        <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="max-w-lg mx-auto text-center"
+            className="text-center mb-8"
           >
-            <h3 className="text-xl font-bold text-text-primary mb-2">Get Signal Alerts</h3>
-            <p className="text-text-secondary text-sm mb-6">Subscribe to receive email alerts when high-confidence signals appear.</p>
+            <p className="text-text-muted text-sm uppercase tracking-widest font-semibold">Our Partners</p>
+            <p className="text-text-secondary text-sm mt-1">These partners help keep PiiTrade free for everyone</p>
+          </motion.div>
+          <PartnerCards />
+        </div>
+      </section>
+
+      {/* ── Trust / Why Free ── */}
+      <section className="py-24 px-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">Why PiiTrade?</h2>
+            <p className="text-text-secondary text-lg max-w-2xl mx-auto">
+              Professional-grade trading tools should be accessible to everyone — not just institutional traders paying thousands per month.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trustPoints.map((point, i) => {
+              const Icon = point.icon
+              return (
+                <motion.div
+                  key={point.text}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-start gap-3 p-4 bg-bg-card border border-border-default rounded-xl hover:border-accent-green/30 transition-colors"
+                >
+                  <Icon size={18} className="text-accent-green flex-shrink-0 mt-0.5" />
+                  <p className="text-text-secondary text-sm leading-relaxed">{point.text}</p>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Subscribe ── */}
+      <section className="py-20 px-4 bg-bg-secondary border-y border-border-default">
+        <div className="max-w-lg mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h3 className="text-2xl font-bold text-text-primary mb-2">Get Signal Alerts</h3>
+            <p className="text-text-secondary text-sm mb-6">
+              Subscribe to receive email alerts when high-confidence signals appear across 35 forex pairs.
+            </p>
             {subStatus === 'success' ? (
               <div className="px-6 py-4 bg-accent-green/10 border border-accent-green/30 rounded-xl text-accent-green font-medium">
                 ✓ Subscribed successfully! You'll receive alerts soon.
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex gap-3">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   required
-                  className="flex-1 px-4 py-3 bg-bg-card border border-border-default rounded-lg text-text-primary placeholder-text-muted input-animated"
+                  className="flex-1 px-4 py-3 bg-bg-card border border-border-default rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue/50 transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={subLoading}
-                  className="btn-interactive px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 disabled:opacity-60"
+                  className="btn-interactive px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 disabled:opacity-60 whitespace-nowrap"
                 >
                   {subLoading ? '...' : 'Subscribe'}
                 </button>
@@ -421,27 +600,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-24 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            {stats.map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <AnimatedCounter target={s.value} suffix={s.suffix} />
-                <p className="text-text-secondary text-sm mt-2">{s.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Roadmap */}
+      {/* ── Roadmap ── */}
       <section className="py-20 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -451,36 +610,36 @@ export default function Landing() {
           className="max-w-3xl mx-auto text-center"
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-6">
-            🗺️ What's Coming Next
+            🗺️ What&rsquo;s Coming Next
           </h2>
           <div className="bg-bg-card border border-border-default rounded-2xl p-8 space-y-4 text-left">
             <div className="flex items-start gap-3">
               <span className="text-2xl">📈</span>
               <p className="text-text-secondary leading-relaxed">
-                <span className="text-accent-green font-semibold">Forex signals are live today,</span>{' '}
-                free for all traders on their way.
+                <span className="text-accent-green font-semibold">Forex signals are live today</span>
+                {' — '}free for all traders, updated continuously.
               </p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">₿</span>
               <p className="text-text-secondary leading-relaxed">
-                <span className="text-accent-yellow font-semibold">Crypto markets join us next,</span>{' '}
-                AI signals — no complex text.
+                <span className="text-accent-yellow font-semibold">Crypto markets are next</span>
+                {' — '}AI-powered signals for Bitcoin, Ethereum, and more.
               </p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">📊</span>
               <p className="text-text-secondary leading-relaxed">
-                <span className="text-accent-purple font-semibold">Stocks and commodities join the floor,</span>{' '}
-                professional tools, and so much more.
+                <span className="text-accent-purple font-semibold">Stocks and commodities</span>
+                {' — '}professional AI tools for every asset class, all free.
               </p>
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-4 bg-bg-secondary">
+      {/* ── Final CTA ── */}
+      <section className="py-24 px-4 bg-bg-secondary border-t border-border-default">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -491,16 +650,23 @@ export default function Landing() {
             Ready to Trade Smarter?
           </h2>
           <p className="text-text-secondary text-lg mb-8">
-            Thirty-five forex pairs, signals live and free — powered by AI for traders like you and me.
-            No account needed, no paywalls in sight — just open the dashboard and trade it right.
+            No account needed. No paywalls. Just open the dashboard and start trading with AI-powered signals — free forever.
           </p>
-          <Link
-            to="/forex"
-            className="btn-interactive inline-flex items-center gap-2 px-8 py-4 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 text-lg group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
-          >
-            Open Dashboard
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/forex"
+              className="btn-interactive inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 text-lg group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
+            >
+              Open Dashboard
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              to="/methodology"
+              className="btn-interactive inline-flex items-center justify-center gap-2 px-8 py-4 border border-border-default text-text-primary rounded-xl hover:border-accent-blue/50 hover:text-accent-blue text-lg"
+            >
+              Learn More
+            </Link>
+          </div>
         </motion.div>
       </section>
     </div>
