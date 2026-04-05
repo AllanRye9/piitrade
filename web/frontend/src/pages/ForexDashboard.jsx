@@ -9,8 +9,7 @@ import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
   getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe,
 } from '../utils/api'
-import AdBanner from '../components/Layout/AdBanner'
-import { useAds } from '../hooks/useAds'
+import PriceTicker from '../components/PriceTicker'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 function dirColor(dir) {
@@ -243,7 +242,7 @@ function RiskCalcTab() {
             type="number"
             value={balance}
             onChange={(e) => setBalance(parseFloat(e.target.value) || 0)}
-            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
+            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
           />
         </div>
         <div>
@@ -262,7 +261,7 @@ function RiskCalcTab() {
               type="number" step="0.00001" value={entry}
               onChange={(e) => setEntry(e.target.value)}
               placeholder="1.08420"
-              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue placeholder-text-muted"
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
             />
           </div>
           <div>
@@ -271,7 +270,7 @@ function RiskCalcTab() {
               type="number" step="0.00001" value={sl}
               onChange={(e) => setSl(e.target.value)}
               placeholder="1.08000"
-              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue placeholder-text-muted"
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
             />
           </div>
         </div>
@@ -280,7 +279,7 @@ function RiskCalcTab() {
           <input
             type="number" value={pipValue}
             onChange={(e) => setPipValue(parseFloat(e.target.value) || 10)}
-            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
+            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
           />
         </div>
       </div>
@@ -808,7 +807,7 @@ function AlertsTab() {
             <input
               type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com" required
-              className="flex-1 bg-bg-secondary border border-border-default rounded-lg px-3 py-2 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue text-sm"
+              className="flex-1 bg-bg-secondary border border-border-default rounded-lg px-3 py-2 text-text-primary placeholder-text-muted input-animated text-sm"
             />
             <button
               type="submit" disabled={loading}
@@ -880,7 +879,6 @@ function Gamebar() {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ForexDashboard() {
-  const { ads } = useAds()
   const [allPairsData, setAllPairsData] = useState(null)
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
   const [activeTab, setActiveTab] = useState('signal')
@@ -948,11 +946,16 @@ export default function ForexDashboard() {
   return (
     <div className="min-h-screen bg-bg-primary py-3 px-3">
       <div className="max-w-5xl mx-auto space-y-3">
-        {/* Top ad */}
-        <AdBanner placement="banner-top" ads={ads} />
+        {/* Price Ticker */}
+        <PriceTicker />
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="flex items-center justify-between"
+        >
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-text-primary">📊 PiiTrade — Forex Signal Hub</h1>
             <p className="text-text-muted text-xs">AI-powered signals for {forexPairs.length} forex pairs</p>
@@ -960,7 +963,7 @@ export default function ForexDashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary transition-colors"
+              className="btn-interactive p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary"
               title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
             >
               {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
@@ -968,21 +971,26 @@ export default function ForexDashboard() {
             <button
               onClick={fetchSignal}
               disabled={signalLoading}
-              className="p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-accent-blue transition-colors"
+              className="btn-interactive p-1.5 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-accent-blue"
               title="Refresh signal"
             >
               <RefreshCw size={13} className={signalLoading ? 'animate-spin' : ''} />
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Pair selector row */}
-        <div className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-wrap items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-wrap items-center gap-3 card-hover"
+        >
           <label className="text-text-secondary text-sm font-medium flex-shrink-0">Trading Pair:</label>
           <select
             value={selectedPair}
             onChange={(e) => setSelectedPair(e.target.value)}
-            className="bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue"
+            className="bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
           >
             {majorList.length > 0 && (
               <optgroup label="Major">
@@ -1012,7 +1020,7 @@ export default function ForexDashboard() {
               {signal.price ? `$${signal.price}` : signal.current_price ? `$${signal.current_price}` : `$${signal.entry_price}`}
             </span>
           )}
-        </div>
+        </motion.div>
 
         {/* Gamebar */}
         <Gamebar />
@@ -1027,7 +1035,7 @@ export default function ForexDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+                className={`btn-interactive px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary shadow-sm shadow-accent-blue/30' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
               >
                 {tab.label}
               </button>
@@ -1061,9 +1069,6 @@ export default function ForexDashboard() {
             {activeTab === 'alerts' && <AlertsTab />}
           </motion.div>
         </AnimatePresence>
-
-        {/* Bottom ad */}
-        <AdBanner placement="banner-bottom" ads={ads} />
       </div>
     </div>
   )

@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { TrendingUp, TrendingDown, Minus, Zap, BarChart2, Globe, Shield, ChevronRight, ArrowRight } from 'lucide-react'
-import AdBanner from '../components/Layout/AdBanner'
-import { useAds } from '../hooks/useAds'
 import { subscribe } from '../utils/api'
 
 const containerVariants = {
@@ -118,7 +116,6 @@ function SignalBadge({ dir }) {
 }
 
 export default function Landing() {
-  const { ads } = useAds()
   const [email, setEmail] = useState('')
   const [subStatus, setSubStatus] = useState(null)
   const [subLoading, setSubLoading] = useState(false)
@@ -153,21 +150,29 @@ export default function Landing() {
             backgroundSize: '50px 50px',
           }}
         />
-        {/* Gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-accent-blue/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent-purple/5 blur-3xl pointer-events-none" />
+        {/* Gradient orbs with ambient animation */}
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-accent-blue/5 blur-3xl pointer-events-none"
+        />
+        <motion.div
+          animate={{ x: [0, -25, 0], y: [0, 15, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent-purple/5 blur-3xl pointer-events-none"
+        />
 
         <div className="relative z-10 max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* Left */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-sm mb-6"
             >
               <Zap size={12} />
@@ -177,7 +182,7 @@ export default function Landing() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               <span className="text-text-primary">AI-Powered</span>
               <br />
-              <span className="bg-gradient-to-r from-accent-blue via-accent-purple to-accent-green bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-accent-blue via-accent-purple to-accent-green bg-[length:200%_auto] gradient-animated bg-clip-text text-transparent">
                 Forex Signals
               </span>
               <br />
@@ -191,14 +196,14 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 to="/forex"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 transition-all duration-200 group"
+                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
               >
                 View Live Signals
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/methodology"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border-default text-text-primary rounded-lg hover:border-accent-blue/50 hover:text-accent-blue transition-all duration-200"
+                className="btn-interactive inline-flex items-center justify-center gap-2 px-6 py-3 border border-border-default text-text-primary rounded-lg hover:border-accent-blue/50 hover:text-accent-blue"
               >
                 Learn Methodology
               </Link>
@@ -315,7 +320,8 @@ export default function Landing() {
                 <motion.div
                   key={f.title}
                   variants={itemVariants}
-                  className="bg-bg-card border border-border-default rounded-xl p-6 hover:border-accent-blue/50 transition-all duration-300 group"
+                  whileHover={{ y: -6, transition: { duration: 0.25, ease: 'easeOut' } }}
+                  className="bg-bg-card border border-border-default rounded-xl p-6 hover:border-accent-blue/50 hover:shadow-[0_20px_30px_-10px_rgba(0,0,0,0.2)] transition-all duration-250 group cursor-pointer"
                 >
                   <div className={`w-10 h-10 rounded-lg ${f.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     <Icon size={20} className={f.color} />
@@ -328,11 +334,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
-      {/* Ad slot */}
-      <div className="max-w-6xl mx-auto px-4 mb-12">
-        <AdBanner placement="inline" ads={ads} />
-      </div>
 
       {/* Live Preview / Subscribe */}
       <section className="py-24 px-4 bg-bg-secondary">
@@ -402,12 +403,12 @@ export default function Landing() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   required
-                  className="flex-1 px-4 py-3 bg-bg-card border border-border-default rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue transition-colors"
+                  className="flex-1 px-4 py-3 bg-bg-card border border-border-default rounded-lg text-text-primary placeholder-text-muted input-animated"
                 />
                 <button
                   type="submit"
                   disabled={subLoading}
-                  className="px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 transition-all disabled:opacity-60"
+                  className="btn-interactive px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-lg hover:bg-blue-400 disabled:opacity-60"
                 >
                   {subLoading ? '...' : 'Subscribe'}
                 </button>
@@ -495,7 +496,7 @@ export default function Landing() {
           </p>
           <Link
             to="/forex"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 transition-all duration-200 text-lg group"
+            className="btn-interactive inline-flex items-center gap-2 px-8 py-4 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 text-lg group shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-shadow duration-250"
           >
             Open Dashboard
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
