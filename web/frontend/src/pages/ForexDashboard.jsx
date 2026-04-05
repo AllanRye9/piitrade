@@ -965,8 +965,7 @@ export default function ForexDashboard() {
           className="flex items-center justify-between"
         >
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-text-primary">📊 PiiTrade — Forex Signal Hub</h1>
-            <p className="text-text-muted text-xs">AI-powered signals for {forexPairs.length} forex pairs</p>
+            <h1 className="text-lg sm:text-xl font-bold text-text-primary">📊 PiiTrade</h1>
           </div>
           <div className="flex items-center gap-2">
             <button

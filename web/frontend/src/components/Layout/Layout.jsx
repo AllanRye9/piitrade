@@ -21,6 +21,8 @@ export default function Layout({ children }) {
       <ScrollProgressBar />
       <Navbar />
       <main className="flex-1 min-w-0 pt-16">
+        {/* Top blank canvas — appears at the top of every page */}
+        <div className="mx-auto" style={{ width: '90%', height: '18px' }} />
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
