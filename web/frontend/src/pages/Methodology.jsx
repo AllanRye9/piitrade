@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion'
 import { Database, Cpu, TrendingUp, AlertTriangle, BookOpen, LineChart } from 'lucide-react'
-import AdBanner from '../components/Layout/AdBanner'
-import { useAds } from '../hooks/useAds'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -64,8 +62,6 @@ const features = [
 ]
 
 export default function Methodology() {
-  const { ads } = useAds()
-
   return (
     <div className="min-h-screen bg-bg-primary pt-20 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
@@ -163,9 +159,6 @@ export default function Methodology() {
             </div>
           </div>
         </motion.div>
-
-        {/* Bottom ad */}
-        <AdBanner placement="banner-bottom" ads={ads} />
       </div>
     </div>
   )

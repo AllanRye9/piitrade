@@ -9,8 +9,6 @@ import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
   getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe,
 } from '../utils/api'
-import AdBanner from '../components/Layout/AdBanner'
-import { useAds } from '../hooks/useAds'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 function dirColor(dir) {
@@ -880,7 +878,6 @@ function Gamebar() {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ForexDashboard() {
-  const { ads } = useAds()
   const [allPairsData, setAllPairsData] = useState(null)
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
   const [activeTab, setActiveTab] = useState('signal')
@@ -948,9 +945,6 @@ export default function ForexDashboard() {
   return (
     <div className="min-h-screen bg-bg-primary py-3 px-3">
       <div className="max-w-5xl mx-auto space-y-3">
-        {/* Top ad */}
-        <AdBanner placement="banner-top" ads={ads} />
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -1061,9 +1055,6 @@ export default function ForexDashboard() {
             {activeTab === 'alerts' && <AlertsTab />}
           </motion.div>
         </AnimatePresence>
-
-        {/* Bottom ad */}
-        <AdBanner placement="banner-bottom" ads={ads} />
       </div>
     </div>
   )
