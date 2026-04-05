@@ -3131,7 +3131,7 @@ canvas {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 .ad-img-taptap {
   background: linear-gradient(135deg, #0d1e40 0%, #1e3a6e 50%, #3a7bd5 100%);
