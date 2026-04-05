@@ -110,7 +110,7 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`flex items-center gap-3 transition-all duration-300 ${isCompact ? 'h-14' : 'h-16'}`}>
+          <div className={`flex items-center justify-between gap-3 transition-all duration-300 ${isCompact ? 'h-14' : 'h-16'}`}>
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
               <motion.div
@@ -177,6 +177,7 @@ export default function Navbar() {
                 className="p-2 rounded-lg text-text-secondary hover:text-accent-blue hover:bg-bg-card transition-all relative"
                 aria-label="Notifications"
                 title="Notifications"
+                onClick={() => {/* notification panel — to be implemented */}}
               >
                 <Bell size={18} />
               </button>

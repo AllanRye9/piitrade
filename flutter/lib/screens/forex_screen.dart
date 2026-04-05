@@ -671,12 +671,11 @@ class _ForexScreenState extends State<ForexScreen>
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 8),
-          // Exness banner — flexible width, fills space up to the bell icon
+          // Exness banner — flexible width, fills space up to notifications icon
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                // Open Exness partner link
-              },
+              // TODO: open Exness partner URL via url_launcher when integrated
+              onTap: null,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: Image.asset(
@@ -694,7 +693,8 @@ class _ForexScreenState extends State<ForexScreen>
         IconButton(
           icon: const Icon(Icons.notifications_none_outlined),
           tooltip: 'Notifications',
-          onPressed: () {},
+          // TODO: implement notification panel
+          onPressed: null,
         ),
         IconButton(
           icon: _loadingSignal
