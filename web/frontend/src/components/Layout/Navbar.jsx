@@ -192,8 +192,7 @@ export default function Navbar() {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ duration: 0.3, ease: [0.34, 1.3, 0.55, 1] }}
-                className="lg:hidden fixed top-0 right-0 bottom-0 w-72 z-[70] flex flex-col"
-                style={{ background: 'var(--glass-bg, rgba(22,27,34,0.95))', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderLeft: '1px solid var(--glass-border, rgba(48,54,61,0.8))' }}
+                className="lg:hidden fixed top-0 right-0 bottom-0 w-72 z-[70] flex flex-col sidebar-glass"
               >
                 {/* Sidebar header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">

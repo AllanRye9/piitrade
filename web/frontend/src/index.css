@@ -137,6 +137,14 @@ body { background: var(--bg-primary, #0d1117); color: var(--text-primary, #e6edf
   text-decoration: none;
 }
 
+/* ─── Sidebar drawer glass effect ─── */
+.sidebar-glass {
+  background: var(--glass-bg, rgba(22,27,34,0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-left: 1px solid var(--glass-border, rgba(48,54,61,0.8));
+}
+
 /* ─── PART 4.3: Card Click Ripple Effect ─── */
 .card-ripple {
   position: relative;
