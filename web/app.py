@@ -1292,6 +1292,15 @@ async def favicon_png():
     return FileResponse(str(_favicon), media_type="image/png")
 
 
+@app.get("/exness.jpg")
+async def exness_banner_image():
+    """Serve the Exness banner image used in the shared header."""
+    _banner = _DIR.parent / "exness.jpg"
+    if not _banner.exists():
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return FileResponse(str(_banner), media_type="image/jpeg")
+
+
 def _serve_react_or_template(request: Request, template: str, **kwargs):
     """Serve the React SPA index.html if the build exists, else a legacy template."""
     _record_visit(_get_client_ip(request))

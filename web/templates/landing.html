@@ -371,21 +371,17 @@
 
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
-  <a href="/" class="brand">
+  <div class="brand">
     <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Forex Signal Hub</span>
-    <span class="brand-live">LIVE</span>
-  </a>
+    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img src="/exness.jpg" alt="Exness"/></a></span>
+  </div>
   <nav class="fx-nav">
     <a href="/forex">Dashboard</a>
     <a href="/disclaimer">Disclaimer</a>
     {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% else %}
-      <a href="/login" class="btn-outline">Login</a>
-      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>

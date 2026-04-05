@@ -1,4 +1,4 @@
-/// Data models for the Forex Technical Analysis API response.
+// Data models for the Forex Technical Analysis API response.
 
 class SupportResistance {
   final List<double> support;

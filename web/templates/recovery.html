@@ -10,15 +10,13 @@
 <body>
 
 <header class="fx-header">
-  <a href="/" class="brand">
+  <div class="brand">
     <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Forex Signal Hub</span>
-  </a>
+    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img src="/exness.jpg" alt="Exness"/></a></span>
+  </div>
   <nav class="fx-nav">
     <a href="/">Home</a>
-    <a href="/login" class="btn-outline">Login</a>
-    <a href="/register" class="btn-primary">Register</a>
   </nav>
 </header>
 
@@ -147,12 +145,12 @@
     <!-- Step 4: Done -->
     {% if step == 'done' %}
     <div style="text-align:center;margin-top:16px">
-      <a href="/login" class="btn-auth-submit" style="display:inline-block;text-decoration:none">→ Go to Login</a>
+      <a href="/" class="btn-auth-submit" style="display:inline-block;text-decoration:none">→ Go to Home</a>
     </div>
     {% endif %}
 
     <div class="auth-footer">
-      Remember your password? <a href="/login">Sign in</a>
+      Return to <a href="/">Home</a>
     </div>
   </div>
 </main>

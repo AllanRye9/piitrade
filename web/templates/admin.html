@@ -11,13 +11,15 @@
 
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
-  <a href="/" class="brand">
+  <div class="brand">
     <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">Admin Dashboard</span>
-  </a>
+    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img src="/exness.jpg" alt="Exness"/></a></span>
+  </div>
   <nav class="fx-nav">
     <a href="/forex">📊 Signal Hub</a>
+    <a href="/login" class="btn-outline">Login</a>
+    <a href="/register" class="btn-primary">Register</a>
     <span class="nav-user nav-admin-badge">🛡️ {{ current_user }}</span>
     <a href="/logout" class="btn-outline">Logout</a>
   </nav>

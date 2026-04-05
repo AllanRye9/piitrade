@@ -1,4 +1,4 @@
-/// Data models for the AI Forex Signal Hub.
+// Data models for the AI Forex Signal Hub.
 
 class ForexHistory {
   final String day;

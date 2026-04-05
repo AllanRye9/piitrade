@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'utils/color_compat.dart';
 import 'screens/forex_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';

@@ -6,6 +6,7 @@ import '../models/forex_signal.dart';
 import '../models/forex_technical.dart';
 import '../models/forex_news.dart';
 import '../services/api_service.dart';
+import '../utils/color_compat.dart';
 
 // ── Supported currency pairs ──────────────────────────────────────────────────
 
@@ -543,8 +544,11 @@ class _ForexScreenState extends State<ForexScreen>
     final margin   = posUnits * entry / leverage;
 
     Color rrColor = Colors.white70;
-    if (rr >= 2) rrColor = _kBuyColor;
-    else if (rr > 0 && rr < 1) rrColor = _kSellColor;
+    if (rr >= 2) {
+      rrColor = _kBuyColor;
+    } else if (rr > 0 && rr < 1) {
+      rrColor = _kSellColor;
+    }
 
     setState(() {
       _resRiskAmt  = '\$${riskAmt.toStringAsFixed(2)}';
@@ -605,7 +609,10 @@ class _ForexScreenState extends State<ForexScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() { _subscribeStatus = 'Network error. $e'; _subscribeOk = false; });
+        setState(() {
+          _subscribeStatus = 'Network error. $e';
+          _subscribeOk = false;
+        });
       }
     } finally {
       if (mounted) setState(() => _subscribing = false);
@@ -722,9 +729,9 @@ class _ForexScreenState extends State<ForexScreen>
     final xpInLevel = _game.xp % _kXpPerLevel;
     final xpPct     = xpInLevel / _kXpPerLevel;
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: _kCardBg,
-        border: const Border(
+        border: Border(
           bottom: BorderSide(color: _kBorderColor),
         ),
       ),
@@ -882,7 +889,7 @@ class _ForexScreenState extends State<ForexScreen>
                   : _signalError != null
                       ? _buildErrorCard(
                           _signalError!, _loadSignal, cs,
-                          key: ValueKey('error'),
+                          key: const ValueKey('error'),
                         )
                       : _signal != null
                           ? Column(
@@ -961,12 +968,12 @@ class _ForexScreenState extends State<ForexScreen>
         if (_signal != null) ...[
           const SizedBox(width: 6),
           if (_signal!.isLive)
-            Row(
+            const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _PulseDot(color: _kBuyColor),
-                const SizedBox(width: 4),
-                const Text('Live',
+                SizedBox(width: 4),
+                Text('Live',
                     style: TextStyle(
                         fontSize: 11,
                         color: _kBuyColor,
@@ -974,7 +981,7 @@ class _ForexScreenState extends State<ForexScreen>
               ],
             )
           else
-            Text('Cached',
+            const Text('Cached',
                 style: TextStyle(
                     fontSize: 11, color: _kHoldColor)),
         ],
@@ -1040,12 +1047,12 @@ class _ForexScreenState extends State<ForexScreen>
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (s.isLive)
-                    Row(
+                    const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _PulseDot(color: _kBuyColor),
-                        const SizedBox(width: 5),
-                        const Text('Live',
+                        SizedBox(width: 5),
+                        Text('Live',
                             style: TextStyle(
                                 color: _kBuyColor,
                                 fontSize: 12,
@@ -1826,10 +1833,10 @@ class _ForexScreenState extends State<ForexScreen>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Text(
                   '💥 Support & Resistance Breakouts',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
               ),
               IconButton(
@@ -2049,7 +2056,7 @@ class _ForexScreenState extends State<ForexScreen>
               _badge(direction, _directionColor(direction)),
             ]),
             const SizedBox(height: 2),
-            Text('${entryPrice.toStringAsFixed(dec)}',
+            Text(entryPrice.toStringAsFixed(dec),
                 style: TextStyle(
                     fontSize: 12, color: cs.onSurface.withValues(alpha: 0.55))),
           ]),
@@ -2185,7 +2192,7 @@ class _ForexScreenState extends State<ForexScreen>
                     color: revColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 14)),
-            Text('${entryPrice.toStringAsFixed(dec)}',
+            Text(entryPrice.toStringAsFixed(dec),
                 style: TextStyle(
                     fontSize: 12,
                     color: cs.onSurface.withValues(alpha: 0.55))),
@@ -2423,11 +2430,11 @@ class _ForexScreenState extends State<ForexScreen>
               filled: true,
               fillColor: _kCardBg,
               border: OutlineInputBorder(
-                borderSide: BorderSide(color: _kBorderColor),
+                borderSide: const BorderSide(color: _kBorderColor),
                 borderRadius: BorderRadius.circular(10),
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: _kBorderColor),
+                borderSide: const BorderSide(color: _kBorderColor),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -2444,8 +2451,11 @@ class _ForexScreenState extends State<ForexScreen>
               dense: true,
               controlAffinity: ListTileControlAffinity.leading,
               onChanged: (v) => setState(() {
-                if (v == true) _alertPairs.add(p);
-                else _alertPairs.remove(p);
+                if (v == true) {
+                  _alertPairs.add(p);
+                } else {
+                  _alertPairs.remove(p);
+                }
               }),
             )).toList(),
           ),
@@ -2552,7 +2562,7 @@ class _AccuracyChartPainter extends CustomPainter {
     final gridPaint = Paint()
       ..color = const Color(0xFF30363d)
       ..strokeWidth = 1;
-    final labelStyle = const TextStyle(color: Color(0xFF8B949E), fontSize: 10);
+    const labelStyle = TextStyle(color: Color(0xFF8B949E), fontSize: 10);
 
     const gridLines = 4;
     final dec = _isJpy(pair) || _isGold(pair) ? 2 : 4;
@@ -2569,7 +2579,7 @@ class _AccuracyChartPainter extends CustomPainter {
     final axisPaint = Paint()
       ..color = const Color(0xFF30363d)
       ..strokeWidth = 1;
-    canvas.drawLine(Offset(padLeft, padTop), Offset(padLeft, padTop + ch + 6), axisPaint);
+    canvas.drawLine(const Offset(padLeft, padTop), Offset(padLeft, padTop + ch + 6), axisPaint);
     canvas.drawLine(
         Offset(padLeft - 4, padTop + ch), Offset(padLeft + cw, padTop + ch), axisPaint);
 
@@ -2583,7 +2593,11 @@ class _AccuracyChartPainter extends CustomPainter {
     for (int i = 0; i < history.length; i++) {
       final x = xOf(i);
       final y = yOf(history[i].exit);
-      if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
     canvas.drawPath(path, linePaint);
 

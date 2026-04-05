@@ -248,20 +248,17 @@
 
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header class="fx-header">
-  <a href="/" class="brand">
+  <div class="brand">
     <img src="/static/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub">AI Forex Signal Hub</span>
-  </a>
+    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img src="/exness.jpg" alt="Exness"/></a></span>
+  </div>
   <nav class="fx-nav">
     <a href="/">Home</a>
     {% if current_user %}
       {% if is_admin %}<a href="/const" class="nav-admin">⚙️ Admin</a>{% endif %}
       <a href="/forex" class="btn-primary">Dashboard</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% else %}
-      <a href="/login" class="btn-outline">Login</a>
-      <a href="/register" class="btn-primary">Register</a>
     {% endif %}
   </nav>
 </header>
@@ -545,8 +542,6 @@
 <footer class="sub-footer">
   <div class="sub-footer-links">
     <a href="/">Home</a>
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
     <a href="/methodology">Methodology</a>
     <a href="/terms">Terms &amp; Conditions</a>
     <a href="/conduct">Conduct of Usage</a>

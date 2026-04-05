@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../utils/color_compat.dart';
 
 const _kPiiDataUrl = String.fromEnvironment('PIIDATA');
 
@@ -104,7 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     const borderColor = Color(0xFF30363d);
     const textMuted = Color(0xFF8b949e);
 
-    InputDecoration _fieldDeco({
+    InputDecoration fieldDeco({
       required String label,
       required String hint,
       required IconData icon,
@@ -242,7 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 textInputAction: TextInputAction.next,
                                 autofillHints: const [AutofillHints.username],
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _fieldDeco(
+                                decoration: fieldDeco(
                                   label: 'Username',
                                   hint: '3–32 characters, letters/numbers/-/_',
                                   icon: Icons.person_outline,
@@ -271,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 textInputAction: TextInputAction.next,
                                 autofillHints: const [AutofillHints.email],
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _fieldDeco(
+                                decoration: fieldDeco(
                                   label: 'Email Address',
                                   hint: 'your@email.com',
                                   icon: Icons.email_outlined,
@@ -296,7 +297,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 textInputAction: TextInputAction.next,
                                 autofillHints: const [AutofillHints.newPassword],
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _fieldDeco(
+                                decoration: fieldDeco(
                                   label: 'Password',
                                   hint: 'At least 8 characters',
                                   icon: Icons.lock_outline,
@@ -332,7 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 autofillHints: const [AutofillHints.newPassword],
                                 onFieldSubmitted: (_) => _submit(),
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _fieldDeco(
+                                decoration: fieldDeco(
                                   label: 'Confirm Password',
                                   hint: 'Repeat your password',
                                   icon: Icons.lock_outline,

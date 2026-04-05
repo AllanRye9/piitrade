@@ -29,7 +29,7 @@ void main() {
     });
 
     test('toJson round-trips correctly', () {
-      final slide = Slide(
+      const slide = Slide(
           index: 2, type: 'text', content: 'Hello', title: 'Intro');
       final json = slide.toJson();
       expect(json['index'], 2);
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('toJson includes thumbnail when present', () {
-      final f = PresentationFile(
+      const f = PresentationFile(
         id: 'a',
         filename: 'test.pdf',
         totalSlides: 3,
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('toJson omits thumbnail when null', () {
-      final f = PresentationFile(
+      const f = PresentationFile(
         id: 'b',
         filename: 'test.pdf',
         totalSlides: 1,

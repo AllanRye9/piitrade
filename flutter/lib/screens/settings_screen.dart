@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/color_compat.dart';
 
 /// Settings screen for configuring the PiiTrade Forex backend server URL.
 class SettingsScreen extends StatefulWidget {
