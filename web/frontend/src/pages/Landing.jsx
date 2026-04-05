@@ -260,12 +260,12 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Right — floating signal card */}
+          {/* Right — floating signal card (visible on lg+ only) */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative"
+            className="relative hidden lg:block"
           >
             <motion.div
               animate={{ y: [0, -10, 0] }}
@@ -633,6 +633,16 @@ export default function Landing() {
                 <span className="text-accent-purple font-semibold">Stocks and commodities</span>
                 {' — '}professional AI tools for every asset class, all free.
               </p>
+            </div>
+            <div className="pt-4 border-t border-border-default flex justify-center">
+              <Link
+                to="/roadmap"
+                className="btn-interactive inline-flex items-center gap-2 px-6 py-3 bg-accent-blue/10 border border-accent-blue/30 text-accent-blue font-semibold rounded-xl hover:bg-accent-blue/20 hover:border-accent-blue/60 transition-all duration-200 text-sm no-underline"
+              >
+                <BookOpen size={16} />
+                Read Full Roadmap &amp; White Paper
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </motion.div>
