@@ -158,8 +158,8 @@ export default function SponsorBannerStrip() {
   return (
     <div className="w-full bg-bg-secondary/50 border-b border-border-subtle">
 
-      {/* ── Desktop (sm+): all three banners side by side ── */}
-      <div className="hidden sm:flex gap-3 px-4 py-2">
+      {/* ── Desktop (sm+): all three banners side by side, centered ── */}
+      <div className="hidden sm:flex gap-3 px-4 py-2 max-w-4xl mx-auto">
         {BANNERS.map((banner, i) => (
           <BannerCard
             key={banner.id}
