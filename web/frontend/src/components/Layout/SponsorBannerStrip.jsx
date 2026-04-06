@@ -8,6 +8,7 @@ const BANNERS = [
 ]
 
 const CAROUSEL_INTERVAL = 4500
+const TAP_GLOW_DURATION_MS = 400 // keep in sync with tapping transition duration (0.4s)
 
 // Glow shadow values — warm golden tone
 const GLOW_NONE  = '0 2px 10px rgba(0,0,0,0.35)'
@@ -27,7 +28,7 @@ function BannerCard({ banner, glowIndex, loaded, onLoad, onError, className }) {
   const handleTouchStart = () => {
     clearTimeout(tapTimerRef.current)
     setTapping(true)
-    tapTimerRef.current = setTimeout(() => setTapping(false), 450)
+    tapTimerRef.current = setTimeout(() => setTapping(false), TAP_GLOW_DURATION_MS)
   }
 
   useEffect(() => () => clearTimeout(tapTimerRef.current), [])
@@ -105,6 +106,9 @@ export default function SponsorBannerStrip() {
 
   // Only banners that haven't errored
   const visibleBanners = BANNERS.filter(b => loadedMap[b.id] !== false)
+  const visibleLengthRef = useRef(visibleBanners.length)
+  visibleLengthRef.current = visibleBanners.length
+
   const safeIndex = visibleBanners.length > 0
     ? Math.min(activeIndex, visibleBanners.length - 1)
     : 0
@@ -112,22 +116,31 @@ export default function SponsorBannerStrip() {
   // Restart the auto-advance interval
   const resetInterval = useCallback(() => {
     clearInterval(intervalRef.current)
-    if (visibleBanners.length > 1) {
+    if (visibleLengthRef.current > 1) {
       intervalRef.current = setInterval(() => {
-        setActiveIndex(prev => (prev + 1) % visibleBanners.length)
+        // Read length from ref to avoid stale closure when banners error out
+        setActiveIndex(prev => (prev + 1) % visibleLengthRef.current)
       }, CAROUSEL_INTERVAL)
     }
-  }, [visibleBanners.length])
+  }, [])
 
   useEffect(() => {
     resetInterval()
     return () => clearInterval(intervalRef.current)
-  }, [resetInterval])
+  }, [resetInterval, visibleBanners.length])
 
   const goTo = useCallback((idx) => {
     setActiveIndex(idx)
     resetInterval()
   }, [resetInterval])
+
+  // Helper: advance carousel index by ±1 with wrap-around
+  const getAdjacentIndex = (current, direction) => {
+    const len = visibleLengthRef.current
+    return direction === 'next'
+      ? (current + 1) % len
+      : (current - 1 + len) % len
+  }
 
   // Touch swipe handlers (mobile carousel)
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
@@ -135,10 +148,7 @@ export default function SponsorBannerStrip() {
     if (touchStartX.current === null) return
     const diff = touchStartX.current - e.changedTouches[0].clientX
     if (Math.abs(diff) > 40) {
-      goTo(diff > 0
-        ? (safeIndex + 1) % visibleBanners.length
-        : (safeIndex - 1 + visibleBanners.length) % visibleBanners.length
-      )
+      goTo(getAdjacentIndex(safeIndex, diff > 0 ? 'next' : 'prev'))
     }
     touchStartX.current = null
   }
