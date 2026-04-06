@@ -277,7 +277,7 @@ export default function Landing() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
               >
-                <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness trading platform (opens in new tab)" className="block w-full h-full">
                   <motion.img
                     src="/img/exness.png"
                     alt="Exness trading platform"
@@ -299,7 +299,7 @@ export default function Landing() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
                 >
-                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness trading dashboard (opens in new tab)" className="block w-full h-full">
                     <img
                       src="/img/exness2.png"
                       alt="Exness trading dashboard"
@@ -316,7 +316,7 @@ export default function Landing() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
                 >
-                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness market analysis (opens in new tab)" className="block w-full h-full">
                     <img
                       src="/img/exness3.png"
                       alt="Exness market analysis view"
