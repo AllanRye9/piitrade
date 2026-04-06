@@ -697,18 +697,13 @@ class _ForexScreenState extends State<ForexScreen>
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 8),
-          // Exness banner — flexible width, fills space up to notifications icon
+          // Exness banner carousel — centered, shows 1 image at a time
           Expanded(
-            child: GestureDetector(
-              // TODO: open Exness partner URL via url_launcher when integrated
-              onTap: null,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'assets/images/img/exness.png',
-                  fit: BoxFit.contain,
-                  height: kToolbarHeight,
-                ),
+            child: Center(
+              child: GestureDetector(
+                // TODO: open Exness partner URL via url_launcher when integrated
+                onTap: null,
+                child: const _ExnessBannerCarousel(),
               ),
             ),
           ),
@@ -2832,6 +2827,82 @@ class _AccuracyChartPainter extends CustomPainter {
 // ══════════════════════════════════════════════════════════════════════════════
 // _PulseDot – animated pulsing circle for live signal indicator
 // ══════════════════════════════════════════════════════════════════════════════
+
+// ── Exness banner carousel ─────────────────────────────────────────────────────
+
+const _kBannerImages = [
+  'assets/images/exness.png',
+  'assets/images/exness2.png',
+  'assets/images/exness3.png',
+];
+
+const _kBannerInterval = Duration(milliseconds: 4500);
+
+class _ExnessBannerCarousel extends StatefulWidget {
+  const _ExnessBannerCarousel();
+
+  @override
+  State<_ExnessBannerCarousel> createState() => _ExnessBannerCarouselState();
+}
+
+class _ExnessBannerCarouselState extends State<_ExnessBannerCarousel> {
+  int _activeIndex = 0;
+  Timer? _timer;
+
+  void _startTimer() {
+    _timer = Timer.periodic(_kBannerInterval, (_) {
+      if (mounted) {
+        setState(() {
+          _activeIndex = (_activeIndex + 1) % _kBannerImages.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void deactivate() {
+    _timer?.cancel();
+    _timer = null;
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: kToolbarHeight * 0.75,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: ClipRRect(
+          key: ValueKey(_activeIndex),
+          borderRadius: BorderRadius.circular(6),
+          child: Image.asset(
+            _kBannerImages[_activeIndex],
+            fit: BoxFit.contain,
+            height: kToolbarHeight * 0.75,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _PulseDot extends StatefulWidget {
   final Color color;
