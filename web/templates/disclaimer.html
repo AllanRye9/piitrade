@@ -99,74 +99,106 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <span id="container"
-        style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; width:100%; margin:0 auto; position:relative;">
+      <style>
+        #container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 120px;
+          /* ensures vertical centering in header */
+          position: relative;
+          margin: 0 auto;
+        }
 
-        <!-- Images (background) -->
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap"
-          style="display:flex; flex-wrap:wrap; justify-content:center; gap:4px; width:100%;">
+        #imageWrap {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: nowrap;
+        }
 
-          <img
-            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
-            src="/img/exness.png" />
-          <img
-            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
-            src="/img/exness2.png" />
-          <img
-            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
-            src="/img/exness3.png" />
-          <img
-            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
-            src="/img/exness.png" />
-          <img
-            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
-            src="/img/exness3.png" />
+        #imageWrap img {
+          width: 100px;
+          height: 50px;
+          border-radius: 6px;
+          box-shadow: 0 0 5px #00f, 0 0 10px #00f;
+          transition: 0.3s;
+        }
+
+        #promoText {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%) scale(1);
+          background: rgba(0, 0, 0, 0.8);
+          color: #fff;
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-size: 13px;
+          text-align: center;
+          z-index: 5;
+          white-space: nowrap;
+          text-decoration: none;
+        }
+
+        /* ✅ Mobile behavior */
+        @media (max-width: 600px) {
+          #imageWrap {
+            position: relative;
+          }
+
+          #imageWrap img {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.9);
+          }
+
+          #imageWrap img:first-child {
+            position: relative;
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      </style>
+
+      <span id="container">
+
+        <!-- Images -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap">
+          <img src="/img/exness.png" />
+          <img src="/img/exness2.png" />
+          <img src="/img/exness3.png" />
+          <img src="/img/exness.png" />
+          <img src="/img/exness3.png" />
         </a>
 
-        <!-- Animated Text (in front) -->
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText" style="position:absolute; top:0; left:50%; transform:translateX(-50%) scale(1); 
-            background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:6px;
-            font-size:13px; text-align:center; z-index:5; white-space:nowrap; text-decoration:none;
-            display:inline-block; transition:0.2s;">
+        <!-- Text -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText">
           best trading broker you can trust - 0 swap fees for GCC countries
         </a>
+
       </span>
 
       <script>
         (function () {
           var text = document.getElementById("promoText");
-          var images = document.getElementById("imageWrap");
 
-          // Pulse zoom animation for text
+          // Smooth pulse animation
           var scale = 1, growing = true;
+
           setInterval(function () {
             if (growing) {
-              scale += 0.02;
+              scale += 0.01;
               if (scale >= 1.08) growing = false;
             } else {
-              scale -= 0.02;
+              scale -= 0.01;
               if (scale <= 1) growing = true;
             }
-            text.style.transform = "translateX(-50%) scale(" + scale + ")";
-          }, 60);
 
-          // Mobile: hide images, keep text on top
-          function handleMobile() {
-            if (window.innerWidth < 600) {
-              images.style.display = "none";
-              text.style.position = "relative";
-              text.style.left = "0";
-              text.style.transform = "scale(1)";
-              text.style.margin = "0 auto";
-            } else {
-              images.style.display = "flex";
-              text.style.position = "absolute";
-              text.style.left = "50%";
-            }
-          }
-
-          handleMobile();
-          window.addEventListener("resize", handleMobile);
+            text.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+          }, 50);
         })();
       </script>
     </div>
