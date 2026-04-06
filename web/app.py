@@ -6,6 +6,7 @@ FastAPI application with auth, admin dashboard, and security hardening.
 
 import hashlib
 import os
+import re as _re
 import secrets
 import smtplib
 import time
@@ -964,6 +965,7 @@ _FALLBACK_NEWS: list[dict[str, Any]] = [
 
 _news_cache: dict[str, Any] = {"items": [], "ts": 0.0}
 _NEWS_CACHE_TTL = 300  # 5 minutes
+_NEWS_DEDUP_PREFIX_LEN = 60  # characters of title used to detect duplicate articles
 
 
 def _fetch_rss_feed(name: str, url: str) -> list[dict[str, Any]]:
@@ -985,7 +987,6 @@ def _fetch_rss_feed(name: str, url: str) -> list[dict[str, Any]]:
             pub = (item.findtext("pubDate") or "").strip()
             desc_raw = item.findtext("description") or ""
             # Strip HTML tags from description
-            import re as _re
             desc = _re.sub(r"<[^>]+>", "", unescape(desc_raw)).strip()[:240]
             items.append({
                 "title": unescape(title),
@@ -1025,7 +1026,7 @@ def _make_news_items() -> list[dict[str, Any]]:
     seen: set[str] = set()
     unique: list[dict[str, Any]] = []
     for item in results:
-        key = item.get("title", "")[:60].lower()
+        key = item.get("title", "")[:_NEWS_DEDUP_PREFIX_LEN].lower()
         if key not in seen:
             seen.add(key)
             unique.append(item)

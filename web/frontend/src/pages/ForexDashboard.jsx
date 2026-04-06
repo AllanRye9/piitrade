@@ -593,7 +593,7 @@ function VolatileTab() {
     const fetch = () => {
       const tf = activeTimeframeRef.current
       getVolatile(tf)
-        .then((res) => { if (activeTimeframeRef.current === tf) { setData(res); setLoading(false) } })
+        .then((res) => { if (activeTimeframeRef.current === tf) { setData(res); setLoading(false); setError(null) } })
         .catch(() => { if (activeTimeframeRef.current === tf) { setError('Failed to load volatility data.'); setLoading(false) } })
     }
     fetch()
