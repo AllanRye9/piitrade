@@ -183,16 +183,6 @@
     Click here!
   </span>
 </a>
-
-<style>
-@keyframes beepText {
-  0%   { transform: translate(-50%, -50%) scale(1); }
-  25%  { transform: translate(-50%, -50%) scale(1.2); }
-  50%  { transform: translate(-50%, -50%) scale(1); }
-  75%  { transform: translate(-50%, -50%) scale(1.2); }
-  100% { transform: translate(-50%, -50%) scale(1); }
-}
-</style>
     </div>
   </div>
 
@@ -206,8 +196,8 @@
         return;
       }
 
-      const DISCLAIMER_TIME = 120000; // 2 minutes
-      const BANNER_TIME = 80000;      // 80 seconds
+      const DISCLAIMER_TIME = 240000; // 4 minutes
+      const BANNER_TIME = 90000;      // 1.5 minutes
 
       function showDisclaimer() {
         disclaimer.style.display = "flex";

@@ -127,6 +127,14 @@ a:hover {
   }
 }
 
+@keyframes beepText {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  25%  { transform: translate(-50%, -50%) scale(1.2); }
+  50%  { transform: translate(-50%, -50%) scale(1); }
+  75%  { transform: translate(-50%, -50%) scale(1.2); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
 .fx-header {
   background: linear-gradient(135deg, #161b22 0%, #1a2030 50%, #161b22 100%);
   border-bottom: 1px solid var(--border);
