@@ -6,6 +6,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+export const getLivePrices = () => api.get('/api/forex/live-prices').then(r => r.data)
 export const getSignals = (pair) => api.get('/api/forex/signals', { params: { pair } }).then(r => r.data)
 export const getPairs = () => api.get('/api/forex/pairs').then(r => r.data)
 export const getTechnical = (pair) => api.get('/api/forex/technical', { params: { pair } }).then(r => r.data)

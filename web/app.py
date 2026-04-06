@@ -2124,6 +2124,48 @@ async def forex_pairs():
     })
 
 
+_TICKER_PAIRS = [
+    "EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD", "USD/CAD",
+    "USD/CHF", "NZD/USD", "EUR/GBP", "GBP/JPY", "EUR/JPY",
+]
+
+
+@app.get("/api/forex/live-prices")
+async def forex_live_prices():
+    """Return live prices and 24h change for the main ticker pairs."""
+    result = []
+    for pair in _TICKER_PAIRS:
+        current = _fetch_live_rate(pair)
+        if current is None:
+            # Fall back to static signal entry price
+            entry = _FOREX_SIGNALS.get(pair, {}).get("entry_price")
+            result.append({
+                "pair": pair,
+                "price": str(entry) if entry is not None else "—",
+                "change": "0.00%",
+                "up": True,
+            })
+            continue
+        # Use last 2 days of history to compute change
+        hist = _fetch_historical_rates(pair, 2)
+        prev_values = list(hist.values())
+        if len(prev_values) >= 2:
+            prev = prev_values[-2]
+        elif len(prev_values) == 1:
+            prev = prev_values[0]
+        else:
+            prev = current
+        change_pct = ((current - prev) / prev * 100) if prev != 0 else 0.0
+        pip, dec = _pair_pip_dec(pair)
+        result.append({
+            "pair": pair,
+            "price": f"{current:.{dec}f}",
+            "change": f"{change_pct:+.2f}%",
+            "up": change_pct >= 0,
+        })
+    return JSONResponse({"prices": result})
+
+
 @app.get("/api/forex/news")
 async def forex_news():
     return JSONResponse({"news": _make_news_items()})

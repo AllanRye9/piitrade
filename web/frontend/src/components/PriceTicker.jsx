@@ -1,11 +1,14 @@
 /**
  * Horizontal scrolling price ticker for major Forex pairs.
+ * Fetches live prices in the background every 30 seconds.
  * Continuous smooth scroll with CSS animation, pauses on hover.
  * Content is duplicated for seamless loop (PART 5.1).
  */
+import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { getLivePrices } from '../utils/api'
 
-const defaultTickers = [
+const FALLBACK_TICKERS = [
   { pair: 'EUR/USD', price: '1.0842', change: '+0.12%', up: true },
   { pair: 'GBP/USD', price: '1.2650', change: '-0.08%', up: false },
   { pair: 'USD/JPY', price: '154.82', change: '+0.25%', up: true },
@@ -18,8 +21,28 @@ const defaultTickers = [
   { pair: 'EUR/JPY', price: '167.92', change: '+0.18%', up: true },
 ]
 
-export default function PriceTicker({ data = defaultTickers }) {
-  const items = data.length > 0 ? data : defaultTickers
+const REFRESH_INTERVAL_MS = 30_000
+
+export default function PriceTicker({ data }) {
+  const [livePrices, setLivePrices] = useState(data || null)
+
+  useEffect(() => {
+    let cancelled = false
+    const fetchPrices = () => {
+      getLivePrices()
+        .then((res) => {
+          if (!cancelled && Array.isArray(res?.prices) && res.prices.length > 0) {
+            setLivePrices(res.prices)
+          }
+        })
+        .catch(() => { /* keep current/fallback data on error */ })
+    }
+    fetchPrices()
+    const id = setInterval(fetchPrices, REFRESH_INTERVAL_MS)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
+
+  const items = livePrices && livePrices.length > 0 ? livePrices : FALLBACK_TICKERS
 
   const renderItem = (item, idx) => (
     <div
@@ -38,9 +61,7 @@ export default function PriceTicker({ data = defaultTickers }) {
   return (
     <div className="w-full overflow-hidden bg-bg-card border border-border-default rounded-lg">
       <div className="ticker-track">
-        {/* Original items */}
         {items.map((item, i) => renderItem(item, i))}
-        {/* Duplicated items for seamless loop */}
         {items.map((item, i) => renderItem(item, `dup-${i}`))}
       </div>
     </div>
