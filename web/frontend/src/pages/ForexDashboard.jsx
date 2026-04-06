@@ -105,10 +105,20 @@ const FALLBACK_PAIRS = [
 ]
 
 // ─── sub-components ─────────────────────────────────────────────────────────
-function LoadingSpinner() {
+function LoadingSpinner({ text = 'Loading…' }) {
   return (
-    <div className="flex items-center justify-center py-16">
-      <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
+    <div className="flex flex-col items-center justify-center py-16 gap-4">
+      <div className="flex items-end gap-1 h-7">
+        {[0, 1, 2, 3].map((i) => (
+          <motion.div
+            key={i}
+            className="w-1.5 rounded-full bg-accent-blue"
+            animate={{ height: ['10px', '28px', '10px'] }}
+            transition={{ duration: 0.8, delay: i * 0.14, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ))}
+      </div>
+      <p className="text-text-muted text-xs">{text}</p>
     </div>
   )
 }
@@ -133,7 +143,7 @@ function ErrorBox({ msg }) {
 
 // ─── Signal Tab ──────────────────────────────────────────────────────────────
 function SignalTab({ pair, signal, loading, error }) {
-  if (loading) return <LoadingSpinner />
+  if (loading) return <LoadingSpinner text="Generating signal…" />
   if (error) return <ErrorBox msg={error} />
   if (!signal) return <EmptyState title="No signal yet" desc="Select a pair to see its signal." />
 
@@ -305,22 +315,24 @@ function RiskCalcTab() {
 // ─── Technical Tab ────────────────────────────────────────────────────────────
 function TechnicalTab({ pair }) {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (!pair) return
-    setLoading(true)
-    setError(null)
     getTechnical(pair)
-      .then(setData)
-      .catch(() => setError('Failed to load technical data.'))
-      .finally(() => setLoading(false))
+      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .catch(() => { setError('Failed to load technical data.'); setLoading(false) })
   }, [pair])
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorBox msg={error} />
-  if (!data) return <EmptyState title="No technical data" desc="Technical analysis unavailable for this pair." />
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
+
+  if (loading) return <LoadingSpinner text="Running technical analysis…" />
+  if (error && !data) return <ErrorBox msg={error} />
 
   const sr = data.support_resistance || data.sr || {}
   const fvg = data.fvg_zones || data.fvg || []
@@ -398,52 +410,79 @@ function TechnicalTab({ pair }) {
 // ─── FVG Tab ──────────────────────────────────────────────────────────────────
 function FVGTab() {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('approaching')
 
-  useEffect(() => {
-    setLoading(true)
-    setError(null)
+  const fetchData = useCallback(() => {
     getFvgScanner()
-      .then(setData)
-      .catch(() => setError('Failed to load FVG data.'))
-      .finally(() => setLoading(false))
+      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .catch(() => { setError('Failed to load FVG data.'); setLoading(false) })
   }, [])
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorBox msg={error} />
-  if (!data) return <EmptyState title="No FVG data" desc="FVG scanner data unavailable." />
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
 
-  const grouped = data.grouped || {}
-  const items = Array.isArray(data)
+  if (loading) return <LoadingSpinner text="Scanning FVG zones…" />
+  if (error && !data) return <ErrorBox msg={error} />
+
+  const grouped = data?.grouped || {}
+  const allItems = Array.isArray(data)
     ? data
     : Object.entries(grouped).flatMap(([status, list]) =>
         (list || []).map(item => ({ ...item, status }))
       )
 
+  const filtered = statusFilter === 'all' ? allItems : allItems.filter(z => (z.status || 'active') === statusFilter)
+
   return (
     <div className="space-y-3">
-      {items.length === 0 && <EmptyState title="No FVG zones" desc="No fair value gaps detected." />}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {items.map((zone, i) => {
-          const status = zone.status || 'active'
-          const statusColor = status === 'approaching' ? 'text-accent-yellow' : status === 'reached' ? 'text-accent-green' : status === 'rejected' ? 'text-accent-red' : 'text-accent-blue'
+      {/* Status filter */}
+      <div className="flex flex-wrap gap-1.5">
+        {['approaching', 'active', 'reached', 'rejected', 'all'].map((s) => {
+          const colors = { approaching: 'text-accent-yellow border-accent-yellow/40 bg-accent-yellow/10', active: 'text-accent-blue border-accent-blue/40 bg-accent-blue/10', reached: 'text-accent-green border-accent-green/40 bg-accent-green/10', rejected: 'text-accent-red border-accent-red/40 bg-accent-red/10', all: 'text-text-secondary border-border-default bg-bg-card' }
+          const activeColors = { approaching: 'bg-accent-yellow text-bg-primary border-accent-yellow', active: 'bg-accent-blue text-bg-primary border-accent-blue', reached: 'bg-accent-green text-bg-primary border-accent-green', rejected: 'bg-accent-red text-bg-primary border-accent-red', all: 'bg-text-secondary text-bg-primary border-text-secondary' }
+          const count = s === 'all' ? allItems.length : allItems.filter(z => (z.status || 'active') === s).length
           return (
-            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3">
-              <div className="flex justify-between items-start mb-3">
-                <span className="text-text-primary font-medium">{zone.pair || `Zone ${i + 1}`}</span>
-                <span className={`text-xs font-semibold uppercase ${statusColor}`}>{status}</span>
-              </div>
-              <div className="space-y-1 text-sm">
-                {(zone.top != null) && <div className="flex justify-between"><span className="text-text-muted">High</span><span className="font-mono text-text-primary">{zone.top}</span></div>}
-                {(zone.bottom != null) && <div className="flex justify-between"><span className="text-text-muted">Low</span><span className="font-mono text-text-primary">{zone.bottom}</span></div>}
-                {zone.fvg_type || zone.type ? <div className="flex justify-between"><span className="text-text-muted">Type</span><span className={( zone.fvg_type || zone.type) === 'bullish' ? 'text-accent-green' : 'text-accent-red'}>{zone.fvg_type || zone.type}</span></div> : null}
-                {zone.direction && <div className="flex justify-between"><span className="text-text-muted">Signal</span><span className={dirColor(zone.direction)}>{zone.direction}</span></div>}
-              </div>
-            </div>
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border uppercase transition-all ${statusFilter === s ? activeColors[s] : colors[s]}`}
+            >
+              {s} {count > 0 && <span className="opacity-70">({count})</span>}
+            </button>
           )
         })}
       </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState title={`No ${statusFilter === 'all' ? '' : statusFilter + ' '}FVG zones`} desc={statusFilter === 'all' ? 'No fair value gaps detected.' : `No zones with status "${statusFilter}" found.`} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {filtered.map((zone, i) => {
+            const status = zone.status || 'active'
+            const statusColor = status === 'approaching' ? 'text-accent-yellow' : status === 'reached' ? 'text-accent-green' : status === 'rejected' ? 'text-accent-red' : 'text-accent-blue'
+            const borderColor = status === 'approaching' ? 'border-accent-yellow/30' : status === 'reached' ? 'border-accent-green/30' : status === 'rejected' ? 'border-accent-red/30' : 'border-accent-blue/30'
+            return (
+              <div key={i} className={`bg-bg-card border ${borderColor} rounded-xl p-3`}>
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-text-primary font-medium">{zone.pair || `Zone ${i + 1}`}</span>
+                  <span className={`text-xs font-semibold uppercase ${statusColor}`}>{status}</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  {(zone.top != null) && <div className="flex justify-between"><span className="text-text-muted">High</span><span className="font-mono text-text-primary">{zone.top}</span></div>}
+                  {(zone.bottom != null) && <div className="flex justify-between"><span className="text-text-muted">Low</span><span className="font-mono text-text-primary">{zone.bottom}</span></div>}
+                  {(zone.fvg_type || zone.type) ? <div className="flex justify-between"><span className="text-text-muted">Type</span><span className={(zone.fvg_type || zone.type) === 'bullish' ? 'text-accent-green' : 'text-accent-red'}>{zone.fvg_type || zone.type}</span></div> : null}
+                  {zone.direction && <div className="flex justify-between"><span className="text-text-muted">Signal</span><span className={dirColor(zone.direction)}>{zone.direction}</span></div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -451,20 +490,23 @@ function FVGTab() {
 // ─── S/R Breakouts Tab ────────────────────────────────────────────────────────
 function SRTab() {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    setLoading(true)
-    setError(null)
+  const fetchData = useCallback(() => {
     getSrBreakouts()
-      .then(setData)
-      .catch(() => setError('Failed to load S/R breakout data.'))
-      .finally(() => setLoading(false))
+      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .catch(() => { setError('Failed to load S/R breakout data.'); setLoading(false) })
   }, [])
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorBox msg={error} />
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
+
+  if (loading) return <LoadingSpinner text="Detecting S/R breakouts…" />
+  if (error && !data) return <ErrorBox msg={error} />
   const srGroups = data?.sr_groups || {}
   const items = Array.isArray(data)
     ? data
@@ -542,16 +584,21 @@ function SRTab() {
 function VolatileTab() {
   const [timeframe, setTimeframe] = useState('24h')
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const activeTimeframeRef = useRef(timeframe)
 
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    getVolatile(timeframe)
-      .then(setData)
-      .catch(() => setError('Failed to load volatility data.'))
-      .finally(() => setLoading(false))
+    activeTimeframeRef.current = timeframe
+    const fetch = () => {
+      const tf = activeTimeframeRef.current
+      getVolatile(tf)
+        .then((res) => { if (activeTimeframeRef.current === tf) { setData(res); setLoading(false) } })
+        .catch(() => { if (activeTimeframeRef.current === tf) { setError('Failed to load volatility data.'); setLoading(false) } })
+    }
+    fetch()
+    const id = setInterval(fetch, 30_000)
+    return () => clearInterval(id)
   }, [timeframe])
 
   const items = Array.isArray(data) ? data : data?.pairs || []
@@ -570,7 +617,7 @@ function VolatileTab() {
           </button>
         ))}
       </div>
-      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner text="Ranking volatile pairs…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No data" desc="Volatility data not available." />
       ) : (
         <div className="space-y-2">
@@ -600,23 +647,26 @@ function VolatileTab() {
 // ─── Reversal Tab ─────────────────────────────────────────────────────────────
 function ReversalTab() {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    setLoading(true)
-    setError(null)
+  const fetchData = useCallback(() => {
     getReversals()
-      .then(setData)
-      .catch(() => setError('Failed to load reversal data.'))
-      .finally(() => setLoading(false))
+      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .catch(() => { setError('Failed to load reversal data.'); setLoading(false) })
   }, [])
+
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
 
   const items = Array.isArray(data) ? data : data?.pairs || data?.reversals || []
 
   return (
     <div className="space-y-3">
-      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner text="Detecting reversal patterns…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No reversals" desc="No reversal signals detected." />
       ) : items.map((r, i) => (
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center justify-between">
@@ -642,21 +692,26 @@ function SuccessTab({ allPairs }) {
   useEffect(() => {
     if (!allPairs.length) return
     setLoading(true)
-    const top10 = allPairs.slice(0, 10)
-    Promise.allSettled(top10.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? null }))))
-      .then((settled) => {
-        const list = settled
-          .filter((s) => s.status === 'fulfilled' && s.value.acc != null)
-          .map((s) => s.value)
-        list.sort((a, b) => b.acc - a.acc)
-        setResults(list)
-      })
-      .finally(() => setLoading(false))
+    const fetchSuccess = () => {
+      const top10 = allPairs.slice(0, 10)
+      Promise.allSettled(top10.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? null }))))
+        .then((settled) => {
+          const list = settled
+            .filter((s) => s.status === 'fulfilled' && s.value.acc != null)
+            .map((s) => s.value)
+          list.sort((a, b) => b.acc - a.acc)
+          setResults(list)
+        })
+        .finally(() => setLoading(false))
+    }
+    fetchSuccess()
+    const id = setInterval(fetchSuccess, 120_000) // 2-min interval (10 parallel requests)
+    return () => clearInterval(id)
   }, [allPairs])
 
   return (
     <div className="space-y-3">
-      {loading ? <LoadingSpinner /> : results.length === 0 ? (
+      {loading ? <LoadingSpinner text="Calculating success rates…" /> : results.length === 0 ? (
         <EmptyState title="No data" desc="Accuracy data unavailable." />
       ) : results.map((r, i) => (
         <div key={r.pair} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center gap-3">
@@ -679,23 +734,26 @@ function SuccessTab({ allPairs }) {
 // ─── Scanner Tab ──────────────────────────────────────────────────────────────
 function ScannerTab() {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    setLoading(true)
-    setError(null)
+  const fetchData = useCallback(() => {
     getPatternScanner()
-      .then(setData)
-      .catch(() => setError('Failed to load pattern scanner data.'))
-      .finally(() => setLoading(false))
+      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .catch(() => { setError('Failed to load pattern scanner data.'); setLoading(false) })
   }, [])
+
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
 
   const items = Array.isArray(data) ? data : data?.patterns || []
 
   return (
     <div className="space-y-3">
-      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
+      {loading ? <LoadingSpinner text="Scanning patterns…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No patterns" desc="No patterns detected in the scanner." />
       ) : items.map((p, i) => (
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3">
@@ -722,24 +780,31 @@ function ScannerTab() {
 }
 
 // ─── News Tab ─────────────────────────────────────────────────────────────────
-const NEWS_REFRESH_MS = 5 * 60 * 1000 // 5 minutes
+const NEWS_REFRESH_MS = 2.5 * 60 * 1000 // 2.5 minutes for fresher feeds
+
+const SOURCE_COLORS = {
+  ForexLive: 'bg-accent-blue/10 text-accent-blue',
+  FXStreet: 'bg-accent-green/10 text-accent-green',
+  'Investing.com': 'bg-accent-yellow/10 text-accent-yellow',
+  DailyFX: 'bg-accent-purple/10 text-accent-purple',
+  Reuters: 'bg-accent-red/10 text-accent-red',
+}
 
 function NewsTab() {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
 
   const fetchNews = useCallback(() => {
-    setLoading(true)
-    setError(null)
     getNews()
       .then((res) => {
         setData(res)
         setLastUpdated(new Date())
+        setLoading(false)
+        setError(null)
       })
-      .catch(() => setError('Failed to load market news.'))
-      .finally(() => setLoading(false))
+      .catch(() => { setError('Failed to load market news.'); setLoading(false) })
   }, [])
 
   useEffect(() => {
@@ -749,15 +814,21 @@ function NewsTab() {
   }, [fetchNews])
 
   const items = Array.isArray(data) ? data : data?.news || data?.articles || []
+  const sources = [...new Set(items.map((n) => n.source).filter(Boolean))]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-text-primary text-sm font-semibold">Market News</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-text-primary text-sm font-semibold">Market News</h3>
+          {items.length > 0 && (
+            <span className="text-text-muted text-xs">({items.length} articles)</span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {lastUpdated && (
-            <span className="text-text-muted text-xs">
-              Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <span className="text-text-muted text-xs hidden sm:inline">
+              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           <button
@@ -770,7 +841,17 @@ function NewsTab() {
           </button>
         </div>
       </div>
-      {loading && items.length === 0 ? <LoadingSpinner /> : error && items.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
+      {/* Source badges */}
+      {sources.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {sources.map((src) => (
+            <span key={src} className={`text-xs px-2 py-0.5 rounded-full font-medium ${SOURCE_COLORS[src] || 'bg-bg-card text-text-muted'}`}>
+              {src}
+            </span>
+          ))}
+        </div>
+      )}
+      {loading && items.length === 0 ? <LoadingSpinner text="Fetching market news…" /> : error && items.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
             <Newspaper size={32} className="text-text-muted" />
@@ -782,11 +863,20 @@ function NewsTab() {
         <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 hover:border-accent-blue/30 transition-all">
           <div className="flex gap-3">
             <div className="flex-1">
-              <a href={n.url || '#'} target="_blank" rel="noopener noreferrer" className="text-text-primary font-medium hover:text-accent-blue transition-colors">
+              <a href={n.url || '#'} target="_blank" rel="noopener noreferrer" className="text-text-primary font-medium hover:text-accent-blue transition-colors leading-snug">
                 {n.title || n.headline || 'News Article'}
               </a>
-              {n.summary && <p className="text-text-secondary text-sm mt-1 line-clamp-2">{n.summary}</p>}
-              <p className="text-text-muted text-xs mt-2">{n.published_at || n.date || ''} {n.source ? `• ${n.source}` : ''}</p>
+              {n.summary && <p className="text-text-secondary text-xs mt-1 line-clamp-2">{n.summary}</p>}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {n.source && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_COLORS[n.source] || 'bg-bg-secondary text-text-muted'}`}>
+                    {n.source}
+                  </span>
+                )}
+                {(n.published_at || n.date) && (
+                  <span className="text-text-muted text-xs">{n.published_at || n.date}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1269,7 +1359,7 @@ export default function ForexDashboard() {
           >
             {activeTab === 'signal' && <SignalTab pair={selectedPair} signal={signal} loading={signalLoading} error={signalError} />}
             {activeTab === 'risk' && <RiskCalcTab pair={selectedPair} />}
-            {activeTab === 'technical' && <TechnicalTab pair={selectedPair} />}
+            {activeTab === 'technical' && <TechnicalTab key={selectedPair} pair={selectedPair} />}
             {activeTab === 'fvg' && <FVGTab />}
             {activeTab === 'sr' && <SRTab />}
             {activeTab === 'volatile' && <VolatileTab />}
