@@ -69,10 +69,6 @@
       <span class="brand-title">PiiTrade</span>
       <marquee behavior="scroll" direction="left" style="width:100%; height:56px;">
   <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId"></a>
-
-  <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText">
-    best trading broker you can trust - 0 swap fees for GCC countries
-  </a>
 </marquee>
       </span>
       <script>
@@ -84,25 +80,7 @@
 
         document.getElementById("maqId").innerHTML = output;
       </script>
-      <script>
-        (function () {
-          let text = document.getElementById("promoText");
-
-          // Smooth pulse animation
-          let scale = 1, growing = true;
-
-          setInterval(function () {
-            if (growing) {
-              scale += 0.01;
-              if (scale >= 1.08) growing = false;
-            } else {
-              scale -= 0.01;
-              if (scale <= 1) growing = true;
-            }
-            text.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
-          }, 50);
-        })();
-      </script>
+      
     </div>
     <nav class="fx-nav">
       <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"

@@ -515,107 +515,18 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <style>
-        #container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 100%;
-          height: 120px;
-          /* ensures vertical centering in header */
-          position: relative;
-          margin: 0 auto;
-        }
-
-        #imageWrap {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: nowrap;
-        }
-
-        #imageWrap img {
-          width: 100px;
-          height: 50px;
-          border-radius: 6px;
-          box-shadow: 0 0 5px #00f, 0 0 10px #00f;
-          transition: 0.3s;
-        }
-
-        #promoText {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%) scale(1);
-          background: rgba(0, 0, 0, 0.8);
-          color: #fff;
-          padding: 6px 10px;
-          border-radius: 6px;
-          font-size: 13px;
-          text-align: center;
-          z-index: 5;
-          white-space: nowrap;
-          text-decoration: none;
-        }
-
-        /* ✅ Mobile behavior */
-        @media (max-width: 600px) {
-          #imageWrap {
-            position: relative;
-          }
-
-          #imageWrap img {
-            position: absolute;
-            opacity: 0;
-            transform: scale(0.9);
-          }
-
-          #imageWrap img:first-child {
-            position: relative;
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      </style>
-
-      <span id="container">
-
-        <!-- Images -->
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap">
-          <img src="/img/exness.png" />
-          <img src="/img/exness2.png" />
-          <img src="/img/exness3.png" />
-          <img src="/img/exness.png" />
-          <img src="/img/exness3.png" />
-        </a>
-
-        <!-- Text -->
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText">
-          best trading broker you can trust - 0 swap fees for GCC countries
-        </a>
-
+      <marquee behavior="scroll" direction="left" style="width:100%; height:56px;">
+  <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId"></a>
+</marquee>
       </span>
-
       <script>
-        (function () {
-          var text = document.getElementById("promoText");
+        let output = "";
 
-          // Smooth pulse animation
-          var scale = 1, growing = true;
+        for (let i = 1; i <= 140; i++) {
+          output += `<img src="/img/exness_${i}.png" style="height:56px;margin-right:10px;">`;
+        }
 
-          setInterval(function () {
-            if (growing) {
-              scale += 0.01;
-              if (scale >= 1.08) growing = false;
-            } else {
-              scale -= 0.01;
-              if (scale <= 1) growing = true;
-            }
-
-            text.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
-          }, 50);
-        })();
+        document.getElementById("maqId").innerHTML = output;
       </script>
     </div>
     <nav class="fx-nav">
