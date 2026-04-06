@@ -1249,6 +1249,11 @@ class _CachedStaticFiles(StaticFiles):
 
 app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 
+# Serve repository-level marketing/media images (e.g. /img/exness_*.png, /img/taptap.jfif)
+_IMG_DIR = _DIR.parent / "img"
+if _IMG_DIR.exists():
+    app.mount("/img", _CachedStaticFiles(directory=_IMG_DIR), name="img")
+
 # React SPA disabled – the Jinja2 HTML templates are served directly.
 # Setting _REACT_INDEX to a non-existent path ensures all _REACT_INDEX.exists()
 # checks return False without touching each route handler individually.
