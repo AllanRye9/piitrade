@@ -271,52 +271,58 @@ export default function Landing() {
 
               {/* Large left image — exness.png: slides from left, then continuously floats */}
               <motion.div
-                className="exness-left overflow-hidden rounded-2xl h-48 lg:h-auto"
+                className="exness-left overflow-hidden rounded-2xl h-36 sm:h-44 lg:h-auto"
                 initial={{ opacity: 0, x: -60 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
               >
-                <motion.img
-                  src="/img/exness.png"
-                  alt="Exness trading platform"
-                  className="w-full h-full object-cover"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  whileHover={{ scale: 1.04, transition: { duration: 0.3 } }}
-                />
+                <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                  <motion.img
+                    src="/img/exness.png"
+                    alt="Exness trading platform"
+                    className="w-full h-full object-cover"
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    whileHover={{ scale: 1.04, transition: { duration: 0.3 } }}
+                  />
+                </a>
               </motion.div>
 
               {/* Right two images — flex row on mobile, dissolved into grid on desktop */}
               <div className="exness-right-pair flex gap-2 lg:flex-col">
                 {/* exness2.png — slides from right, 0.2 s delay */}
                 <motion.div
-                  className="flex-1 overflow-hidden rounded-2xl h-32 lg:h-auto"
+                  className="flex-1 overflow-hidden rounded-2xl h-24 sm:h-28 lg:h-auto"
                   initial={{ opacity: 0, x: 60 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
                 >
-                  <img
-                    src="/img/exness2.png"
-                    alt="Exness trading dashboard"
-                    className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
-                  />
+                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                    <img
+                      src="/img/exness2.png"
+                      alt="Exness trading dashboard"
+                      className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
+                    />
+                  </a>
                 </motion.div>
 
                 {/* exness3.png — slides from right, 0.4 s delay */}
                 <motion.div
-                  className="flex-1 overflow-hidden rounded-2xl h-32 lg:h-auto"
+                  className="flex-1 overflow-hidden rounded-2xl h-24 sm:h-28 lg:h-auto"
                   initial={{ opacity: 0, x: 60 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
                 >
-                  <img
-                    src="/img/exness3.png"
-                    alt="Exness market analysis view"
-                    className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
-                  />
+                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                    <img
+                      src="/img/exness3.png"
+                      alt="Exness market analysis view"
+                      className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
+                    />
+                  </a>
                 </motion.div>
               </div>
 
