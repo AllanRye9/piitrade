@@ -147,10 +147,8 @@
 
   <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
   <div id="disclaimerContainer" style="position:relative;width:100%;max-width:800px;margin:10px auto;">
-
-    <!-- DISCLAIMER -->
     <div class="global-disclaimer" id="disclaimerBox" role="alert" style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
-    background:#111;color:#fff;padding:10px;gap:10px;border-radius:6px;box-sizing:border-box;">
+              background:#111;color:#fff;padding:10px;gap:10px;border-radius:6px;box-sizing:border-box;">
 
       <span class="global-disclaimer-icon">⚠️</span>
 
@@ -169,50 +167,52 @@
     </div>
 
     <!-- BANNER -->
-    <div id="bannerBox" style="width:100%;min-height:80px;display:none;align-items:center;justify-content:center;
-    background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;">
+    <div id="bannerBox" style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
+                             background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;">
 
-      <marquee behavior="scroll" direction="left" style="width:100%;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-      </marquee>
-
+      <!-- Single full-width image -->
+      <a style="display:flex;align-items:center;justify-content:center;width:10%;height:100%;" href="https://apps.apple.com/us/app/taptap-send-money-transfer/id1413346006" target="_blank" rel="noopener">
+          <img src="/img/taptap.webp" alt="Banner">
+          <span class="banner-text">Click here!</span>
+      </a>
     </div>
 
   </div>
 
   <script>
-    (function () {
-      let disclaimer = document.getElementById("disclaimerBox");
-      let banner = document.getElementById("bannerBox");
+(function () {
+  let disclaimer = document.getElementById("disclaimerBox");
+  let banner = document.getElementById("bannerBox");
 
-      let DISCLAIMER_TIME = 120000; // 2 minutes
-      let BANNER_TIME = 80000;      // 80 seconds
+  if (!disclaimer || !banner) {
+    console.error("Disclaimer or Banner element not found!");
+    return;
+  }
 
-      function showDisclaimer() {
-        disclaimer.style.setProperty("display", "flex", "important");
-        banner.style.setProperty("display", "none", "important");
+  const DISCLAIMER_TIME = 12000; // 2 minutes
+  const BANNER_TIME = 8000;      // 80 seconds
 
-        setTimeout(showBanner, DISCLAIMER_TIME);
-      }
+  function showDisclaimer() {
+    disclaimer.style.display = "flex";
+    banner.style.display = "none";
 
-      function showBanner() {
-        disclaimer.style.setProperty("display", "none", "important");
-        banner.style.setProperty("display", "flex", "important");
+    setTimeout(showBanner, DISCLAIMER_TIME);
+  }
 
-        setTimeout(showDisclaimer, BANNER_TIME);
-      }
+  function showBanner() {
+    disclaimer.style.display = "none";
+    banner.style.display = "flex";
 
-      // Ensure DOM is ready
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", showDisclaimer);
-      } else {
-        showDisclaimer();
-      }
-    })();
-  </script>
+    setTimeout(showDisclaimer, BANNER_TIME);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showDisclaimer);
+  } else {
+    showDisclaimer();
+  }
+})();
+</script>
 
   <!-- ═══════════════════════════════ TOAST CONTAINER ═══════════════════════ -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
