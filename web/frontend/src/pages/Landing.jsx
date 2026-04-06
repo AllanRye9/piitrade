@@ -260,99 +260,135 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Right — floating signal card (visible on lg+ only) */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative hidden lg:block"
-          >
-            {/* Trader image — decorative backdrop */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, delay: 0.6, ease: 'easeOut' }}
-            >
-              <motion.img
-                src="/img/trader.png"
-                alt=""
-                className="w-72 h-72 object-cover rounded-full"
-                style={{
-                  opacity: 0.35,
-                  maskImage: 'radial-gradient(circle at center, black 40%, transparent 75%)',
-                  WebkitMaskImage: 'radial-gradient(circle at center, black 40%, transparent 75%)',
-                }}
-                animate={{
-                  scale: [1, 1.04, 1],
-                  filter: [
-                    'drop-shadow(0 0 18px rgba(88,166,255,0.25))',
-                    'drop-shadow(0 0 36px rgba(88,166,255,0.55))',
-                    'drop-shadow(0 0 18px rgba(88,166,255,0.25))',
-                  ],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </motion.div>
+          {/* Right — landing preview: Exness image cluster + signal card */}
+          <div className="relative">
 
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative z-10"
-            >
-              <div className="bg-bg-card border border-border-default rounded-2xl p-6 shadow-2xl glow-blue">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Live Signal</p>
-                    <p className="text-text-primary font-bold text-xl">EUR/USD</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-2xl font-bold text-accent-green">BUY</span>
-                    <span className="text-text-secondary text-sm">78% conf.</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  {[
-                    { label: 'Entry', value: '1.0842', color: 'text-text-primary' },
-                    { label: 'Take Profit', value: '1.0910', color: 'text-accent-green' },
-                    { label: 'Stop Loss', value: '1.0800', color: 'text-accent-red' },
-                  ].map((item) => (
-                    <div key={item.label} className="bg-bg-secondary rounded-lg p-2 text-center">
-                      <p className="text-text-muted text-xs mb-1">{item.label}</p>
-                      <p className={`font-mono text-sm font-semibold ${item.color}`}>{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs text-text-muted mb-1">
-                    <span>Confidence</span><span>78%</span>
-                  </div>
-                  <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '78%' }}
-                      transition={{ delay: 0.8, duration: 1 }}
-                      className="h-full bg-accent-green rounded-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            {/* Exness image cluster — responsive grid (see .exness-image-cluster in index.css)
+                Mobile: single-column stack — large image full-width, then two smaller images side by side
+                Desktop: two-column grid (3fr / 2fr), large image spans both rows on the left
+            */}
+            <div className="exness-image-cluster">
 
-            {previewSignals.slice(1).map((s, i) => (
+              {/* Large left image — exness.png: slides from left, then continuously floats */}
               <motion.div
-                key={s.pair}
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
-                className={`absolute ${i === 0 ? '-top-6 -right-4' : i === 1 ? 'bottom-0 -left-6' : '-bottom-4 right-8'} bg-bg-card border border-border-default rounded-xl p-3 shadow-lg`}
+                className="exness-left overflow-hidden rounded-2xl h-48 lg:h-auto"
+                initial={{ opacity: 0, x: -60 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-text-secondary text-xs font-medium">{s.pair}</span>
-                  <SignalBadge dir={s.dir} />
+                <motion.img
+                  src="/img/exness.png"
+                  alt="Exness trading platform"
+                  className="w-full h-full object-cover"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  whileHover={{ scale: 1.04, transition: { duration: 0.3 } }}
+                />
+              </motion.div>
+
+              {/* Right two images — flex row on mobile, dissolved into grid on desktop */}
+              <div className="exness-right-pair flex gap-2 lg:flex-col">
+                {/* exness2.png — slides from right, 0.2 s delay */}
+                <motion.div
+                  className="flex-1 overflow-hidden rounded-2xl h-32 lg:h-auto"
+                  initial={{ opacity: 0, x: 60 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                >
+                  <img
+                    src="/img/exness2.png"
+                    alt="Exness trading dashboard"
+                    className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
+                  />
+                </motion.div>
+
+                {/* exness3.png — slides from right, 0.4 s delay */}
+                <motion.div
+                  className="flex-1 overflow-hidden rounded-2xl h-32 lg:h-auto"
+                  initial={{ opacity: 0, x: 60 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
+                >
+                  <img
+                    src="/img/exness3.png"
+                    alt="Exness market analysis view"
+                    className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
+                  />
+                </motion.div>
+              </div>
+
+            </div>
+
+            {/* Signal card (preview-blur-wrap) — desktop only, floats below image cluster */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="relative hidden lg:block mt-4"
+            >
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                className="relative z-10"
+              >
+                <div className="bg-bg-card border border-border-default rounded-2xl p-6 shadow-2xl glow-blue">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Live Signal</p>
+                      <p className="text-text-primary font-bold text-xl">EUR/USD</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-2xl font-bold text-accent-green">BUY</span>
+                      <span className="text-text-secondary text-sm">78% conf.</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {[
+                      { label: 'Entry', value: '1.0842', color: 'text-text-primary' },
+                      { label: 'Take Profit', value: '1.0910', color: 'text-accent-green' },
+                      { label: 'Stop Loss', value: '1.0800', color: 'text-accent-red' },
+                    ].map((item) => (
+                      <div key={item.label} className="bg-bg-secondary rounded-lg p-2 text-center">
+                        <p className="text-text-muted text-xs mb-1">{item.label}</p>
+                        <p className={`font-mono text-sm font-semibold ${item.color}`}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-text-muted mb-1">
+                      <span>Confidence</span><span>78%</span>
+                    </div>
+                    <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: '78%' }}
+                        transition={{ delay: 0.8, duration: 1 }}
+                        className="h-full bg-accent-green rounded-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
+
+              {previewSignals.slice(1).map((s, i) => (
+                <motion.div
+                  key={s.pair}
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+                  className={`absolute ${i === 0 ? '-top-6 -right-4' : i === 1 ? 'bottom-0 -left-6' : '-bottom-4 right-8'} bg-bg-card border border-border-default rounded-xl p-3 shadow-lg`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-secondary text-xs font-medium">{s.pair}</span>
+                    <SignalBadge dir={s.dir} />
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+          </div>
         </div>
 
         <motion.div
