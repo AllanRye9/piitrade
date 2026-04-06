@@ -7,6 +7,7 @@ import ScrollProgressBar from './ScrollProgressBar'
 import BackToTop from './BackToTop'
 import ToastContainer from './ToastContainer'
 import TopAdStrip from './TopAdStrip'
+import SponsorBannerStrip from './SponsorBannerStrip'
 
 export default function Layout({ children }) {
   const location = useLocation()
@@ -23,8 +24,8 @@ export default function Layout({ children }) {
       <ScrollProgressBar />
       <Navbar />
       <main className="flex-1 min-w-0 pt-16">
-        {/* Top blank canvas — appears at the top of every page */}
-        <div className="mx-auto" style={{ width: '90%', height: '18px' }} />
+        {/* Sponsor banner strip — persists across all primary section views */}
+        <SponsorBannerStrip />
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
