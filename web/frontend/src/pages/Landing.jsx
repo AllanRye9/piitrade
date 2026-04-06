@@ -260,80 +260,15 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Right — landing preview: Exness image cluster + signal card */}
+          {/* Right — landing preview: signal card */}
           <div className="relative">
 
-            {/* Exness image cluster — responsive grid (see .exness-image-cluster in index.css)
-                Mobile: single-column stack — large image full-width, then two smaller images side by side
-                Desktop: two-column grid (3fr / 2fr), large image spans both rows on the left
-            */}
-            <div className="exness-image-cluster">
-
-              {/* Large left image — exness.png: slides from left, then continuously floats */}
-              <motion.div
-                className="exness-left overflow-hidden rounded-2xl h-36 sm:h-44 lg:h-auto"
-                initial={{ opacity: 0, x: -60 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              >
-                <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness trading platform (opens in new tab)" className="block w-full h-full">
-                  <motion.img
-                    src="/img/exness.png"
-                    alt="Exness trading platform"
-                    className="w-full h-full object-cover"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    whileHover={{ scale: 1.04, transition: { duration: 0.3 } }}
-                  />
-                </a>
-              </motion.div>
-
-              {/* Right two images — flex row on mobile, dissolved into grid on desktop */}
-              <div className="exness-right-pair flex gap-2 lg:flex-col">
-                {/* exness2.png — slides from right, 0.2 s delay */}
-                <motion.div
-                  className="flex-1 overflow-hidden rounded-2xl h-24 sm:h-28 lg:h-auto"
-                  initial={{ opacity: 0, x: 60 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                >
-                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness trading dashboard (opens in new tab)" className="block w-full h-full">
-                    <img
-                      src="/img/exness2.png"
-                      alt="Exness trading dashboard"
-                      className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
-                    />
-                  </a>
-                </motion.div>
-
-                {/* exness3.png — slides from right, 0.4 s delay */}
-                <motion.div
-                  className="flex-1 overflow-hidden rounded-2xl h-24 sm:h-28 lg:h-auto"
-                  initial={{ opacity: 0, x: 60 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
-                >
-                  <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Exness market analysis (opens in new tab)" className="block w-full h-full">
-                    <img
-                      src="/img/exness3.png"
-                      alt="Exness market analysis view"
-                      className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-300"
-                    />
-                  </a>
-                </motion.div>
-              </div>
-
-            </div>
-
-            {/* Signal card (preview-blur-wrap) — desktop only, floats below image cluster */}
+            {/* Signal card preview */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative hidden lg:block mt-4"
+              className="relative mt-4"
             >
               <motion.div
                 animate={{ y: [0, -10, 0] }}

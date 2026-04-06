@@ -170,30 +170,6 @@ body { background: var(--bg-primary, #0d1117); color: var(--text-primary, #e6edf
   opacity: 0;
 }
 
-/* ─── Exness Image Cluster ─── */
-.exness-image-cluster {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 1024px) {
-  .exness-image-cluster {
-    grid-template-columns: 3fr 2fr;
-    grid-template-rows: 1fr 1fr;
-    height: 320px;
-  }
-
-  .exness-image-cluster .exness-left {
-    grid-row: 1 / span 2;
-  }
-
-  /* On desktop the two-image wrapper is dissolved so its children sit in the grid */
-  .exness-image-cluster .exness-right-pair {
-    display: contents;
-  }
-}
-
 /* ─── PART 5: Gradient Text ─── */
 .text-gradient {
   background: linear-gradient(135deg, var(--accent-blue, #58a6ff), var(--accent-purple, #a855f7));
