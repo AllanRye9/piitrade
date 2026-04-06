@@ -181,7 +181,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-x-hidden px-4 py-16 sm:py-20">
         {/* Background grid */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -261,8 +261,7 @@ export default function Landing() {
           </motion.div>
 
           {/* Right — landing preview: signal card */}
-          <div className="relative">
-
+          <div className="relative sm:pt-8 sm:pb-8 sm:px-8">
             {/* Signal card preview */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -319,7 +318,7 @@ export default function Landing() {
                   key={s.pair}
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
-                  className={`absolute ${i === 0 ? '-top-6 -right-4' : i === 1 ? 'bottom-0 -left-6' : '-bottom-4 right-8'} bg-bg-card border border-border-default rounded-xl p-3 shadow-lg`}
+                  className={`hidden sm:flex absolute ${i === 0 ? '-top-6 -right-4' : i === 1 ? 'bottom-0 -left-6' : '-bottom-4 right-8'} bg-bg-card border border-border-default rounded-xl p-3 shadow-lg`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-text-secondary text-xs font-medium">{s.pair}</span>

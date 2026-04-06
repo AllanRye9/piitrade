@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
-  getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe,
+  getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe, getLivePrices,
 } from '../utils/api'
 import PriceTicker from '../components/PriceTicker'
 import PartnerCards from '../components/PartnerCard'
@@ -477,32 +477,62 @@ function SRTab() {
       {items.length === 0 ? (
         <EmptyState title="No breakouts" desc="No S/R breakouts detected at this time." />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-default">
-                {['Pair', 'Level', 'Type', 'Status', 'Direction'].map((h) => (
-                  <th key={h} className="text-left py-3 px-4 text-text-muted font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((b, i) => (
-                <tr key={i} className="border-b border-border-subtle hover:bg-bg-card transition-colors">
-                  <td className="py-3 px-4 text-text-primary font-medium">{b.pair || '—'}</td>
-                  <td className="py-3 px-4 font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs font-semibold uppercase ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>{b.type || '—'}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>{b.status || '—'}</span>
-                  </td>
-                  <td className={`py-3 px-4 font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</td>
+        <>
+          {/* Card layout for mobile */}
+          <div className="sm:hidden space-y-2">
+            {items.map((b, i) => (
+              <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-primary font-semibold">{b.pair || '—'}</span>
+                  <span className={`text-xs font-bold font-mono ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>
+                    {(b.type || '—').toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Level</span>
+                  <span className="font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Status</span>
+                  <span className={`font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>
+                    {b.status || '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Direction</span>
+                  <span className={`font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Table layout for sm+ screens */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-default">
+                  {['Pair', 'Level', 'Type', 'Status', 'Direction'].map((h) => (
+                    <th key={h} className="text-left py-3 px-4 text-text-muted font-medium">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((b, i) => (
+                  <tr key={i} className="border-b border-border-subtle hover:bg-bg-card transition-colors">
+                    <td className="py-3 px-4 text-text-primary font-medium">{b.pair || '—'}</td>
+                    <td className="py-3 px-4 font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</td>
+                    <td className="py-3 px-4">
+                      <span className={`text-xs font-semibold uppercase ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>{b.type || '—'}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`text-xs font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>{b.status || '—'}</span>
+                    </td>
+                    <td className={`py-3 px-4 font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
@@ -692,25 +722,55 @@ function ScannerTab() {
 }
 
 // ─── News Tab ─────────────────────────────────────────────────────────────────
+const NEWS_REFRESH_MS = 5 * 60 * 1000 // 5 minutes
+
 function NewsTab() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(null)
 
-  useEffect(() => {
+  const fetchNews = useCallback(() => {
     setLoading(true)
     setError(null)
     getNews()
-      .then(setData)
+      .then((res) => {
+        setData(res)
+        setLastUpdated(new Date())
+      })
       .catch(() => setError('Failed to load market news.'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchNews()
+    const id = setInterval(fetchNews, NEWS_REFRESH_MS)
+    return () => clearInterval(id)
+  }, [fetchNews])
 
   const items = Array.isArray(data) ? data : data?.news || data?.articles || []
 
   return (
     <div className="space-y-4">
-      {loading ? <LoadingSpinner /> : error ? <ErrorBox msg={error} /> : items.length === 0 ? (
+      <div className="flex items-center justify-between">
+        <h3 className="text-text-primary text-sm font-semibold">Market News</h3>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-text-muted text-xs">
+              Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <button
+            onClick={fetchNews}
+            disabled={loading}
+            className="p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-accent-blue transition-colors"
+            title="Refresh news"
+          >
+            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+      </div>
+      {loading && items.length === 0 ? <LoadingSpinner /> : error && items.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
             <Newspaper size={32} className="text-text-muted" />
@@ -736,10 +796,79 @@ function NewsTab() {
 }
 
 // ─── Alerts Tab ───────────────────────────────────────────────────────────────
+const PRICE_ALERTS_KEY = 'piitrade_price_alerts'
+
+function loadPriceAlerts() {
+  try { return JSON.parse(localStorage.getItem(PRICE_ALERTS_KEY)) || [] } catch { return [] }
+}
+function savePriceAlerts(alerts) {
+  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts))
+}
+
+const ALERT_PAIRS = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'EUR/GBP', 'GBP/JPY', 'EUR/JPY']
+
 function AlertsTab() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [priceAlerts, setPriceAlerts] = useState(loadPriceAlerts)
+  const [alertPair, setAlertPair] = useState('EUR/USD')
+  const [alertTarget, setAlertTarget] = useState('')
+  const [alertDir, setAlertDir] = useState('above')
+  const [livePrices, setLivePrices] = useState({})
+
+  // Poll live prices for active alerts using the batch endpoint
+  useEffect(() => {
+    const fetchPrices = () => {
+      getLivePrices()
+        .then((res) => {
+          if (!Array.isArray(res?.prices)) return
+          const map = {}
+          res.prices.forEach((p) => { if (p.price !== '—') map[p.pair] = parseFloat(p.price) })
+          setLivePrices(map)
+        })
+        .catch(() => { /* silently keep stale data */ })
+    }
+    fetchPrices()
+    const id = setInterval(fetchPrices, 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Check triggered alerts whenever live prices update
+  useEffect(() => {
+    if (Object.keys(livePrices).length === 0) return
+    setPriceAlerts((prev) => {
+      const updated = prev.map((a) => {
+        if (a.triggered) return a
+        const current = livePrices[a.pair]
+        if (current == null) return a
+        const hit = a.dir === 'above' ? current >= a.target : current <= a.target
+        return hit ? { ...a, triggered: true, triggeredAt: new Date().toISOString() } : a
+      })
+      savePriceAlerts(updated)
+      return updated
+    })
+  }, [livePrices])
+
+  const addAlert = (e) => {
+    e.preventDefault()
+    const target = parseFloat(alertTarget)
+    if (isNaN(target) || target <= 0) return
+    const id = typeof crypto?.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const newAlert = { id, pair: alertPair, target, dir: alertDir, triggered: false }
+    const updated = [newAlert, ...priceAlerts].slice(0, 10)
+    savePriceAlerts(updated)
+    setPriceAlerts(updated)
+    setAlertTarget('')
+  }
+
+  const removeAlert = (id) => {
+    const updated = priceAlerts.filter((a) => a.id !== id)
+    savePriceAlerts(updated)
+    setPriceAlerts(updated)
+  }
 
   const events = [
     { time: 'Mon 09:30', event: 'US CPI y/y', currency: 'USD', impact: 'High' },
@@ -764,11 +893,85 @@ function AlertsTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Price Alerts */}
+      <div>
+        <h3 className="text-text-primary text-sm font-semibold mb-3">🔔 Price Alerts</h3>
+        <form onSubmit={addAlert} className="flex flex-wrap gap-2 mb-3">
+          <select
+            value={alertPair}
+            onChange={(e) => setAlertPair(e.target.value)}
+            className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
+          >
+            {ALERT_PAIRS.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select
+            value={alertDir}
+            onChange={(e) => setAlertDir(e.target.value)}
+            className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
+          >
+            <option value="above">Above</option>
+            <option value="below">Below</option>
+          </select>
+          <input
+            type="number" step="any" value={alertTarget} onChange={(e) => setAlertTarget(e.target.value)}
+            placeholder="Target price" required
+            className="flex-1 min-w-[110px] bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary placeholder-text-muted text-xs input-animated"
+          />
+          <button type="submit" className="px-3 py-1.5 bg-accent-blue text-bg-primary font-semibold rounded-lg text-xs hover:bg-blue-400 transition-all">
+            Set Alert
+          </button>
+        </form>
+        {livePrices[alertPair] != null && (
+          <p className="text-text-muted text-xs mb-3">
+            Current {alertPair}: <span className="font-mono text-text-secondary">{livePrices[alertPair]}</span>
+          </p>
+        )}
+        {priceAlerts.length > 0 ? (
+          <div className="space-y-2">
+            {priceAlerts.map((a) => (
+              <div key={a.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${a.triggered ? 'bg-accent-green/10 border-accent-green/30' : 'bg-bg-card border-border-default'}`}>
+                <div className="flex items-center gap-2">
+                  <Bell size={12} className={a.triggered ? 'text-accent-green' : 'text-text-muted'} />
+                  <span className="text-text-primary font-medium">{a.pair}</span>
+                  <span className="text-text-muted">{a.dir === 'above' ? '≥' : '≤'}</span>
+                  <span className="font-mono text-text-secondary">{a.target}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {a.triggered && (
+                    <span className="text-accent-green font-semibold">
+                      ✓ {new Date(a.triggeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                  <button onClick={() => removeAlert(a.id)} className="text-text-muted hover:text-accent-red transition-colors">✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-text-muted text-xs">No active price alerts. Add one above.</p>
+        )}
+      </div>
+
       {/* Economic calendar */}
       <div>
-        <h3 className="text-text-primary text-sm font-semibold mb-3">Upcoming Economic Events</h3>
-        <div className="overflow-x-auto">
+        <h3 className="text-text-primary text-sm font-semibold mb-3">📅 Upcoming Economic Events</h3>
+        {/* Mobile: cards */}
+        <div className="sm:hidden space-y-2">
+          {events.map((ev, i) => (
+            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-start justify-between">
+              <div>
+                <p className="text-text-primary text-xs font-medium">{ev.event}</p>
+                <p className="text-text-muted text-xs mt-0.5 font-mono">{ev.time} • <span className="text-accent-blue">{ev.currency}</span></p>
+              </div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 ${ev.impact === 'High' ? 'bg-accent-red/10 text-accent-red' : 'bg-accent-yellow/10 text-accent-yellow'}`}>
+                {ev.impact}
+              </span>
+            </div>
+          ))}
+        </div>
+        {/* Table for sm+ */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-default">
@@ -796,15 +999,15 @@ function AlertsTab() {
       </div>
 
       {/* Subscribe */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4 max-w-md">
-        <h3 className="text-text-primary text-sm font-semibold mb-2">Get Signal Alerts</h3>
+      <div className="bg-bg-card border border-border-default rounded-xl p-4">
+        <h3 className="text-text-primary text-sm font-semibold mb-2">Get Signal Alerts via Email</h3>
         <p className="text-text-secondary text-sm mb-4">Subscribe for email alerts on high-confidence signals.</p>
         {status === 'success' ? (
           <div className="px-4 py-3 bg-accent-green/10 border border-accent-green/30 rounded-lg text-accent-green text-sm">
             ✓ Subscribed! You'll receive alerts soon.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex gap-3">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
             <input
               type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com" required
