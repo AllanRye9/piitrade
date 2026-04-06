@@ -3064,6 +3064,9 @@ a:hover {
   line-height: 1.5;
   padding: 10px 24px;
   animation: section-enter .35s ease;
+  width: 100%;
+  min-height: 80px;
+  box-sizing: border-box;
 }
 
 .global-disclaimer--hidden {
@@ -3089,11 +3092,38 @@ a:hover {
   flex-shrink: 0;
   padding: 0 4px;
   line-height: 1;
+  margin-left: auto;
   transition: color .2s;
 }
 
 .global-disclaimer-close:hover {
   color: var(--text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sponsor Banner Marquee (CSS animation – replaces deprecated <marquee>)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.banner-marquee {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+}
+
+.banner-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: banner-scroll 18s linear infinite;
+}
+
+.banner-marquee-track img {
+  height: 80px;
+  margin-right: 10px;
+}
+
+@keyframes banner-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

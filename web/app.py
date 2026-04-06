@@ -1319,6 +1319,15 @@ async def exness_banner_image_3():
     return FileResponse(str(_banner), media_type="image/png")
 
 
+@app.get("/img/taptap.jfif")
+async def taptap_banner_image():
+    """Serve TapTap sponsor banner image used in the forex disclaimer marquee."""
+    _banner = _DIR.parent / "img" / "taptap.jfif"
+    if not _banner.exists():
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return FileResponse(str(_banner), media_type="image/jpeg")
+
+
 def _serve_react_or_template(request: Request, template: str, **kwargs):
     """Serve the React SPA index.html if the build exists, else a legacy template."""
     _record_visit(_get_client_ip(request))

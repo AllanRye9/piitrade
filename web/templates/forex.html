@@ -237,8 +237,7 @@
   <div id="disclaimerContainer" style="position:relative;width:100%;max-width:800px;margin:10px auto;">
 
     <!-- DISCLAIMER -->
-    <div class="global-disclaimer" id="disclaimerBox" role="alert" style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
-    background:#111;color:#fff;padding:10px;gap:10px;border-radius:6px;box-sizing:border-box;">
+    <div class="global-disclaimer" id="disclaimerBox" role="alert">
 
       <span class="global-disclaimer-icon">⚠️</span>
 
@@ -249,32 +248,43 @@
         commodities, and stocks involves significant risk of loss.
       </div>
 
-      <button class="global-disclaimer-close" type="button"
-        onclick="document.getElementById('disclaimerContainer').style.display='none'"
-        style="margin-left:auto;background:none;border:none;color:#fff;font-size:16px;cursor:pointer;">
+      <button class="global-disclaimer-close" id="disclaimerClose" type="button">
         ✕
       </button>
     </div>
 
     <!-- BANNER -->
     <div id="bannerBox" style="width:100%;min-height:80px;display:none;align-items:center;justify-content:center;
-    background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;">
+    background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;position:relative;">
 
-      <marquee behavior="scroll" direction="left" style="width:100%;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-        <img src="/img/taptap.jfif" style="height:80px;margin-right:10px;">
-      </marquee>
+      <div class="banner-marquee">
+        <div class="banner-marquee-track">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <!-- duplicates for seamless loop -->
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+          <img src="/img/taptap.jfif" alt="TapTap">
+        </div>
+      </div>
 
+      <button class="global-disclaimer-close" id="bannerClose" type="button"
+        style="position:absolute;top:4px;right:6px;">
+        ✕
+      </button>
     </div>
 
   </div>
 
   <script>
     (function () {
+      var container = document.getElementById("disclaimerContainer");
       var disclaimer = document.getElementById("disclaimerBox");
       var banner = document.getElementById("bannerBox");
+      var timer = null;
 
       var DISCLAIMER_TIME = 120000; // 2 minutes
       var BANNER_TIME = 80000;      // 80 seconds
@@ -282,16 +292,22 @@
       function showDisclaimer() {
         disclaimer.style.setProperty("display", "flex", "important");
         banner.style.setProperty("display", "none", "important");
-
-        setTimeout(showBanner, DISCLAIMER_TIME);
+        timer = setTimeout(showBanner, DISCLAIMER_TIME);
       }
 
       function showBanner() {
         disclaimer.style.setProperty("display", "none", "important");
         banner.style.setProperty("display", "flex", "important");
-
-        setTimeout(showDisclaimer, BANNER_TIME);
+        timer = setTimeout(showDisclaimer, BANNER_TIME);
       }
+
+      function dismiss() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        container.style.display = "none";
+      }
+
+      document.getElementById("disclaimerClose").addEventListener("click", dismiss);
+      document.getElementById("bannerClose").addEventListener("click", dismiss);
 
       // Ensure DOM is ready
       if (document.readyState === "loading") {
