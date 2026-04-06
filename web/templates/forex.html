@@ -146,38 +146,41 @@
   </div>
 
   <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
-  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:800px;margin:10px auto;">
-    <div class="global-disclaimer" id="disclaimerBox" role="alert" style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
-              background:#111;color:#fff;padding:10px;gap:10px;border-radius:6px;box-sizing:border-box;">
+  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:10px auto;">
+  <!-- DISCLAIMER -->
+  <div class="global-disclaimer" id="disclaimerBox" role="alert"
+       style="width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;
+              background:#111;color:#fff;padding:8px;gap:8px;border-radius:6px;box-sizing:border-box;font-size:14px;">
 
-      <span class="global-disclaimer-icon">⚠️</span>
+    <span class="global-disclaimer-icon">⚠️</span>
 
-      <div>
-        <strong>Disclaimer:</strong> All signals are for informational purposes only.
-        Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research,
-        and consult a licensed financial advisor before making any trading decisions. Trading forex, crypto,
-        commodities, and stocks involves significant risk of loss.
-      </div>
-
-      <button class="global-disclaimer-close" type="button"
-        onclick="document.getElementById('disclaimerContainer').style.display='none'"
-        style="margin-left:auto;background:none;border:none;color:#fff;font-size:16px;cursor:pointer;">
-        ✕
-      </button>
+    <div>
+      <strong>Disclaimer:</strong> All signals are for informational purposes only.
+      Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research,
+      and consult a licensed financial advisor before making trading decisions. Trading involves risk.
     </div>
 
-    <!-- BANNER -->
-    <div id="bannerBox" style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
-                             background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;">
-
-      <!-- Single full-width image -->
-      <a style="display:flex;align-items:center;justify-content:center;width:10%;height:100%;" href="https://apps.apple.com/us/app/taptap-send-money-transfer/id1413346006" target="_blank" rel="noopener">
-          <img src="/img/taptap.webp" alt="Banner">
-          <span class="banner-text">Click here!</span>
-      </a>
-    </div>
-
+    <button class="global-disclaimer-close" type="button"
+            onclick="document.getElementById('disclaimerContainer').style.display='none'"
+            style="margin-left:auto;background:none;border:none;color:#fff;font-size:14px;cursor:pointer;">
+      ✕
+    </button>
   </div>
+
+  <!-- BANNER -->
+  <div id="bannerBox" style="width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;
+                             background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;position:relative;">
+
+    <a href="https://apps.apple.com/us/app/taptap-send-money-transfer/id1413346006" target="_blank"
+       style="display:block;width:100%;height:100%;position:relative;">
+      <img src="/img/taptap.webp" alt="Banner"
+           style="width:100%;height:100%;object-fit:cover;display:block;">
+      <span class="banner-text"
+            style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);
+                   color:#fff;font-size:14px;font-weight:bold;">Click here!</span>
+    </a>
+  </div>
+</div>
 
   <script>
 (function () {
