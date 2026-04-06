@@ -154,32 +154,6 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* Exness banners — 3 images, no gaps, glowing border */}
-            <div className="flex-1 min-w-0 self-stretch flex items-stretch overflow-hidden rounded-lg border border-accent-blue/40 animate-glow">
-              {[
-                { src: '/img/exness.png', alt: 'Exness' },
-                { src: '/img/exness2.png', alt: 'Exness 2' },
-                { src: '/img/exness3.png', alt: 'Exness 3' },
-              ].map(({ src, alt }) => (
-                <a
-                  key={src}
-                  href="https://www.exness.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-0 flex items-stretch"
-                  title="Exness — Trade Smarter"
-                  aria-label="Exness — Sponsored"
-                >
-                  <img
-                    src={src}
-                    alt={alt}
-                    className="h-full w-full object-cover"
-                    draggable="false"
-                  />
-                </a>
-              ))}
-            </div>
-
             {/* Right side: bell + theme picker + hamburger */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
