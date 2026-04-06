@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>AI Forex Signal Dashboard – PiiTrade (Free) | Currency Pair Signals</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade free AI forex signal dashboard. Real-time buy/sell/hold signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner, volatility scanner. No login required."/>
-  <meta name="keywords" content="forex signals free, free AI forex signals, EUR/USD signal, GBP/USD signal, USD/JPY signal, risk calculator, technical analysis, FVG fair value gap, volatility scanner, market structure BOS CHoCH, trend reversal, forex alerts 2026"/>
-  <meta name="robots" content="index, follow"/>
-  <meta name="author" content="PiiTrade"/>
-  <link rel="canonical" href="https://piitrade.onrender.com/forex"/>
+  <meta name="description"
+    content="PiiTrade free AI forex signal dashboard. Real-time buy/sell/hold signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner, volatility scanner. No login required." />
+  <meta name="keywords"
+    content="forex signals free, free AI forex signals, EUR/USD signal, GBP/USD signal, USD/JPY signal, risk calculator, technical analysis, FVG fair value gap, volatility scanner, market structure BOS CHoCH, trend reversal, forex alerts 2026" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.onrender.com/forex" />
   <!-- Open Graph -->
-  <meta property="og:type" content="website"/>
-  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
-  <meta property="og:description" content="Free real-time AI trading signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner – all free, no account needed."/>
-  <meta property="og:url" content="https://piitrade.onrender.com/forex"/>
-  <meta property="og:site_name" content="PiiTrade"/>
-  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png"/>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard" />
+  <meta property="og:description"
+    content="Free real-time AI trading signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner – all free, no account needed." />
+  <meta property="og:url" content="https://piitrade.onrender.com/forex" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Dashboard"/>
-  <meta name="twitter:description" content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required."/>
-  <meta name="twitter:image" content="https://piitrade.onrender.com/img/trader.png"/>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Dashboard" />
+  <meta name="twitter:description"
+    content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required." />
+  <meta name="twitter:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
@@ -46,682 +51,783 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="/static/css/forex.css"/>
-  <link rel="icon" type="image/png" href="/img/trader.png"/>
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
 </head>
+
 <body>
 
-<!-- ═══════════════════════════════ LOADING OVERLAY ════════════════════════ -->
-<div id="piitrade-loading-overlay" class="piitrade-loading-overlay" aria-live="polite" aria-label="Loading">
-  <div class="piitrade-loader-text" id="piitrade-loader-text">.... PIITRADE ....</div>
-</div>
-
-<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
-<header class="fx-header">
-  <div class="brand">
-    <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
-    <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img class="exness-slide exness-slide-1" src="/img/exness.png" alt="Exness"/><img class="exness-slide exness-slide-2" src="/img/exness2.png" alt="Exness 2"/><img class="exness-slide exness-slide-3" src="/img/exness3.png" alt="Exness 3"/></a></span>
+  <!-- ═══════════════════════════════ LOADING OVERLAY ════════════════════════ -->
+  <div id="piitrade-loading-overlay" class="piitrade-loading-overlay" aria-live="polite" aria-label="Loading">
+    <div class="piitrade-loader-text" id="piitrade-loader-text">.... PIITRADE ....</div>
   </div>
-  <nav class="fx-nav">
-    <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds" aria-pressed="true">🔔</button>
-    <a href="/">Home</a>
-    {% if current_user and is_admin %}
+
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+      <span id="container"
+        style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; width:100%; margin:0 auto; position:relative;">
+
+        <!-- Images (background) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap"
+          style="display:flex; flex-wrap:wrap; justify-content:center; gap:4px; width:100%;">
+
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness2.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+        </a>
+
+        <!-- Animated Text (in front) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText" style="position:absolute; top:0; left:50%; transform:translateX(-50%) scale(1); 
+            background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:6px;
+            font-size:13px; text-align:center; z-index:5; white-space:nowrap; text-decoration:none;
+            display:inline-block; transition:0.2s;">
+          Best trading broker you can trust - 0 swap fees for GCC countries Click here 
+        </a>
+      </span>
+
+      <script>
+        (function () {
+          var text = document.getElementById("promoText");
+          var images = document.getElementById("imageWrap");
+
+          // Pulse zoom animation for text
+          var scale = 1, growing = true;
+          setInterval(function () {
+            if (growing) {
+              scale += 0.02;
+              if (scale >= 1.08) growing = false;
+            } else {
+              scale -= 0.02;
+              if (scale <= 1) growing = true;
+            }
+            text.style.transform = "translateX(-50%) scale(" + scale + ")";
+          }, 60);
+
+          // Mobile: hide images, keep text on top
+          function handleMobile() {
+            if (window.innerWidth < 600) {
+              images.style.display = "none";
+              text.style.position = "relative";
+              text.style.left = "0";
+              text.style.transform = "scale(1)";
+              text.style.margin = "0 auto";
+            } else {
+              images.style.display = "flex";
+              text.style.position = "absolute";
+              text.style.left = "50%";
+            }
+          }
+
+          handleMobile();
+          window.addEventListener("resize", handleMobile);
+        })();
+      </script>
+    </div>
+    <nav class="fx-nav">
+      <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
+        aria-pressed="true">🔔</button>
+      <a href="/">Home</a>
+      {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% endif %}
-  </nav>
-</header>
+      {% endif %}
+    </nav>
+  </header>
 
-<!-- ═══════════════════════════════ TAB NAV ═════════════════════════════════ -->
-<div class="fx-tabs-wrapper">
-  <button class="fx-tab-scroll-btn fx-tab-scroll-left" id="tab-scroll-left" aria-label="Scroll tabs left" type="button">‹</button>
-  <nav class="fx-tabs" id="fx-tabs-nav" role="tablist" aria-label="Forex Hub Sections">
-    <button class="fx-tab active" role="tab" aria-selected="true"  data-section="section-signal"   aria-label="AI Signal">📊 Signal</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-risk"      aria-label="Risk Management Calculator">📐 Risk Calc</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-technical" aria-label="Technical Analysis">🔍 Technical</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-fvg"       aria-label="Fair Value Gap Status">🌀 FVG Status</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-sr-breaks" aria-label="Support & Resistance Breaks">💥 S/R Breaks</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-volatile"  aria-label="Highly Volatile Pairs">🔥 Volatile</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-reversal"  aria-label="Trend Reversal Pairs">🔄 Reversal</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-success"   aria-label="Pair Success Rates">🏆 Success</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-patterns"  aria-label="Structure & Pattern Scanner">🔮 Scanner</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-news"      aria-label="Market News">📰 News</button>
-    <button class="fx-tab"        role="tab" aria-selected="false" data-section="section-alerts"    aria-label="Market Alerts & Events">🔔 Alerts</button>
-  </nav>
-  <button class="fx-tab-scroll-btn fx-tab-scroll-right" id="tab-scroll-right" aria-label="Scroll tabs right" type="button">›</button>
-</div>
-
-<!-- ═══════════════════════════════ GAMIFICATION BAR ═══════════════════════ -->
-<div class="fx-gamebar" id="fx-gamebar">
-  <div class="gamebar-item">
-    <span class="gamebar-label">XP</span>
-    <div class="xp-bar-wrap">
-      <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
-    </div>
-    <span class="gamebar-value" id="xp-value">0</span>
+  <!-- ═══════════════════════════════ TAB NAV ═════════════════════════════════ -->
+  <div class="fx-tabs-wrapper">
+    <button class="fx-tab-scroll-btn fx-tab-scroll-left" id="tab-scroll-left" aria-label="Scroll tabs left"
+      type="button">‹</button>
+    <nav class="fx-tabs" id="fx-tabs-nav" role="tablist" aria-label="Forex Hub Sections">
+      <button class="fx-tab active" role="tab" aria-selected="true" data-section="section-signal"
+        aria-label="AI Signal">📊 Signal</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-risk"
+        aria-label="Risk Management Calculator">📐 Risk Calc</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-technical"
+        aria-label="Technical Analysis">🔍 Technical</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-fvg"
+        aria-label="Fair Value Gap Status">🌀 FVG Status</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-sr-breaks"
+        aria-label="Support & Resistance Breaks">💥 S/R Breaks</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-volatile"
+        aria-label="Highly Volatile Pairs">🔥 Volatile</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-reversal"
+        aria-label="Trend Reversal Pairs">🔄 Reversal</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-success"
+        aria-label="Pair Success Rates">🏆 Success</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-patterns"
+        aria-label="Structure & Pattern Scanner">🔮 Scanner</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-news" aria-label="Market News">📰
+        News</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-alerts"
+        aria-label="Market Alerts & Events">🔔 Alerts</button>
+    </nav>
+    <button class="fx-tab-scroll-btn fx-tab-scroll-right" id="tab-scroll-right" aria-label="Scroll tabs right"
+      type="button">›</button>
   </div>
-  <div class="gamebar-item">
-    <span class="gamebar-label">🔥 Streak</span>
-    <span class="gamebar-value streak-value" id="streak-value">0</span>
-  </div>
-  <div class="gamebar-item">
-    <span class="gamebar-label">✅ Signals</span>
-    <span class="gamebar-value" id="signals-watched">0</span>
-  </div>
-  <div class="gamebar-badges" id="gamebar-badges"></div>
-</div>
 
-<!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
-<div class="global-disclaimer" role="alert">
-  <span class="global-disclaimer-icon">⚠️</span>
-  <div>
-    <strong>Disclaimer:</strong> All signals are for informational purposes only. 
-    Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research, 
-    and consult a licensed financial advisor before making any trading decisions. Trading forex, crypto,
-    commodities, and stocks involves significant risk of loss.
-  </div>
-  <button class="global-disclaimer-close" type="button" aria-label="Close disclaimer">✕</button>
-</div>
-
-<!-- ═══════════════════════════════ TOAST CONTAINER ═══════════════════════ -->
-<div id="toast-container" class="toast-container" aria-live="polite"></div>
-
-<!-- ═══════════════════════════════ PAGE WRAPPER ════════════════════════════ -->
-<div class="page-wrapper">
-
-<div class="main-content">
-
-<!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
-<main class="fx-main">
-
-  <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
-  <section id="section-signal">
-    <div class="fx-pair-bar">
-      <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
-      <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
-        <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
-          <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
-          <option value="GBP/USD">GBP/USD – British Pound / US Dollar</option>
-          <option value="USD/JPY">USD/JPY – US Dollar / Japanese Yen</option>
-          <option value="USD/CHF">USD/CHF – US Dollar / Swiss Franc</option>
-          <option value="AUD/USD">AUD/USD – Australian Dollar / US Dollar</option>
-          <option value="USD/CAD">USD/CAD – US Dollar / Canadian Dollar</option>
-          <option value="NZD/USD">NZD/USD – New Zealand Dollar / US Dollar</option>
-        </optgroup>
-        <optgroup id="optgroup-minor" label="── Minor / Cross Pairs" data-group="minor" data-requires-ecb="true">
-          <option value="EUR/GBP">EUR/GBP – Euro / British Pound</option>
-          <option value="EUR/JPY">EUR/JPY – Euro / Japanese Yen</option>
-          <option value="EUR/AUD">EUR/AUD – Euro / Australian Dollar</option>
-          <option value="EUR/CAD">EUR/CAD – Euro / Canadian Dollar</option>
-          <option value="EUR/CHF">EUR/CHF – Euro / Swiss Franc</option>
-          <option value="EUR/NZD">EUR/NZD – Euro / New Zealand Dollar</option>
-          <option value="GBP/JPY">GBP/JPY – British Pound / Japanese Yen</option>
-          <option value="GBP/CHF">GBP/CHF – British Pound / Swiss Franc</option>
-          <option value="GBP/AUD">GBP/AUD – British Pound / Australian Dollar</option>
-          <option value="GBP/CAD">GBP/CAD – British Pound / Canadian Dollar</option>
-          <option value="GBP/NZD">GBP/NZD – British Pound / New Zealand Dollar</option>
-          <option value="AUD/JPY">AUD/JPY – Australian Dollar / Japanese Yen</option>
-          <option value="AUD/CAD">AUD/CAD – Australian Dollar / Canadian Dollar</option>
-          <option value="AUD/CHF">AUD/CHF – Australian Dollar / Swiss Franc</option>
-          <option value="AUD/NZD">AUD/NZD – Australian Dollar / New Zealand Dollar</option>
-          <option value="NZD/JPY">NZD/JPY – New Zealand Dollar / Japanese Yen</option>
-          <option value="NZD/CAD">NZD/CAD – New Zealand Dollar / Canadian Dollar</option>
-          <option value="NZD/CHF">NZD/CHF – New Zealand Dollar / Swiss Franc</option>
-          <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
-          <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
-        </optgroup>
-        <optgroup id="optgroup-exotic" label="── Exotic Pairs" data-group="exotic" data-requires-ecb="true">
-          <option value="USD/MXN">USD/MXN – US Dollar / Mexican Peso</option>
-          <option value="USD/NOK">USD/NOK – US Dollar / Norwegian Krone</option>
-          <option value="USD/SEK">USD/SEK – US Dollar / Swedish Krona</option>
-          <option value="USD/SGD">USD/SGD – US Dollar / Singapore Dollar</option>
-          <option value="USD/HKD">USD/HKD – US Dollar / Hong Kong Dollar</option>
-          <option value="USD/TRY">USD/TRY – US Dollar / Turkish Lira</option>
-          <option value="USD/ZAR">USD/ZAR – US Dollar / South African Rand</option>
-          <option value="USD/CNY">USD/CNY – US Dollar / Chinese Yuan</option>
-        </optgroup>
-      </select>
-      <button id="btn-refresh" class="fx-refresh-btn" type="button" title="Refresh signal">
-        <span class="refresh-icon">↻</span> Refresh
-      </button>
-      <span id="last-updated" class="fx-last-updated"></span>
-      <span id="data-source-badge" class="fx-data-source"></span>
-    </div>
-
-  <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
-    <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
-    <div class="fx-signal-card" id="fx-signal-card">
-      <!-- Live data unavailable overlay (shown when pair feed is offline) -->
-      <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
-        <span class="signal-offline-icon">📡</span>
-        <div class="signal-offline-title">Live Data Unavailable</div>
-        <div class="signal-offline-msg">This pair's feed is currently offline. Data will appear once the live connection is restored.</div>
+  <!-- ═══════════════════════════════ GAMIFICATION BAR ═══════════════════════ -->
+  <div class="fx-gamebar" id="fx-gamebar">
+    <div class="gamebar-item">
+      <span class="gamebar-label">XP</span>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
       </div>
-      <!-- Direction badge -->
-      <div id="signal-direction" class="signal-direction-badge HOLD">
-        <span id="direction-arrow">→</span>
-        HOLD
-      </div>
+      <span class="gamebar-value" id="xp-value">0</span>
+    </div>
+    <div class="gamebar-item">
+      <span class="gamebar-label">🔥 Streak</span>
+      <span class="gamebar-value streak-value" id="streak-value">0</span>
+    </div>
+    <div class="gamebar-item">
+      <span class="gamebar-label">✅ Signals</span>
+      <span class="gamebar-value" id="signals-watched">0</span>
+    </div>
+    <div class="gamebar-badges" id="gamebar-badges"></div>
+  </div>
 
-      <!-- Signal metadata -->
-      <div class="signal-meta">
-        <!-- Confidence row -->
-        <div class="signal-confidence-row">
-          <span class="label">Confidence</span>
-          <div class="confidence-bar">
-            <div class="confidence-fill HOLD" id="confidence-fill" style="width:52.1%"></div>
+  <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
+  <div class="global-disclaimer" role="alert">
+    <span class="global-disclaimer-icon">⚠️</span>
+    <div>
+      <strong>Disclaimer:</strong> All signals are for informational purposes only.
+      Do <strong>not</strong> rely solely on AI signals — always use multiple tools, conduct your own research,
+      and consult a licensed financial advisor before making any trading decisions. Trading forex, crypto,
+      commodities, and stocks involves significant risk of loss.
+    </div>
+    <button class="global-disclaimer-close" type="button" aria-label="Close disclaimer">✕</button>
+  </div>
+
+  <!-- ═══════════════════════════════ TOAST CONTAINER ═══════════════════════ -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- ═══════════════════════════════ PAGE WRAPPER ════════════════════════════ -->
+  <div class="page-wrapper">
+
+    <div class="main-content">
+
+      <!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
+      <main class="fx-main">
+
+        <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
+        <section id="section-signal">
+          <div class="fx-pair-bar">
+            <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
+            <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
+              <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
+                <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
+                <option value="GBP/USD">GBP/USD – British Pound / US Dollar</option>
+                <option value="USD/JPY">USD/JPY – US Dollar / Japanese Yen</option>
+                <option value="USD/CHF">USD/CHF – US Dollar / Swiss Franc</option>
+                <option value="AUD/USD">AUD/USD – Australian Dollar / US Dollar</option>
+                <option value="USD/CAD">USD/CAD – US Dollar / Canadian Dollar</option>
+                <option value="NZD/USD">NZD/USD – New Zealand Dollar / US Dollar</option>
+              </optgroup>
+              <optgroup id="optgroup-minor" label="── Minor / Cross Pairs" data-group="minor" data-requires-ecb="true">
+                <option value="EUR/GBP">EUR/GBP – Euro / British Pound</option>
+                <option value="EUR/JPY">EUR/JPY – Euro / Japanese Yen</option>
+                <option value="EUR/AUD">EUR/AUD – Euro / Australian Dollar</option>
+                <option value="EUR/CAD">EUR/CAD – Euro / Canadian Dollar</option>
+                <option value="EUR/CHF">EUR/CHF – Euro / Swiss Franc</option>
+                <option value="EUR/NZD">EUR/NZD – Euro / New Zealand Dollar</option>
+                <option value="GBP/JPY">GBP/JPY – British Pound / Japanese Yen</option>
+                <option value="GBP/CHF">GBP/CHF – British Pound / Swiss Franc</option>
+                <option value="GBP/AUD">GBP/AUD – British Pound / Australian Dollar</option>
+                <option value="GBP/CAD">GBP/CAD – British Pound / Canadian Dollar</option>
+                <option value="GBP/NZD">GBP/NZD – British Pound / New Zealand Dollar</option>
+                <option value="AUD/JPY">AUD/JPY – Australian Dollar / Japanese Yen</option>
+                <option value="AUD/CAD">AUD/CAD – Australian Dollar / Canadian Dollar</option>
+                <option value="AUD/CHF">AUD/CHF – Australian Dollar / Swiss Franc</option>
+                <option value="AUD/NZD">AUD/NZD – Australian Dollar / New Zealand Dollar</option>
+                <option value="NZD/JPY">NZD/JPY – New Zealand Dollar / Japanese Yen</option>
+                <option value="NZD/CAD">NZD/CAD – New Zealand Dollar / Canadian Dollar</option>
+                <option value="NZD/CHF">NZD/CHF – New Zealand Dollar / Swiss Franc</option>
+                <option value="CAD/JPY">CAD/JPY – Canadian Dollar / Japanese Yen</option>
+                <option value="CHF/JPY">CHF/JPY – Swiss Franc / Japanese Yen</option>
+              </optgroup>
+              <optgroup id="optgroup-exotic" label="── Exotic Pairs" data-group="exotic" data-requires-ecb="true">
+                <option value="USD/MXN">USD/MXN – US Dollar / Mexican Peso</option>
+                <option value="USD/NOK">USD/NOK – US Dollar / Norwegian Krone</option>
+                <option value="USD/SEK">USD/SEK – US Dollar / Swedish Krona</option>
+                <option value="USD/SGD">USD/SGD – US Dollar / Singapore Dollar</option>
+                <option value="USD/HKD">USD/HKD – US Dollar / Hong Kong Dollar</option>
+                <option value="USD/TRY">USD/TRY – US Dollar / Turkish Lira</option>
+                <option value="USD/ZAR">USD/ZAR – US Dollar / South African Rand</option>
+                <option value="USD/CNY">USD/CNY – US Dollar / Chinese Yuan</option>
+              </optgroup>
+            </select>
+            <button id="btn-refresh" class="fx-refresh-btn" type="button" title="Refresh signal">
+              <span class="refresh-icon">↻</span> Refresh
+            </button>
+            <span id="last-updated" class="fx-last-updated"></span>
+            <span id="data-source-badge" class="fx-data-source"></span>
           </div>
-          <span class="confidence-pct" id="confidence-pct">52.1%</span>
-        </div>
 
-        <!-- 30-day accuracy -->
-        <div class="signal-accuracy-row" id="accuracy-30d">30-day model accuracy: <strong>–</strong></div>
+          <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
+          <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
+          <div class="fx-signal-card" id="fx-signal-card">
+            <!-- Live data unavailable overlay (shown when pair feed is offline) -->
+            <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
+              <span class="signal-offline-icon">📡</span>
+              <div class="signal-offline-title">Live Data Unavailable</div>
+              <div class="signal-offline-msg">This pair's feed is currently offline. Data will appear once the live
+                connection is restored.</div>
+            </div>
+            <!-- Direction badge -->
+            <div id="signal-direction" class="signal-direction-badge HOLD">
+              <span id="direction-arrow">→</span>
+              HOLD
+            </div>
 
-        <!-- Price levels -->
-        <div class="signal-levels">
-          <div class="signal-level entry">
-            <span class="level-label">Entry Price</span>
-            <span class="level-value" id="entry-price">–</span>
+            <!-- Signal metadata -->
+            <div class="signal-meta">
+              <!-- Confidence row -->
+              <div class="signal-confidence-row">
+                <span class="label">Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill HOLD" id="confidence-fill" style="width:52.1%"></div>
+                </div>
+                <span class="confidence-pct" id="confidence-pct">52.1%</span>
+              </div>
+
+              <!-- 30-day accuracy -->
+              <div class="signal-accuracy-row" id="accuracy-30d">30-day model accuracy: <strong>–</strong></div>
+
+              <!-- Price levels -->
+              <div class="signal-levels">
+                <div class="signal-level entry">
+                  <span class="level-label">Entry Price</span>
+                  <span class="level-value" id="entry-price">–</span>
+                </div>
+                <div class="signal-level tp">
+                  <span class="level-label">Take Profit</span>
+                  <span class="level-value" id="take-profit">–</span>
+                </div>
+                <div class="signal-level sl">
+                  <span class="level-label">Stop Loss</span>
+                  <span class="level-value" id="stop-loss">–</span>
+                </div>
+              </div>
+
+              <!-- Model info -->
+              <div class="signal-model-row">
+                <span style="color:var(--text2)">Model:</span>
+                <span id="model-version" style="color:var(--text)"></span>
+                &nbsp;·&nbsp;
+                <span style="color:var(--text2)">Features:</span>
+                <span id="features-list"></span>
+              </div>
+            </div>
           </div>
-          <div class="signal-level tp">
-            <span class="level-label">Take Profit</span>
-            <span class="level-value" id="take-profit">–</span>
+        </section>
+
+        <!-- ─── Historical Accuracy Chart (inside Signal section) ──────────────── -->
+        <section id="section-history">
+          <div class="fx-section-title">📉 Historical Accuracy – Last 30 Days</div>
+          <div class="fx-chart-wrap">
+            <canvas id="accuracy-chart" height="400"
+              aria-label="Historical price and prediction accuracy chart"></canvas>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-line"></div> Actual exit price
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot correct"></div> Correct prediction
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot incorrect"></div> Incorrect prediction
+              </div>
+            </div>
           </div>
-          <div class="signal-level sl">
-            <span class="level-label">Stop Loss</span>
-            <span class="level-value" id="stop-loss">–</span>
+        </section>
+
+        <!-- 3. Risk Management Calculator ──────────────────────────────────────── -->
+        <section id="section-risk">
+          <div class="fx-section-title">📐 Risk Management Calculator</div>
+          <div class="risk-calc-card">
+            <div class="risk-inputs">
+              <div class="risk-group">
+                <label class="risk-label" for="calc-balance">Account Balance ($)</label>
+                <input type="number" id="calc-balance" class="risk-input" value="10000" min="1" step="100" />
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-risk-pct">Risk per Trade (%)</label>
+                <input type="number" id="calc-risk-pct" class="risk-input" value="2" min="0.1" max="100" step="0.1" />
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-entry">Entry Price</label>
+                <input type="number" id="calc-entry" class="risk-input" value="" step="any" placeholder="Auto-filled" />
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-sl">Stop Loss</label>
+                <input type="number" id="calc-sl" class="risk-input" value="" step="any" placeholder="Auto-filled" />
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-tp">Take Profit</label>
+                <input type="number" id="calc-tp" class="risk-input" value="" step="any" placeholder="Auto-filled" />
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-rr-target">Target R:R Ratio</label>
+                <select id="calc-rr-target" class="risk-input">
+                  <option value="auto">Auto (use TP above)</option>
+                  <option value="1">1 : 1</option>
+                  <option value="1.5">1 : 1.5</option>
+                  <option value="2" selected>1 : 2</option>
+                  <option value="2.5">1 : 2.5</option>
+                  <option value="3">1 : 3.00</option>
+                </select>
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-leverage">Leverage</label>
+                <select id="calc-leverage" class="risk-input">
+                  <option value="50">50:1</option>
+                  <option value="100" selected>100:1</option>
+                  <option value="200">200:1</option>
+                  <option value="500">500:1</option>
+                </select>
+              </div>
+              <div class="risk-group">
+                <label class="risk-label" for="calc-lot-type">Lot Type</label>
+                <select id="calc-lot-type" class="risk-input">
+                  <option value="standard">Standard (100k)</option>
+                  <option value="mini">Mini (10k)</option>
+                  <option value="micro">Micro (1k)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="risk-results">
+              <div class="risk-result-item">
+                <span class="risk-result-label">Risk Amount</span>
+                <span class="risk-result-value accent" id="res-risk-amount">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Position Size</span>
+                <span class="risk-result-value" id="res-position-size">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Pip Value (per lot)</span>
+                <span class="risk-result-value" id="res-pip-value">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Pips to Stop Loss</span>
+                <span class="risk-result-value sell" id="res-pips-sl">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Pips to Take Profit</span>
+                <span class="risk-result-value buy" id="res-pips-tp">–</span>
+              </div>
+              <div class="risk-result-item rr-highlight">
+                <span class="risk-result-label">Risk : Reward</span>
+                <span class="risk-result-value rr-value" id="res-rr">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Potential Profit</span>
+                <span class="risk-result-value buy" id="res-profit">–</span>
+              </div>
+              <div class="risk-result-item">
+                <span class="risk-result-label">Required Margin</span>
+                <span class="risk-result-value" id="res-margin">–</span>
+              </div>
+            </div>
+            <p class="risk-disclaimer">⚠️ Pip values are approximated for a USD-denominated account. Cross-pair values
+              use mid-market estimates. For informational purposes only.</p>
           </div>
-        </div>
+        </section>
 
-        <!-- Model info -->
-        <div class="signal-model-row">
-          <span style="color:var(--text2)">Model:</span>
-          <span id="model-version" style="color:var(--text)"></span>
-          &nbsp;·&nbsp;
-          <span style="color:var(--text2)">Features:</span>
-          <span id="features-list"></span>
-        </div>
-      </div>
+        <!-- 4. Technical Analysis ────────────────────────────────────────────────── -->
+        <section id="section-technical">
+          <div class="fx-section-title">🔍 Technical Analysis</div>
+          <div id="ta-loading" class="ta-loading">Loading technical data…</div>
+          <div id="ta-content" class="ta-grid" style="display:none">
+
+            <!-- Current Price (live) -->
+            <div class="ta-card ta-card-wide">
+              <div class="ta-card-title">
+                💱 Current Price
+                <span id="ta-live-price-badge" class="fx-data-source live" style="margin-left:8px;font-size:.72rem">🟢
+                  Live</span>
+              </div>
+              <div id="ta-current-price-display" class="ta-live-price-row">
+                <span id="ta-current-price" class="ta-live-price-value">–</span>
+                <span id="ta-pair-label" class="ta-live-price-pair"></span>
+                <span id="ta-price-updated" class="ta-live-price-time"></span>
+              </div>
+            </div>
+
+            <!-- Support & Resistance -->
+            <div class="ta-card">
+              <div class="ta-card-title">📏 Support &amp; Resistance</div>
+              <div id="ta-sr-content" class="ta-levels"></div>
+            </div>
+
+            <!-- Fair Value Gaps -->
+            <div class="ta-card">
+              <div class="ta-card-title">🌀 Fair Value Gaps (FVG)</div>
+              <div id="ta-fvg-content" class="ta-list"></div>
+            </div>
+
+            <!-- Break of Structure -->
+            <div class="ta-card">
+              <div class="ta-card-title">⚡ Break of Structure (BOS)</div>
+              <div id="ta-bos-content" class="ta-list"></div>
+            </div>
+
+            <!-- CHoCH -->
+            <div class="ta-card">
+              <div class="ta-card-title">🔄 Change of Character (CHoCH)</div>
+              <div id="ta-choch-content" class="ta-list"></div>
+            </div>
+
+            <!-- High Volume Zones -->
+            <div class="ta-card ta-card-wide">
+              <div class="ta-card-title">🔥 High Volume Trade Zones</div>
+              <div id="ta-volume-content" class="ta-list"></div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
+        <section id="section-fvg">
+          <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            All trading pairs classified by their current relationship to Fair Value Gaps.
+            Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
+            Click any row to expand and view all FVGs for that pair.
+          </p>
+
+          <!-- FVG Filter Bar -->
+          <div class="fvg-filter-bar">
+            <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Show:</span>
+            <button class="fvg-filter-btn active" data-filter="approaching">📍 Approaching</button>
+            <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
+            <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
+            <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-left:auto">↻
+              Refresh</button>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="fvg-disclaimer">
+            ⚠️ <strong>Important:</strong> FVG signals are one tool among many. Always combine with other technical
+            indicators,
+            fundamental analysis, and risk management. Do <strong>not</strong> rely solely on price predictions for
+            trading decisions.
+          </div>
+
+          <div id="fvg-loading" class="ta-loading">Loading FVG scanner…</div>
+
+          <div id="fvg-content" style="display:none">
+            <!-- Approaching -->
+            <div class="fvg-group" data-group="approaching">
+              <div class="fvg-group-title approaching">
+                <span class="fvg-group-icon">📍</span> Approaching FVG Zone
+                <span class="fvg-group-sub">Price is within 1% of the FVG — potential entry zone forming</span>
+              </div>
+              <div id="fvg-approaching" class="fvg-list"></div>
+            </div>
+
+            <!-- Reached -->
+            <div class="fvg-group" data-group="reached">
+              <div class="fvg-group-title reached">
+                <span class="fvg-group-icon">🎯</span> Inside FVG Zone
+                <span class="fvg-group-sub">Price is currently trading inside the Fair Value Gap</span>
+              </div>
+              <div id="fvg-reached" class="fvg-list"></div>
+            </div>
+
+            <!-- Rejected -->
+            <div class="fvg-group" data-group="rejected">
+              <div class="fvg-group-title rejected">
+                <span class="fvg-group-icon">🚫</span> Strong Rejection at FVG
+                <span class="fvg-group-sub">Price touched the FVG zone but reversed strongly away</span>
+              </div>
+              <div id="fvg-rejected" class="fvg-list"></div>
+            </div>
+
+            <!-- Passed — hidden by default (consumed FVGs) -->
+            <div class="fvg-group fx-hidden" data-group="passed">
+              <div class="fvg-group-title passed">
+                <span class="fvg-group-icon">✅</span> Passed Through FVG (Filled)
+                <span class="fvg-group-sub">Price has passed through and filled the Fair Value Gap</span>
+              </div>
+              <div id="fvg-passed" class="fvg-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
+        <section id="section-sr-breaks">
+          <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            All trading pairs classified by their current relationship to major support and
+            resistance levels — from those approaching, to those touching, to confirmed breaks.
+          </p>
+
+          <!-- S/R Group Filter Bar -->
+          <div class="fvg-filter-bar">
+            <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Group:</span>
+            <button class="fvg-filter-btn sr-filter-btn active" data-sr-filter="soon_touching">📍 Soon Touching</button>
+            <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="touched">🎯 Touched</button>
+            <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="broke">💥 Broke</button>
+            <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
+          </div>
+
+          <div id="sr-loading" class="ta-loading">Loading S/R scanner…</div>
+          <div id="sr-content" style="display:none">
+            <!-- Soon Touching -->
+            <div class="sr-group" data-sr-group="soon_touching">
+              <div class="fvg-group-title approaching">
+                <span class="fvg-group-icon">📍</span> Soon Touching
+                <span class="fvg-group-sub">Price is approaching a major S/R level — watch closely</span>
+              </div>
+              <div id="sr-soon-touching" class="fvg-list"></div>
+            </div>
+            <!-- Touched -->
+            <div class="sr-group fx-hidden" data-sr-group="touched">
+              <div class="fvg-group-title reached">
+                <span class="fvg-group-icon">🎯</span> Touched
+                <span class="fvg-group-sub">Price is right at the S/R level — potential reversal or breakout</span>
+              </div>
+              <div id="sr-touched" class="fvg-list"></div>
+            </div>
+            <!-- Broke -->
+            <div class="sr-group fx-hidden" data-sr-group="broke">
+              <div class="fvg-group-title rejected">
+                <span class="fvg-group-icon">💥</span> Broke
+                <span class="fvg-group-sub">Price has broken through the level with confirmed momentum</span>
+              </div>
+              <div id="sr-broke" class="fvg-list"></div>
+            </div>
+          </div>
+          <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
+            No S/R activity detected at this time. Markets may be ranging.
+          </div>
+        </section>
+
+        <section id="section-volatile">
+          <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            Pairs ranked by price range movement over the selected timeframe. Higher volatility can signal trading
+            opportunities but also greater risk.
+          </p>
+          <div class="volatile-filter-bar">
+            <span style="color:var(--text2);font-size:.85rem">Timeframe:</span>
+            <button class="volatile-tf-btn active" data-tf="1h">1 Hour</button>
+            <button class="volatile-tf-btn" data-tf="4h">4 Hours</button>
+            <button class="volatile-tf-btn" data-tf="24h">24 Hours</button>
+            <button id="btn-refresh-volatile" class="fx-refresh-btn" type="button" style="margin-left:auto">↻
+              Refresh</button>
+          </div>
+          <div id="volatile-loading" class="ta-loading">Loading volatile pairs…</div>
+          <div id="volatile-list" class="volatile-list" style="display:none"></div>
+        </section>
+
+        <!-- 6. Trend Reversal Pairs ─────────────────────────────────────────────── -->
+        <section id="section-reversal">
+          <div class="fx-section-title">🔄 Potential Trend Reversal Pairs</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            Pairs where the AI model has detected a recent momentum shift, suggesting a potential change in trend
+            direction.
+          </p>
+          <button id="btn-refresh-reversal" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻
+            Refresh</button>
+          <div id="reversal-loading" class="ta-loading">Loading reversal signals…</div>
+          <div id="reversal-list" class="volatile-list" style="display:none"></div>
+        </section>
+
+        <!-- 7. Success Rate Tracking ─────────────────────────────────────────────── -->
+        <section id="section-success">
+          <div class="fx-section-title">🏆 Pair Success Rates</div>
+          <div class="success-intro">
+            <p>Accuracy is computed from the last 30-day prediction history returned by the API for each pair.
+              <span class="success-note">Click <em>Load All Pairs</em> to fetch rates for every available pair.</span>
+            </p>
+            <button id="btn-load-all-pairs" class="btn-load-pairs" type="button">⟳ Load All Pairs</button>
+          </div>
+          <div id="success-rate-grid" class="success-rate-grid">
+            <div id="success-loading" class="success-loading">Select a pair above to see its success rate.</div>
+          </div>
+
+          <!-- AI explanation moved here -->
+          <div class="fx-section-title" style="margin-top:28px">🧠 How Our AI Works</div>
+          <div class="fx-explanation">
+            <p>
+              Our AI analyzes 10+ years of historical price data, real-time news sentiment,
+              and economic events using machine learning to generate buy/sell/hold signals.
+              The model is retrained weekly using fresh market data collected automatically
+              via Zapier from Yahoo Finance.
+            </p>
+            <p>
+              The pipeline uses a <strong>LightGBM</strong> gradient-boosted tree model trained
+              on features including RSI, MACD, exponential moving averages (EMA-20/50),
+              news sentiment scores, CPI delta, and PMI readings. Training data is stored in
+              Google Sheets and predictions are displayed here in real time.
+            </p>
+            <div class="fx-disclaimer">
+              ⚠️ <strong>Disclaimer:</strong> For informational purposes only. Not financial advice.
+              Forex trading involves significant risk of loss. Past signal accuracy does not
+              guarantee future results. Always conduct your own analysis before trading.
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
+        <section id="section-patterns">
+          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
+            across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
+          </p>
+
+          <div class="fvg-disclaimer">
+            ⚠️ <strong>Important:</strong> Pattern identification is automated and approximate.
+            Always confirm formations with multiple timeframes, volume analysis, and your own
+            technical research before trading. Do <strong>not</strong> act on AI-detected market structure signals
+            alone.
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+            <button id="btn-refresh-patterns" class="fx-refresh-btn" type="button">↻ Refresh Patterns</button>
+            <span style="color:var(--text2);font-size:.82rem">🔔 Sound alerts fire automatically for High Impact
+              formations</span>
+          </div>
+
+          <div id="pattern-loading" class="ta-loading">Loading pattern scanner…</div>
+          <div id="pattern-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
+            No significant market structure formations detected at this time.
+          </div>
+          <div id="pattern-content" style="display:none">
+            <div id="pattern-list" class="pattern-list"></div>
+          </div>
+        </section>
+
+        <!-- 6. Real-Time News Feed ──────────────────────────────────────────────── -->
+        <section id="section-news">
+          <div class="fx-section-title">📰 Market News
+            <span id="news-new-badge" class="news-new-badge" style="display:none">🔔 New</span>
+          </div>
+          <!-- News category tabs -->
+          <div class="news-cat-tabs" role="tablist" aria-label="News categories">
+            <button class="news-cat-tab active" data-cat="all" role="tab" aria-selected="true">🌐 All</button>
+            <button class="news-cat-tab" data-cat="forex" role="tab" aria-selected="false">💱 Forex</button>
+          </div>
+          <div class="fx-news-wrap">
+            <div id="news-loading">Loading headlines…</div>
+            <div id="news-list"></div>
+          </div>
+        </section>
+
+        <!-- 7. Alerts & Events ─────────────────────────────────────────────────── -->
+        <section id="section-alerts">
+          <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            Tracks impactful market events, institutional activity, and significant price surges in real time.
+            Use this section to stay ahead of major catalysts that move markets.
+          </p>
+
+          <!-- Alert category tabs -->
+          <div class="alerts-cat-tabs">
+            <button class="alerts-cat-tab active" data-alert-cat="all">📋 All Events</button>
+            <button class="alerts-cat-tab" data-alert-cat="institutional">🏦 Institutional</button>
+            <button class="alerts-cat-tab" data-alert-cat="surge">🚀 Price Surges</button>
+            <button class="alerts-cat-tab" data-alert-cat="economic">📅 Economic</button>
+          </div>
+
+          <!-- Live alert feed -->
+          <div id="alerts-feed" class="alerts-feed">
+            <div style="color:var(--text2);padding:32px 0;text-align:center;font-size:.95rem">
+              No market alerts at this time. Check back later.
+            </div>
+          </div>
+
+          <!-- Email subscription (moved below alerts feed) -->
+          <div class="alerts-subscribe-section">
+            <div class="fx-section-title" style="font-size:1rem;margin-bottom:12px">📧 Get Signal Alerts by Email</div>
+            <p style="color:var(--text2);font-size:.85rem;margin:0 0 14px">
+              Receive an email the moment a new AI signal is generated for your chosen pairs.
+            </p>
+            <form class="subscribe-form" id="subscribe-form" novalidate>
+              <div class="email-row">
+                <input type="email" id="email-input" class="email-input" placeholder="your@email.com"
+                  autocomplete="email" aria-label="Email address" />
+                <button type="submit" class="btn-subscribe">Subscribe</button>
+              </div>
+              <div class="pair-checkboxes" aria-label="Select pairs to receive alerts for">
+                <label><input type="checkbox" value="EUR/USD" checked /> EUR/USD</label>
+                <label><input type="checkbox" value="GBP/USD" /> GBP/USD</label>
+                <label><input type="checkbox" value="USD/JPY" /> USD/JPY</label>
+                <label><input type="checkbox" value="USD/CHF" /> USD/CHF</label>
+                <label><input type="checkbox" value="AUD/USD" /> AUD/USD</label>
+                <label><input type="checkbox" value="USD/CAD" /> USD/CAD</label>
+                <label><input type="checkbox" value="NZD/USD" /> NZD/USD</label>
+                <label><input type="checkbox" value="EUR/GBP" /> EUR/GBP</label>
+                <label><input type="checkbox" value="EUR/JPY" /> EUR/JPY</label>
+                <label><input type="checkbox" value="EUR/AUD" /> EUR/AUD</label>
+                <label><input type="checkbox" value="EUR/CAD" /> EUR/CAD</label>
+                <label><input type="checkbox" value="EUR/CHF" /> EUR/CHF</label>
+                <label><input type="checkbox" value="EUR/NZD" /> EUR/NZD</label>
+                <label><input type="checkbox" value="GBP/JPY" /> GBP/JPY</label>
+                <label><input type="checkbox" value="GBP/CHF" /> GBP/CHF</label>
+                <label><input type="checkbox" value="GBP/AUD" /> GBP/AUD</label>
+                <label><input type="checkbox" value="GBP/CAD" /> GBP/CAD</label>
+                <label><input type="checkbox" value="GBP/NZD" /> GBP/NZD</label>
+                <label><input type="checkbox" value="AUD/JPY" /> AUD/JPY</label>
+                <label><input type="checkbox" value="AUD/CAD" /> AUD/CAD</label>
+                <label><input type="checkbox" value="AUD/CHF" /> AUD/CHF</label>
+                <label><input type="checkbox" value="AUD/NZD" /> AUD/NZD</label>
+                <label><input type="checkbox" value="NZD/JPY" /> NZD/JPY</label>
+                <label><input type="checkbox" value="NZD/CAD" /> NZD/CAD</label>
+                <label><input type="checkbox" value="NZD/CHF" /> NZD/CHF</label>
+                <label><input type="checkbox" value="CAD/JPY" /> CAD/JPY</label>
+                <label><input type="checkbox" value="CHF/JPY" /> CHF/JPY</label>
+                <label><input type="checkbox" value="USD/MXN" /> USD/MXN</label>
+                <label><input type="checkbox" value="USD/NOK" /> USD/NOK</label>
+                <label><input type="checkbox" value="USD/SEK" /> USD/SEK</label>
+                <label><input type="checkbox" value="USD/SGD" /> USD/SGD</label>
+                <label><input type="checkbox" value="USD/HKD" /> USD/HKD</label>
+                <label><input type="checkbox" value="USD/TRY" /> USD/TRY</label>
+                <label><input type="checkbox" value="USD/ZAR" /> USD/ZAR</label>
+                <label><input type="checkbox" value="USD/CNY" /> USD/CNY</label>
+              </div>
+              <div class="subscribe-status" id="subscribe-status" role="status"></div>
+            </form>
+          </div>
+        </section>
+
+      </main>
+
+    </div><!-- /.main-content -->
+
+  </div><!-- /.page-wrapper -->
+
+  <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+  <footer
+    style="text-align:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
+    <div style="display:flex;gap:14px;justify-content:center;margin-bottom:5px;flex-wrap:wrap">
+      <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+      <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
     </div>
-  </section>
+    <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute
+      financial advice.</div>
+  </footer>
 
-  <!-- ─── Historical Accuracy Chart (inside Signal section) ──────────────── -->
-  <section id="section-history">
-    <div class="fx-section-title">📉 Historical Accuracy – Last 30 Days</div>
-    <div class="fx-chart-wrap">
-      <canvas id="accuracy-chart" height="400" aria-label="Historical price and prediction accuracy chart"></canvas>
-      <div class="chart-legend">
-        <div class="legend-item"><div class="legend-line"></div> Actual exit price</div>
-        <div class="legend-item"><div class="legend-dot correct"></div> Correct prediction</div>
-        <div class="legend-item"><div class="legend-dot incorrect"></div> Incorrect prediction</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. Risk Management Calculator ──────────────────────────────────────── -->
-  <section id="section-risk">
-    <div class="fx-section-title">📐 Risk Management Calculator</div>
-    <div class="risk-calc-card">
-      <div class="risk-inputs">
-        <div class="risk-group">
-          <label class="risk-label" for="calc-balance">Account Balance ($)</label>
-          <input type="number" id="calc-balance" class="risk-input" value="10000" min="1" step="100"/>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-risk-pct">Risk per Trade (%)</label>
-          <input type="number" id="calc-risk-pct" class="risk-input" value="2" min="0.1" max="100" step="0.1"/>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-entry">Entry Price</label>
-          <input type="number" id="calc-entry" class="risk-input" value="" step="any" placeholder="Auto-filled"/>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-sl">Stop Loss</label>
-          <input type="number" id="calc-sl" class="risk-input" value="" step="any" placeholder="Auto-filled"/>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-tp">Take Profit</label>
-          <input type="number" id="calc-tp" class="risk-input" value="" step="any" placeholder="Auto-filled"/>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-rr-target">Target R:R Ratio</label>
-          <select id="calc-rr-target" class="risk-input">
-            <option value="auto">Auto (use TP above)</option>
-            <option value="1">1 : 1</option>
-            <option value="1.5">1 : 1.5</option>
-            <option value="2" selected>1 : 2</option>
-            <option value="2.5">1 : 2.5</option>
-            <option value="3">1 : 3.00</option>
-          </select>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-leverage">Leverage</label>
-          <select id="calc-leverage" class="risk-input">
-            <option value="50">50:1</option>
-            <option value="100" selected>100:1</option>
-            <option value="200">200:1</option>
-            <option value="500">500:1</option>
-          </select>
-        </div>
-        <div class="risk-group">
-          <label class="risk-label" for="calc-lot-type">Lot Type</label>
-          <select id="calc-lot-type" class="risk-input">
-            <option value="standard">Standard (100k)</option>
-            <option value="mini">Mini (10k)</option>
-            <option value="micro">Micro (1k)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="risk-results">
-        <div class="risk-result-item">
-          <span class="risk-result-label">Risk Amount</span>
-          <span class="risk-result-value accent" id="res-risk-amount">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Position Size</span>
-          <span class="risk-result-value" id="res-position-size">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Pip Value (per lot)</span>
-          <span class="risk-result-value" id="res-pip-value">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Pips to Stop Loss</span>
-          <span class="risk-result-value sell" id="res-pips-sl">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Pips to Take Profit</span>
-          <span class="risk-result-value buy" id="res-pips-tp">–</span>
-        </div>
-        <div class="risk-result-item rr-highlight">
-          <span class="risk-result-label">Risk : Reward</span>
-          <span class="risk-result-value rr-value" id="res-rr">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Potential Profit</span>
-          <span class="risk-result-value buy" id="res-profit">–</span>
-        </div>
-        <div class="risk-result-item">
-          <span class="risk-result-label">Required Margin</span>
-          <span class="risk-result-value" id="res-margin">–</span>
-        </div>
-      </div>
-      <p class="risk-disclaimer">⚠️ Pip values are approximated for a USD-denominated account. Cross-pair values use mid-market estimates. For informational purposes only.</p>
-    </div>
-  </section>
-
-  <!-- 4. Technical Analysis ────────────────────────────────────────────────── -->
-  <section id="section-technical">
-    <div class="fx-section-title">🔍 Technical Analysis</div>
-    <div id="ta-loading" class="ta-loading">Loading technical data…</div>
-    <div id="ta-content" class="ta-grid" style="display:none">
-
-      <!-- Current Price (live) -->
-      <div class="ta-card ta-card-wide">
-        <div class="ta-card-title">
-          💱 Current Price
-          <span id="ta-live-price-badge" class="fx-data-source live" style="margin-left:8px;font-size:.72rem">🟢 Live</span>
-        </div>
-        <div id="ta-current-price-display" class="ta-live-price-row">
-          <span id="ta-current-price" class="ta-live-price-value">–</span>
-          <span id="ta-pair-label" class="ta-live-price-pair"></span>
-          <span id="ta-price-updated" class="ta-live-price-time"></span>
-        </div>
-      </div>
-
-      <!-- Support & Resistance -->
-      <div class="ta-card">
-        <div class="ta-card-title">📏 Support &amp; Resistance</div>
-        <div id="ta-sr-content" class="ta-levels"></div>
-      </div>
-
-      <!-- Fair Value Gaps -->
-      <div class="ta-card">
-        <div class="ta-card-title">🌀 Fair Value Gaps (FVG)</div>
-        <div id="ta-fvg-content" class="ta-list"></div>
-      </div>
-
-      <!-- Break of Structure -->
-      <div class="ta-card">
-        <div class="ta-card-title">⚡ Break of Structure (BOS)</div>
-        <div id="ta-bos-content" class="ta-list"></div>
-      </div>
-
-      <!-- CHoCH -->
-      <div class="ta-card">
-        <div class="ta-card-title">🔄 Change of Character (CHoCH)</div>
-        <div id="ta-choch-content" class="ta-list"></div>
-      </div>
-
-      <!-- High Volume Zones -->
-      <div class="ta-card ta-card-wide">
-        <div class="ta-card-title">🔥 High Volume Trade Zones</div>
-        <div id="ta-volume-content" class="ta-list"></div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
-  <section id="section-fvg">
-    <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      All trading pairs classified by their current relationship to Fair Value Gaps.
-      Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
-      Click any row to expand and view all FVGs for that pair.
-    </p>
-
-    <!-- FVG Filter Bar -->
-    <div class="fvg-filter-bar">
-      <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Show:</span>
-      <button class="fvg-filter-btn active" data-filter="approaching">📍 Approaching</button>
-      <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
-      <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
-      <button id="btn-refresh-fvg" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
-    </div>
-
-    <!-- Disclaimer -->
-    <div class="fvg-disclaimer">
-      ⚠️ <strong>Important:</strong> FVG signals are one tool among many. Always combine with other technical indicators, 
-      fundamental analysis, and risk management. Do <strong>not</strong> rely solely on price predictions for trading decisions.
-    </div>
-
-    <div id="fvg-loading" class="ta-loading">Loading FVG scanner…</div>
-
-    <div id="fvg-content" style="display:none">
-      <!-- Approaching -->
-      <div class="fvg-group" data-group="approaching">
-        <div class="fvg-group-title approaching">
-          <span class="fvg-group-icon">📍</span> Approaching FVG Zone
-          <span class="fvg-group-sub">Price is within 1% of the FVG — potential entry zone forming</span>
-        </div>
-        <div id="fvg-approaching" class="fvg-list"></div>
-      </div>
-
-      <!-- Reached -->
-      <div class="fvg-group" data-group="reached">
-        <div class="fvg-group-title reached">
-          <span class="fvg-group-icon">🎯</span> Inside FVG Zone
-          <span class="fvg-group-sub">Price is currently trading inside the Fair Value Gap</span>
-        </div>
-        <div id="fvg-reached" class="fvg-list"></div>
-      </div>
-
-      <!-- Rejected -->
-      <div class="fvg-group" data-group="rejected">
-        <div class="fvg-group-title rejected">
-          <span class="fvg-group-icon">🚫</span> Strong Rejection at FVG
-          <span class="fvg-group-sub">Price touched the FVG zone but reversed strongly away</span>
-        </div>
-        <div id="fvg-rejected" class="fvg-list"></div>
-      </div>
-
-      <!-- Passed — hidden by default (consumed FVGs) -->
-      <div class="fvg-group fx-hidden" data-group="passed">
-        <div class="fvg-group-title passed">
-          <span class="fvg-group-icon">✅</span> Passed Through FVG (Filled)
-          <span class="fvg-group-sub">Price has passed through and filled the Fair Value Gap</span>
-        </div>
-        <div id="fvg-passed" class="fvg-list"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
-  <section id="section-sr-breaks">
-    <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      All trading pairs classified by their current relationship to major support and
-      resistance levels — from those approaching, to those touching, to confirmed breaks.
-    </p>
-
-    <!-- S/R Group Filter Bar -->
-    <div class="fvg-filter-bar">
-      <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Group:</span>
-      <button class="fvg-filter-btn sr-filter-btn active" data-sr-filter="soon_touching">📍 Soon Touching</button>
-      <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="touched">🎯 Touched</button>
-      <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="broke">💥 Broke</button>
-      <button id="btn-refresh-sr" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
-    </div>
-
-    <div id="sr-loading" class="ta-loading">Loading S/R scanner…</div>
-    <div id="sr-content" style="display:none">
-      <!-- Soon Touching -->
-      <div class="sr-group" data-sr-group="soon_touching">
-        <div class="fvg-group-title approaching">
-          <span class="fvg-group-icon">📍</span> Soon Touching
-          <span class="fvg-group-sub">Price is approaching a major S/R level — watch closely</span>
-        </div>
-        <div id="sr-soon-touching" class="fvg-list"></div>
-      </div>
-      <!-- Touched -->
-      <div class="sr-group fx-hidden" data-sr-group="touched">
-        <div class="fvg-group-title reached">
-          <span class="fvg-group-icon">🎯</span> Touched
-          <span class="fvg-group-sub">Price is right at the S/R level — potential reversal or breakout</span>
-        </div>
-        <div id="sr-touched" class="fvg-list"></div>
-      </div>
-      <!-- Broke -->
-      <div class="sr-group fx-hidden" data-sr-group="broke">
-        <div class="fvg-group-title rejected">
-          <span class="fvg-group-icon">💥</span> Broke
-          <span class="fvg-group-sub">Price has broken through the level with confirmed momentum</span>
-        </div>
-        <div id="sr-broke" class="fvg-list"></div>
-      </div>
-    </div>
-    <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
-      No S/R activity detected at this time. Markets may be ranging.
-    </div>
-  </section>
-
-  <section id="section-volatile">
-    <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Pairs ranked by price range movement over the selected timeframe. Higher volatility can signal trading opportunities but also greater risk.
-    </p>
-    <div class="volatile-filter-bar">
-      <span style="color:var(--text2);font-size:.85rem">Timeframe:</span>
-      <button class="volatile-tf-btn active" data-tf="1h">1 Hour</button>
-      <button class="volatile-tf-btn" data-tf="4h">4 Hours</button>
-      <button class="volatile-tf-btn" data-tf="24h">24 Hours</button>
-      <button id="btn-refresh-volatile" class="fx-refresh-btn" type="button" style="margin-left:auto">↻ Refresh</button>
-    </div>
-    <div id="volatile-loading" class="ta-loading">Loading volatile pairs…</div>
-    <div id="volatile-list" class="volatile-list" style="display:none"></div>
-  </section>
-
-  <!-- 6. Trend Reversal Pairs ─────────────────────────────────────────────── -->
-  <section id="section-reversal">
-    <div class="fx-section-title">🔄 Potential Trend Reversal Pairs</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Pairs where the AI model has detected a recent momentum shift, suggesting a potential change in trend direction.
-    </p>
-    <button id="btn-refresh-reversal" class="fx-refresh-btn" type="button" style="margin-bottom:16px">↻ Refresh</button>
-    <div id="reversal-loading" class="ta-loading">Loading reversal signals…</div>
-    <div id="reversal-list" class="volatile-list" style="display:none"></div>
-  </section>
-
-  <!-- 7. Success Rate Tracking ─────────────────────────────────────────────── -->
-  <section id="section-success">
-    <div class="fx-section-title">🏆 Pair Success Rates</div>
-    <div class="success-intro">
-      <p>Accuracy is computed from the last 30-day prediction history returned by the API for each pair.
-      <span class="success-note">Click <em>Load All Pairs</em> to fetch rates for every available pair.</span></p>
-      <button id="btn-load-all-pairs" class="btn-load-pairs" type="button">⟳ Load All Pairs</button>
-    </div>
-    <div id="success-rate-grid" class="success-rate-grid">
-      <div id="success-loading" class="success-loading">Select a pair above to see its success rate.</div>
-    </div>
-
-    <!-- AI explanation moved here -->
-    <div class="fx-section-title" style="margin-top:28px">🧠 How Our AI Works</div>
-    <div class="fx-explanation">
-      <p>
-        Our AI analyzes 10+ years of historical price data, real-time news sentiment,
-        and economic events using machine learning to generate buy/sell/hold signals.
-        The model is retrained weekly using fresh market data collected automatically
-        via Zapier from Yahoo Finance.
-      </p>
-      <p>
-        The pipeline uses a <strong>LightGBM</strong> gradient-boosted tree model trained
-        on features including RSI, MACD, exponential moving averages (EMA-20/50),
-        news sentiment scores, CPI delta, and PMI readings. Training data is stored in
-        Google Sheets and predictions are displayed here in real time.
-      </p>
-      <div class="fx-disclaimer">
-        ⚠️ <strong>Disclaimer:</strong> For informational purposes only. Not financial advice.
-        Forex trading involves significant risk of loss. Past signal accuracy does not
-        guarantee future results. Always conduct your own analysis before trading.
-      </div>
-    </div>
-  </section>
-
-  <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
-  <section id="section-patterns">
-    <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
-      across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
-    </p>
-
-    <div class="fvg-disclaimer">
-      ⚠️ <strong>Important:</strong> Pattern identification is automated and approximate.
-      Always confirm formations with multiple timeframes, volume analysis, and your own
-      technical research before trading. Do <strong>not</strong> act on AI-detected market structure signals alone.
-    </div>
-
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-      <button id="btn-refresh-patterns" class="fx-refresh-btn" type="button">↻ Refresh Patterns</button>
-      <span style="color:var(--text2);font-size:.82rem">🔔 Sound alerts fire automatically for High Impact formations</span>
-    </div>
-
-    <div id="pattern-loading" class="ta-loading">Loading pattern scanner…</div>
-    <div id="pattern-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
-      No significant market structure formations detected at this time.
-    </div>
-    <div id="pattern-content" style="display:none">
-      <div id="pattern-list" class="pattern-list"></div>
-    </div>
-  </section>
-
-  <!-- 6. Real-Time News Feed ──────────────────────────────────────────────── -->
-  <section id="section-news">
-    <div class="fx-section-title">📰 Market News
-      <span id="news-new-badge" class="news-new-badge" style="display:none">🔔 New</span>
-    </div>
-    <!-- News category tabs -->
-    <div class="news-cat-tabs" role="tablist" aria-label="News categories">
-      <button class="news-cat-tab active" data-cat="all" role="tab" aria-selected="true">🌐 All</button>
-      <button class="news-cat-tab" data-cat="forex" role="tab" aria-selected="false">💱 Forex</button>
-    </div>
-    <div class="fx-news-wrap">
-      <div id="news-loading">Loading headlines…</div>
-      <div id="news-list"></div>
-    </div>
-  </section>
-
-  <!-- 7. Alerts & Events ─────────────────────────────────────────────────── -->
-  <section id="section-alerts">
-    <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
-    <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
-      Tracks impactful market events, institutional activity, and significant price surges in real time.
-      Use this section to stay ahead of major catalysts that move markets.
-    </p>
-
-    <!-- Alert category tabs -->
-    <div class="alerts-cat-tabs">
-      <button class="alerts-cat-tab active" data-alert-cat="all">📋 All Events</button>
-      <button class="alerts-cat-tab" data-alert-cat="institutional">🏦 Institutional</button>
-      <button class="alerts-cat-tab" data-alert-cat="surge">🚀 Price Surges</button>
-      <button class="alerts-cat-tab" data-alert-cat="economic">📅 Economic</button>
-    </div>
-
-    <!-- Live alert feed -->
-    <div id="alerts-feed" class="alerts-feed">
-      <div style="color:var(--text2);padding:32px 0;text-align:center;font-size:.95rem">
-        No market alerts at this time. Check back later.
-      </div>
-    </div>
-
-    <!-- Email subscription (moved below alerts feed) -->
-    <div class="alerts-subscribe-section">
-      <div class="fx-section-title" style="font-size:1rem;margin-bottom:12px">📧 Get Signal Alerts by Email</div>
-      <p style="color:var(--text2);font-size:.85rem;margin:0 0 14px">
-        Receive an email the moment a new AI signal is generated for your chosen pairs.
-      </p>
-      <form class="subscribe-form" id="subscribe-form" novalidate>
-        <div class="email-row">
-          <input
-            type="email"
-            id="email-input"
-            class="email-input"
-            placeholder="your@email.com"
-            autocomplete="email"
-            aria-label="Email address"
-          />
-          <button type="submit" class="btn-subscribe">Subscribe</button>
-        </div>
-        <div class="pair-checkboxes" aria-label="Select pairs to receive alerts for">
-          <label><input type="checkbox" value="EUR/USD" checked/> EUR/USD</label>
-          <label><input type="checkbox" value="GBP/USD"/> GBP/USD</label>
-          <label><input type="checkbox" value="USD/JPY"/> USD/JPY</label>
-          <label><input type="checkbox" value="USD/CHF"/> USD/CHF</label>
-          <label><input type="checkbox" value="AUD/USD"/> AUD/USD</label>
-          <label><input type="checkbox" value="USD/CAD"/> USD/CAD</label>
-          <label><input type="checkbox" value="NZD/USD"/> NZD/USD</label>
-          <label><input type="checkbox" value="EUR/GBP"/> EUR/GBP</label>
-          <label><input type="checkbox" value="EUR/JPY"/> EUR/JPY</label>
-          <label><input type="checkbox" value="EUR/AUD"/> EUR/AUD</label>
-          <label><input type="checkbox" value="EUR/CAD"/> EUR/CAD</label>
-          <label><input type="checkbox" value="EUR/CHF"/> EUR/CHF</label>
-          <label><input type="checkbox" value="EUR/NZD"/> EUR/NZD</label>
-          <label><input type="checkbox" value="GBP/JPY"/> GBP/JPY</label>
-          <label><input type="checkbox" value="GBP/CHF"/> GBP/CHF</label>
-          <label><input type="checkbox" value="GBP/AUD"/> GBP/AUD</label>
-          <label><input type="checkbox" value="GBP/CAD"/> GBP/CAD</label>
-          <label><input type="checkbox" value="GBP/NZD"/> GBP/NZD</label>
-          <label><input type="checkbox" value="AUD/JPY"/> AUD/JPY</label>
-          <label><input type="checkbox" value="AUD/CAD"/> AUD/CAD</label>
-          <label><input type="checkbox" value="AUD/CHF"/> AUD/CHF</label>
-          <label><input type="checkbox" value="AUD/NZD"/> AUD/NZD</label>
-          <label><input type="checkbox" value="NZD/JPY"/> NZD/JPY</label>
-          <label><input type="checkbox" value="NZD/CAD"/> NZD/CAD</label>
-          <label><input type="checkbox" value="NZD/CHF"/> NZD/CHF</label>
-          <label><input type="checkbox" value="CAD/JPY"/> CAD/JPY</label>
-          <label><input type="checkbox" value="CHF/JPY"/> CHF/JPY</label>
-          <label><input type="checkbox" value="USD/MXN"/> USD/MXN</label>
-          <label><input type="checkbox" value="USD/NOK"/> USD/NOK</label>
-          <label><input type="checkbox" value="USD/SEK"/> USD/SEK</label>
-          <label><input type="checkbox" value="USD/SGD"/> USD/SGD</label>
-          <label><input type="checkbox" value="USD/HKD"/> USD/HKD</label>
-          <label><input type="checkbox" value="USD/TRY"/> USD/TRY</label>
-          <label><input type="checkbox" value="USD/ZAR"/> USD/ZAR</label>
-          <label><input type="checkbox" value="USD/CNY"/> USD/CNY</label>
-        </div>
-        <div class="subscribe-status" id="subscribe-status" role="status"></div>
-      </form>
-    </div>
-  </section>
-
-</main>
-
-</div><!-- /.main-content -->
-
-</div><!-- /.page-wrapper -->
-
-<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
-<footer style="text-align:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
-  <div style="display:flex;gap:14px;justify-content:center;margin-bottom:5px;flex-wrap:wrap">
-    <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
-    <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
-  </div>
-  <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute financial advice.</div>
-</footer>
-
-<script src="/static/js/forex.js"></script>
+  <script src="/static/js/forex.js"></script>
 </body>
+
 </html>

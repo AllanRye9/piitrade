@@ -1,25 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Risk Disclaimer – PiiTrade AI Signal Hub</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade Risk Disclaimer. All AI trading signals are for informational purposes only and do not constitute financial advice. Understand the risks of forex, crypto, commodities, and stock trading before using our signals."/>
-  <meta name="keywords" content="trading risk disclaimer, forex risk, crypto risk, trading signals disclaimer, PiiTrade disclaimer, AI signals risk"/>
-  <meta name="robots" content="index, follow"/>
-  <meta name="author" content="PiiTrade"/>
-  <link rel="canonical" href="https://piitrade.onrender.com/disclaimer"/>
+  <meta name="description"
+    content="PiiTrade Risk Disclaimer. All AI trading signals are for informational purposes only and do not constitute financial advice. Understand the risks of forex, crypto, commodities, and stock trading before using our signals." />
+  <meta name="keywords"
+    content="trading risk disclaimer, forex risk, crypto risk, trading signals disclaimer, PiiTrade disclaimer, AI signals risk" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.onrender.com/disclaimer" />
   <!-- Open Graph -->
-  <meta property="og:type" content="website"/>
-  <meta property="og:title" content="Risk Disclaimer – PiiTrade AI Signal Hub"/>
-  <meta property="og:description" content="Read the full PiiTrade risk disclaimer before using our AI-powered trading signals. Trading involves significant risk of loss."/>
-  <meta property="og:url" content="https://piitrade.onrender.com/disclaimer"/>
-  <meta property="og:site_name" content="PiiTrade"/>
-  <link rel="stylesheet" href="/static/css/forex.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>"/>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Risk Disclaimer – PiiTrade AI Signal Hub" />
+  <meta property="og:description"
+    content="Read the full PiiTrade risk disclaimer before using our AI-powered trading signals. Trading involves significant risk of loss." />
+  <meta property="og:url" content="https://piitrade.onrender.com/disclaimer" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>📊</text></svg>" />
   <style>
-    .disclaimer-body { max-width: 800px; margin: 0 auto; padding: 24px 16px 64px; }
+    .disclaimer-body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+
     .disclaimer-section {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -28,23 +38,36 @@
       margin-bottom: 24px;
       box-shadow: var(--shadow);
     }
+
     .disclaimer-section h2 {
       font-size: 1.05rem;
       font-weight: 700;
       margin-bottom: 12px;
       color: var(--text);
-      display: flex; align-items: center; gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .disclaimer-section p, .disclaimer-section li {
+
+    .disclaimer-section p,
+    .disclaimer-section li {
       font-size: 0.9rem;
       color: var(--text2);
       line-height: 1.7;
     }
-    .disclaimer-section ul { padding-left: 20px; margin-top: 8px; }
-    .disclaimer-section li { margin-bottom: 6px; }
+
+    .disclaimer-section ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .disclaimer-section li {
+      margin-bottom: 6px;
+    }
+
     .disclaimer-highlight {
-      background: rgba(248,81,73,0.08);
-      border: 1px solid rgba(248,81,73,0.25);
+      background: rgba(248, 81, 73, 0.08);
+      border: 1px solid rgba(248, 81, 73, 0.25);
       border-radius: 8px;
       padding: 14px 16px;
       margin-top: 14px;
@@ -52,6 +75,7 @@
       color: var(--text2);
       line-height: 1.6;
     }
+
     .back-link {
       display: inline-flex;
       align-items: center;
@@ -61,167 +85,246 @@
       margin: 20px 0 8px;
       text-decoration: none;
     }
-    .back-link:hover { color: var(--text); }
+
+    .back-link:hover {
+      color: var(--text);
+    }
   </style>
 </head>
+
 <body>
 
-<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
-<header class="fx-header">
-  <div class="brand">
-    <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
-    <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img class="exness-slide exness-slide-1" src="/img/exness.png" alt="Exness"/><img class="exness-slide exness-slide-2" src="/img/exness2.png" alt="Exness 2"/><img class="exness-slide exness-slide-3" src="/img/exness3.png" alt="Exness 3"/></a></span>
-  </div>
-  <nav class="fx-nav">
-    <a href="/">Home</a>
-    <a href="/forex">Dashboard</a>
-    {% if current_user and is_admin %}
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+      <span id="container"
+        style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; width:100%; margin:0 auto; position:relative;">
+
+        <!-- Images (background) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap"
+          style="display:flex; flex-wrap:wrap; justify-content:center; gap:4px; width:100%;">
+
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness2.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+        </a>
+
+        <!-- Animated Text (in front) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText" style="position:absolute; top:0; left:50%; transform:translateX(-50%) scale(1); 
+            background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:6px;
+            font-size:13px; text-align:center; z-index:5; white-space:nowrap; text-decoration:none;
+            display:inline-block; transition:0.2s;">
+          best trading broker you can trust - 0 swap fees for GCC countries
+        </a>
+      </span>
+
+      <script>
+        (function () {
+          var text = document.getElementById("promoText");
+          var images = document.getElementById("imageWrap");
+
+          // Pulse zoom animation for text
+          var scale = 1, growing = true;
+          setInterval(function () {
+            if (growing) {
+              scale += 0.02;
+              if (scale >= 1.08) growing = false;
+            } else {
+              scale -= 0.02;
+              if (scale <= 1) growing = true;
+            }
+            text.style.transform = "translateX(-50%) scale(" + scale + ")";
+          }, 60);
+
+          // Mobile: hide images, keep text on top
+          function handleMobile() {
+            if (window.innerWidth < 600) {
+              images.style.display = "none";
+              text.style.position = "relative";
+              text.style.left = "0";
+              text.style.transform = "scale(1)";
+              text.style.margin = "0 auto";
+            } else {
+              images.style.display = "flex";
+              text.style.position = "absolute";
+              text.style.left = "50%";
+            }
+          }
+
+          handleMobile();
+          window.addEventListener("resize", handleMobile);
+        })();
+      </script>
+    </div>
+    <nav class="fx-nav">
+      <a href="/">Home</a>
+      <a href="/forex">Dashboard</a>
+      {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% endif %}
-  </nav>
-</header>
+      {% endif %}
+    </nav>
+  </header>
 
-<!-- ═══════════════════════════════ CONTENT + ADS ══════════════════════════ -->
-<div class="page-wrapper">
+  <!-- ═══════════════════════════════ CONTENT + ADS ══════════════════════════ -->
+  <div class="page-wrapper">
 
-<!-- LEFT AD (Taptap) -->
-<div class="main-content">
+    <!-- LEFT AD (Taptap) -->
+    <div class="main-content">
 
-<!-- ═══════════════════════════════ CONTENT ═════════════════════════════════ -->
-<div class="disclaimer-body">
-  <a href="/" class="back-link">← Back to Home</a>
+      <!-- ═══════════════════════════════ CONTENT ═════════════════════════════════ -->
+      <div class="disclaimer-body">
+        <a href="/" class="back-link">← Back to Home</a>
 
-  <h1 style="font-size:1.5rem;font-weight:700;margin:16px 0 24px;color:var(--text)">
-    ⚠️ Risk Disclaimer
-  </h1>
+        <h1 style="font-size:1.5rem;font-weight:700;margin:16px 0 24px;color:var(--text)">
+          ⚠️ Risk Disclaimer
+        </h1>
 
-  <div class="disclaimer-section">
-    <h2>📋 General Disclaimer</h2>
-    <p>
-      PiiTrade ("the Service") provides AI-generated trading signals and market analysis tools
-      for informational and educational purposes only. Nothing on this website constitutes
-      financial, investment, trading, or any other form of professional advice.
-    </p>
-    <p style="margin-top:10px">
-      All signals, price levels, and analysis are generated by automated machine-learning
-      models and do not represent the opinions, recommendations, or advice of any licensed
-      financial professional.
-    </p>
-    <div class="disclaimer-highlight">
-      ⚠️ <strong>Important:</strong> Do <strong>not</strong> make any trading or investment
-      decisions based solely on the signals, indicators, or content provided by PiiTrade.
-      Always conduct your own independent research and consult a licensed financial advisor
-      before placing any trade.
-    </div>
-  </div>
+        <div class="disclaimer-section">
+          <h2>📋 General Disclaimer</h2>
+          <p>
+            PiiTrade ("the Service") provides AI-generated trading signals and market analysis tools
+            for informational and educational purposes only. Nothing on this website constitutes
+            financial, investment, trading, or any other form of professional advice.
+          </p>
+          <p style="margin-top:10px">
+            All signals, price levels, and analysis are generated by automated machine-learning
+            models and do not represent the opinions, recommendations, or advice of any licensed
+            financial professional.
+          </p>
+          <div class="disclaimer-highlight">
+            ⚠️ <strong>Important:</strong> Do <strong>not</strong> make any trading or investment
+            decisions based solely on the signals, indicators, or content provided by PiiTrade.
+            Always conduct your own independent research and consult a licensed financial advisor
+            before placing any trade.
+          </div>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>📉 Risk of Loss</h2>
-    <p>
-      Trading financial instruments — including but not limited to forex (foreign exchange),
-      cryptocurrencies, commodities, and equities (stocks) — involves a substantial risk of loss
-      and is not suitable for all investors. You may lose some or all of your invested capital.
-    </p>
-    <ul>
-      <li>Forex markets can move rapidly and unpredictably due to macroeconomic events, central bank policy, and geopolitical developments.</li>
-      <li>Cryptocurrencies are highly volatile and largely unregulated; prices can drop significantly within hours.</li>
-      <li>Commodity prices are affected by supply/demand dynamics, weather events, and global trade conditions.</li>
-      <li>Stock prices are influenced by earnings, regulatory changes, economic cycles, and market sentiment.</li>
-    </ul>
-    <p style="margin-top:10px">
-      Leverage (margin trading) amplifies both potential profits and losses. Using high leverage
-      can result in losses exceeding your initial deposit. Ensure you fully understand the risks
-      of leverage before trading.
-    </p>
-  </div>
+        <div class="disclaimer-section">
+          <h2>📉 Risk of Loss</h2>
+          <p>
+            Trading financial instruments — including but not limited to forex (foreign exchange),
+            cryptocurrencies, commodities, and equities (stocks) — involves a substantial risk of loss
+            and is not suitable for all investors. You may lose some or all of your invested capital.
+          </p>
+          <ul>
+            <li>Forex markets can move rapidly and unpredictably due to macroeconomic events, central bank policy, and
+              geopolitical developments.</li>
+            <li>Cryptocurrencies are highly volatile and largely unregulated; prices can drop significantly within
+              hours.</li>
+            <li>Commodity prices are affected by supply/demand dynamics, weather events, and global trade conditions.
+            </li>
+            <li>Stock prices are influenced by earnings, regulatory changes, economic cycles, and market sentiment.</li>
+          </ul>
+          <p style="margin-top:10px">
+            Leverage (margin trading) amplifies both potential profits and losses. Using high leverage
+            can result in losses exceeding your initial deposit. Ensure you fully understand the risks
+            of leverage before trading.
+          </p>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>🤖 AI Signal Accuracy</h2>
-    <p>
-      The AI models used by PiiTrade are trained on historical price data, news sentiment,
-      and macroeconomic indicators. Historical accuracy does <strong>not</strong> guarantee
-      future results. Market conditions change, and models may underperform during:
-    </p>
-    <ul>
-      <li>High-impact news events (central bank decisions, geopolitical crises, trade policy announcements)</li>
-      <li>Black swan events that fall outside the model's training distribution</li>
-      <li>Extended low-liquidity or ranging market conditions</li>
-      <li>Sudden changes in market correlation or volatility regimes</li>
-    </ul>
-    <p style="margin-top:10px">
-      Confidence scores reflect the model's predicted class probability, not a guaranteed
-      probability of success. A 70% confidence signal does not mean it will be correct 70%
-      of the time in all market conditions.
-    </p>
-  </div>
+        <div class="disclaimer-section">
+          <h2>🤖 AI Signal Accuracy</h2>
+          <p>
+            The AI models used by PiiTrade are trained on historical price data, news sentiment,
+            and macroeconomic indicators. Historical accuracy does <strong>not</strong> guarantee
+            future results. Market conditions change, and models may underperform during:
+          </p>
+          <ul>
+            <li>High-impact news events (central bank decisions, geopolitical crises, trade policy announcements)</li>
+            <li>Black swan events that fall outside the model's training distribution</li>
+            <li>Extended low-liquidity or ranging market conditions</li>
+            <li>Sudden changes in market correlation or volatility regimes</li>
+          </ul>
+          <p style="margin-top:10px">
+            Confidence scores reflect the model's predicted class probability, not a guaranteed
+            probability of success. A 70% confidence signal does not mean it will be correct 70%
+            of the time in all market conditions.
+          </p>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>💰 No Financial Advice</h2>
-    <p>
-      PiiTrade is not a registered investment adviser, broker-dealer, or financial institution
-      in any jurisdiction. The Service does not provide personalised investment advice and does
-      not take into account your individual financial situation, investment objectives, or risk tolerance.
-    </p>
-    <p style="margin-top:10px">
-      Before trading, you should carefully consider whether trading is appropriate for you in
-      light of your financial circumstances, level of experience, and risk appetite. If in doubt,
-      seek independent advice from a licensed financial adviser.
-    </p>
-  </div>
+        <div class="disclaimer-section">
+          <h2>💰 No Financial Advice</h2>
+          <p>
+            PiiTrade is not a registered investment adviser, broker-dealer, or financial institution
+            in any jurisdiction. The Service does not provide personalised investment advice and does
+            not take into account your individual financial situation, investment objectives, or risk tolerance.
+          </p>
+          <p style="margin-top:10px">
+            Before trading, you should carefully consider whether trading is appropriate for you in
+            light of your financial circumstances, level of experience, and risk appetite. If in doubt,
+            seek independent advice from a licensed financial adviser.
+          </p>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>📡 Data Sources &amp; Accuracy</h2>
-    <p>
-      Price data is sourced from third-party providers including the European Central Bank (via the
-      Frankfurter API) and Yahoo Finance. While we strive to display accurate, real-time data,
-      PiiTrade cannot guarantee the accuracy, completeness, or timeliness of any data displayed
-      on the platform. Data may be delayed, cached, or temporarily unavailable.
-    </p>
-    <p style="margin-top:10px">
-      Always verify price levels with your broker or exchange before executing any trade.
-    </p>
-  </div>
+        <div class="disclaimer-section">
+          <h2>📡 Data Sources &amp; Accuracy</h2>
+          <p>
+            Price data is sourced from third-party providers including the European Central Bank (via the
+            Frankfurter API) and Yahoo Finance. While we strive to display accurate, real-time data,
+            PiiTrade cannot guarantee the accuracy, completeness, or timeliness of any data displayed
+            on the platform. Data may be delayed, cached, or temporarily unavailable.
+          </p>
+          <p style="margin-top:10px">
+            Always verify price levels with your broker or exchange before executing any trade.
+          </p>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>🌐 Regulatory Notice</h2>
-    <p>
-      Financial products and services are subject to regulation in many jurisdictions. It is your
-      responsibility to ensure that you comply with all applicable laws and regulations in your
-      country or region before using the information provided by PiiTrade.
-    </p>
-    <p style="margin-top:10px">
-      PiiTrade does not accept responsibility for any losses arising from the use of signals,
-      tools, or information provided on this platform.
-    </p>
-    <div class="disclaimer-highlight">
-      <strong>By using PiiTrade, you acknowledge that you have read and understood this Risk
-      Disclaimer, and agree that PiiTrade and its operators bear no liability for any trading
-      losses you incur.</strong>
-    </div>
-  </div>
+        <div class="disclaimer-section">
+          <h2>🌐 Regulatory Notice</h2>
+          <p>
+            Financial products and services are subject to regulation in many jurisdictions. It is your
+            responsibility to ensure that you comply with all applicable laws and regulations in your
+            country or region before using the information provided by PiiTrade.
+          </p>
+          <p style="margin-top:10px">
+            PiiTrade does not accept responsibility for any losses arising from the use of signals,
+            tools, or information provided on this platform.
+          </p>
+          <div class="disclaimer-highlight">
+            <strong>By using PiiTrade, you acknowledge that you have read and understood this Risk
+              Disclaimer, and agree that PiiTrade and its operators bear no liability for any trading
+              losses you incur.</strong>
+          </div>
+        </div>
 
-  <div class="disclaimer-section">
-    <h2>📅 Last Updated</h2>
-    <p>This Risk Disclaimer was last updated on <strong>April 3, 2026</strong>.</p>
-  </div>
-</div>
+        <div class="disclaimer-section">
+          <h2>📅 Last Updated</h2>
+          <p>This Risk Disclaimer was last updated on <strong>April 3, 2026</strong>.</p>
+        </div>
+      </div>
 
-<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
-<footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
-  <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
-    <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
-    <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
-    <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
-  </div>
-  <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for informational purposes only and do not constitute financial advice.</div>
-</footer>
+      <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+      <footer
+        style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+        <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+          <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+          <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
+          <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+        </div>
+        <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for
+          informational purposes only and do not constitute financial advice.</div>
+      </footer>
 
-</div><!-- /.main-content -->
+    </div><!-- /.main-content -->
 
-<!-- RIGHT AD (Exness) -->
-</div><!-- /.page-wrapper -->
+    <!-- RIGHT AD (Exness) -->
+  </div><!-- /.page-wrapper -->
 
 </body>
+
 </html>

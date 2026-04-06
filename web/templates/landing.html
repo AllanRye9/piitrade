@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PiiTrade – Free AI Forex Signal Hub | Currency Pair Signals</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="PiiTrade delivers free, real-time AI-powered buy/sell/hold signals for 35 forex pairs — majors, minors, and exotics. No sign-up, no subscription, completely free."/>
-  <meta name="keywords" content="free forex signals, AI forex signals, forex signal hub, EUR/USD signals, GBP/USD signals, USD/JPY signals, risk calculator, volatility scanner, trend reversal alerts, market structure analysis, free AI trading tool, best free forex signals 2026"/>
-  <meta name="robots" content="index, follow"/>
-  <meta name="author" content="PiiTrade"/>
-  <link rel="canonical" href="https://piitrade.onrender.com/"/>
+  <meta name="description"
+    content="PiiTrade delivers free, real-time AI-powered buy/sell/hold signals for 35 forex pairs — majors, minors, and exotics. No sign-up, no subscription, completely free." />
+  <meta name="keywords"
+    content="free forex signals, AI forex signals, forex signal hub, EUR/USD signals, GBP/USD signals, USD/JPY signals, risk calculator, volatility scanner, trend reversal alerts, market structure analysis, free AI trading tool, Best free forex signals 2026" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.onrender.com/" />
   <!-- Open Graph -->
-  <meta property="og:type" content="website"/>
-  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Hub"/>
-  <meta property="og:description" content="Get free real-time AI trading signals for 35 forex pairs: majors, minors, and exotics. Includes risk calculator, FVG scanner, volatility scanner, and market alerts. No account needed."/>
-  <meta property="og:url" content="https://piitrade.onrender.com/"/>
-  <meta property="og:site_name" content="PiiTrade"/>
-  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png"/>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PiiTrade – Free AI Forex Signal Hub" />
+  <meta property="og:description"
+    content="Get free real-time AI trading signals for 35 forex pairs: majors, minors, and exotics. Includes risk calculator, FVG scanner, volatility scanner, and market alerts. No account needed." />
+  <meta property="og:url" content="https://piitrade.onrender.com/" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Hub"/>
-  <meta name="twitter:description" content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required."/>
-  <meta name="twitter:image" content="https://piitrade.onrender.com/img/trader.png"/>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Hub" />
+  <meta name="twitter:description"
+    content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required." />
+  <meta name="twitter:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
@@ -55,12 +60,12 @@
     }
   }
   </script>
-  <link rel="preload" href="/static/css/forex.css" as="style"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="dns-prefetch" href="//api.frankfurter.app"/>
-  <link rel="stylesheet" href="/static/css/forex.css"/>
-  <link rel="icon" type="image/png" href="/img/trader.png"/>
+  <link rel="preload" href="/static/css/forex.css" as="style" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="//api.frankfurter.app" />
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
   <style>
     /* ── Landing-specific overrides ── */
     .landing-hero {
@@ -68,21 +73,25 @@
       padding: 36px 24px 16px;
       position: relative;
     }
+
     .landing-hero::before {
       content: '';
       position: absolute;
-      top: 0; left: 50%; transform: translateX(-50%);
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
       width: 600px;
       height: 300px;
-      background: radial-gradient(ellipse at center, rgba(88,166,255,0.07) 0%, transparent 70%);
+      background: radial-gradient(ellipse at center, rgba(88, 166, 255, 0.07) 0%, transparent 70%);
       pointer-events: none;
     }
+
     .landing-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(88,166,255,0.1);
-      border: 1px solid rgba(88,166,255,0.25);
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.25);
       border-radius: 20px;
       padding: 4px 14px;
       font-size: .75rem;
@@ -92,13 +101,16 @@
       margin-bottom: 14px;
       text-transform: uppercase;
     }
+
     .landing-badge::before {
       content: '';
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent);
       animation: live-pulse 1.8s ease-in-out infinite;
     }
+
     .landing-hero h1 {
       font-size: clamp(1.7rem, 4vw, 2.4rem);
       font-weight: 800;
@@ -107,6 +119,7 @@
       letter-spacing: -0.03em;
       line-height: 1.2;
     }
+
     .landing-hero h1 span {
       color: #58a6ff;
       background: linear-gradient(90deg, #58a6ff, #a371f7);
@@ -114,6 +127,7 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
     .landing-hero p {
       font-size: .95rem;
       color: var(--text2);
@@ -121,6 +135,7 @@
       margin: 0 auto 18px;
       line-height: 1.6;
     }
+
     .landing-cta-row {
       display: flex;
       gap: 10px;
@@ -128,12 +143,14 @@
       flex-wrap: wrap;
       margin-bottom: 24px;
     }
+
     .landing-cta-row .btn-primary {
       font-size: .95rem;
       padding: 10px 24px;
       text-decoration: none;
       font-weight: 700;
     }
+
     .landing-cta-row .btn-outline {
       font-size: .95rem;
       padding: 10px 24px;
@@ -142,7 +159,12 @@
       border-radius: var(--radius);
       color: var(--text2);
     }
-    .landing-cta-row .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .landing-cta-row .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
     /* Stats bar */
     .landing-stats {
       display: flex;
@@ -156,6 +178,7 @@
       border-radius: 12px;
       overflow: hidden;
     }
+
     .stat-item {
       flex: 1;
       min-width: 100px;
@@ -163,7 +186,11 @@
       text-align: center;
       border-right: 1px solid var(--border);
     }
-    .stat-item:last-child { border-right: none; }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
     .stat-value {
       font-size: 1.4rem;
       font-weight: 800;
@@ -171,6 +198,7 @@
       line-height: 1;
       letter-spacing: -0.02em;
     }
+
     .stat-label {
       font-size: .7rem;
       color: var(--text2);
@@ -178,10 +206,12 @@
       letter-spacing: .06em;
       margin-top: 3px;
     }
+
     .landing-preview {
       max-width: 480px;
       margin: 0 auto 10px;
     }
+
     .preview-label {
       font-size: .78rem;
       color: var(--text2);
@@ -189,9 +219,11 @@
       letter-spacing: .08em;
       margin-bottom: 6px;
     }
+
     .preview-blur-wrap {
       position: relative;
     }
+
     .preview-blur-overlay {
       position: absolute;
       inset: 0;
@@ -204,27 +236,32 @@
       padding-bottom: 16px;
       z-index: 2;
     }
+
     .preview-blur-overlay p {
       color: var(--text2);
       font-size: .88rem;
       margin: 0 0 8px;
     }
+
     .landing-features {
       max-width: 900px;
       margin: 0 auto 24px;
       padding: 0 16px;
     }
+
     .landing-features h2 {
       text-align: center;
       font-size: 1.15rem;
       color: var(--text);
       margin-bottom: 14px;
     }
+
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 10px;
     }
+
     .feature-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -232,21 +269,25 @@
       padding: 13px 12px;
       text-align: center;
     }
+
     .feature-card .feat-icon {
       font-size: 1.4rem;
       margin-bottom: 5px;
     }
+
     .feature-card h3 {
       font-size: .88rem;
       color: var(--text);
       margin: 0 0 4px;
     }
+
     .feature-card p {
       font-size: .78rem;
       color: var(--text2);
       margin: 0;
       line-height: 1.35;
     }
+
     .landing-subscribe-banner {
       background: linear-gradient(135deg, #6C63FF22, #6C63FF11);
       border: 1px solid var(--accent);
@@ -256,22 +297,26 @@
       padding: 16px 20px;
       text-align: center;
     }
+
     .landing-subscribe-banner h2 {
       font-size: 1.1rem;
       color: var(--text);
       margin: 0 0 6px;
     }
+
     .landing-subscribe-banner p {
       color: var(--text2);
       font-size: .84rem;
       margin: 0 0 12px;
       line-height: 1.4;
     }
+
     .landing-subscribe-banner .btn-primary {
       text-decoration: none;
       font-size: .88rem;
       padding: 8px 18px;
     }
+
     /* ── Footer ── */
     .landing-footer {
       text-align: center;
@@ -281,11 +326,16 @@
       font-size: .78rem;
       line-height: 1.6;
     }
+
     .landing-footer a {
       color: var(--text2);
       text-decoration: none;
     }
-    .landing-footer a:hover { color: var(--text); }
+
+    .landing-footer a:hover {
+      color: var(--text);
+    }
+
     .footer-links {
       display: flex;
       gap: 14px;
@@ -298,26 +348,70 @@
 
     /* ── Landing entrance animations ── */
     @keyframes land-slide-up {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes land-cta-glow {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
-      55%       { box-shadow: 0 0 0 9px rgba(88, 166, 255, 0.18); }
-    }
-    @keyframes land-float {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(-6px); }
-    }
-    @keyframes land-arrow-bounce {
-      0%, 100% { transform: translateY(0); opacity: 0.7; }
-      50%       { transform: translateY(5px); opacity: 1; }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .landing-hero h1 { animation: land-slide-up 0.5s ease both; }
-    .landing-hero p  { animation: land-slide-up 0.5s 0.1s ease both; }
-    .landing-cta-row { animation: land-slide-up 0.5s 0.18s ease both; }
-    .landing-stats   { animation: land-slide-up 0.5s 0.22s ease both; }
+    @keyframes land-cta-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(88, 166, 255, 0);
+      }
+
+      55% {
+        box-shadow: 0 0 0 9px rgba(88, 166, 255, 0.18);
+      }
+    }
+
+    @keyframes land-float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+
+    @keyframes land-arrow-bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+
+      50% {
+        transform: translateY(5px);
+        opacity: 1;
+      }
+    }
+
+    .landing-hero h1 {
+      animation: land-slide-up 0.5s ease both;
+    }
+
+    .landing-hero p {
+      animation: land-slide-up 0.5s 0.1s ease both;
+    }
+
+    .landing-cta-row {
+      animation: land-slide-up 0.5s 0.18s ease both;
+    }
+
+    .landing-stats {
+      animation: land-slide-up 0.5s 0.22s ease both;
+    }
 
     .landing-cta-row .btn-primary,
     .landing-subscribe-banner .btn-primary,
@@ -325,8 +419,13 @@
       animation: land-cta-glow 2.4s ease-in-out infinite;
     }
 
-    .landing-preview { animation: land-slide-up 0.5s 0.28s ease both; }
-    .preview-blur-wrap .fx-signal-card { animation: land-float 5s ease-in-out 0.6s infinite; }
+    .landing-preview {
+      animation: land-slide-up 0.5s 0.28s ease both;
+    }
+
+    .preview-blur-wrap .fx-signal-card {
+      animation: land-float 5s ease-in-out 0.6s infinite;
+    }
 
     .preview-blur-overlay::before {
       content: "↓";
@@ -341,217 +440,336 @@
       animation: land-slide-up 0.45s ease both;
       transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .feature-card:nth-child(1)  { animation-delay: 0.05s; }
-    .feature-card:nth-child(2)  { animation-delay: 0.10s; }
-    .feature-card:nth-child(3)  { animation-delay: 0.15s; }
-    .feature-card:nth-child(4)  { animation-delay: 0.20s; }
-    .feature-card:nth-child(5)  { animation-delay: 0.25s; }
-    .feature-card:nth-child(6)  { animation-delay: 0.30s; }
-    .feature-card:nth-child(7)  { animation-delay: 0.35s; }
-    .feature-card:nth-child(8)  { animation-delay: 0.40s; }
+
+    .feature-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .feature-card:nth-child(2) {
+      animation-delay: 0.10s;
+    }
+
+    .feature-card:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .feature-card:nth-child(4) {
+      animation-delay: 0.20s;
+    }
+
+    .feature-card:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    .feature-card:nth-child(6) {
+      animation-delay: 0.30s;
+    }
+
+    .feature-card:nth-child(7) {
+      animation-delay: 0.35s;
+    }
+
+    .feature-card:nth-child(8) {
+      animation-delay: 0.40s;
+    }
+
     .feature-card:hover {
       transform: translateY(-4px);
       border-color: var(--accent);
       box-shadow: 0 6px 16px rgba(88, 166, 255, 0.12);
     }
 
-    .landing-subscribe-banner { animation: land-slide-up 0.5s 0.35s ease both; }
+    .landing-subscribe-banner {
+      animation: land-slide-up 0.5s 0.35s ease both;
+    }
 
     @media (prefers-reduced-motion: reduce) {
-      .landing-hero h1, .landing-hero p, .landing-cta-row, .landing-stats,
-      .landing-preview, .landing-subscribe-banner, .feature-card
-      { animation: none; opacity: 1; transform: none; }
-      .landing-cta-row .btn-primary, .landing-subscribe-banner .btn-primary,
-      .preview-blur-overlay .btn-primary, .preview-blur-wrap .fx-signal-card,
-      .preview-blur-overlay::before { animation: none; }
+
+      .landing-hero h1,
+      .landing-hero p,
+      .landing-cta-row,
+      .landing-stats,
+      .landing-preview,
+      .landing-subscribe-banner,
+      .feature-card {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .landing-cta-row .btn-primary,
+      .landing-subscribe-banner .btn-primary,
+      .preview-blur-overlay .btn-primary,
+      .preview-blur-wrap .fx-signal-card,
+      .preview-blur-overlay::before {
+        animation: none;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
-<header class="fx-header">
-  <div class="brand">
-    <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
-    <span class="brand-title">PiiTrade</span>
-    <span class="brand-sub"><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img class="exness-slide exness-slide-1" src="/img/exness.png" alt="Exness"/><img class="exness-slide exness-slide-2" src="/img/exness2.png" alt="Exness 2"/><img class="exness-slide exness-slide-3" src="/img/exness3.png" alt="Exness 3"/></a></span>
-  </div>
-  <nav class="fx-nav">
-    <a href="/forex">Dashboard</a>
-    <a href="/disclaimer">Disclaimer</a>
-    {% if current_user and is_admin %}
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+      <span id="container"
+        style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; width:100%; margin:0 auto; position:relative;">
+
+        <!-- Images (background) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="imageWrap"
+          style="display:flex; flex-wrap:wrap; justify-content:center; gap:4px; width:100%;">
+
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness2.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness.png" />
+          <img
+            style="width:100px;height:50px;max-width:100%;border-radius:6px; box-shadow:0 0 5px #00f,0 0 10px #00f; transition:0.3s;"
+            src="/img/exness3.png" />
+        </a>
+
+        <!-- Animated Text (in front) -->
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="promoText" style="position:absolute; top:0; left:50%; transform:translateX(-50%) scale(1); 
+            background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:6px;
+            font-size:13px; text-align:center; z-index:5; white-space:nowrap; text-decoration:none;
+            display:inline-block; transition:0.2s;">
+          Best trading broker you can trust - 0 swap fees for GCC countries Click here 
+        </a>
+      </span>
+
+      <script>
+        (function () {
+          var text = document.getElementById("promoText");
+          var images = document.getElementById("imageWrap");
+
+          // Pulse zoom animation for text
+          var scale = 1, growing = true;
+          setInterval(function () {
+            if (growing) {
+              scale += 0.02;
+              if (scale >= 1.08) growing = false;
+            } else {
+              scale -= 0.02;
+              if (scale <= 1) growing = true;
+            }
+            text.style.transform = "translateX(-50%) scale(" + scale + ")";
+          }, 60);
+
+          // Mobile: hide images, keep text on top
+          function handleMobile() {
+            if (window.innerWidth < 600) {
+              images.style.display = "none";
+              text.style.position = "relative";
+              text.style.left = "0";
+              text.style.transform = "scale(1)";
+              text.style.margin = "0 auto";
+            } else {
+              images.style.display = "flex";
+              text.style.position = "absolute";
+              text.style.left = "50%";
+            }
+          }
+
+          handleMobile();
+          window.addEventListener("resize", handleMobile);
+        })();
+      </script>
+    </div>
+    <nav class="fx-nav">
+      <a href="/forex">Dashboard</a>
+      <a href="/disclaimer">Disclaimer</a>
+      {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
-    {% endif %}
-  </nav>
-</header>
+      {% endif %}
+    </nav>
+  </header>
 
-<div class="page-wrapper">
+  <div class="page-wrapper">
 
-<div class="main-content">
+    <div class="main-content">
 
-<!-- ═══════════════════════════════ HERO ════════════════════════════════════ -->
-<div class="landing-hero">
-  <div class="landing-badge">AI-Powered · 35 Pairs · Real-Time</div>
-  <h1>Free Forex Signals for<br><span>35 Currency Pairs</span></h1>
-  <p>
-    Institutional-grade buy, sell, and hold signals for forex majors, minors, and exotics — delivered in real time.
-    Powered by LightGBM models trained on 10+ years of price data.
-    <strong>Completely free. No sign-up required.</strong>
-  </p>
-  <div class="landing-cta-row">
-    <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
-    <a href="/disclaimer" class="btn-outline">Risk Disclaimer</a>
-  </div>
-  <div class="landing-stats">
-    <div class="stat-item">
-      <div class="stat-value">35</div>
-      <div class="stat-label">Forex Pairs</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">AI</div>
-      <div class="stat-label">Powered</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">Free</div>
-      <div class="stat-label">Always</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">24/7</div>
-      <div class="stat-label">Real-Time</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════ PREVIEW SIGNAL ══════════════════════════ -->
-<div class="landing-preview">
-  <div class="preview-label">📊 Live EUR/USD Preview Signal</div>
-  <div class="preview-blur-wrap">
-    <div class="fx-signal-card" style="position:relative;z-index:1">
-      <!-- Direction badge -->
-      <div class="signal-direction-badge {{ signal.direction }}">
-        <span>{% if signal.direction == 'BUY' %}▲{% elif signal.direction == 'SELL' %}▼{% else %}→{% endif %}</span>
-        {{ signal.direction }}
-      </div>
-
-      <!-- Signal metadata -->
-      <div class="signal-meta">
-        <div class="signal-confidence-row">
-          <span class="label">Confidence</span>
-          <div class="confidence-bar">
-            <div class="confidence-fill {{ signal.direction }}" style="width:{{ signal.confidence }}%"></div>
-          </div>
-          <span class="confidence-pct">{{ signal.confidence }}%</span>
+      <!-- ═══════════════════════════════ HERO ════════════════════════════════════ -->
+      <div class="landing-hero">
+        <div class="landing-badge">AI-Powered · 35 Pairs · Real-Time</div>
+        <h1>Free Forex Signals for<br><span>35 Currency Pairs</span></h1>
+        <p>
+          Institutional-grade buy, sell, and hold signals for forex majors, minors, and exotics — delivered in real
+          time.
+          Powered by LightGBM models trained on 10+ years of price data.
+          <strong>Completely free. No sign-up required.</strong>
+        </p>
+        <div class="landing-cta-row">
+          <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
+          <a href="/disclaimer" class="btn-outline">Risk Disclaimer</a>
         </div>
-        <div class="signal-levels">
-          <div class="signal-level entry">
-            <span class="level-label">Entry Price</span>
-            <span class="level-value">{{ "%.4f"|format(signal.entry_price) }}</span>
+        <div class="landing-stats">
+          <div class="stat-item">
+            <div class="stat-value">35</div>
+            <div class="stat-label">Forex Pairs</div>
           </div>
-          <div class="signal-level tp">
-            <span class="level-label">Take Profit</span>
-            <span class="level-value">{{ "%.4f"|format(signal.take_profit) }}</span>
+          <div class="stat-item">
+            <div class="stat-value">AI</div>
+            <div class="stat-label">Powered</div>
           </div>
-          <div class="signal-level sl">
-            <span class="level-label">Stop Loss</span>
-            <span class="level-value">{{ "%.4f"|format(signal.stop_loss) }}</span>
+          <div class="stat-item">
+            <div class="stat-value">Free</div>
+            <div class="stat-label">Always</div>
           </div>
-        </div>
-        <div class="signal-model-row">
-          <span style="color:var(--text2)">Model:</span>
-          <span style="color:var(--text)">{{ signal.model_version }}</span>
-          &nbsp;·&nbsp;
-          <span style="color:var(--text2)">Live:</span>
-          <span style="color:var(--text)">{% if signal.is_live %}✅ Yes{% else %}⚠️ Cached{% endif %}</span>
+          <div class="stat-item">
+            <div class="stat-value">24/7</div>
+            <div class="stat-label">Real-Time</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Open access prompt -->
-    <div class="preview-blur-overlay">
-      <p>Full dashboard: all 35 forex pairs with live prices — completely free.</p>
-      <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
-    </div>
-  </div>
-</div>
+      <!-- ═══════════════════════════════ PREVIEW SIGNAL ══════════════════════════ -->
+      <div class="landing-preview">
+        <div class="preview-label">📊 Live EUR/USD Preview Signal</div>
+        <div class="preview-blur-wrap">
+          <div class="fx-signal-card" style="position:relative;z-index:1">
+            <!-- Direction badge -->
+            <div class="signal-direction-badge {{ signal.direction }}">
+              <span>{% if signal.direction == 'BUY' %}▲{% elif signal.direction == 'SELL' %}▼{% else %}→{% endif
+                %}</span>
+              {{ signal.direction }}
+            </div>
 
-<!-- ═══════════════════════════════ FEATURES ════════════════════════════════ -->
-<div class="landing-features">
-  <h2>Everything you need to trade forex smarter — all free</h2>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <div class="feat-icon">💱</div>
-      <h3>35 Forex Pairs</h3>
-      <p>Majors, minors &amp; exotics — EUR/USD, GBP/USD, USD/JPY, exotic pairs, and more. 100% forex focused.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">🔥</div>
-      <h3>Volatility Scanner</h3>
-      <p>Identify the highest-momentum forex pairs across 1 h, 4 h, and 24 h timeframes.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">🔔</div>
-      <h3>Market Alerts &amp; Events</h3>
-      <p>Track Fed rate decisions, FOMC statements, institutional activity, and significant forex price surges.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">📐</div>
-      <h3>Risk Calculator</h3>
-      <p>Compute position size, pip value, risk-to-reward ratio, and required margin instantly for any forex pair.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">🔍</div>
-      <h3>Technical Analysis</h3>
-      <p>Automated support/resistance levels, Fair Value Gaps (FVG), Break of Structure (BOS), and CHoCH.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">🏆</div>
-      <h3>Signal Performance</h3>
-      <p>30-day accuracy history per pair with a visual chart to objectively evaluate model reliability.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">🗺️</div>
-      <h3>Development Roadmap</h3>
-      <p><strong>Upcoming:</strong> Multi-timeframe confluence scoring · Advanced AI retraining pipeline · Mobile push alerts · TradingView chart integration · Premium tier with email signals · API access for developers.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feat-icon">📄</div>
-      <h3>Whitepaper</h3>
-      <p>The PiiTrade Whitepaper covers the LightGBM AI pipeline, feature engineering, signal generation logic, and backtested accuracy results across 35 forex pairs. <em>Full document coming soon.</em></p>
-    </div>
-  </div>
-</div>
+            <!-- Signal metadata -->
+            <div class="signal-meta">
+              <div class="signal-confidence-row">
+                <span class="label">Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill {{ signal.direction }}" style="width:{{ signal.confidence }}%"></div>
+                </div>
+                <span class="confidence-pct">{{ signal.confidence }}%</span>
+              </div>
+              <div class="signal-levels">
+                <div class="signal-level entry">
+                  <span class="level-label">Entry Price</span>
+                  <span class="level-value">{{ "%.4f"|format(signal.entry_price) }}</span>
+                </div>
+                <div class="signal-level tp">
+                  <span class="level-label">Take Profit</span>
+                  <span class="level-value">{{ "%.4f"|format(signal.take_profit) }}</span>
+                </div>
+                <div class="signal-level sl">
+                  <span class="level-label">Stop Loss</span>
+                  <span class="level-value">{{ "%.4f"|format(signal.stop_loss) }}</span>
+                </div>
+              </div>
+              <div class="signal-model-row">
+                <span style="color:var(--text2)">Model:</span>
+                <span style="color:var(--text)">{{ signal.model_version }}</span>
+                &nbsp;·&nbsp;
+                <span style="color:var(--text2)">Live:</span>
+                <span style="color:var(--text)">{% if signal.is_live %}✅ Yes{% else %}⚠️ Cached{% endif %}</span>
+              </div>
+            </div>
+          </div>
 
-<!-- ═══════════════════════════════ FREE ACCESS BANNER ══════════════════════ -->
-<div class="landing-subscribe-banner">
-  <h2>🎉 100% Free Access – No Account Required</h2>
-  <p>
-    PiiTrade gives you full access to all 35 forex pairs — majors, minors, and exotics —
-    with real-time AI signals, volatility scanner, market alerts, risk calculator,
-    FVG scanner, structure scanner, and 30-day accuracy history.
-    Completely free, forever. No account needed, no hidden fees.
-  </p>
-  <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
-</div>
+          <!-- Open access prompt -->
+          <div class="preview-blur-overlay">
+            <p>Full dashboard: all 35 forex pairs with live prices — completely free.</p>
+            <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
+          </div>
+        </div>
+      </div>
 
-<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
-<footer class="landing-footer">
-  <div class="footer-links">
-    <a href="/">Home</a>
-    <a href="/disclaimer">Risk Disclaimer</a>
-  </div>
-  <div>© 2026 PiiTrade · Free AI Forex Signal Hub · All rights reserved.</div>
-  <div style="max-width:600px;margin:5px auto 0;font-size:.72rem;opacity:.75;line-height:1.5;">
-    PiiTrade is a free forex signal service. All signals and analysis are provided for informational
-    purposes only and do not constitute financial, investment, or trading advice. Trading carries
-    significant risk. Past performance does not guarantee future results. Please read our full
-    <a href="/disclaimer">Risk Disclaimer</a> before trading.
-  </div>
-</footer>
+      <!-- ═══════════════════════════════ FEATURES ════════════════════════════════ -->
+      <div class="landing-features">
+        <h2>Everything you need to trade forex smarter — all free</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feat-icon">💱</div>
+            <h3>35 Forex Pairs</h3>
+            <p>Majors, minors &amp; exotics — EUR/USD, GBP/USD, USD/JPY, exotic pairs, and more. 100% forex focused.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">🔥</div>
+            <h3>Volatility Scanner</h3>
+            <p>Identify the highest-momentum forex pairs across 1 h, 4 h, and 24 h timeframes.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">🔔</div>
+            <h3>Market Alerts &amp; Events</h3>
+            <p>Track Fed rate decisions, FOMC statements, institutional activity, and significant forex price surges.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">📐</div>
+            <h3>Risk Calculator</h3>
+            <p>Compute position size, pip value, risk-to-reward ratio, and required margin instantly for any forex pair.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">🔍</div>
+            <h3>Technical Analysis</h3>
+            <p>Automated support/resistance levels, Fair Value Gaps (FVG), Break of Structure (BOS), and CHoCH.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">🏆</div>
+            <h3>Signal Performance</h3>
+            <p>30-day accuracy history per pair with a visual chart to objectively evaluate model reliability.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">🗺️</div>
+            <h3>Development Roadmap</h3>
+            <p><strong>Upcoming:</strong> Multi-timeframe confluence scoring · Advanced AI retraining pipeline · Mobile
+              push alerts · TradingView chart integration · Premium tier with email signals · API access for developers.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feat-icon">📄</div>
+            <h3>Whitepaper</h3>
+            <p>The PiiTrade Whitepaper covers the LightGBM AI pipeline, feature engineering, signal generation logic,
+              and backtested accuracy results across 35 forex pairs. <em>Full document coming soon.</em></p>
+          </div>
+        </div>
+      </div>
 
-</div><!-- /.main-content -->
+      <!-- ═══════════════════════════════ FREE ACCESS BANNER ══════════════════════ -->
+      <div class="landing-subscribe-banner">
+        <h2>🎉 100% Free Access – No Account Required</h2>
+        <p>
+          PiiTrade gives you full access to all 35 forex pairs — majors, minors, and exotics —
+          with real-time AI signals, volatility scanner, market alerts, risk calculator,
+          FVG scanner, structure scanner, and 30-day accuracy history.
+          Completely free, forever. No account needed, no hidden fees.
+        </p>
+        <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
+      </div>
 
-</div><!-- /.page-wrapper -->
+      <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+      <footer class="landing-footer">
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="/disclaimer">Risk Disclaimer</a>
+        </div>
+        <div>© 2026 PiiTrade · Free AI Forex Signal Hub · All rights reserved.</div>
+        <div style="max-width:600px;margin:5px auto 0;font-size:.72rem;opacity:.75;line-height:1.5;">
+          PiiTrade is a free forex signal service. All signals and analysis are provided for informational
+          purposes only and do not constitute financial, investment, or trading advice. Trading carries
+          significant risk. Past performance does not guarantee future results. Please read our full
+          <a href="/disclaimer">Risk Disclaimer</a> before trading.
+        </div>
+      </footer>
+
+    </div><!-- /.main-content -->
+
+  </div><!-- /.page-wrapper -->
 
 </body>
+
 </html>
