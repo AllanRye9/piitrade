@@ -17,7 +17,6 @@ export const getSrBreakouts = () => api.get('/api/forex/sr-breakouts').then(r =>
 export const getPatternScanner = (timeframe = '1h') => api.get('/api/forex/pattern-scanner', { params: { timeframe } }).then(r => r.data)
 export const getNews = () => api.get('/api/forex/news').then(r => r.data)
 export const getEconomicCalendar = () => api.get('/api/forex/economic-calendar').then(r => r.data)
-export const subscribe = (email) => api.post('/api/forex/subscribe', { email }).then(r => r.data)
 export const getAdminStats = () => api.get('/api/admin/stats').then(r => r.data)
 export const login = (username, password) => api.post('/api/auth/login', { username, password }).then(r => r.data)
 export const logout = () => api.post('/api/auth/logout').then(r => r.data)

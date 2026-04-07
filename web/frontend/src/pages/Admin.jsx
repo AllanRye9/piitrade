@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart2, Users, Mail, AlertCircle } from 'lucide-react'
+import { BarChart2, Users, AlertCircle } from 'lucide-react'
 import { getAdminStats } from '../utils/api'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: BarChart2 },
-  { id: 'subscribers', label: 'Subscribers', icon: Mail },
 ]
 
 function LoadingSpinner() {
@@ -44,7 +43,6 @@ function OverviewTab() {
 
   const cards = [
     { label: 'Total Users', value: stats.total_users ?? stats.users ?? '—', color: 'text-accent-blue', icon: Users },
-    { label: 'Subscribers', value: stats.total_subscribers ?? stats.subscribers ?? '—', color: 'text-accent-green', icon: Mail },
     { label: 'Total Visitors', value: stats.visitors ?? stats.total_visitors ?? '—', color: 'text-accent-purple', icon: BarChart2 },
     { label: 'Cache Health', value: stats.cache_health ?? '—', color: 'text-accent-yellow', icon: BarChart2 },
   ]
@@ -76,52 +74,6 @@ function OverviewTab() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Subscribers Tab ──────────────────────────────────────────────────────────
-function SubscribersTab() {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setLoading(true)
-    getAdminStats()
-      .then(setStats)
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return <LoadingSpinner />
-  const subscribers = stats?.subscriber_list || stats?.subscribers_list || []
-
-  return (
-    <div>
-      <p className="text-text-secondary text-sm mb-4">Total: <span className="text-accent-green font-semibold">{stats?.total_subscribers ?? subscribers.length}</span></p>
-      {subscribers.length === 0 ? (
-        <div className="text-center py-12 text-text-muted">No subscriber details available via stats endpoint.</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-default">
-                {['Email', 'Subscribed At'].map((h) => (
-                  <th key={h} className="text-left py-3 px-4 text-text-muted font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {subscribers.map((s, i) => (
-                <tr key={i} className="border-b border-border-subtle">
-                  <td className="py-3 px-4 text-text-primary">{s.email || s}</td>
-                  <td className="py-3 px-4 text-text-muted">{s.created_at || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       )}
     </div>
@@ -163,7 +115,6 @@ export default function Admin() {
           {/* Content */}
           <div className="bg-bg-secondary border border-border-default rounded-2xl p-6">
             {activeTab === 'overview' && <OverviewTab />}
-            {activeTab === 'subscribers' && <SubscribersTab />}
           </div>
         </motion.div>
       </div>

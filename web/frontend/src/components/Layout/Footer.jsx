@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Bell, Activity, Database, Lock } from 'lucide-react'
+import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Activity, Database, Lock } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -128,7 +128,6 @@ export default function Footer() {
                 { icon: BarChart2,   text: 'High Volume Trade Zones' },
                 { icon: Globe,       text: 'Pattern Recognition Scanner' },
                 { icon: Newspaper,   text: 'Live Market News & Sentiment' },
-                { icon: Bell,        text: 'Price Alert Notifications' },
                 { icon: Clock,       text: 'Economic Calendar Integration' },
                 { icon: Lock,        text: 'Secure & Privacy-First' },
               ].map(({ icon: Icon, text }) => (

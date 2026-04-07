@@ -999,24 +999,6 @@ _NEWS_FEEDS: list[tuple[str, str]] = [
     ("Yahoo Finance", "https://finance.yahoo.com/rss/topfinstories"),
 ]
 
-_FALLBACK_NEWS: list[dict[str, Any]] = [
-    {"title": "EUR/USD holds near 1.0840 ahead of ECB speakers", "source": "FXStreet", "url": "https://www.fxstreet.com", "published_at": "Today", "summary": "The euro trades quietly as markets await ECB comments for fresh directional cues. Technicals suggest near-term consolidation between 1.0800 and 1.0880."},
-    {"title": "GBP/USD climbs above 1.2650 on firmer UK data", "source": "ForexLive", "url": "https://www.forexlive.com", "published_at": "Today", "summary": "Sterling saw mild buying after UK retail sales came in above forecast, providing some relief to GBP bulls amid ongoing geopolitical uncertainties."},
-    {"title": "USD/JPY tests 155.00 resistance as US yields rise", "source": "DailyFX", "url": "https://www.dailyfx.com", "published_at": "Today", "summary": "The yen continued to weaken against the dollar as US Treasury yields climbed, renewing intervention concerns from Japanese officials."},
-    {"title": "Gold rally stalls near $2,380 on profit-taking", "source": "Investing.com", "url": "https://www.investing.com", "published_at": "Today", "summary": "XAU/USD pulled back from recent highs after a strong weekly rally as traders booked profits ahead of key US employment data due Friday."},
-    {"title": "Fed minutes signal higher-for-longer rate stance", "source": "Reuters", "url": "https://www.reuters.com", "published_at": "Today", "summary": "Minutes from the Federal Reserve's latest meeting reinforced expectations that rate cuts may be delayed into late 2025, boosting the US dollar broadly."},
-    {"title": "AUD/USD dips below 0.6550 on risk aversion", "source": "FXStreet", "url": "https://www.fxstreet.com", "published_at": "Today", "summary": "The Australian dollar slipped as commodity prices retreated and global risk sentiment soured, with focus turning to next week's RBA rate decision."},
-    {"title": "US NFP preview: markets expect 175K jobs added", "source": "DailyFX", "url": "https://www.dailyfx.com", "published_at": "Today", "summary": "Analysts forecast 175,000 new jobs for the upcoming Non-Farm Payrolls report. A strong reading could reignite USD bulls while a miss may trigger broad dollar selling."},
-    {"title": "ECB holds rates; Lagarde hints at June cut", "source": "ForexLive", "url": "https://www.forexlive.com", "published_at": "Today", "summary": "The European Central Bank kept its benchmark rate at 4.5% as expected. President Lagarde's comments about June being a 'live meeting' sent the euro lower."},
-    {"title": "USD/CAD climbs as oil prices fall sharply", "source": "Investing.com", "url": "https://www.investing.com", "published_at": "Today", "summary": "The Canadian dollar weakened after crude oil prices dropped over 2% on demand concerns, pushing USD/CAD back above 1.3600."},
-    {"title": "CHF strengthens on safe-haven flows amid geopolitical tension", "source": "FXStreet", "url": "https://www.fxstreet.com", "published_at": "Today", "summary": "The Swiss franc attracted safe-haven demand as risk sentiment deteriorated following escalating tensions in the Middle East. EUR/CHF dropped toward 0.9750."},
-    {"title": "NZD/USD bounces from support at 0.5950", "source": "DailyFX", "url": "https://www.dailyfx.com", "published_at": "Today", "summary": "The kiwi found buyers near key technical support after RBNZ minutes showed a patient outlook on rates, steadying the pair for now."},
-    {"title": "GBP/JPY surges to 196.00 — watch for BoJ warnings", "source": "ForexLive", "url": "https://www.forexlive.com", "published_at": "Today", "summary": "Cross rates involving the yen continue to surge, with GBP/JPY testing levels not seen since 2008. Traders remain cautious of potential Bank of Japan intervention."},
-    {"title": "Market outlook: USD strength to persist near-term", "source": "Investing.com", "url": "https://www.investing.com", "published_at": "Today", "summary": "A stronger US jobs report and resilient consumer spending data point to continued USD outperformance in Q2. Technical signals for DXY confirm the bullish bias."},
-    {"title": "EUR/GBP slides toward 0.8530 support zone", "source": "FXStreet", "url": "https://www.fxstreet.com", "published_at": "Today", "summary": "EUR/GBP has been drifting lower this week as the pound benefits from relatively hawkish BoE expectations versus the ECB's more dovish tilt."},
-    {"title": "Weekly forex outlook: central bank decisions in focus", "source": "DailyFX", "url": "https://www.dailyfx.com", "published_at": "Today", "summary": "This week's key events include rate decisions from the Fed, ECB and BoJ. Forex volatility is expected to spike, with major pairs likely to see significant moves."},
-]
-
 _news_cache: dict[str, Any] = {"items": [], "ts": 0.0}
 _NEWS_CACHE_TTL = 300  # 5 minutes
 _NEWS_DEDUP_PREFIX_LEN = 60  # characters of title used to detect duplicate articles
@@ -1056,7 +1038,7 @@ def _fetch_rss_feed(name: str, url: str) -> list[dict[str, Any]]:
 
 def _make_news_items() -> list[dict[str, Any]]:
     """Return live news from multiple RSS feeds with 5-minute caching.
-    Falls back to curated synthetic items if all feeds are unreachable."""
+    Returns an empty list if all feeds are unreachable."""
     now = time.time()
     if _news_cache["items"] and now - _news_cache["ts"] < _NEWS_CACHE_TTL:
         return _news_cache["items"]
@@ -1073,9 +1055,6 @@ def _make_news_items() -> list[dict[str, Any]]:
     except Exception:
         pass
 
-    if not results:
-        results = list(_FALLBACK_NEWS)
-
     # Deduplicate by title
     seen: set[str] = set()
     unique: list[dict[str, Any]] = []
@@ -1089,7 +1068,6 @@ def _make_news_items() -> list[dict[str, Any]]:
     _news_cache["ts"] = now
     return _news_cache["items"]
 
-_FOREX_SUBSCRIBERS: list[dict[str, Any]] = []
 _PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
 
 
@@ -2050,7 +2028,6 @@ async def admin_dashboard(request: Request):
         _ctx(
             request,
             users=users_list,
-            subscribers=list(_FOREX_SUBSCRIBERS),
             plans=_PLANS,
             cache_info=sorted(cache_info, key=lambda x: x["key"]),
             total_pairs=len(_SUPPORTED_PAIRS),
@@ -2077,7 +2054,6 @@ async def admin_stats(request: Request):
         "admin_users": admin_count,
         "regular_users": total_users - admin_count,
         "active_subscriptions": active_subs,
-        "total_subscribers": len(_FOREX_SUBSCRIBERS),
         "pending_payments": len([p for p in _PAYMENT_CONFIRMATIONS if p.get("status") == "pending"]),
         "total_pairs": len(_SUPPORTED_PAIRS),
         "cache_entries": len(_RATE_CACHE),
@@ -2096,18 +2072,6 @@ async def admin_delete_user(request: Request, target_username: str):
             return JSONResponse({"error": "Cannot delete admin accounts via API"}, status_code=400)
         del _USERS[target_username]
     return JSONResponse({"success": True, "message": f"User '{target_username}' deleted."})
-
-
-@app.delete("/api/admin/subscribers/{email}")
-async def admin_delete_subscriber(request: Request, email: str):
-    if not _is_admin(request):
-        return JSONResponse({"error": "Unauthorized"}, status_code=status.HTTP_403_FORBIDDEN)
-    global _FOREX_SUBSCRIBERS
-    before = len(_FOREX_SUBSCRIBERS)
-    _FOREX_SUBSCRIBERS = [s for s in _FOREX_SUBSCRIBERS if s["email"] != email]
-    if len(_FOREX_SUBSCRIBERS) == before:
-        return JSONResponse({"error": "Subscriber not found"}, status_code=404)
-    return JSONResponse({"success": True, "message": f"Subscriber '{email}' removed."})
 
 
 @app.post("/api/admin/users/{target_username}/subscription")
@@ -2429,52 +2393,6 @@ def _fetch_economic_calendar() -> list[dict[str, Any]]:
 async def forex_economic_calendar():
     """Return upcoming economic events for the current week."""
     return JSONResponse({"events": _fetch_economic_calendar()})
-
-
-@app.post("/api/forex/subscribe")
-async def forex_subscribe(request: Request):
-    try:
-        data: dict[str, Any] = await request.json()
-    except Exception:
-        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
-
-    email: str = data.get("email", "").strip().lower()
-    pairs: list[str] = data.get("pairs", [])
-
-    if not email or "@" not in email or "." not in email.split("@")[-1]:
-        return JSONResponse({"error": "Please provide a valid email address"}, status_code=400)
-
-    invalid = [p for p in pairs if p not in _SUPPORTED_PAIRS]
-    if invalid:
-        return JSONResponse({"error": f"Unsupported pairs: {', '.join(invalid)}"}, status_code=400)
-
-    if not pairs:
-        pairs = list(_SUPPORTED_PAIRS)
-
-    if any(s["email"] == email for s in _FOREX_SUBSCRIBERS):
-        return JSONResponse({"success": True, "message": "You are already subscribed."})
-
-    _FOREX_SUBSCRIBERS.append({
-        "email": email,
-        "pairs": pairs,
-        "subscribed_at": datetime.now(timezone.utc).isoformat(),
-    })
-    # Subscriber is stored before attempting the notification email so that
-    # a transient SMTP failure never prevents the subscription from being recorded.
-    # Forward new subscriber info to support (backend only – address not exposed to frontend).
-    # _send_email() silently swallows exceptions and returns False on failure.
-    _send_email(
-        _SUPPORT_ALERT_EMAIL,
-        "PiiTrade – New Signal Alert Subscriber",
-        f"<html><body style='font-family:sans-serif'>"
-        f"<p><strong>New subscriber:</strong> {email}</p>"
-        f"<p><strong>Pairs:</strong> {', '.join(pairs)}</p>"
-        f"</body></html>",
-    )
-    return JSONResponse({
-        "success": True,
-        "message": "Subscribed! You will receive alerts when new signals are generated.",
-    })
 
 
 def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
