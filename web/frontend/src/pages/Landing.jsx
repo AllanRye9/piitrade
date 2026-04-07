@@ -6,7 +6,7 @@ import {
   ChevronRight, ArrowRight, CheckCircle, Users, Star, Clock, Lock,
   Activity, DollarSign, BookOpen
 } from 'lucide-react'
-import { subscribe } from '../utils/api'
+import { subscribe, getSignals } from '../utils/api'
 import PartnerCards from '../components/PartnerCard'
 
 const containerVariants = {
@@ -98,12 +98,14 @@ const stats = [
   { value: 100, suffix: '%', label: 'Free Forever' },
 ]
 
-const previewSignals = [
+const STATIC_PREVIEW_SIGNALS = [
   { pair: 'EUR/USD', dir: 'BUY', conf: 78, entry: '1.0842' },
   { pair: 'GBP/JPY', dir: 'SELL', conf: 65, entry: '196.34' },
   { pair: 'AUD/USD', dir: 'BUY', conf: 71, entry: '0.6541' },
   { pair: 'USD/JPY', dir: 'HOLD', conf: 58, entry: '154.82' },
 ]
+
+const PREVIEW_PAIRS = ['EUR/USD', 'GBP/JPY', 'AUD/USD', 'USD/JPY']
 
 const howItWorks = [
   {
@@ -160,8 +162,32 @@ export default function Landing() {
   const [email, setEmail] = useState('')
   const [subStatus, setSubStatus] = useState(null)
   const [subLoading, setSubLoading] = useState(false)
+  const [previewSignals, setPreviewSignals] = useState(STATIC_PREVIEW_SIGNALS)
   const featuresRef = useRef(null)
   const featuresInView = useInView(featuresRef, { once: true, margin: '-100px' })
+
+  // Fetch live signals for the preview section
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(PREVIEW_PAIRS.map((pair) => getSignals(pair).catch(() => null)))
+      .then((results) => {
+        if (cancelled) return
+        const live = results
+          .map((sig, i) => {
+            if (!sig) return null
+            const pair = PREVIEW_PAIRS[i]
+            const dir = sig.direction || sig.signal || STATIC_PREVIEW_SIGNALS[i].dir
+            const conf = sig.confidence != null ? Math.round(sig.confidence) : STATIC_PREVIEW_SIGNALS[i].conf
+            const rawEntry = sig.entry_price ?? sig.entry
+            const dec = pair.includes('JPY') ? 2 : 4
+            const entry = rawEntry != null ? Number(rawEntry).toFixed(dec) : STATIC_PREVIEW_SIGNALS[i].entry
+            return { pair, dir, conf, entry, ai_label: sig.ai_label || null, is_live: sig.is_live }
+          })
+          .filter(Boolean)
+        if (live.length > 0) setPreviewSignals(live)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const handleSubscribe = async (e) => {
     e.preventDefault()
@@ -277,19 +303,23 @@ export default function Landing() {
                 <div className="bg-bg-card border border-border-default rounded-2xl p-6 shadow-2xl glow-blue">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Live Signal</p>
-                      <p className="text-text-primary font-bold text-xl">EUR/USD</p>
+                      <p className="text-text-muted text-xs uppercase tracking-wider mb-1">
+                        Live Signal{previewSignals[0]?.is_live ? '' : ' (cached)'}
+                      </p>
+                      <p className="text-text-primary font-bold text-xl">{previewSignals[0]?.pair ?? 'EUR/USD'}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-2xl font-bold text-accent-green">BUY</span>
-                      <span className="text-text-secondary text-sm">78% conf.</span>
+                      <span className={`text-2xl font-bold ${previewSignals[0]?.dir === 'BUY' ? 'text-accent-green' : previewSignals[0]?.dir === 'SELL' ? 'text-accent-red' : 'text-accent-yellow'}`}>
+                        {previewSignals[0]?.dir ?? 'BUY'}
+                      </span>
+                      <span className="text-text-secondary text-sm">{previewSignals[0]?.conf ?? 78}% conf.</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     {[
-                      { label: 'Entry', value: '1.0842', color: 'text-text-primary' },
-                      { label: 'Take Profit', value: '1.0910', color: 'text-accent-green' },
-                      { label: 'Stop Loss', value: '1.0800', color: 'text-accent-red' },
+                      { label: 'Entry', value: previewSignals[0]?.entry ?? '1.0842', color: 'text-text-primary' },
+                      { label: 'Take Profit', value: '—', color: 'text-accent-green' },
+                      { label: 'Stop Loss', value: '—', color: 'text-accent-red' },
                     ].map((item) => (
                       <div key={item.label} className="bg-bg-secondary rounded-lg p-2 text-center">
                         <p className="text-text-muted text-xs mb-1">{item.label}</p>
@@ -297,16 +327,21 @@ export default function Landing() {
                       </div>
                     ))}
                   </div>
+                  {previewSignals[0]?.ai_label && (
+                    <p className="text-xs text-text-muted mb-2 truncate" title={previewSignals[0].ai_label}>
+                      🤖 {previewSignals[0].ai_label}
+                    </p>
+                  )}
                   <div>
                     <div className="flex justify-between text-xs text-text-muted mb-1">
-                      <span>Confidence</span><span>78%</span>
+                      <span>Confidence</span><span>{previewSignals[0]?.conf ?? 78}%</span>
                     </div>
                     <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: '78%' }}
+                        animate={{ width: `${previewSignals[0]?.conf ?? 78}%` }}
                         transition={{ delay: 0.8, duration: 1 }}
-                        className="h-full bg-accent-green rounded-full"
+                        className={`h-full rounded-full ${(previewSignals[0]?.conf ?? 78) >= 70 ? 'bg-accent-green' : (previewSignals[0]?.conf ?? 78) >= 50 ? 'bg-accent-yellow' : 'bg-accent-red'}`}
                       />
                     </div>
                   </div>

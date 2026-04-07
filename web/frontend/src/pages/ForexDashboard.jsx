@@ -155,6 +155,22 @@ function SignalTab({ pair, signal, loading, error }) {
 
   return (
     <div className="space-y-3">
+      {/* AI Opportunity Label */}
+      {(signal.ai_label || signal.opportunity) && (
+        <motion.div
+          key={signal.ai_label}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-bg-card border border-accent-blue/30 rounded-lg px-3 py-2 flex items-start gap-2"
+        >
+          <span className="text-accent-blue text-xs mt-0.5">🤖</span>
+          <div>
+            <p className="text-text-muted text-xs mb-0.5">AI Opportunity Label</p>
+            <p className="text-sm font-semibold text-text-primary">{signal.ai_label || signal.opportunity}</p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Main signal card */}
       <motion.div
         key={dir}
@@ -175,6 +191,11 @@ function SignalTab({ pair, signal, loading, error }) {
             {accuracy !== null && (
               <p className="text-lg font-bold text-text-primary">{typeof accuracy === 'number' ? accuracy.toFixed(1) : accuracy}% <span className="text-xs font-normal text-text-muted">30d acc</span></p>
             )}
+            {signal.is_live !== undefined && (
+              <span className={`inline-block text-xs px-1.5 py-0.5 rounded mt-1 ${signal.is_live ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-yellow/10 text-accent-yellow'}`}>
+                {signal.is_live ? '🔴 Live' : '⚠️ Cached'}
+              </span>
+            )}
           </div>
         </div>
       </motion.div>
@@ -192,6 +213,16 @@ function SignalTab({ pair, signal, loading, error }) {
           </div>
         ))}
       </div>
+
+      {/* Data source & timestamp */}
+      {(signal.data_source || signal.generated_at) && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
+          {signal.data_source && <span>📡 Source: {signal.data_source}</span>}
+          {signal.generated_at && (
+            <span>🕐 Updated: {new Date(signal.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          )}
+        </div>
+      )}
 
       {/* Confidence meter */}
       <div className="bg-bg-card border border-border-default rounded-lg p-3">
@@ -1182,6 +1213,7 @@ export default function ForexDashboard() {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
+  const contentRef = useRef(null)
 
   // Load all pairs — API returns {major, minor, exotic, all, ecb_live}
   useEffect(() => {
@@ -1224,6 +1256,16 @@ export default function ForexDashboard() {
 
   const scrollTabs = (dir) => {
     if (tabsRef.current) tabsRef.current.scrollBy({ left: dir * 120, behavior: 'smooth' })
+  }
+
+  // On mobile, scroll the tab content area into view when a tab is selected
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    if (window.innerWidth < 768 && contentRef.current) {
+      setTimeout(() => {
+        contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 60)
+    }
   }
 
   // Auto-scroll active tab into view when changed
@@ -1335,7 +1377,7 @@ export default function ForexDashboard() {
               <button
                 key={tab.id}
                 data-active={activeTab === tab.id ? 'true' : undefined}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`btn-interactive px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-accent-blue text-bg-primary shadow-sm shadow-accent-blue/30' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
               >
                 {tab.label}
@@ -1350,6 +1392,7 @@ export default function ForexDashboard() {
         {/* Tab content */}
         <AnimatePresence mode="wait">
           <motion.div
+            ref={contentRef}
             key={activeTab}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
