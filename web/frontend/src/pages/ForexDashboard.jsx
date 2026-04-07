@@ -8,6 +8,7 @@ import {
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
   getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe, getLivePrices,
+  getEconomicCalendar,
 } from '../utils/api'
 import PriceTicker from '../components/PriceTicker'
 import PartnerCards from '../components/PartnerCard'
@@ -263,20 +264,73 @@ function SignalTab({ pair, signal, loading, error }) {
 }
 
 // ─── Risk Calc Tab ────────────────────────────────────────────────────────────
-function RiskCalcTab() {
+function RiskCalcTab({ pair }) {
   const [balance, setBalance] = useState(10000)
   const [riskPct, setRiskPct] = useState(1)
   const [entry, setEntry] = useState('')
   const [sl, setSl] = useState('')
+  const [tp, setTp] = useState('')
   const [pipValue, setPipValue] = useState(10)
+  const [livePrice, setLivePrice] = useState(null)
+
+  // Detect pip size based on pair (JPY pairs use 0.01, others 0.0001)
+  const isJpy = pair?.includes('JPY')
+  const pipMultiplier = isJpy ? 100 : 10000
+
+  // Fetch live price for the selected pair
+  useEffect(() => {
+    const fetchPrice = () => {
+      getLivePrices()
+        .then((res) => {
+          if (!Array.isArray(res?.prices)) return
+          const match = res.prices.find((p) => p.pair === pair)
+          if (match && match.price && match.price !== '—') {
+            setLivePrice(match.price)
+          }
+        })
+        .catch(() => {})
+    }
+    fetchPrice()
+    const id = setInterval(fetchPrice, 30_000)
+    return () => clearInterval(id)
+  }, [pair])
+
+  const entryNum = parseFloat(entry)
+  const slNum = parseFloat(sl)
+  const tpNum = parseFloat(tp)
 
   const riskAmount = (balance * riskPct) / 100
-  const pips = entry && sl ? Math.abs(parseFloat(entry) - parseFloat(sl)) * 10000 : 0
-  const positionSize = pips > 0 ? (riskAmount / (pips * pipValue)).toFixed(2) : '—'
+
+  // Pips between entry and stop loss — respects JPY vs non-JPY
+  const slPips = entry && sl && !isNaN(entryNum) && !isNaN(slNum)
+    ? Math.abs(entryNum - slNum) * pipMultiplier
+    : 0
+
+  // Pips between entry and take profit
+  const tpPips = entry && tp && !isNaN(entryNum) && !isNaN(tpNum)
+    ? Math.abs(tpNum - entryNum) * pipMultiplier
+    : 0
+
+  // Risk:Reward ratio (e.g. 1:2 = tpPips / slPips)
+  const rrRatio = slPips > 0 && tpPips > 0 ? tpPips / slPips : null
+
+  const positionSize = slPips > 0 ? (riskAmount / (slPips * pipValue)).toFixed(2) : '—'
   const margin = positionSize !== '—' ? (parseFloat(positionSize) * 1000 * 0.02).toFixed(2) : '—'
+
+  // Potential profit if TP is hit
+  const potentialProfit = positionSize !== '—' && tpPips > 0
+    ? (parseFloat(positionSize) * tpPips * pipValue).toFixed(2)
+    : '—'
 
   return (
     <div className="space-y-3 max-w-md">
+      {livePrice && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
+          <span className="text-text-muted text-xs">Live price</span>
+          <span className="font-mono text-accent-blue text-sm font-semibold">{pair}: {livePrice}</span>
+        </div>
+      )}
+
       <div className="bg-bg-card border border-border-default rounded-xl p-3 space-y-3">
         <div>
           <label className="text-text-secondary text-xs mb-1 block">Account Balance ($)</label>
@@ -302,7 +356,7 @@ function RiskCalcTab() {
             <input
               type="number" step="0.00001" value={entry}
               onChange={(e) => setEntry(e.target.value)}
-              placeholder="1.08420"
+              placeholder={isJpy ? '154.820' : '1.08420'}
               className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
             />
           </div>
@@ -311,10 +365,19 @@ function RiskCalcTab() {
             <input
               type="number" step="0.00001" value={sl}
               onChange={(e) => setSl(e.target.value)}
-              placeholder="1.08000"
+              placeholder={isJpy ? '154.000' : '1.08000'}
               className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
             />
           </div>
+        </div>
+        <div>
+          <label className="text-text-secondary text-xs mb-1 block">Take Profit</label>
+          <input
+            type="number" step="0.00001" value={tp}
+            onChange={(e) => setTp(e.target.value)}
+            placeholder={isJpy ? '156.400' : '1.09260'}
+            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
+          />
         </div>
         <div>
           <label className="text-text-secondary text-xs mb-1 block">Pip Value ($)</label>
@@ -326,12 +389,35 @@ function RiskCalcTab() {
         </div>
       </div>
 
+      {/* Risk : Reward banner */}
+      {rrRatio !== null && (
+        <motion.div
+          key={rrRatio.toFixed(2)}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`border rounded-xl p-3 flex items-center justify-between ${rrRatio >= 2 ? 'bg-accent-green/10 border-accent-green/40' : rrRatio >= 1.5 ? 'bg-accent-yellow/10 border-accent-yellow/40' : 'bg-accent-red/10 border-accent-red/40'}`}
+        >
+          <div>
+            <p className="text-text-muted text-xs mb-0.5">Risk : Reward</p>
+            <p className={`text-2xl font-bold font-mono ${rrRatio >= 2 ? 'text-accent-green' : rrRatio >= 1.5 ? 'text-accent-yellow' : 'text-accent-red'}`}>
+              1 : {rrRatio.toFixed(2)}
+            </p>
+          </div>
+          <div className="text-right text-xs text-text-muted">
+            <p>SL: {slPips.toFixed(1)} pips</p>
+            <p>TP: {tpPips.toFixed(1)} pips</p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         {[
           { label: 'Risk Amount', value: `$${riskAmount.toFixed(2)}`, color: 'text-accent-red' },
           { label: 'Position Size (lots)', value: positionSize, color: 'text-accent-green' },
-          { label: 'Pips at Risk', value: pips > 0 ? pips.toFixed(1) : '—', color: 'text-accent-yellow' },
+          { label: 'SL Pips at Risk', value: slPips > 0 ? slPips.toFixed(1) : '—', color: 'text-accent-yellow' },
           { label: 'Margin Needed', value: margin !== '—' ? `$${margin}` : '—', color: 'text-accent-blue' },
+          { label: 'Potential Profit', value: potentialProfit !== '—' ? `$${potentialProfit}` : '—', color: 'text-accent-green' },
+          { label: 'Pip Size', value: isJpy ? '0.01' : '0.0001', color: 'text-text-secondary' },
         ].map((item) => (
           <div key={item.label} className="bg-bg-card border border-border-default rounded-lg p-3">
             <p className="text-text-muted text-xs mb-0.5">{item.label}</p>
@@ -551,23 +637,19 @@ function SRTab() {
         <EmptyState title="No breakouts" desc="No S/R breakouts detected at this time." />
       ) : (
         <>
-          {/* Card layout for mobile */}
-          <div className="sm:hidden space-y-2">
+          {/* Card layout — responsive grid for all screen sizes */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {items.map((b, i) => (
-              <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 space-y-2">
+              <div key={i} className={`bg-bg-card border rounded-xl p-3 space-y-2 ${b.type?.startsWith('support') ? 'border-accent-green/30' : 'border-accent-red/30'}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-text-primary font-semibold">{b.pair || '—'}</span>
-                  <span className={`text-xs font-bold font-mono ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>
+                  <span className={`text-xs font-bold uppercase ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>
                     {(b.type || '—').toUpperCase()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-muted">Level</span>
-                  <span className="font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
                   <span className="text-text-muted">Status</span>
-                  <span className={`font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>
+                  <span className={`font-semibold uppercase px-1.5 py-0.5 rounded ${b.status === 'broke' ? 'bg-accent-red/10 text-accent-red' : b.status === 'touched' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-blue/10 text-accent-blue'}`}>
                     {b.status || '—'}
                   </span>
                 </div>
@@ -577,33 +659,6 @@ function SRTab() {
                 </div>
               </div>
             ))}
-          </div>
-          {/* Table layout for sm+ screens */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border-default">
-                  {['Pair', 'Level', 'Type', 'Status', 'Direction'].map((h) => (
-                    <th key={h} className="text-left py-3 px-4 text-text-muted font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((b, i) => (
-                  <tr key={i} className="border-b border-border-subtle hover:bg-bg-card transition-colors">
-                    <td className="py-3 px-4 text-text-primary font-medium">{b.pair || '—'}</td>
-                    <td className="py-3 px-4 font-mono text-text-secondary">{typeof b.level === 'number' ? b.level.toFixed(5) : (b.level || '—')}</td>
-                    <td className="py-3 px-4">
-                      <span className={`text-xs font-semibold uppercase ${b.type?.startsWith('support') ? 'text-accent-green' : 'text-accent-red'}`}>{b.type || '—'}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`text-xs font-semibold uppercase ${b.status === 'broke' ? 'text-accent-red' : b.status === 'touched' ? 'text-accent-yellow' : 'text-accent-blue'}`}>{b.status || '—'}</span>
-                    </td>
-                    <td className={`py-3 px-4 font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </>
       )}
@@ -937,6 +992,8 @@ function AlertsTab() {
   const [alertTarget, setAlertTarget] = useState('')
   const [alertDir, setAlertDir] = useState('above')
   const [livePrices, setLivePrices] = useState({})
+  const [events, setEvents] = useState([])
+  const [eventsLoading, setEventsLoading] = useState(true)
 
   // Poll live prices for active alerts using the batch endpoint
   useEffect(() => {
@@ -952,6 +1009,22 @@ function AlertsTab() {
     }
     fetchPrices()
     const id = setInterval(fetchPrices, 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Fetch economic calendar from backend (ForexFactory)
+  useEffect(() => {
+    const fetchCalendar = () => {
+      getEconomicCalendar()
+        .then((res) => {
+          const list = res?.events || []
+          if (list.length > 0) setEvents(list)
+          setEventsLoading(false)
+        })
+        .catch(() => { setEventsLoading(false) })
+    }
+    fetchCalendar()
+    const id = setInterval(fetchCalendar, 3300_000) // refresh every 55 min (backend caches for 1 hour)
     return () => clearInterval(id)
   }, [])
 
@@ -990,14 +1063,6 @@ function AlertsTab() {
     savePriceAlerts(updated)
     setPriceAlerts(updated)
   }
-
-  const events = [
-    { time: 'Mon 09:30', event: 'US CPI y/y', currency: 'USD', impact: 'High' },
-    { time: 'Tue 13:30', event: 'ECB Rate Decision', currency: 'EUR', impact: 'High' },
-    { time: 'Wed 15:00', event: 'UK Unemployment', currency: 'GBP', impact: 'Medium' },
-    { time: 'Thu 09:00', event: 'Japan Tankan', currency: 'JPY', impact: 'Medium' },
-    { time: 'Fri 13:30', event: 'US NFP', currency: 'USD', impact: 'High' },
-  ]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -1045,7 +1110,8 @@ function AlertsTab() {
         </form>
         {livePrices[alertPair] != null && (
           <p className="text-text-muted text-xs mb-3">
-            Current {alertPair}: <span className="font-mono text-text-secondary">{livePrices[alertPair]}</span>
+            Live {alertPair}: <span className="font-mono text-accent-blue font-semibold">{livePrices[alertPair]}</span>
+            <span className="text-text-muted ml-1">(updates every 30s)</span>
           </p>
         )}
         {priceAlerts.length > 0 ? (
@@ -1057,6 +1123,9 @@ function AlertsTab() {
                   <span className="text-text-primary font-medium">{a.pair}</span>
                   <span className="text-text-muted">{a.dir === 'above' ? '≥' : '≤'}</span>
                   <span className="font-mono text-text-secondary">{a.target}</span>
+                  {livePrices[a.pair] != null && !a.triggered && (
+                    <span className="text-text-muted">now: <span className="font-mono text-accent-blue">{livePrices[a.pair]}</span></span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {a.triggered && (
@@ -1076,47 +1145,41 @@ function AlertsTab() {
 
       {/* Economic calendar */}
       <div>
-        <h3 className="text-text-primary text-sm font-semibold mb-3">📅 Upcoming Economic Events</h3>
-        {/* Mobile: cards */}
-        <div className="sm:hidden space-y-2">
-          {events.map((ev, i) => (
-            <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-start justify-between">
-              <div>
-                <p className="text-text-primary text-xs font-medium">{ev.event}</p>
-                <p className="text-text-muted text-xs mt-0.5 font-mono">{ev.time} • <span className="text-accent-blue">{ev.currency}</span></p>
-              </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 ${ev.impact === 'High' ? 'bg-accent-red/10 text-accent-red' : 'bg-accent-yellow/10 text-accent-yellow'}`}>
-                {ev.impact}
-              </span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-text-primary text-sm font-semibold">📅 Economic Calendar</h3>
+          {!eventsLoading && events.length > 0 && (
+            <span className="text-text-muted text-xs">This week • {events.length} events</span>
+          )}
         </div>
-        {/* Table for sm+ */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-default">
-                {['Time', 'Event', 'Currency', 'Impact'].map((h) => (
-                  <th key={h} className="text-left py-2 px-3 text-text-muted font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((ev, i) => (
-                <tr key={i} className="border-b border-border-subtle">
-                  <td className="py-2.5 px-3 text-text-muted font-mono">{ev.time}</td>
-                  <td className="py-2.5 px-3 text-text-primary">{ev.event}</td>
-                  <td className="py-2.5 px-3 text-accent-blue font-medium">{ev.currency}</td>
-                  <td className="py-2.5 px-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${ev.impact === 'High' ? 'bg-accent-red/10 text-accent-red' : 'bg-accent-yellow/10 text-accent-yellow'}`}>
-                      {ev.impact}
-                    </span>
-                  </td>
-                </tr>
+        {eventsLoading ? (
+          <LoadingSpinner text="Fetching economic calendar…" />
+        ) : events.length === 0 ? (
+          <p className="text-text-muted text-xs">No upcoming economic events found.</p>
+        ) : (
+          <>
+            {/* Responsive card grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {events.slice(0, 20).map((ev, i) => (
+                <div key={i} className={`bg-bg-card border rounded-xl p-3 flex items-start justify-between gap-2 ${ev.impact === 'High' ? 'border-accent-red/30' : ev.impact === 'Medium' ? 'border-accent-yellow/30' : 'border-border-default'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-text-primary text-xs font-medium truncate">{ev.event}</p>
+                    <p className="text-text-muted text-xs mt-0.5 font-mono">{ev.time} • <span className="text-accent-blue">{ev.currency}</span></p>
+                    {(ev.actual != null || ev.forecast != null) && (
+                      <p className="text-text-muted text-xs mt-0.5">
+                        {ev.actual != null && <span className="text-accent-green mr-2">A: {ev.actual}</span>}
+                        {ev.forecast != null && <span className="text-text-secondary mr-2">F: {ev.forecast}</span>}
+                        {ev.previous != null && <span className="text-text-muted">P: {ev.previous}</span>}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 ${ev.impact === 'High' ? 'bg-accent-red/10 text-accent-red' : ev.impact === 'Medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-bg-secondary text-text-muted'}`}>
+                    {ev.impact}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Subscribe */}
@@ -1211,6 +1274,7 @@ export default function ForexDashboard() {
   const [signalLoading, setSignalLoading] = useState(true)
   const [signalError, setSignalError] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [livePriceMap, setLivePriceMap] = useState({})
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
   const contentRef = useRef(null)
@@ -1220,6 +1284,23 @@ export default function ForexDashboard() {
     getPairs()
       .then((data) => setAllPairsData(data))
       .catch(() => setAllPairsData(null))
+  }, [])
+
+  // Continuously fetch live prices for all ticker pairs every 30s
+  useEffect(() => {
+    const fetchPrices = () => {
+      getLivePrices()
+        .then((res) => {
+          if (!Array.isArray(res?.prices)) return
+          const map = {}
+          res.prices.forEach((p) => { if (p.price && p.price !== '—') map[p.pair] = p.price })
+          setLivePriceMap(map)
+        })
+        .catch(() => {})
+    }
+    fetchPrices()
+    const id = setInterval(fetchPrices, 30_000)
+    return () => clearInterval(id)
   }, [])
 
   // Fetch signal when pair changes
@@ -1358,9 +1439,14 @@ export default function ForexDashboard() {
               </span>
             </span>
           )}
-          {(signal?.price || signal?.current_price || signal?.entry_price) && (
+          {/* Live current price for selected pair, updated every 30s */}
+          {(livePriceMap[selectedPair] || signal?.current_price || signal?.entry_price) && (
             <span className="text-text-muted text-xs font-mono">
-              {signal.price ? `$${signal.price}` : signal.current_price ? `$${signal.current_price}` : `$${signal.entry_price}`}
+              <span className="text-text-muted">Live: </span>
+              <span className="text-accent-blue font-semibold">
+                {livePriceMap[selectedPair]
+                  || (signal.current_price ? String(signal.current_price) : String(signal.entry_price))}
+              </span>
             </span>
           )}
         </motion.div>
