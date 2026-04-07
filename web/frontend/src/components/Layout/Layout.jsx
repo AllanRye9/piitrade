@@ -26,6 +26,12 @@ export default function Layout({ children }) {
       <main className="flex-1 min-w-0 pt-16">
         {/* Sponsor banner strip — persists across all primary section views */}
         <SponsorBannerStrip />
+        {/* Global price disclaimer */}
+        <div className="px-4 py-1.5 bg-accent-yellow/5 border-b border-accent-yellow/20 text-center">
+          <p className="text-xs text-text-muted">
+            ⚠️ All prices are indicative and updated periodically. They may not reflect real-time market conditions. For reference only — verify with your broker before trading.
+          </p>
+        </div>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

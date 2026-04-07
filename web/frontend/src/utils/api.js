@@ -14,7 +14,7 @@ export const getVolatile = (timeframe = '24h') => api.get('/api/forex/volatile',
 export const getReversals = () => api.get('/api/forex/reversals').then(r => r.data)
 export const getFvgScanner = () => api.get('/api/forex/fvg-scanner').then(r => r.data)
 export const getSrBreakouts = () => api.get('/api/forex/sr-breakouts').then(r => r.data)
-export const getPatternScanner = () => api.get('/api/forex/pattern-scanner').then(r => r.data)
+export const getPatternScanner = (timeframe = '1h') => api.get('/api/forex/pattern-scanner', { params: { timeframe } }).then(r => r.data)
 export const getNews = () => api.get('/api/forex/news').then(r => r.data)
 export const getEconomicCalendar = () => api.get('/api/forex/economic-calendar').then(r => r.data)
 export const subscribe = (email) => api.post('/api/forex/subscribe', { email }).then(r => r.data)
