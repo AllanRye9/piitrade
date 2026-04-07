@@ -6,7 +6,7 @@ import {
   ChevronRight, ArrowRight, CheckCircle, Users, Star, Clock, Lock,
   Activity, DollarSign, BookOpen
 } from 'lucide-react'
-import { subscribe, getSignals } from '../utils/api'
+import { getSignals } from '../utils/api'
 import PartnerCards from '../components/PartnerCard'
 
 const containerVariants = {
@@ -159,9 +159,6 @@ function SignalBadge({ dir }) {
 }
 
 export default function Landing() {
-  const [email, setEmail] = useState('')
-  const [subStatus, setSubStatus] = useState(null)
-  const [subLoading, setSubLoading] = useState(false)
   const [previewSignals, setPreviewSignals] = useState(STATIC_PREVIEW_SIGNALS)
   const featuresRef = useRef(null)
   const featuresInView = useInView(featuresRef, { once: true, margin: '-100px' })
@@ -188,21 +185,6 @@ export default function Landing() {
       })
     return () => { cancelled = true }
   }, [])
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault()
-    if (!email) return
-    setSubLoading(true)
-    try {
-      await subscribe(email)
-      setSubStatus('success')
-      setEmail('')
-    } catch {
-      setSubStatus('error')
-    } finally {
-      setSubLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -596,48 +578,6 @@ export default function Landing() {
               )
             })}
           </div>
-        </div>
-      </section>
-
-      {/* ── Subscribe ── */}
-      <section className="py-20 px-4 bg-bg-secondary border-y border-border-default">
-        <div className="max-w-lg mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h3 className="text-2xl font-bold text-text-primary mb-2">Get Signal Alerts</h3>
-            <p className="text-text-secondary text-sm mb-6">
-              Subscribe to receive email alerts when high-confidence signals appear across 35 forex pairs.
-            </p>
-            {subStatus === 'success' ? (
-              <div className="px-6 py-4 bg-accent-green/10 border border-accent-green/30 rounded-xl text-accent-green font-medium">
-                ✓ Subscribed successfully! You'll receive alerts soon.
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="flex-1 px-4 py-3 bg-bg-card border border-border-default rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue/50 transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={subLoading}
-                  className="btn-interactive px-6 py-3 bg-accent-blue text-bg-primary font-semibold rounded-xl hover:bg-blue-400 disabled:opacity-60 whitespace-nowrap"
-                >
-                  {subLoading ? '...' : 'Subscribe'}
-                </button>
-              </form>
-            )}
-            {subStatus === 'error' && (
-              <p className="mt-3 text-accent-red text-sm">Something went wrong. Please try again.</p>
-            )}
-          </motion.div>
         </div>
       </section>
 

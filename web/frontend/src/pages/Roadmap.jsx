@@ -33,7 +33,7 @@ const roadmapPhases = [
       'Built-in Risk Calculator for position sizing',
       '11 analysis tools: FVG, S/R breakouts, reversals & more',
       'Real-time price ticker & live market data',
-      'Email alert subscription for high-confidence signals',
+      'Live market news feed from multiple sources',
     ],
   },
   {
@@ -225,7 +225,7 @@ export default function Roadmap() {
               { period: 'Now', label: 'Phase 1 — Forex Signal Hub', status: 'live', note: '35 pairs, live signals, risk calculator' },
               { period: 'Q3 2025', label: 'Phase 2 — Crypto Markets', status: 'coming', note: 'Bitcoin, Ethereum & 30+ pairs' },
               { period: 'Q1 2026', label: 'Phase 3 — Stocks & Commodities', status: 'planned', note: 'US stocks, gold, oil & more' },
-              { period: 'Beyond', label: 'Community Features & API Access', status: 'planned', note: 'Public API, custom alerts & more' },
+              { period: 'Beyond', label: 'Community Features & API Access', status: 'planned', note: 'Public API, community features & more' },
             ].map((row, i) => (
               <motion.div
                 key={i}
