@@ -790,7 +790,7 @@ function FVGTab() {
 
   const fetchData = useCallback(() => {
     getFvgScanner()
-      .then((res) => { setData(res); setLoading(false); setError(null); setLastUpdated(new Date()); setCountdown(30) })
+      .then((res) => { setData(res); setLoading(false); setError(null); setLastUpdated(new Date()) })
       .catch(() => { setError('Failed to load FVG data.'); setLoading(false) })
   }, [])
 
@@ -800,11 +800,12 @@ function FVGTab() {
     return () => clearInterval(id)
   }, [fetchData])
 
-  // Countdown ticker
+  // Countdown ticker — resets whenever lastUpdated changes (i.e. after a successful fetch)
   useEffect(() => {
-    const t = setInterval(() => setCountdown(c => c > 0 ? c - 1 : 30), 1_000)
+    setCountdown(30)
+    const t = setInterval(() => setCountdown(c => c > 0 ? c - 1 : 0), 1_000)
     return () => clearInterval(t)
-  }, [])
+  }, [lastUpdated])
 
   if (loading) return <LoadingSpinner text="Scanning FVG zones…" />
   if (error && !data) return <ErrorBox msg={error} />
@@ -1385,7 +1386,8 @@ function filterNewsByTimeframe(items, tf) {
   if (tf === 'all') return items
   return items.filter(n => {
     const age = getNewsAge(n.published_at || n.date)
-    if (age === null) return tf === '1d' // unparse-able → show under 1day bucket
+    // If the publish date cannot be parsed, only show the article in the 'all' view
+    if (age === null) return false
     if (tf === '30m') return age <= 30
     if (tf === '1h')  return age <= 60
     if (tf === '4h')  return age <= 240
@@ -1528,6 +1530,8 @@ function NewsTab() {
 
 // ─── Alerts Tab ───────────────────────────────────────────────────────────────
 const PRICE_ALERTS_KEY = 'piitrade_price_alerts'
+// Threshold below which an alert is considered "near target" (0.1 % of target price)
+const NEAR_TARGET_THRESHOLD_PCT = 0.1
 
 function loadPriceAlerts() {
   try { return JSON.parse(localStorage.getItem(PRICE_ALERTS_KEY)) || [] } catch { return [] }
@@ -1669,7 +1673,7 @@ function AlertsTab() {
               const live = livePrices[a.pair]
               const dist = live != null ? Math.abs(live - a.target) : null
               const distPct = live != null && a.target > 0 ? (dist / a.target * 100).toFixed(3) : null
-              const nearTarget = dist != null && distPct < 0.1
+              const nearTarget = dist != null && distPct < NEAR_TARGET_THRESHOLD_PCT
               return (
                 <div key={a.id} className={`rounded-xl border text-xs p-3 ${a.triggered ? 'bg-accent-green/10 border-accent-green/30' : nearTarget ? 'bg-accent-yellow/10 border-accent-yellow/30' : 'bg-bg-card border-border-default'}`}>
                   <div className="flex items-center justify-between">
