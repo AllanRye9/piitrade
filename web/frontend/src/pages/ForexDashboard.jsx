@@ -827,7 +827,7 @@ function SuccessTab({ allPairs, loadAll }) {
     fetchSuccess()
     const id = setInterval(fetchSuccess, 120_000)
     return () => clearInterval(id)
-  }, [pairsToFetch.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allPairs, loadAll])  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-3">
@@ -974,6 +974,7 @@ function NewsTab() {
   }, [fetchNews])
 
   const items = (Array.isArray(data) ? data : data?.news || data?.articles || [])
+    // Items from RSS feeds use `title`; some API sources may use `headline` — filter out any with neither
     .filter((n) => n.title || n.headline)
   const sources = [...new Set(items.map((n) => n.source).filter(Boolean))]
 

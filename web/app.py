@@ -2714,7 +2714,9 @@ async def forex_pattern_scanner(timeframe: str = "1h"):
     valid_timeframes = {"30m", "1h", "4h", "1day"}
     if timeframe not in valid_timeframes:
         timeframe = "1h"
-    # Map timeframe to how many recent price bars to use for trend/proximity analysis
+    # Map timeframe to how many recent price bars to use for trend/proximity analysis.
+    # Smaller windows make pattern detection more sensitive to recent price action,
+    # while larger windows reflect broader structural context.
     tf_window: dict[str, int] = {"30m": 5, "1h": 10, "4h": 20, "1day": 30}
     analysis_window = tf_window[timeframe]
 
