@@ -999,8 +999,6 @@ _NEWS_FEEDS: list[tuple[str, str]] = [
     ("Yahoo Finance", "https://finance.yahoo.com/rss/topfinstories"),
 ]
 
-_FALLBACK_NEWS: list[dict[str, Any]] = []
-
 _news_cache: dict[str, Any] = {"items": [], "ts": 0.0}
 _NEWS_CACHE_TTL = 300  # 5 minutes
 _NEWS_DEDUP_PREFIX_LEN = 60  # characters of title used to detect duplicate articles
@@ -1040,7 +1038,7 @@ def _fetch_rss_feed(name: str, url: str) -> list[dict[str, Any]]:
 
 def _make_news_items() -> list[dict[str, Any]]:
     """Return live news from multiple RSS feeds with 5-minute caching.
-    Falls back to curated synthetic items if all feeds are unreachable."""
+    Returns an empty list if all feeds are unreachable."""
     now = time.time()
     if _news_cache["items"] and now - _news_cache["ts"] < _NEWS_CACHE_TTL:
         return _news_cache["items"]
@@ -1056,9 +1054,6 @@ def _make_news_items() -> list[dict[str, Any]]:
                     pass
     except Exception:
         pass
-
-    if not results:
-        results = list(_FALLBACK_NEWS)
 
     # Deduplicate by title
     seen: set[str] = set()
