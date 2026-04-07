@@ -2,15 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, Minus, Search, RefreshCw, Volume2, VolumeX,
-  BarChart2, AlertTriangle, Newspaper, Bell, Target, Layers, Zap,
+  BarChart2, AlertTriangle, Target, Layers, Zap,
   Star, Award, Flame, ChevronRight, ChevronLeft,
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
-  getFvgScanner, getSrBreakouts, getPatternScanner, getNews, getLivePrices,
+  getFvgScanner, getSrBreakouts, getPatternScanner,
   getEconomicCalendar,
 } from '../utils/api'
-import PriceTicker from '../components/PriceTicker'
 import PartnerCards from '../components/PartnerCard'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
@@ -88,8 +87,6 @@ const TABS = [
   { id: 'reversal', label: '🔄 Reversal', icon: RefreshCw },
   { id: 'success', label: '🏆 Success', icon: Star },
   { id: 'scanner', label: '🔮 Scanner', icon: Search },
-  { id: 'news', label: '📰 News', icon: Newspaper },
-  { id: 'alerts', label: '🔔 Alerts', icon: Bell },
 ]
 
 const MAJOR_PAIRS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
@@ -272,29 +269,10 @@ function RiskCalcTab({ pair }) {
   const [tp, setTp] = useState('')
   const [pipValue, setPipValue] = useState(10)
   const [leverage, setLeverage] = useState(100)
-  const [livePrice, setLivePrice] = useState(null)
 
   // Detect pip size based on pair (JPY pairs use 0.01, others 0.0001)
   const isJpy = pair?.includes('JPY')
   const pipMultiplier = isJpy ? 100 : 10000
-
-  // Fetch live price for the selected pair
-  useEffect(() => {
-    const fetchPrice = () => {
-      getLivePrices()
-        .then((res) => {
-          if (!Array.isArray(res?.prices)) return
-          const match = res.prices.find((p) => p.pair === pair)
-          if (match && match.price && match.price !== '—') {
-            setLivePrice(match.price)
-          }
-        })
-        .catch(() => {})
-    }
-    fetchPrice()
-    const id = setInterval(fetchPrice, 30_000)
-    return () => clearInterval(id)
-  }, [pair])
 
   const entryNum = parseFloat(entry)
   const slNum = parseFloat(sl)
@@ -334,13 +312,6 @@ function RiskCalcTab({ pair }) {
 
   return (
     <div className="space-y-3 max-w-md">
-      {livePrice && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
-          <span className="text-text-muted text-xs">Live price</span>
-          <span className="font-mono text-accent-blue text-sm font-semibold">{pair}: {livePrice}</span>
-        </div>
-      )}
-
       <div className="bg-bg-card border border-border-default rounded-xl p-3 space-y-3">
         <div>
           <label className="text-text-secondary text-xs mb-1 block">Account Balance ($)</label>
@@ -646,23 +617,6 @@ function TechnicalTab({ pair }) {
 
   return (
     <div className="space-y-3">
-      {/* Live Current Price Banner */}
-      {data.current_price != null && (
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-gradient-to-r from-accent-blue/15 to-accent-purple/10 border border-accent-blue/35 rounded-xl">
-          <div>
-            <p className="text-text-muted text-xs mb-0.5">💱 Current Price</p>
-            <p className="text-2xl font-bold font-mono text-accent-blue">
-              {typeof data.current_price === 'number' ? data.current_price.toFixed(5) : data.current_price}
-            </p>
-            <p className="text-text-muted text-xs mt-0.5">{pair}</p>
-          </div>
-          <div className="text-right text-xs text-text-muted">
-            <p>🔴 Live Data</p>
-            {lastUpdated && <p>{lastUpdated.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</p>}
-          </div>
-        </div>
-      )}
-
       {/* Price Structure Chart */}
       <TechnicalChart data={data} />
 
@@ -675,11 +629,6 @@ function TechnicalTab({ pair }) {
               <div key={`res-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
                 <div>
                   <span className="text-accent-red text-sm">Resistance {i + 1}</span>
-                  {data.current_price && (
-                    <span className="text-text-muted text-xs ml-2">
-                      +{(Math.abs(lvl - data.current_price) * (pair?.includes('JPY') ? 100 : 10000)).toFixed(1)}p
-                    </span>
-                  )}
                 </div>
                 <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
@@ -688,11 +637,6 @@ function TechnicalTab({ pair }) {
               <div key={`sup-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-green/10 border border-accent-green/20 rounded-lg">
                 <div>
                   <span className="text-accent-green text-sm">Support {i + 1}</span>
-                  {data.current_price && (
-                    <span className="text-text-muted text-xs ml-2">
-                      -{(Math.abs(data.current_price - lvl) * (pair?.includes('JPY') ? 100 : 10000)).toFixed(1)}p
-                    </span>
-                  )}
                 </div>
                 <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
@@ -888,15 +832,6 @@ function FVGTab() {
                   </span>
                 </div>
 
-                {/* Live price */}
-                {zone.current_price != null && (
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-accent-blue/10 border border-accent-blue/25 rounded-lg">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse inline-block flex-shrink-0"/>
-                    <span className="text-text-muted text-xs">Price:</span>
-                    <span className="font-mono text-accent-blue text-xs font-bold">{typeof zone.current_price === 'number' ? zone.current_price.toFixed(5) : zone.current_price}</span>
-                  </div>
-                )}
-
                 {/* Zone levels */}
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   {zone.top != null && (
@@ -956,9 +891,6 @@ function FVGTab() {
                         </div>
                         {f.description && <p className="text-text-muted mt-1 italic leading-snug">{f.description}</p>}
                         {f.created && <p className="text-text-muted mt-0.5">Created: {f.created}</p>}
-                        {f.current_price != null && (
-                          <p className="text-accent-blue mt-0.5">Live: <span className="font-mono">{f.current_price}</span></p>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -1342,415 +1274,6 @@ function ScannerTab() {
   )
 }
 
-// ─── News Tab ─────────────────────────────────────────────────────────────────
-const NEWS_REFRESH_MS = 2.5 * 60 * 1000
-
-const SOURCE_COLORS = {
-  ForexLive: 'bg-accent-blue/10 text-accent-blue',
-  FXStreet: 'bg-accent-green/10 text-accent-green',
-  'Investing.com': 'bg-accent-yellow/10 text-accent-yellow',
-  DailyFX: 'bg-accent-purple/10 text-accent-purple',
-  Reuters: 'bg-accent-red/10 text-accent-red',
-  MarketWatch: 'bg-accent-blue/10 text-accent-blue',
-  'Yahoo Finance': 'bg-accent-yellow/10 text-accent-yellow',
-}
-
-const NEWS_TIMEFRAMES = [
-  { id: 'all',  label: 'All',    emoji: '📋' },
-  { id: '30m',  label: '30 Min', emoji: '⚡' },
-  { id: '1h',   label: '1 Hour', emoji: '🕐' },
-  { id: '4h',   label: '4 Hours',emoji: '🕓' },
-  { id: '1d',   label: '1 Day',  emoji: '📅' },
-]
-
-function parseNewsDate(pub) {
-  if (!pub) return null
-  try { return new Date(pub) } catch { return null }
-}
-
-function getNewsAge(pub) {
-  const d = parseNewsDate(pub)
-  if (!d || isNaN(d.getTime())) return null
-  return (Date.now() - d.getTime()) / 60000 // minutes ago
-}
-
-function formatNewsAge(ageMin) {
-  if (ageMin === null) return null
-  if (ageMin < 1) return 'Just now'
-  if (ageMin < 60) return `${Math.floor(ageMin)}m ago`
-  if (ageMin < 1440) return `${Math.floor(ageMin / 60)}h ago`
-  return `${Math.floor(ageMin / 1440)}d ago`
-}
-
-function filterNewsByTimeframe(items, tf) {
-  if (tf === 'all') return items
-  return items.filter(n => {
-    const age = getNewsAge(n.published_at || n.date)
-    // If the publish date cannot be parsed, only show the article in the 'all' view
-    if (age === null) return false
-    if (tf === '30m') return age <= 30
-    if (tf === '1h')  return age <= 60
-    if (tf === '4h')  return age <= 240
-    if (tf === '1d')  return age <= 1440
-    return true
-  })
-}
-
-function NewsTab() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
-  const [tfFilter, setTfFilter] = useState('all')
-
-  const fetchNews = useCallback(() => {
-    getNews()
-      .then((res) => {
-        setData(res)
-        setLastUpdated(new Date())
-        setLoading(false)
-        setError(null)
-      })
-      .catch(() => { setError('Failed to load market news.'); setLoading(false) })
-  }, [])
-
-  useEffect(() => {
-    fetchNews()
-    const id = setInterval(fetchNews, NEWS_REFRESH_MS)
-    return () => clearInterval(id)
-  }, [fetchNews])
-
-  const allItems = (Array.isArray(data) ? data : data?.news || data?.articles || [])
-    .filter((n) => n.title || n.headline)
-
-  const items = filterNewsByTimeframe(allItems, tfFilter)
-  const sources = [...new Set(allItems.map((n) => n.source).filter(Boolean))]
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="text-text-primary text-sm font-semibold">📰 Market News</h3>
-          <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/30 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>LIVE
-          </span>
-          {allItems.length > 0 && (
-            <span className="text-text-muted text-xs">({allItems.length} articles)</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {lastUpdated && (
-            <span className="text-text-muted text-xs hidden sm:inline">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-          <button
-            onClick={fetchNews}
-            disabled={loading}
-            className="p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-accent-blue transition-colors"
-            title="Refresh news"
-          >
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-      </div>
-
-      {/* Timeframe filter */}
-      <div className="flex flex-wrap gap-1.5">
-        {NEWS_TIMEFRAMES.map(({ id, label, emoji }) => {
-          const cnt = id === 'all' ? allItems.length : filterNewsByTimeframe(allItems, id).length
-          return (
-            <button
-              key={id}
-              onClick={() => setTfFilter(id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${tfFilter === id ? 'bg-accent-blue text-bg-primary border-accent-blue' : 'bg-bg-card border-border-default text-text-secondary hover:border-accent-blue/40'}`}
-            >
-              {emoji} {label} <span className="opacity-60">({cnt})</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Source badges */}
-      {sources.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {sources.map((src) => (
-            <span key={src} className={`text-xs px-2 py-0.5 rounded-full font-medium ${SOURCE_COLORS[src] || 'bg-bg-card text-text-muted'}`}>
-              {src}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {loading && allItems.length === 0 ? <LoadingSpinner text="Fetching market news…" /> : error && allItems.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
-        <div className="flex flex-col items-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
-            <Newspaper size={28} className="text-text-muted" />
-          </div>
-          <p className="text-text-secondary font-medium mb-2">No news in this window</p>
-          <p className="text-text-muted text-sm">Try a wider timeframe or refresh.</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {items.map((n, i) => {
-            const ageMin = getNewsAge(n.published_at || n.date)
-            const ageLabel = formatNewsAge(ageMin)
-            const isRecent = ageMin !== null && ageMin <= 30
-            return (
-              <div key={i} className={`bg-bg-card border rounded-xl p-3 hover:border-accent-blue/30 transition-all ${isRecent ? 'border-accent-green/25' : 'border-border-default'}`}>
-                {isRecent && (
-                  <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/20 px-1.5 py-0.5 rounded-full mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>Breaking
-                  </span>
-                )}
-                <a href={n.url || '#'} target="_blank" rel="noopener noreferrer"
-                  className="text-text-primary font-medium hover:text-accent-blue transition-colors leading-snug text-sm block mb-1">
-                  {n.title || n.headline || 'News Article'}
-                </a>
-                {n.summary && <p className="text-text-secondary text-xs mt-1 line-clamp-2 leading-relaxed">{n.summary}</p>}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {n.source && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_COLORS[n.source] || 'bg-bg-secondary text-text-muted'}`}>
-                      {n.source}
-                    </span>
-                  )}
-                  {ageLabel && <span className="text-text-muted text-xs">🕐 {ageLabel}</span>}
-                  {!ageLabel && (n.published_at || n.date) && (
-                    <span className="text-text-muted text-xs">{n.published_at || n.date}</span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Alerts Tab ───────────────────────────────────────────────────────────────
-const PRICE_ALERTS_KEY = 'piitrade_price_alerts'
-// Threshold below which an alert is considered "near target" (0.1 % of target price)
-const NEAR_TARGET_THRESHOLD_PCT = 0.1
-
-function loadPriceAlerts() {
-  try { return JSON.parse(localStorage.getItem(PRICE_ALERTS_KEY)) || [] } catch { return [] }
-}
-function savePriceAlerts(alerts) {
-  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts))
-}
-
-const ALERT_PAIRS = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'EUR/GBP', 'GBP/JPY', 'EUR/JPY']
-
-function AlertsTab() {
-  const [priceAlerts, setPriceAlerts] = useState(loadPriceAlerts)
-  const [alertPair, setAlertPair] = useState('EUR/USD')
-  const [alertTarget, setAlertTarget] = useState('')
-  const [alertDir, setAlertDir] = useState('above')
-  const [livePrices, setLivePrices] = useState({})
-  const [events, setEvents] = useState([])
-  const [eventsLoading, setEventsLoading] = useState(true)
-
-  // Poll live prices for active alerts using the batch endpoint
-  useEffect(() => {
-    const fetchPrices = () => {
-      getLivePrices()
-        .then((res) => {
-          if (!Array.isArray(res?.prices)) return
-          const map = {}
-          res.prices.forEach((p) => { if (p.price !== '—') map[p.pair] = parseFloat(p.price) })
-          setLivePrices(map)
-        })
-        .catch(() => { /* silently keep stale data */ })
-    }
-    fetchPrices()
-    const id = setInterval(fetchPrices, 30_000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Fetch economic calendar from backend (ForexFactory)
-  useEffect(() => {
-    const fetchCalendar = () => {
-      getEconomicCalendar()
-        .then((res) => {
-          const list = res?.events || []
-          if (list.length > 0) setEvents(list)
-          setEventsLoading(false)
-        })
-        .catch(() => { setEventsLoading(false) })
-    }
-    fetchCalendar()
-    const id = setInterval(fetchCalendar, 3300_000) // refresh every 55 min (backend caches for 1 hour)
-    return () => clearInterval(id)
-  }, [])
-
-  // Check triggered alerts whenever live prices update
-  useEffect(() => {
-    if (Object.keys(livePrices).length === 0) return
-    setPriceAlerts((prev) => {
-      const updated = prev.map((a) => {
-        if (a.triggered) return a
-        const current = livePrices[a.pair]
-        if (current == null) return a
-        const hit = a.dir === 'above' ? current >= a.target : current <= a.target
-        return hit ? { ...a, triggered: true, triggeredAt: new Date().toISOString() } : a
-      })
-      savePriceAlerts(updated)
-      return updated
-    })
-  }, [livePrices])
-
-  const addAlert = (e) => {
-    e.preventDefault()
-    const target = parseFloat(alertTarget)
-    if (isNaN(target) || target <= 0) return
-    const id = typeof crypto?.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const newAlert = { id, pair: alertPair, target, dir: alertDir, triggered: false }
-    const updated = [newAlert, ...priceAlerts].slice(0, 10)
-    savePriceAlerts(updated)
-    setPriceAlerts(updated)
-    setAlertTarget('')
-  }
-
-  const removeAlert = (id) => {
-    const updated = priceAlerts.filter((a) => a.id !== id)
-    savePriceAlerts(updated)
-    setPriceAlerts(updated)
-  }
-
-  return (
-    <div className="space-y-5">
-      {/* Price Alerts */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-text-primary text-sm font-semibold">🔔 Price Alerts</h3>
-          <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/30 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>Live prices • 30s
-          </span>
-        </div>
-
-        {/* Live price strip for alert pair */}
-        {livePrices[alertPair] != null && (
-          <div className="flex items-center gap-3 px-3 py-2 bg-accent-blue/10 border border-accent-blue/25 rounded-lg mb-3">
-            <span className="w-2 h-2 rounded-full bg-accent-blue animate-pulse flex-shrink-0"/>
-            <span className="text-text-muted text-xs">Live {alertPair}:</span>
-            <span className="font-mono text-accent-blue font-bold text-sm">{livePrices[alertPair]}</span>
-            <span className="text-text-muted text-xs ml-auto">Updates every 30s</span>
-          </div>
-        )}
-
-        <form onSubmit={addAlert} className="flex flex-wrap gap-2 mb-3">
-          <select
-            value={alertPair}
-            onChange={(e) => setAlertPair(e.target.value)}
-            className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
-          >
-            {ALERT_PAIRS.map((p) => <option key={p} value={p}>{p}{livePrices[p] != null ? ` (${livePrices[p]})` : ''}</option>)}
-          </select>
-          <select
-            value={alertDir}
-            onChange={(e) => setAlertDir(e.target.value)}
-            className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
-          >
-            <option value="above">Rises Above ↑</option>
-            <option value="below">Falls Below ↓</option>
-          </select>
-          <input
-            type="number" step="any" value={alertTarget} onChange={(e) => setAlertTarget(e.target.value)}
-            placeholder="Target price" required
-            className="flex-1 min-w-[110px] bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary placeholder-text-muted text-xs input-animated"
-          />
-          <button type="submit" className="px-3 py-1.5 bg-accent-blue text-bg-primary font-semibold rounded-lg text-xs hover:bg-blue-400 transition-all">
-            Set Alert
-          </button>
-        </form>
-
-        {priceAlerts.length > 0 ? (
-          <div className="space-y-2">
-            {priceAlerts.map((a) => {
-              const live = livePrices[a.pair]
-              const dist = live != null ? Math.abs(live - a.target) : null
-              const distPct = live != null && a.target > 0 ? (dist / a.target * 100).toFixed(3) : null
-              const nearTarget = dist != null && distPct < NEAR_TARGET_THRESHOLD_PCT
-              return (
-                <div key={a.id} className={`rounded-xl border text-xs p-3 ${a.triggered ? 'bg-accent-green/10 border-accent-green/30' : nearTarget ? 'bg-accent-yellow/10 border-accent-yellow/30' : 'bg-bg-card border-border-default'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Bell size={12} className={a.triggered ? 'text-accent-green' : nearTarget ? 'text-accent-yellow' : 'text-text-muted'} />
-                      <span className="text-text-primary font-semibold">{a.pair}</span>
-                      <span className={`font-medium ${a.dir === 'above' ? 'text-accent-green' : 'text-accent-red'}`}>
-                        {a.dir === 'above' ? '↑ ≥' : '↓ ≤'}
-                      </span>
-                      <span className="font-mono text-text-secondary font-bold">{a.target}</span>
-                    </div>
-                    <button onClick={() => removeAlert(a.id)} className="text-text-muted hover:text-accent-red transition-colors ml-2">✕</button>
-                  </div>
-                  {live != null && !a.triggered && (
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-text-muted">Now: <span className="font-mono text-accent-blue font-semibold">{live}</span></span>
-                      {distPct !== null && <span className="text-text-muted">Gap: <span className={nearTarget ? 'text-accent-yellow font-semibold' : 'text-text-secondary'}>{distPct}%</span></span>}
-                      {nearTarget && <span className="text-accent-yellow font-semibold animate-pulse">⚠️ Near target!</span>}
-                    </div>
-                  )}
-                  {a.triggered && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-accent-green font-semibold">✓ Triggered at {new Date(a.triggeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-text-muted text-xs">No active price alerts. Set one above to get notified when price crosses your target.</p>
-        )}
-      </div>
-
-      {/* Economic calendar */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-text-primary text-sm font-semibold">📅 Economic Calendar</h3>
-          {!eventsLoading && events.length > 0 && (
-            <span className="text-text-muted text-xs">This week • {events.length} events</span>
-          )}
-        </div>
-        {eventsLoading ? (
-          <LoadingSpinner text="Fetching economic calendar…" />
-        ) : events.length === 0 ? (
-          <p className="text-text-muted text-xs">No upcoming economic events found.</p>
-        ) : (
-          <>
-            {/* Responsive card grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {events.slice(0, 20).map((ev, i) => (
-                <div key={i} className={`bg-bg-card border rounded-xl p-3 flex items-start justify-between gap-2 ${ev.impact === 'High' ? 'border-accent-red/30' : ev.impact === 'Medium' ? 'border-accent-yellow/30' : 'border-border-default'}`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary text-xs font-medium truncate">{ev.event}</p>
-                    <p className="text-text-muted text-xs mt-0.5 font-mono">{ev.time} • <span className="text-accent-blue">{ev.currency}</span></p>
-                    {(ev.actual != null || ev.forecast != null) && (
-                      <p className="text-text-muted text-xs mt-0.5">
-                        {ev.actual != null && <span className="text-accent-green mr-2">A: {ev.actual}</span>}
-                        {ev.forecast != null && <span className="text-text-secondary mr-2">F: {ev.forecast}</span>}
-                        {ev.previous != null && <span className="text-text-muted">P: {ev.previous}</span>}
-                      </p>
-                    )}
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 ${ev.impact === 'High' ? 'bg-accent-red/10 text-accent-red' : ev.impact === 'Medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-bg-secondary text-text-muted'}`}>
-                    {ev.impact}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-    </div>
-  )
-}
-
 // ─── Gamebar ──────────────────────────────────────────────────────────────────
 function Gamebar() {
   const [game, setGame] = useState(loadGame)
@@ -1814,8 +1337,6 @@ export default function ForexDashboard() {
   const [signalLoading, setSignalLoading] = useState(true)
   const [signalError, setSignalError] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
-  const [livePriceMap, setLivePriceMap] = useState({})
-  const [lastPriceUpdate, setLastPriceUpdate] = useState(null)
   const [successTabClicks, setSuccessTabClicks] = useState(0)
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
@@ -1826,24 +1347,6 @@ export default function ForexDashboard() {
     getPairs()
       .then((data) => setAllPairsData(data))
       .catch(() => setAllPairsData(null))
-  }, [])
-
-  // Continuously fetch live prices for all ticker pairs every 30s
-  useEffect(() => {
-    const fetchPrices = () => {
-      getLivePrices()
-        .then((res) => {
-          if (!Array.isArray(res?.prices)) return
-          const map = {}
-          res.prices.forEach((p) => { if (p.price && p.price !== '—') map[p.pair] = p.price })
-          setLivePriceMap(map)
-          setLastPriceUpdate(new Date())
-        })
-        .catch(() => {})
-    }
-    fetchPrices()
-    const id = setInterval(fetchPrices, 30_000)
-    return () => clearInterval(id)
   }, [])
 
   // Fetch signal when pair changes
@@ -1915,9 +1418,6 @@ export default function ForexDashboard() {
   return (
     <div className="min-h-screen bg-bg-primary py-3" style={{ paddingLeft: 'var(--page-margin-x)', paddingRight: 'var(--page-margin-x)' }}>
       <div className="max-w-5xl mx-auto space-y-3">
-        {/* Price Ticker */}
-        <PriceTicker />
-
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -1983,19 +1483,6 @@ export default function ForexDashboard() {
               </span>
             </span>
           )}
-          {/* Live current price for selected pair, updated every 30s */}
-          {(livePriceMap[selectedPair] || signal?.current_price || signal?.entry_price) && (
-            <span className="text-text-muted text-xs font-mono">
-              <span className="text-text-muted">Live: </span>
-              <span className="text-accent-blue font-semibold">
-                {livePriceMap[selectedPair]
-                  || (signal.current_price ? String(signal.current_price) : String(signal.entry_price))}
-              </span>
-              {lastPriceUpdate && (
-                <span className="text-text-muted ml-1">({lastPriceUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
-              )}
-            </span>
-          )}
         </motion.div>
 
         {/* Gamebar */}
@@ -2043,25 +1530,8 @@ export default function ForexDashboard() {
             {activeTab === 'reversal' && <ReversalTab />}
             {activeTab === 'success' && <SuccessTab allPairs={forexPairs} loadAll={successTabClicks > 1} />}
             {activeTab === 'scanner' && <ScannerTab />}
-            {activeTab === 'news' && <NewsTab />}
-            {activeTab === 'alerts' && <AlertsTab />}
           </motion.div>
         </AnimatePresence>
-
-        {/* Price disclaimer */}
-        <div className="flex items-start gap-2 px-3 py-2 bg-accent-yellow/5 border border-accent-yellow/20 rounded-lg text-xs text-text-muted">
-          <span className="flex-shrink-0">⚠️</span>
-          <span>
-            Prices are indicative and were last updated at{' '}
-            <span className="font-mono text-text-secondary">
-              {lastPriceUpdate
-                ? lastPriceUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                : 'loading…'}
-            </span>
-            {'. '}
-            They may not reflect real-time market fluctuations. Always verify with your broker before trading.
-          </span>
-        </div>
 
         {/* Partner cards */}
         <div className="pt-4 border-t border-border-default">
