@@ -303,8 +303,10 @@ export default function Landing() {
                 <div className="bg-bg-card border border-border-default rounded-2xl p-6 shadow-2xl glow-blue">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-text-muted text-xs uppercase tracking-wider mb-1">
-                        Live Signal{previewSignals[0]?.is_live ? '' : ' (cached)'}
+                      <p className="flex items-center gap-1.5 text-text-muted text-xs uppercase tracking-wider mb-1">
+                        {previewSignals[0]?.is_live !== false
+                          ? <><span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />Live Signal</>
+                          : <><span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-yellow" />Cached Signal</>}
                       </p>
                       <p className="text-text-primary font-bold text-xl">{previewSignals[0]?.pair ?? 'EUR/USD'}</p>
                     </div>

@@ -1262,6 +1262,7 @@ export default function ForexDashboard() {
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
     if (window.innerWidth < 768 && contentRef.current) {
+      // Delay slightly so React has re-rendered the new tab before scrolling
       setTimeout(() => {
         contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 60)

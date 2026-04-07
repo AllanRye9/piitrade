@@ -801,7 +801,7 @@ def _generate_ai_label(direction: str, confidence: float, prices: list[float], i
         momentum = (recent_avg - prev_avg) / prev_avg if prev_avg else 0.0
     elif len(prices) >= 5:
         recent_avg = sum(prices[-3:]) / 3
-        prev_avg = sum(prices[-5:-3]) / 2 if len(prices) >= 5 else recent_avg
+        prev_avg = sum(prices[-5:-3]) / 2
         momentum = (recent_avg - prev_avg) / prev_avg if prev_avg else 0.0
     else:
         momentum = 0.0
