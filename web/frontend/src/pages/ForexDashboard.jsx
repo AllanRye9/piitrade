@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
-  getFvgScanner, getSrBreakouts, getPatternScanner, getNews, subscribe, getLivePrices,
+  getFvgScanner, getSrBreakouts, getPatternScanner, getNews, getLivePrices,
   getEconomicCalendar,
 } from '../utils/api'
 import PriceTicker from '../components/PriceTicker'
@@ -271,6 +271,7 @@ function RiskCalcTab({ pair }) {
   const [sl, setSl] = useState('')
   const [tp, setTp] = useState('')
   const [pipValue, setPipValue] = useState(10)
+  const [leverage, setLeverage] = useState(100)
   const [livePrice, setLivePrice] = useState(null)
 
   // Detect pip size based on pair (JPY pairs use 0.01, others 0.0001)
@@ -314,12 +315,21 @@ function RiskCalcTab({ pair }) {
   // Risk:Reward ratio (e.g. 1:2 = tpPips / slPips)
   const rrRatio = slPips > 0 && tpPips > 0 ? tpPips / slPips : null
 
-  const positionSize = slPips > 0 ? (riskAmount / (slPips * pipValue)).toFixed(2) : '—'
-  const margin = positionSize !== '—' ? (parseFloat(positionSize) * 1000 * 0.02).toFixed(2) : '—'
+  // Position size in lots: Risk Amount / (SL pips × Pip Value per lot)
+  // pipValue defaults to $10/pip which is correct for 1 standard lot (100,000 units) of EUR/USD
+  const positionSizeNum = slPips > 0 ? riskAmount / (slPips * pipValue) : null
+  const positionSize = positionSizeNum !== null ? positionSizeNum.toFixed(2) : '—'
+
+  // Margin required = (lots × contract size) / leverage
+  // Contract size for forex = 100,000 units per standard lot
+  const CONTRACT_SIZE = 100_000
+  const margin = positionSizeNum !== null && leverage > 0
+    ? ((positionSizeNum * CONTRACT_SIZE) / leverage).toFixed(2)
+    : '—'
 
   // Potential profit if TP is hit
-  const potentialProfit = positionSize !== '—' && tpPips > 0
-    ? (parseFloat(positionSize) * tpPips * pipValue).toFixed(2)
+  const potentialProfit = positionSizeNum !== null && tpPips > 0
+    ? (positionSizeNum * tpPips * pipValue).toFixed(2)
     : '—'
 
   return (
@@ -379,13 +389,27 @@ function RiskCalcTab({ pair }) {
             className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated placeholder-text-muted"
           />
         </div>
-        <div>
-          <label className="text-text-secondary text-xs mb-1 block">Pip Value ($)</label>
-          <input
-            type="number" value={pipValue}
-            onChange={(e) => setPipValue(parseFloat(e.target.value) || 10)}
-            className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-text-secondary text-xs mb-1 block">Pip Value ($)</label>
+            <input
+              type="number" value={pipValue}
+              onChange={(e) => setPipValue(parseFloat(e.target.value) || 10)}
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
+            />
+          </div>
+          <div>
+            <label className="text-text-secondary text-xs mb-1 block">Leverage (1:x)</label>
+            <select
+              value={leverage}
+              onChange={(e) => setLeverage(parseInt(e.target.value, 10))}
+              className="w-full bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
+            >
+              {[10, 20, 30, 50, 100, 200, 400, 500].map(l => (
+                <option key={l} value={l}>1:{l}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -415,7 +439,7 @@ function RiskCalcTab({ pair }) {
           { label: 'Risk Amount', value: `$${riskAmount.toFixed(2)}`, color: 'text-accent-red' },
           { label: 'Position Size (lots)', value: positionSize, color: 'text-accent-green' },
           { label: 'SL Pips at Risk', value: slPips > 0 ? slPips.toFixed(1) : '—', color: 'text-accent-yellow' },
-          { label: 'Margin Needed', value: margin !== '—' ? `$${margin}` : '—', color: 'text-accent-blue' },
+          { label: 'Margin Required', value: margin !== '—' ? `$${margin}` : '—', color: 'text-accent-blue' },
           { label: 'Potential Profit', value: potentialProfit !== '—' ? `$${potentialProfit}` : '—', color: 'text-accent-green' },
           { label: 'Pip Size', value: isJpy ? '0.01' : '0.0001', color: 'text-text-secondary' },
         ].map((item) => (
@@ -647,6 +671,12 @@ function SRTab() {
                     {(b.type || '—').toUpperCase()}
                   </span>
                 </div>
+                {b.level != null && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-muted">S/R Level</span>
+                    <span className="font-mono text-text-primary">{typeof b.level === 'number' ? b.level.toFixed(5) : b.level}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-muted">Status</span>
                   <span className={`font-semibold uppercase px-1.5 py-0.5 rounded ${b.status === 'broke' ? 'bg-accent-red/10 text-accent-red' : b.status === 'touched' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-blue/10 text-accent-blue'}`}>
@@ -657,6 +687,9 @@ function SRTab() {
                   <span className="text-text-muted">Direction</span>
                   <span className={`font-semibold ${dirColor(b.direction)}`}>{b.direction || '—'}</span>
                 </div>
+                {b.description && (
+                  <p className="text-text-muted text-xs leading-snug border-t border-border-subtle pt-1.5">{b.description}</p>
+                )}
               </div>
             ))}
           </div>
@@ -771,16 +804,17 @@ function ReversalTab() {
 }
 
 // ─── Success Tab ──────────────────────────────────────────────────────────────
-function SuccessTab({ allPairs }) {
+function SuccessTab({ allPairs, loadAll }) {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
 
+  const pairsToFetch = loadAll ? allPairs : allPairs.slice(0, 10)
+
   useEffect(() => {
-    if (!allPairs.length) return
+    if (!pairsToFetch.length) return
     setLoading(true)
     const fetchSuccess = () => {
-      const top10 = allPairs.slice(0, 10)
-      Promise.allSettled(top10.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? null }))))
+      Promise.allSettled(pairsToFetch.map((p) => getSignals(p).then((d) => ({ pair: p, acc: d.accuracy_30d ?? d.accuracy ?? null }))))
         .then((settled) => {
           const list = settled
             .filter((s) => s.status === 'fulfilled' && s.value.acc != null)
@@ -791,9 +825,9 @@ function SuccessTab({ allPairs }) {
         .finally(() => setLoading(false))
     }
     fetchSuccess()
-    const id = setInterval(fetchSuccess, 120_000) // 2-min interval (10 parallel requests)
+    const id = setInterval(fetchSuccess, 120_000)
     return () => clearInterval(id)
-  }, [allPairs])
+  }, [pairsToFetch.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-3">
@@ -818,27 +852,67 @@ function SuccessTab({ allPairs }) {
 }
 
 // ─── Scanner Tab ──────────────────────────────────────────────────────────────
+const SCANNER_TIMEFRAMES = [
+  { id: '30m', label: '30m' },
+  { id: '1h',  label: '1H' },
+  { id: '4h',  label: '4H' },
+  { id: '1day', label: '1D' },
+]
+
 function ScannerTab() {
+  const [timeframe, setTimeframe] = useState('1h')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const fetchData = useCallback(() => {
-    getPatternScanner()
-      .then((res) => { setData(res); setLoading(false); setError(null) })
-      .catch(() => { setError('Failed to load pattern scanner data.'); setLoading(false) })
-  }, [])
+  const activeTimeframeRef = useRef(timeframe)
 
   useEffect(() => {
-    fetchData()
-    const id = setInterval(fetchData, 30_000)
+    activeTimeframeRef.current = timeframe
+    const fetch = () => {
+      const tf = activeTimeframeRef.current
+      setLoading(true)
+      setError(null)
+      getPatternScanner(tf)
+        .then((res) => {
+          if (activeTimeframeRef.current === tf) {
+            setData(res)
+            setLoading(false)
+            setError(null)
+          }
+        })
+        .catch(() => {
+          if (activeTimeframeRef.current === tf) {
+            setError('Failed to load pattern scanner data.')
+            setLoading(false)
+          }
+        })
+    }
+    fetch()
+    const id = setInterval(fetch, 30_000)
     return () => clearInterval(id)
-  }, [fetchData])
+  }, [timeframe])
 
   const items = Array.isArray(data) ? data : data?.patterns || []
 
   return (
     <div className="space-y-3">
+      {/* Timeframe tabs */}
+      <div className="flex gap-1.5">
+        {SCANNER_TIMEFRAMES.map((tf) => (
+          <button
+            key={tf.id}
+            onClick={() => setTimeframe(tf.id)}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${timeframe === tf.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+          >
+            {tf.label}
+          </button>
+        ))}
+        {data?.generated_at && (
+          <span className="ml-auto text-text-muted text-xs self-center">
+            {new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
       {loading ? <LoadingSpinner text="Scanning patterns…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No patterns" desc="No patterns detected in the scanner." />
       ) : items.map((p, i) => (
@@ -899,7 +973,8 @@ function NewsTab() {
     return () => clearInterval(id)
   }, [fetchNews])
 
-  const items = Array.isArray(data) ? data : data?.news || data?.articles || []
+  const items = (Array.isArray(data) ? data : data?.news || data?.articles || [])
+    .filter((n) => n.title || n.headline)
   const sources = [...new Set(items.map((n) => n.source).filter(Boolean))]
 
   return (
@@ -984,9 +1059,6 @@ function savePriceAlerts(alerts) {
 const ALERT_PAIRS = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'EUR/GBP', 'GBP/JPY', 'EUR/JPY']
 
 function AlertsTab() {
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState(null)
-  const [loading, setLoading] = useState(false)
   const [priceAlerts, setPriceAlerts] = useState(loadPriceAlerts)
   const [alertPair, setAlertPair] = useState('EUR/USD')
   const [alertTarget, setAlertTarget] = useState('')
@@ -1062,20 +1134,6 @@ function AlertsTab() {
     const updated = priceAlerts.filter((a) => a.id !== id)
     savePriceAlerts(updated)
     setPriceAlerts(updated)
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      await subscribe(email)
-      setStatus('success')
-      setEmail('')
-    } catch {
-      setStatus('error')
-    } finally {
-      setLoading(false)
-    }
   }
 
   return (
@@ -1182,31 +1240,6 @@ function AlertsTab() {
         )}
       </div>
 
-      {/* Subscribe */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4">
-        <h3 className="text-text-primary text-sm font-semibold mb-2">Get Signal Alerts via Email</h3>
-        <p className="text-text-secondary text-sm mb-4">Subscribe for email alerts on high-confidence signals.</p>
-        {status === 'success' ? (
-          <div className="px-4 py-3 bg-accent-green/10 border border-accent-green/30 rounded-lg text-accent-green text-sm">
-            ✓ Subscribed! You'll receive alerts soon.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com" required
-              className="flex-1 bg-bg-secondary border border-border-default rounded-lg px-3 py-2 text-text-primary placeholder-text-muted input-animated text-sm"
-            />
-            <button
-              type="submit" disabled={loading}
-              className="px-4 py-2 bg-accent-blue text-bg-primary font-semibold rounded-lg text-sm hover:bg-blue-400 transition-all disabled:opacity-60"
-            >
-              {loading ? '...' : 'Alert Me'}
-            </button>
-          </form>
-        )}
-        {status === 'error' && <p className="text-accent-red text-xs mt-2">Something went wrong. Try again.</p>}
-      </div>
     </div>
   )
 }
@@ -1275,6 +1308,8 @@ export default function ForexDashboard() {
   const [signalError, setSignalError] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [livePriceMap, setLivePriceMap] = useState({})
+  const [lastPriceUpdate, setLastPriceUpdate] = useState(null)
+  const [successTabClicks, setSuccessTabClicks] = useState(0)
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
   const contentRef = useRef(null)
@@ -1295,6 +1330,7 @@ export default function ForexDashboard() {
           const map = {}
           res.prices.forEach((p) => { if (p.price && p.price !== '—') map[p.pair] = p.price })
           setLivePriceMap(map)
+          setLastPriceUpdate(new Date())
         })
         .catch(() => {})
     }
@@ -1342,6 +1378,7 @@ export default function ForexDashboard() {
   // On mobile, scroll the tab content area into view when a tab is selected
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
+    if (tabId === 'success') setSuccessTabClicks((c) => c + 1)
     if (window.innerWidth < 768 && contentRef.current) {
       // Delay slightly so React has re-rendered the new tab before scrolling
       setTimeout(() => {
@@ -1447,6 +1484,9 @@ export default function ForexDashboard() {
                 {livePriceMap[selectedPair]
                   || (signal.current_price ? String(signal.current_price) : String(signal.entry_price))}
               </span>
+              {lastPriceUpdate && (
+                <span className="text-text-muted ml-1">({lastPriceUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+              )}
             </span>
           )}
         </motion.div>
@@ -1494,12 +1534,27 @@ export default function ForexDashboard() {
             {activeTab === 'sr' && <SRTab />}
             {activeTab === 'volatile' && <VolatileTab />}
             {activeTab === 'reversal' && <ReversalTab />}
-            {activeTab === 'success' && <SuccessTab allPairs={forexPairs} />}
+            {activeTab === 'success' && <SuccessTab allPairs={forexPairs} loadAll={successTabClicks > 1} />}
             {activeTab === 'scanner' && <ScannerTab />}
             {activeTab === 'news' && <NewsTab />}
             {activeTab === 'alerts' && <AlertsTab />}
           </motion.div>
         </AnimatePresence>
+
+        {/* Price disclaimer */}
+        <div className="flex items-start gap-2 px-3 py-2 bg-accent-yellow/5 border border-accent-yellow/20 rounded-lg text-xs text-text-muted">
+          <span className="flex-shrink-0">⚠️</span>
+          <span>
+            Prices are indicative and were last updated at{' '}
+            <span className="font-mono text-text-secondary">
+              {lastPriceUpdate
+                ? lastPriceUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : 'loading…'}
+            </span>
+            {'. '}
+            They may not reflect real-time market fluctuations. Always verify with your broker before trading.
+          </span>
+        </div>
 
         {/* Partner cards */}
         <div className="pt-4 border-t border-border-default">

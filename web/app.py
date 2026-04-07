@@ -2694,11 +2694,14 @@ async def forex_sr_breakouts():
 # ─── Price Action Pattern Scanner API ────────────────────────────────────────
 
 @app.get("/api/forex/pattern-scanner")
-async def forex_pattern_scanner():
+async def forex_pattern_scanner(timeframe: str = "1h"):
     """Detect market structure formations across all supported pairs.
 
     Analyses each pair's technical data (BOS, CHoCH, FVG status, S/R proximity,
     and signal strength) and maps them to named market structure formations.
+
+    Query params:
+    - ``timeframe``: ``'30m'`` | ``'1h'`` | ``'4h'`` | ``'1day'`` (default ``'1h'``)
 
     Each pattern entry includes:
     - ``pair``        : trading pair symbol
@@ -2708,6 +2711,13 @@ async def forex_pattern_scanner():
     - ``direction``   : ``'BUY'`` | ``'SELL'`` | ``'HOLD'``
     - ``description`` : detailed explanation
     """
+    valid_timeframes = {"30m", "1h", "4h", "1day"}
+    if timeframe not in valid_timeframes:
+        timeframe = "1h"
+    # Map timeframe to how many recent price bars to use for trend/proximity analysis
+    tf_window: dict[str, int] = {"30m": 5, "1h": 10, "4h": 20, "1day": 30}
+    analysis_window = tf_window[timeframe]
+
     # Collect all raw pattern candidates then deduplicate to one per pair.
     _all_candidates: list[dict[str, Any]] = []
 
@@ -2717,7 +2727,9 @@ async def forex_pattern_scanner():
         # unavailable — static fallback prices would not match market conditions.
         if pair in _YF_PAIRS and live_rate is None:
             continue
-        prices = _get_prices_for_pair(pair, 30)
+        prices_full = _get_prices_for_pair(pair, 30)
+        # Use only the recent slice relevant to the selected timeframe
+        prices = prices_full[-analysis_window:] if len(prices_full) >= analysis_window else prices_full
         current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
         signal = _FOREX_SIGNALS[pair]
         direction = signal["direction"]
@@ -2885,6 +2897,7 @@ async def forex_pattern_scanner():
 
     return JSONResponse({
         "patterns": patterns,
+        "timeframe": timeframe,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     })
 
