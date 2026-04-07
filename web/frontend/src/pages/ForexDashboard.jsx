@@ -3,12 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, Minus, Search, RefreshCw, Volume2, VolumeX,
   BarChart2, AlertTriangle, Target, Layers, Zap,
-  Star, Award, Flame, ChevronRight, ChevronLeft, Newspaper, ExternalLink,
+  Star, Award, Flame, ChevronRight, ChevronLeft,
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
   getFvgScanner, getSrBreakouts, getPatternScanner,
-  getEconomicCalendar, getNews,
 } from '../utils/api'
 import PartnerCards from '../components/PartnerCard'
 
@@ -87,7 +86,6 @@ const TABS = [
   { id: 'reversal', label: '🔄 Reversal', icon: RefreshCw },
   { id: 'success', label: '🏆 Success', icon: Star },
   { id: 'scanner', label: '🔮 Scanner', icon: Search },
-  { id: 'news', label: '📰 News', icon: Newspaper },
 ]
 
 const MAJOR_PAIRS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
@@ -1329,72 +1327,6 @@ function Gamebar() {
   )
 }
 
-// ─── News Tab ─────────────────────────────────────────────────────────────────
-function NewsTab() {
-  const [articles, setArticles] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    const fetch = () => {
-      getNews()
-        .then((res) => {
-          setArticles(res.news || [])
-          setLoading(false)
-          setError(null)
-        })
-        .catch(() => {
-          setError('Unable to load news. Please try again later.')
-          setLoading(false)
-        })
-    }
-    fetch()
-    const id = setInterval(fetch, 300_000) // refresh every 5 min
-    return () => clearInterval(id)
-  }, [])
-
-  if (loading) return <LoadingSpinner text="Loading market news…" />
-  if (error && articles.length === 0) return <ErrorBox msg={error} />
-  if (articles.length === 0) return <EmptyState title="No news available" desc="Market news will appear here when available." />
-
-  return (
-    <div className="space-y-2">
-      <p className="text-text-muted text-xs mb-3">
-        Live headlines from ForexLive, FXStreet, DailyFX, Reuters &amp; more — updated every 5 minutes.
-      </p>
-      {articles.map((article, i) => (
-        <a
-          key={i}
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block bg-bg-card border border-border-default rounded-lg p-3 hover:border-accent-blue/50 transition-all group"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h4 className="text-text-primary text-sm font-medium leading-snug group-hover:text-accent-blue transition-colors line-clamp-2">
-                {article.title}
-              </h4>
-              {article.summary && (
-                <p className="text-text-muted text-xs mt-1 leading-relaxed line-clamp-2">{article.summary}</p>
-              )}
-              <div className="flex items-center gap-3 mt-2">
-                {article.source && (
-                  <span className="text-accent-blue text-xs font-medium">{article.source}</span>
-                )}
-                {article.published_at && (
-                  <span className="text-text-muted text-xs">{article.published_at}</span>
-                )}
-              </div>
-            </div>
-            <ExternalLink size={14} className="text-text-muted flex-shrink-0 mt-0.5 group-hover:text-accent-blue transition-colors" />
-          </div>
-        </a>
-      ))}
-    </div>
-  )
-}
-
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ForexDashboard() {
   const [allPairsData, setAllPairsData] = useState(null)
@@ -1560,7 +1492,7 @@ export default function ForexDashboard() {
           <button onClick={() => scrollTabs(-1)} className="flex-shrink-0 p-1 rounded-lg bg-bg-card border border-border-default text-text-muted hover:text-text-primary flex">
             <ChevronLeft size={13} />
           </button>
-          <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5">
+          <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 pb-0.5 justify-center">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -1597,7 +1529,6 @@ export default function ForexDashboard() {
             {activeTab === 'reversal' && <ReversalTab />}
             {activeTab === 'success' && <SuccessTab allPairs={forexPairs} loadAll={successTabClicks > 1} />}
             {activeTab === 'scanner' && <ScannerTab />}
-            {activeTab === 'news' && <NewsTab />}
           </motion.div>
         </AnimatePresence>
 
