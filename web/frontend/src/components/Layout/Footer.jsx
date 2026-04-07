@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Activity, Database, Lock } from 'lucide-react'
+import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Activity, Database, Lock, AlertTriangle, Info } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -114,22 +114,21 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                { icon: BarChart2,   text: 'AI-Powered Forex Signals' },
-                { icon: TrendingUp,  text: '51 Currency Pairs Covered' },
-                { icon: Clock,       text: 'Real-Time Market Updates' },
-                { icon: Shield,      text: 'Risk Management & Position Sizing' },
-                { icon: BrainCircuit,text: 'LightGBM ML Models' },
-                { icon: Globe,       text: 'Technical Analysis Suite' },
-                { icon: Activity,    text: 'Live Price Structure Chart' },
-                { icon: Zap,         text: 'Break of Structure (BOS) Detection' },
-                { icon: Target,      text: 'Fair-Value Gap (FVG) Scanner' },
-                { icon: TrendingUp,  text: 'Support & Resistance Breakouts' },
-                { icon: Globe,       text: 'Change of Character (CHoCH)' },
-                { icon: BarChart2,   text: 'High Volume Trade Zones' },
-                { icon: Globe,       text: 'Pattern Recognition Scanner' },
-                { icon: Newspaper,   text: 'Live Market News & Sentiment' },
-                { icon: Clock,       text: 'Economic Calendar Integration' },
-                { icon: Lock,        text: 'Secure & Privacy-First' },
+                { icon: BarChart2,    text: 'AI-Powered Forex Signals' },
+                { icon: TrendingUp,   text: '51 Currency Pairs Covered' },
+                { icon: Clock,        text: 'Real-Time Market Updates' },
+                { icon: Shield,       text: 'Risk Management & Position Sizing' },
+                { icon: BrainCircuit, text: 'LightGBM ML Models' },
+                { icon: Globe,        text: 'Technical Analysis Suite' },
+                { icon: Activity,     text: 'Live Price Structure Chart' },
+                { icon: Zap,          text: 'Break of Structure (BOS) Detection' },
+                { icon: Target,       text: 'Fair-Value Gap (FVG) Scanner' },
+                { icon: TrendingUp,   text: 'Support & Resistance Breakouts' },
+                { icon: Globe,        text: 'Change of Character (CHoCH)' },
+                { icon: BarChart2,    text: 'High Volume Trade Zones' },
+                { icon: Globe,        text: 'Pattern Recognition Scanner' },
+                { icon: Clock,        text: 'Economic Calendar Integration' },
+                { icon: Lock,         text: 'Secure & Privacy-First' },
               ].map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-2 text-text-secondary text-sm">
                   <Icon size={13} className="text-accent-blue flex-shrink-0" />
@@ -182,6 +181,48 @@ export default function Footer() {
             </p>
           </motion.div>
         </div>
+
+        {/* Full-width disclaimer banner */}
+        <motion.div variants={itemVariants} className="border-t border-border-default mt-10 pt-8">
+          <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-5">
+            <h4 className="text-red-400 font-bold text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
+              <AlertTriangle size={15} className="flex-shrink-0" /> Important Disclaimer
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-text-muted leading-relaxed">
+              <div>
+                <p className="mb-2">
+                  <span className="text-text-secondary font-semibold">Not Financial Advice.</span> All content, signals, analysis, and information published on PiiTrade are provided for <span className="text-text-secondary font-medium">educational and informational purposes only</span>. Nothing on this platform constitutes financial advice, investment advice, trading advice, or any other type of professional advice. PiiTrade is not a licensed financial adviser and does not hold any regulatory licence.
+                </p>
+                <p className="mb-2">
+                  <span className="text-text-secondary font-semibold">Risk of Loss.</span> Forex and CFD trading carries a <span className="text-text-secondary font-medium">high level of risk</span> and may not be suitable for all investors. Leverage can work both for and against you and can lead to the loss of all invested capital. You should never trade with money you cannot afford to lose.
+                </p>
+                <p>
+                  <span className="text-text-secondary font-semibold">No Guarantees.</span> Past performance of any signal or strategy is not indicative of future results. All AI-generated signals are produced by automated machine-learning models and may contain errors, inaccuracies, or omissions. PiiTrade makes no guarantee of accuracy, completeness, or fitness for any particular purpose.
+                </p>
+              </div>
+              <div>
+                <p className="mb-2">
+                  <span className="text-text-secondary font-semibold">Your Responsibility.</span> You are solely responsible for any trading decisions you make. Before engaging in any trading activity you should carefully consider your investment objectives, level of experience, and risk appetite. Seek independent financial advice from a qualified professional if you are unsure.
+                </p>
+                <p className="mb-2">
+                  <span className="text-text-secondary font-semibold">Third-Party Data.</span> PiiTrade aggregates data from third-party sources including the ECB Frankfurter API, ForexFactory, and various public data feeds. We cannot guarantee the accuracy or timeliness of this data and accept no liability for losses arising from reliance on it.
+                </p>
+                <p>
+                  By accessing and using PiiTrade you confirm that you have read, understood, and agree to be bound by our{' '}
+                  <Link to="/disclaimer" className="text-accent-blue hover:underline">full disclaimer and terms of use</Link>.
+                  If you do not agree with these terms, please discontinue use of this platform immediately.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-text-muted text-xs border-t border-accent-red/10 pt-3">
+              <Info size={12} className="text-accent-blue flex-shrink-0" />
+              <span>
+                PiiTrade is a <span className="text-text-secondary font-medium">free, open-access</span> research tool. We are not affiliated with, endorsed by, or regulated by any financial authority. Read the full{' '}
+                <Link to="/disclaimer" className="text-accent-blue hover:underline">Disclaimer</Link> for complete terms.
+              </span>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Partner strip */}
         <motion.div variants={itemVariants} className="border-t border-border-default mt-10 pt-6">
