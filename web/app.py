@@ -778,6 +778,57 @@ def _compute_tp_sl_pips(prices: list[float], pair: str) -> tuple[int, int]:
     return int(avg_range_pips * 1.5), int(avg_range_pips * 0.75)
 
 
+def _generate_ai_label(direction: str, confidence: float, prices: list[float], is_live: bool) -> str:
+    """Generate a human-readable AI opportunity label from signal data.
+
+    Combines direction, confidence level, and recent price action into a
+    concise label that traders can use to quickly assess the opportunity.
+    """
+    d = direction.upper()
+
+    # Confidence tier
+    if confidence >= 75:
+        strength = "High Confidence"
+    elif confidence >= 62:
+        strength = "Moderate Confidence"
+    else:
+        strength = "Low Confidence"
+
+    # Detect recent price action (last 5 candles vs previous 5)
+    if len(prices) >= 10:
+        recent_avg = sum(prices[-5:]) / 5
+        prev_avg = sum(prices[-10:-5]) / 5
+        momentum = (recent_avg - prev_avg) / prev_avg if prev_avg else 0.0
+    elif len(prices) >= 5:
+        recent_avg = sum(prices[-3:]) / 3
+        prev_avg = sum(prices[-5:-3]) / 2
+        momentum = (recent_avg - prev_avg) / prev_avg if prev_avg else 0.0
+    else:
+        momentum = 0.0
+
+    # Assign action label based on direction + momentum alignment
+    if d == "BUY":
+        if momentum > 0.001:
+            action = "Momentum Continuation"
+        elif momentum < -0.001:
+            action = "Reversal Setup — Dip Entry"
+        else:
+            action = "Bullish Breakout Opportunity"
+    elif d == "SELL":
+        if momentum < -0.001:
+            action = "Downtrend Continuation"
+        elif momentum > 0.001:
+            action = "Bearish Reversal — Short Setup"
+        else:
+            action = "Bearish Breakdown Opportunity"
+    else:
+        action = "Range-Bound — Await Breakout"
+
+    prefix = "🟢" if d == "BUY" else ("🔴" if d == "SELL" else "🟡")
+    source = " · Live Data" if is_live else " · Static Fallback"
+    return f"{prefix} {strength} · {action}{source}"
+
+
 def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[dict[str, Any]]:
     _pip, dec = _pair_pip_dec(pair)
     dates = sorted(hist_rates.keys())
@@ -2181,6 +2232,18 @@ async def forex_signals(pair: str = "EUR/USD"):
     correct_count = sum(1 for h in history if h["correct"])
     signal["accuracy_30d"] = round(correct_count / len(history) * 100, 1) if history else 0.0
     signal["history"] = history
+
+    # Generate AI opportunity label using live price history when available
+    _label_prices = list(hist_rates.values()) if hist_rates else []
+    _is_live = signal.get("is_live", False)
+    signal["ai_label"] = _generate_ai_label(
+        signal.get("direction", "HOLD"),
+        float(signal.get("confidence", 50)),
+        _label_prices,
+        _is_live,
+    )
+    signal["opportunity"] = signal["ai_label"]
+
     return JSONResponse(signal)
 
 
