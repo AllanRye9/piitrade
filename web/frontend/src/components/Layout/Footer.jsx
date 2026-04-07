@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen } from 'lucide-react'
+import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Bell, Activity, Database, Lock } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,17 +39,22 @@ export default function Footer() {
             <p className="text-text-muted text-xs leading-relaxed mb-2">
               Trusted by thousands of traders worldwide. No subscriptions, no paywalls — just powerful signals.
             </p>
-            <p className="text-text-muted text-xs leading-relaxed mb-4">
+            <p className="text-text-muted text-xs leading-relaxed mb-2">
               Our platform combines 11 analytical tools — from FVG scanning and S/R breakout detection
               to pattern recognition and news sentiment — giving every trader the edge they need to
               navigate today's fast-moving forex markets.
+            </p>
+            <p className="text-text-muted text-xs leading-relaxed mb-4">
+              PiiTrade aggregates data from multiple institutional-grade sources including the European
+              Central Bank (ECB) Frankfurter API, live RSS news feeds from ForexLive, FXStreet, DailyFX,
+              Reuters, and MarketWatch, plus real-time economic calendar events.
             </p>
             <div className="flex items-center gap-3 mt-2">
               <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer"
                 className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Partner: Exness">
                 <ExternalLink size={15} />
               </a>
-              <a href="#" className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Website">
+              <a href="https://piitrade.com" className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="PiiTrade Website">
                 <Globe size={15} />
               </a>
               <a href="mailto:support@piitrade.com" className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Contact us">
@@ -80,6 +85,26 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+
+            <h4 className="text-text-primary font-semibold mt-6 mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+              <Database size={14} className="text-accent-blue" /> Data Sources
+            </h4>
+            <ul className="space-y-1.5">
+              {[
+                'ECB Frankfurter API (live rates)',
+                'ForexLive RSS Feed',
+                'FXStreet News Feed',
+                'DailyFX Analysis Feed',
+                'Reuters Business News',
+                'MarketWatch Forex Feed',
+                'ForexFactory Economic Calendar',
+              ].map((src) => (
+                <li key={src} className="text-text-muted text-xs flex items-start gap-1.5">
+                  <span className="text-accent-blue mt-0.5 flex-shrink-0">›</span>
+                  {src}
+                </li>
+              ))}
+            </ul>
           </motion.div>
 
           {/* Features */}
@@ -89,17 +114,23 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                { icon: BarChart2, text: 'AI-Powered Forex Signals' },
-                { icon: TrendingUp, text: '51 Currency Pairs Covered' },
-                { icon: Clock, text: 'Real-Time Market Updates' },
-                { icon: Shield, text: 'Risk Management & Position Sizing' },
-                { icon: BrainCircuit, text: 'LightGBM ML Models' },
-                { icon: Globe, text: 'Technical Analysis Suite' },
-                { icon: BarChart2, text: 'Fair-Value Gap (FVG) Scanner' },
-                { icon: TrendingUp, text: 'Support & Resistance Breakouts' },
-                { icon: Globe, text: 'Pattern Recognition Scanner' },
-                { icon: Clock, text: 'Market News & Sentiment Feed' },
-                { icon: Shield, text: 'Email Alert Subscriptions' },
+                { icon: BarChart2,   text: 'AI-Powered Forex Signals' },
+                { icon: TrendingUp,  text: '51 Currency Pairs Covered' },
+                { icon: Clock,       text: 'Real-Time Market Updates' },
+                { icon: Shield,      text: 'Risk Management & Position Sizing' },
+                { icon: BrainCircuit,text: 'LightGBM ML Models' },
+                { icon: Globe,       text: 'Technical Analysis Suite' },
+                { icon: Activity,    text: 'Live Price Structure Chart' },
+                { icon: Zap,         text: 'Break of Structure (BOS) Detection' },
+                { icon: Target,      text: 'Fair-Value Gap (FVG) Scanner' },
+                { icon: TrendingUp,  text: 'Support & Resistance Breakouts' },
+                { icon: Globe,       text: 'Change of Character (CHoCH)' },
+                { icon: BarChart2,   text: 'High Volume Trade Zones' },
+                { icon: Globe,       text: 'Pattern Recognition Scanner' },
+                { icon: Newspaper,   text: 'Live Market News & Sentiment' },
+                { icon: Bell,        text: 'Price Alert Notifications' },
+                { icon: Clock,       text: 'Economic Calendar Integration' },
+                { icon: Lock,        text: 'Secure & Privacy-First' },
               ].map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-2 text-text-secondary text-sm">
                   <Icon size={13} className="text-accent-blue flex-shrink-0" />
@@ -109,7 +140,7 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Risk Warning */}
+          {/* Risk Warning + Mission */}
           <motion.div variants={itemVariants}>
             <h4 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
               <Shield size={14} className="text-red-400" /> Risk Warning
@@ -127,10 +158,28 @@ export default function Footer() {
               Never trade with funds you cannot afford to lose. Seek independent financial advice if necessary.
               PiiTrade does not hold any regulatory licence and is not authorised to provide financial advice.
             </p>
-            <p className="text-text-muted text-xs leading-relaxed">
+            <p className="text-text-muted text-xs leading-relaxed mb-4">
               By using this platform you confirm that you have read, understood, and agree to our
               <Link to="/disclaimer" className="text-accent-blue hover:underline ml-1">full disclaimer</Link>.
               All signal outputs are generated by automated machine-learning models and may contain errors.
+            </p>
+
+            <h4 className="text-text-primary font-semibold mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+              <Zap size={14} className="text-accent-blue" /> Our Mission
+            </h4>
+            <p className="text-text-muted text-xs leading-relaxed mb-2">
+              PiiTrade was built to democratize access to institutional-grade forex analysis. We believe
+              every trader — from beginner to professional — deserves accurate, timely, and intelligible
+              market intelligence without paying premium subscription fees.
+            </p>
+            <p className="text-text-muted text-xs leading-relaxed mb-2">
+              We continuously improve our AI models, expand our data sources, and enhance our analytical
+              toolkit so that traders can visit daily to acquire, analyze, and research quality forex
+              information on a consistent basis.
+            </p>
+            <p className="text-text-muted text-xs leading-relaxed">
+              Our platform is built on transparency — every signal comes with its confidence score,
+              data source attribution, and an explanation of what market conditions led to the prediction.
             </p>
           </motion.div>
         </div>
@@ -153,6 +202,8 @@ export default function Footer() {
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-3 text-text-muted text-xs">
               <span>© {new Date().getFullYear()} PiiTrade. All rights reserved.</span>
+              <span className="hidden sm:inline text-border-default">|</span>
+              <a href="https://piitrade.com" className="hover:text-accent-blue transition-colors">piitrade.com</a>
               <span className="hidden sm:inline text-border-default">|</span>
               <span>Not financial advice. Trade responsibly.</span>
             </div>

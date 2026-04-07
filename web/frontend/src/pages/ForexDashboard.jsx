@@ -453,16 +453,176 @@ function RiskCalcTab({ pair }) {
   )
 }
 
+// ─── Technical Chart (SVG) ────────────────────────────────────────────────────
+function TechnicalChart({ data }) {
+  const currentPrice = data.current_price
+  const sr = data.support_resistance || {}
+  const supportLevels = Array.isArray(sr.support) ? sr.support : []
+  const resistanceLevels = Array.isArray(sr.resistance) ? sr.resistance : []
+  const fvgZones = data.fvg || []
+  const hvzones = data.high_volume_zones || []
+  const bos = data.bos || []
+  const choch = data.choch || []
+
+  const allPrices = [
+    currentPrice,
+    ...supportLevels, ...resistanceLevels,
+    ...fvgZones.flatMap(z => [z.top, z.bottom]),
+    ...hvzones.flatMap(z => [z.top, z.bottom]),
+    ...bos.map(b => b.level),
+    ...choch.map(c => c.level),
+  ].filter(p => p != null && !isNaN(p))
+
+  if (allPrices.length === 0) return null
+
+  const minPrice = Math.min(...allPrices)
+  const maxPrice = Math.max(...allPrices)
+  const range = maxPrice - minPrice || currentPrice * 0.005
+  const pad = range * 0.18
+  const chartMin = minPrice - pad
+  const chartMax = maxPrice + pad
+  const chartRange = chartMax - chartMin
+  const W = 700; const H = 300; const LW = 68
+
+  const toY = (price) => ((chartMax - price) / chartRange) * H
+
+  return (
+    <div className="bg-bg-card border border-border-default rounded-xl p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h3 className="text-text-primary text-sm font-semibold">📊 Price Structure Chart — {data.pair}</h3>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {[['bg-accent-green/60','Support'],['bg-accent-red/60','Resistance'],['bg-accent-blue/30','FVG Bull'],['bg-accent-red/20','FVG Bear'],['bg-accent-yellow/30','High Vol']].map(([col,lbl]) => (
+            <span key={lbl} className="flex items-center gap-1 text-text-muted">
+              <span className={`w-3 h-2 rounded-sm ${col} inline-block`} />{lbl}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 280, height: H }}>
+          {/* Grid */}
+          {[0,25,50,75,100].map(pct => {
+            const price = chartMax - (pct/100)*chartRange
+            const y = (pct/100)*H
+            return (
+              <g key={pct}>
+                <line x1={LW} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+                <text x={LW-4} y={y+4} textAnchor="end" fontSize="8" fill="rgba(180,180,180,0.35)">{price.toFixed(5)}</text>
+              </g>
+            )
+          })}
+          {/* High Volume Trade Zones */}
+          {hvzones.map((z,i) => {
+            const y1 = toY(z.top); const y2 = toY(z.bottom)
+            const y = Math.min(y1,y2); const h = Math.max(Math.abs(y2-y1),3)
+            return (
+              <g key={`hvz${i}`}>
+                <rect x={LW} y={y} width={W-LW} height={h}
+                  fill={z.strength==='high'?'rgba(251,191,36,0.13)':'rgba(251,191,36,0.07)'}
+                  stroke="rgba(251,191,36,0.35)" strokeWidth="0.6" strokeDasharray="3,3"/>
+                <text x={LW+5} y={y+h/2+3} fontSize="7.5" fill="rgba(251,191,36,0.75)">
+                  🔥 {z.strength==='high'?'High Vol':'Med Vol'}
+                </text>
+              </g>
+            )
+          })}
+          {/* FVG Zones */}
+          {fvgZones.map((z,i) => {
+            const y1 = toY(z.top); const y2 = toY(z.bottom)
+            const y = Math.min(y1,y2); const h = Math.max(Math.abs(y2-y1),3)
+            const bull = z.type==='bullish'; const filled = z.filled
+            return (
+              <g key={`fvg${i}`}>
+                <rect x={LW+8} y={y} width={W-LW-8} height={h}
+                  fill={bull?(filled?'rgba(74,222,128,0.05)':'rgba(74,222,128,0.16)'):(filled?'rgba(248,113,113,0.05)':'rgba(248,113,113,0.16)')}
+                  stroke={bull?(filled?'rgba(74,222,128,0.25)':'rgba(74,222,128,0.55)'):(filled?'rgba(248,113,113,0.25)':'rgba(248,113,113,0.55)')}
+                  strokeWidth="0.8"/>
+                <text x={LW+13} y={y+h/2+3} fontSize="7.5"
+                  fill={bull?'rgba(74,222,128,0.85)':'rgba(248,113,113,0.85)'}>
+                  🌀 FVG {bull?'▲':'▼'}{filled?' (Filled)':''}
+                </text>
+              </g>
+            )
+          })}
+          {/* Support lines */}
+          {supportLevels.map((lvl,i) => {
+            const y = toY(lvl)
+            return (
+              <g key={`s${i}`}>
+                <line x1={LW} y1={y} x2={W} y2={y} stroke="rgba(74,222,128,0.7)" strokeWidth="1.5"/>
+                <text x={W-3} y={y-3} textAnchor="end" fontSize="7.5" fill="rgba(74,222,128,0.85)">
+                  S{i+1} {typeof lvl==='number'?lvl.toFixed(5):lvl}
+                </text>
+              </g>
+            )
+          })}
+          {/* Resistance lines */}
+          {resistanceLevels.map((lvl,i) => {
+            const y = toY(lvl)
+            return (
+              <g key={`r${i}`}>
+                <line x1={LW} y1={y} x2={W} y2={y} stroke="rgba(248,113,113,0.7)" strokeWidth="1.5"/>
+                <text x={W-3} y={y-3} textAnchor="end" fontSize="7.5" fill="rgba(248,113,113,0.85)">
+                  R{i+1} {typeof lvl==='number'?lvl.toFixed(5):lvl}
+                </text>
+              </g>
+            )
+          })}
+          {/* BOS markers */}
+          {bos.map((b,i) => {
+            const y = toY(b.level); const bull = b.type==='bullish'
+            return (
+              <g key={`bos${i}`}>
+                <line x1={LW} y1={y} x2={W-80} y2={y} stroke={bull?'rgba(74,222,128,0.45)':'rgba(248,113,113,0.45)'} strokeWidth="1" strokeDasharray="4,2"/>
+                <rect x={LW+5} y={y-8} width={34} height={14} rx={3}
+                  fill={bull?'rgba(74,222,128,0.12)':'rgba(248,113,113,0.12)'}
+                  stroke={bull?'rgba(74,222,128,0.4)':'rgba(248,113,113,0.4)'} strokeWidth="0.5"/>
+                <text x={LW+9} y={y+3.5} fontSize="7" fill={bull?'rgba(74,222,128,0.95)':'rgba(248,113,113,0.95)'} fontWeight="bold">⚡BOS</text>
+              </g>
+            )
+          })}
+          {/* CHoCH markers */}
+          {choch.map((c,i) => {
+            const y = toY(c.level); const bull = c.type==='bullish'
+            return (
+              <g key={`choch${i}`}>
+                <line x1={LW} y1={y} x2={W-80} y2={y} stroke="rgba(139,92,246,0.55)" strokeWidth="1" strokeDasharray="2,2"/>
+                <rect x={LW+43} y={y-8} width={44} height={14} rx={3}
+                  fill="rgba(139,92,246,0.12)" stroke="rgba(139,92,246,0.4)" strokeWidth="0.5"/>
+                <text x={LW+47} y={y+3.5} fontSize="7" fill="rgba(139,92,246,0.95)" fontWeight="bold">🔄CHoCH {bull?'▲':'▼'}</text>
+              </g>
+            )
+          })}
+          {/* Current price */}
+          {currentPrice != null && (() => {
+            const y = toY(currentPrice)
+            return (
+              <g>
+                <line x1={LW} y1={y} x2={W} y2={y} stroke="#60a5fa" strokeWidth="2" strokeDasharray="7,3"/>
+                <rect x={LW+2} y={y-9} width={78} height={17} rx={4} fill="rgba(96,165,250,0.18)" stroke="rgba(96,165,250,0.6)" strokeWidth="0.7"/>
+                <text x={LW+6} y={y+3.5} fontSize="8.5" fill="#60a5fa" fontWeight="bold">
+                  ● {currentPrice.toFixed(5)}
+                </text>
+              </g>
+            )
+          })()}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 // ─── Technical Tab ────────────────────────────────────────────────────────────
 function TechnicalTab({ pair }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(null)
 
   const fetchData = useCallback(() => {
     if (!pair) return
     getTechnical(pair)
-      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .then((res) => { setData(res); setLoading(false); setError(null); setLastUpdated(new Date()) })
       .catch(() => { setError('Failed to load technical data.'); setLoading(false) })
   }, [pair])
 
@@ -479,26 +639,61 @@ function TechnicalTab({ pair }) {
   const fvg = data.fvg_zones || data.fvg || []
   const bos = data.bos || []
   const choch = data.choch || []
+  const hvzones = data.high_volume_zones || []
 
   const supportLevels = Array.isArray(sr.support) ? sr.support : (sr.support != null ? [sr.support] : [])
   const resistanceLevels = Array.isArray(sr.resistance) ? sr.resistance : (sr.resistance != null ? [sr.resistance] : [])
 
   return (
     <div className="space-y-3">
+      {/* Live Current Price Banner */}
+      {data.current_price != null && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-gradient-to-r from-accent-blue/15 to-accent-purple/10 border border-accent-blue/35 rounded-xl">
+          <div>
+            <p className="text-text-muted text-xs mb-0.5">💱 Current Price</p>
+            <p className="text-2xl font-bold font-mono text-accent-blue">
+              {typeof data.current_price === 'number' ? data.current_price.toFixed(5) : data.current_price}
+            </p>
+            <p className="text-text-muted text-xs mt-0.5">{pair}</p>
+          </div>
+          <div className="text-right text-xs text-text-muted">
+            <p>🔴 Live Data</p>
+            {lastUpdated && <p>{lastUpdated.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Price Structure Chart */}
+      <TechnicalChart data={data} />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* S/R */}
         <div className="bg-bg-card border border-border-default rounded-xl p-3">
-          <h3 className="text-text-primary text-sm font-semibold mb-3">Support & Resistance</h3>
+          <h3 className="text-text-primary text-sm font-semibold mb-3">Support &amp; Resistance</h3>
           <div className="space-y-2">
             {resistanceLevels.map((lvl, i) => (
               <div key={`res-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
-                <span className="text-accent-red text-sm">Resistance {i + 1}</span>
+                <div>
+                  <span className="text-accent-red text-sm">Resistance {i + 1}</span>
+                  {data.current_price && (
+                    <span className="text-text-muted text-xs ml-2">
+                      +{(Math.abs(lvl - data.current_price) * (pair?.includes('JPY') ? 100 : 10000)).toFixed(1)}p
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
             ))}
             {supportLevels.map((lvl, i) => (
               <div key={`sup-${i}`} className="flex justify-between items-center py-2 px-3 bg-accent-green/10 border border-accent-green/20 rounded-lg">
-                <span className="text-accent-green text-sm">Support {i + 1}</span>
+                <div>
+                  <span className="text-accent-green text-sm">Support {i + 1}</span>
+                  {data.current_price && (
+                    <span className="text-text-muted text-xs ml-2">
+                      -{(Math.abs(data.current_price - lvl) * (pair?.includes('JPY') ? 100 : 10000)).toFixed(1)}p
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-sm text-text-primary">{typeof lvl === 'number' ? lvl.toFixed(5) : lvl}</span>
               </div>
             ))}
@@ -513,12 +708,17 @@ function TechnicalTab({ pair }) {
           <h3 className="text-text-primary text-sm font-semibold mb-3">Market Structure</h3>
           <div className="space-y-2">
             {[...bos.map(b => ({ ...b, label: 'BOS' })), ...choch.map(c => ({ ...c, label: 'CHoCH' }))].slice(0, 6).map((item, i) => (
-              <div key={i} className="flex justify-between items-center py-1.5 border-b border-border-subtle last:border-0">
-                <div>
-                  <span className={`text-xs font-semibold uppercase mr-1 ${item.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>{item.label}</span>
-                  <span className="text-text-secondary text-xs">{item.type}</span>
+              <div key={i} className="py-1.5 border-b border-border-subtle last:border-0">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className={`text-xs font-bold uppercase mr-1 px-1.5 py-0.5 rounded ${item.label === 'BOS' ? (item.type === 'bullish' ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red') : 'bg-accent-purple/15 text-accent-purple'}`}>
+                      {item.label === 'BOS' ? '⚡' : '🔄'} {item.label}
+                    </span>
+                    <span className={`text-xs ml-1 ${item.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>{item.type}</span>
+                  </div>
+                  <span className="font-mono text-sm text-text-primary">{typeof item.level === 'number' ? item.level.toFixed(5) : item.level}</span>
                 </div>
-                <span className="font-mono text-sm text-text-primary">{typeof item.level === 'number' ? item.level.toFixed(5) : item.level}</span>
+                {item.description && <p className="text-text-muted text-xs mt-1 leading-snug">{item.description}</p>}
               </div>
             ))}
             {!bos.length && !choch.length && <p className="text-text-muted text-sm">No market structure data</p>}
@@ -529,16 +729,46 @@ function TechnicalTab({ pair }) {
       {/* FVG Zones */}
       {fvg.length > 0 && (
         <div className="bg-bg-card border border-border-default rounded-xl p-3">
-          <h3 className="text-text-primary text-sm font-semibold mb-2">FVG Zones</h3>
+          <h3 className="text-text-primary text-sm font-semibold mb-2">🌀 Fair Value Gaps</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {fvg.map((zone, i) => (
+              <div key={i} className={`rounded-lg p-2.5 border ${zone.type === 'bullish' ? (zone.filled ? 'bg-accent-green/5 border-accent-green/20' : 'bg-accent-green/12 border-accent-green/40') : (zone.filled ? 'bg-accent-red/5 border-accent-red/20' : 'bg-accent-red/12 border-accent-red/40')}`}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`text-xs font-bold ${zone.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>
+                    {zone.type === 'bullish' ? '▲' : '▼'} {zone.type?.toUpperCase()}
+                  </span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${zone.filled ? 'bg-bg-secondary text-text-muted' : 'bg-accent-blue/15 text-accent-blue'}`}>
+                    {zone.filled ? 'Filled' : 'Active'}
+                  </span>
+                </div>
+                <p className="text-text-muted text-xs">High: <span className="font-mono text-text-primary">{typeof zone.top === 'number' ? zone.top.toFixed(5) : zone.top}</span></p>
+                <p className="text-text-muted text-xs">Low: <span className="font-mono text-text-primary">{typeof zone.bottom === 'number' ? zone.bottom.toFixed(5) : zone.bottom}</span></p>
+                {zone.created && <p className="text-text-muted text-xs mt-1">Created: {zone.created}</p>}
+                {zone.description && <p className="text-text-muted text-xs mt-1 leading-snug italic">{zone.description}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* High Volume Trade Zones */}
+      {hvzones.length > 0 && (
+        <div className="bg-bg-card border border-border-default rounded-xl p-3">
+          <h3 className="text-text-primary text-sm font-semibold mb-2">🔥 High Volume Trade Zones</h3>
           <div className="space-y-2">
-            {fvg.slice(0, 5).map((zone, i) => (
-              <div key={i} className="flex justify-between items-center py-2 px-3 bg-bg-secondary rounded-lg">
-                <span className={`text-sm font-medium ${zone.type === 'bullish' ? 'text-accent-green' : 'text-accent-red'}`}>
-                  {zone.type?.toUpperCase() || 'FVG'}{zone.filled ? ' (Filled)' : ''}
-                </span>
-                <span className="font-mono text-xs text-text-secondary">
-                  {zone.bottom ?? zone.low} – {zone.top ?? zone.high}
-                </span>
+            {hvzones.map((zone, i) => (
+              <div key={i} className={`flex items-start justify-between py-2 px-3 rounded-lg border ${zone.strength === 'high' ? 'bg-accent-yellow/10 border-accent-yellow/35' : 'bg-accent-yellow/5 border-accent-yellow/20'}`}>
+                <div>
+                  <span className={`text-xs font-bold uppercase ${zone.strength === 'high' ? 'text-accent-yellow' : 'text-accent-yellow/70'}`}>
+                    {zone.strength === 'high' ? '🔥' : '🟡'} {zone.strength} volume
+                  </span>
+                  <p className="text-text-muted text-xs mt-0.5">{zone.description}</p>
+                </div>
+                <div className="text-right text-xs font-mono text-text-secondary ml-2 flex-shrink-0">
+                  <p>{typeof zone.top === 'number' ? zone.top.toFixed(5) : zone.top}</p>
+                  <p className="text-text-muted">–</p>
+                  <p>{typeof zone.bottom === 'number' ? zone.bottom.toFixed(5) : zone.bottom}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -554,10 +784,13 @@ function FVGTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('approaching')
+  const [expandedPair, setExpandedPair] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(null)
+  const [countdown, setCountdown] = useState(30)
 
   const fetchData = useCallback(() => {
     getFvgScanner()
-      .then((res) => { setData(res); setLoading(false); setError(null) })
+      .then((res) => { setData(res); setLoading(false); setError(null); setLastUpdated(new Date()); setCountdown(30) })
       .catch(() => { setError('Failed to load FVG data.'); setLoading(false) })
   }, [])
 
@@ -567,10 +800,18 @@ function FVGTab() {
     return () => clearInterval(id)
   }, [fetchData])
 
+  // Countdown ticker
+  useEffect(() => {
+    const t = setInterval(() => setCountdown(c => c > 0 ? c - 1 : 30), 1_000)
+    return () => clearInterval(t)
+  }, [])
+
   if (loading) return <LoadingSpinner text="Scanning FVG zones…" />
   if (error && !data) return <ErrorBox msg={error} />
 
   const grouped = data?.grouped || {}
+  const pairFvgs = data?.pair_fvgs || {}
+
   const allItems = Array.isArray(data)
     ? data
     : Object.entries(grouped).flatMap(([status, list]) =>
@@ -579,46 +820,148 @@ function FVGTab() {
 
   const filtered = statusFilter === 'all' ? allItems : allItems.filter(z => (z.status || 'active') === statusFilter)
 
+  const STATUS_META = {
+    approaching: { emoji: '🎯', label: 'Approaching', color: 'text-accent-yellow', border: 'border-accent-yellow/30', bg: 'bg-accent-yellow/10', activeBg: 'bg-accent-yellow text-bg-primary border-accent-yellow' },
+    reached:     { emoji: '✅', label: 'Reached',    color: 'text-accent-green',  border: 'border-accent-green/30',  bg: 'bg-accent-green/10',  activeBg: 'bg-accent-green text-bg-primary border-accent-green'  },
+    passed:      { emoji: '✔️', label: 'Passed',     color: 'text-text-muted',    border: 'border-border-default',   bg: 'bg-bg-card',           activeBg: 'bg-text-secondary text-bg-primary border-text-secondary' },
+    rejected:    { emoji: '❌', label: 'Rejected',   color: 'text-accent-red',    border: 'border-accent-red/30',    bg: 'bg-accent-red/10',    activeBg: 'bg-accent-red text-bg-primary border-accent-red'    },
+    all:         { emoji: '📋', label: 'All',        color: 'text-text-secondary', border: 'border-border-default',  bg: 'bg-bg-card',           activeBg: 'bg-accent-blue text-bg-primary border-accent-blue'  },
+  }
+
   return (
     <div className="space-y-3">
-      {/* Status filter */}
+      {/* Header with live update indicator */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-green bg-accent-green/10 border border-accent-green/30 px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>
+            LIVE
+          </span>
+          {lastUpdated && (
+            <span className="text-text-muted text-xs">{lastUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+          )}
+        </div>
+        <span className="text-text-muted text-xs">Refresh in {countdown}s</span>
+      </div>
+
+      {/* Status filter tabs */}
       <div className="flex flex-wrap gap-1.5">
-        {['approaching', 'active', 'reached', 'rejected', 'all'].map((s) => {
-          const colors = { approaching: 'text-accent-yellow border-accent-yellow/40 bg-accent-yellow/10', active: 'text-accent-blue border-accent-blue/40 bg-accent-blue/10', reached: 'text-accent-green border-accent-green/40 bg-accent-green/10', rejected: 'text-accent-red border-accent-red/40 bg-accent-red/10', all: 'text-text-secondary border-border-default bg-bg-card' }
-          const activeColors = { approaching: 'bg-accent-yellow text-bg-primary border-accent-yellow', active: 'bg-accent-blue text-bg-primary border-accent-blue', reached: 'bg-accent-green text-bg-primary border-accent-green', rejected: 'bg-accent-red text-bg-primary border-accent-red', all: 'bg-text-secondary text-bg-primary border-text-secondary' }
+        {['approaching','reached','rejected','passed','all'].map((s) => {
+          const meta = STATUS_META[s]
           const count = s === 'all' ? allItems.length : allItems.filter(z => (z.status || 'active') === s).length
           return (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border uppercase transition-all ${statusFilter === s ? activeColors[s] : colors[s]}`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border uppercase transition-all ${statusFilter === s ? meta.activeBg : `${meta.color} ${meta.border} ${meta.bg}`}`}
             >
-              {s} {count > 0 && <span className="opacity-70">({count})</span>}
+              {meta.emoji} {meta.label} {count > 0 && <span className="opacity-70">({count})</span>}
             </button>
           )
         })}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title={`No ${statusFilter === 'all' ? '' : statusFilter + ' '}FVG zones`} desc={statusFilter === 'all' ? 'No fair value gaps detected.' : `No zones with status "${statusFilter}" found.`} />
+        <EmptyState title={`No ${statusFilter === 'all' ? '' : STATUS_META[statusFilter]?.label + ' '}FVG zones`} desc={statusFilter === 'all' ? 'No fair value gaps detected.' : `No zones with status "${statusFilter}" found right now.`} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {filtered.map((zone, i) => {
             const status = zone.status || 'active'
-            const statusColor = status === 'approaching' ? 'text-accent-yellow' : status === 'reached' ? 'text-accent-green' : status === 'rejected' ? 'text-accent-red' : 'text-accent-blue'
-            const borderColor = status === 'approaching' ? 'border-accent-yellow/30' : status === 'reached' ? 'border-accent-green/30' : status === 'rejected' ? 'border-accent-red/30' : 'border-accent-blue/30'
+            const meta = STATUS_META[status] || STATUS_META.all
+            const fvgType = zone.fvg_type || zone.type || ''
+            const isBullish = fvgType === 'bullish'
+            const pairKey = zone.pair
+            const pairFvgList = pairKey ? (pairFvgs[pairKey] || []) : []
+            const isExpanded = expandedPair === `${pairKey}-${i}`
+
             return (
-              <div key={i} className={`bg-bg-card border ${borderColor} rounded-xl p-3`}>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-text-primary font-medium">{zone.pair || `Zone ${i + 1}`}</span>
-                  <span className={`text-xs font-semibold uppercase ${statusColor}`}>{status}</span>
+              <div key={i} className={`bg-bg-card border ${meta.border} rounded-xl p-3 flex flex-col gap-2`}>
+                {/* Header row */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-text-primary font-semibold text-sm">{zone.pair || `Zone ${i + 1}`}</p>
+                    <span className={`text-xs font-bold uppercase ${meta.color}`}>{meta.emoji} {status}</span>
+                  </div>
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isBullish ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red'}`}>
+                    {isBullish ? '▲ Bullish' : '▼ Bearish'}
+                  </span>
                 </div>
-                <div className="space-y-1 text-sm">
-                  {(zone.top != null) && <div className="flex justify-between"><span className="text-text-muted">High</span><span className="font-mono text-text-primary">{zone.top}</span></div>}
-                  {(zone.bottom != null) && <div className="flex justify-between"><span className="text-text-muted">Low</span><span className="font-mono text-text-primary">{zone.bottom}</span></div>}
-                  {(zone.fvg_type || zone.type) ? <div className="flex justify-between"><span className="text-text-muted">Type</span><span className={(zone.fvg_type || zone.type) === 'bullish' ? 'text-accent-green' : 'text-accent-red'}>{zone.fvg_type || zone.type}</span></div> : null}
-                  {zone.direction && <div className="flex justify-between"><span className="text-text-muted">Signal</span><span className={dirColor(zone.direction)}>{zone.direction}</span></div>}
+
+                {/* Live price */}
+                {zone.current_price != null && (
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-accent-blue/10 border border-accent-blue/25 rounded-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse inline-block flex-shrink-0"/>
+                    <span className="text-text-muted text-xs">Price:</span>
+                    <span className="font-mono text-accent-blue text-xs font-bold">{typeof zone.current_price === 'number' ? zone.current_price.toFixed(5) : zone.current_price}</span>
+                  </div>
+                )}
+
+                {/* Zone levels */}
+                <div className="grid grid-cols-2 gap-1 text-xs">
+                  {zone.top != null && (
+                    <div className="bg-bg-secondary rounded px-2 py-1">
+                      <p className="text-text-muted">Zone High</p>
+                      <p className="font-mono text-text-primary font-medium">{typeof zone.top === 'number' ? zone.top.toFixed(5) : zone.top}</p>
+                    </div>
+                  )}
+                  {zone.bottom != null && (
+                    <div className="bg-bg-secondary rounded px-2 py-1">
+                      <p className="text-text-muted">Zone Low</p>
+                      <p className="font-mono text-text-primary font-medium">{typeof zone.bottom === 'number' ? zone.bottom.toFixed(5) : zone.bottom}</p>
+                    </div>
+                  )}
                 </div>
+
+                {/* Distance & signal */}
+                <div className="flex gap-2 text-xs flex-wrap">
+                  {zone.direction && (
+                    <span className={`px-1.5 py-0.5 rounded font-semibold ${dirColor(zone.direction)} bg-bg-secondary`}>
+                      Signal: {zone.direction}
+                    </span>
+                  )}
+                  {zone.dist != null && zone.dist > 0 && (
+                    <span className="text-text-muted">Dist: <span className="font-mono">{(zone.dist * 100).toFixed(3)}%</span></span>
+                  )}
+                  {zone.created && (
+                    <span className="text-text-muted">Created: {zone.created}</span>
+                  )}
+                </div>
+
+                {/* Expandable: all FVGs for this pair */}
+                {pairFvgList.length > 0 && (
+                  <button
+                    onClick={() => setExpandedPair(isExpanded ? null : `${pairKey}-${i}`)}
+                    className="text-xs text-accent-blue hover:text-accent-blue/80 text-left flex items-center gap-1 pt-1 border-t border-border-subtle"
+                  >
+                    {isExpanded ? '▲' : '▼'} {isExpanded ? 'Hide' : 'Show'} all {pairFvgList.length} FVGs for {pairKey}
+                  </button>
+                )}
+                {isExpanded && (
+                  <div className="space-y-1.5 pt-1">
+                    {pairFvgList.map((f, fi) => (
+                      <div key={fi} className={`text-xs rounded-lg px-2 py-1.5 border ${f.type === 'bullish' ? 'bg-accent-green/8 border-accent-green/25' : 'bg-accent-red/8 border-accent-red/25'}`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className={f.type === 'bullish' ? 'text-accent-green font-semibold' : 'text-accent-red font-semibold'}>
+                            {f.type === 'bullish' ? '▲' : '▼'} {f.type?.toUpperCase()}
+                          </span>
+                          <span className={`px-1 py-0.5 rounded text-xs ${f.filled ? 'bg-bg-secondary text-text-muted' : 'bg-accent-blue/15 text-accent-blue'}`}>
+                            {f.filled ? 'Filled' : 'Active'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-text-muted">
+                          <div><p>High</p><p className="font-mono text-text-primary">{f.top}</p></div>
+                          <div><p>Mid</p><p className="font-mono text-text-primary">{f.mid}</p></div>
+                          <div><p>Low</p><p className="font-mono text-text-primary">{f.bottom}</p></div>
+                        </div>
+                        {f.description && <p className="text-text-muted mt-1 italic leading-snug">{f.description}</p>}
+                        {f.created && <p className="text-text-muted mt-0.5">Created: {f.created}</p>}
+                        {f.current_price != null && (
+                          <p className="text-accent-blue mt-0.5">Live: <span className="font-mono">{f.current_price}</span></p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -853,10 +1196,10 @@ function SuccessTab({ allPairs, loadAll }) {
 
 // ─── Scanner Tab ──────────────────────────────────────────────────────────────
 const SCANNER_TIMEFRAMES = [
-  { id: '30m', label: '30m' },
-  { id: '1h',  label: '1H' },
-  { id: '4h',  label: '4H' },
-  { id: '1day', label: '1D' },
+  { id: '30m', label: '30m', desc: '30 Minutes' },
+  { id: '1h',  label: '1H',  desc: '1 Hour'    },
+  { id: '4h',  label: '4H',  desc: '4 Hours'   },
+  { id: '1day', label: '1D', desc: '1 Day'     },
 ]
 
 function ScannerTab() {
@@ -894,53 +1237,112 @@ function ScannerTab() {
 
   const items = Array.isArray(data) ? data : data?.patterns || []
 
+  const buyItems  = items.filter(p => (p.direction || '').toUpperCase() === 'BUY'  || p.type?.toLowerCase().includes('bull'))
+  const sellItems = items.filter(p => (p.direction || '').toUpperCase() === 'SELL' || p.type?.toLowerCase().includes('bear'))
+  const holdItems = items.filter(p => !buyItems.includes(p) && !sellItems.includes(p))
+
   return (
     <div className="space-y-3">
       {/* Timeframe tabs */}
-      <div className="flex gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {SCANNER_TIMEFRAMES.map((tf) => (
           <button
             key={tf.id}
             onClick={() => setTimeframe(tf.id)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${timeframe === tf.id ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${timeframe === tf.id ? 'bg-accent-blue text-bg-primary shadow-sm' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'}`}
           >
             {tf.label}
+            <span className={`ml-1 text-xs ${timeframe === tf.id ? 'opacity-80' : 'text-text-muted'}`}>({tf.desc})</span>
           </button>
         ))}
         {data?.generated_at && (
-          <span className="ml-auto text-text-muted text-xs self-center">
-            {new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <span className="ml-auto text-text-muted text-xs self-center hidden sm:inline">
+            🕐 {new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
       </div>
+
       {loading ? <LoadingSpinner text="Scanning patterns…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
-        <EmptyState title="No patterns" desc="No patterns detected in the scanner." />
-      ) : items.map((p, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-text-primary text-sm font-medium">{p.pair || '—'}</p>
-              <p className="text-text-muted text-xs mt-0.5">{p.description || p.timeframe || p.tf || ''}</p>
-            </div>
-            <div className="text-right space-y-1">
-              <span className={`text-sm font-semibold block ${p.type?.toLowerCase().includes('bull') || p.direction === 'BUY' ? 'text-accent-green' : p.type?.toLowerCase().includes('bear') || p.direction === 'SELL' ? 'text-accent-red' : 'text-accent-yellow'}`}>
-                {p.label || p.pattern || p.type || 'Pattern'}
-              </span>
-              {p.impact && (
-                <span className={`text-xs font-semibold uppercase px-1.5 py-0.5 rounded ${p.impact === 'high' ? 'bg-accent-red/10 text-accent-red' : p.impact === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-blue/10 text-accent-blue'}`}>
-                  {p.impact}
-                </span>
-              )}
-            </div>
+        <EmptyState title="No patterns" desc={`No market structure patterns detected on the ${timeframe} timeframe.`} />
+      ) : (
+        <div className="space-y-3">
+          {/* Summary row */}
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            {[['BUY/Bullish', buyItems.length, 'text-accent-green bg-accent-green/10 border-accent-green/25'],
+              ['SELL/Bearish', sellItems.length, 'text-accent-red bg-accent-red/10 border-accent-red/25'],
+              ['Neutral/Hold', holdItems.length, 'text-accent-yellow bg-accent-yellow/10 border-accent-yellow/25'],
+            ].map(([lbl, cnt, cls]) => (
+              <div key={lbl} className={`rounded-lg border p-2 ${cls}`}>
+                <p className="font-bold text-base">{cnt}</p>
+                <p className="opacity-80">{lbl}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Pattern cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {items.map((p, i) => {
+              const isBull = p.type?.toLowerCase().includes('bull') || (p.direction || '').toUpperCase() === 'BUY'
+              const isBear = p.type?.toLowerCase().includes('bear') || (p.direction || '').toUpperCase() === 'SELL'
+              const dirCls = isBull ? 'text-accent-green' : isBear ? 'text-accent-red' : 'text-accent-yellow'
+              const borderCls = isBull ? 'border-accent-green/25' : isBear ? 'border-accent-red/25' : 'border-accent-yellow/25'
+              return (
+                <div key={i} className={`bg-bg-card border ${borderCls} rounded-xl p-3`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-text-primary text-sm font-semibold">{p.pair || '—'}</p>
+                      <p className={`text-xs font-bold mt-0.5 ${dirCls}`}>
+                        {p.label || p.pattern || p.type || 'Pattern'}
+                      </p>
+                      {p.description && (
+                        <p className="text-text-muted text-xs mt-1 leading-snug">{p.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right flex-shrink-0 space-y-1">
+                      {p.direction && (
+                        <span className={`text-xs font-bold block px-1.5 py-0.5 rounded ${dirColor(p.direction)} bg-bg-secondary`}>
+                          {p.direction}
+                        </span>
+                      )}
+                      {p.confidence != null && (
+                        <span className="text-text-muted text-xs block">
+                          {p.confidence}% conf
+                        </span>
+                      )}
+                      {p.impact && (
+                        <span className={`text-xs font-semibold uppercase px-1.5 py-0.5 rounded block ${p.impact === 'high' ? 'bg-accent-red/10 text-accent-red' : p.impact === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-blue/10 text-accent-blue'}`}>
+                          {p.impact}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Confidence bar if available */}
+                  {p.confidence != null && (
+                    <div className="mt-2">
+                      <div className="h-1 bg-bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${isBull ? 'bg-accent-green' : isBear ? 'bg-accent-red' : 'bg-accent-yellow'}`}
+                          style={{ width: `${Math.min(p.confidence, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2 text-xs text-text-muted flex-wrap">
+                    {(p.timeframe || p.tf) && <span>TF: {p.timeframe || p.tf}</span>}
+                    {p.entry_price != null && <span>Entry: <span className="font-mono text-text-secondary">{p.entry_price}</span></span>}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
-      ))}
+      )}
     </div>
   )
 }
 
 // ─── News Tab ─────────────────────────────────────────────────────────────────
-const NEWS_REFRESH_MS = 2.5 * 60 * 1000 // 2.5 minutes for fresher feeds
+const NEWS_REFRESH_MS = 2.5 * 60 * 1000
 
 const SOURCE_COLORS = {
   ForexLive: 'bg-accent-blue/10 text-accent-blue',
@@ -948,6 +1350,48 @@ const SOURCE_COLORS = {
   'Investing.com': 'bg-accent-yellow/10 text-accent-yellow',
   DailyFX: 'bg-accent-purple/10 text-accent-purple',
   Reuters: 'bg-accent-red/10 text-accent-red',
+  MarketWatch: 'bg-accent-blue/10 text-accent-blue',
+  'Yahoo Finance': 'bg-accent-yellow/10 text-accent-yellow',
+}
+
+const NEWS_TIMEFRAMES = [
+  { id: 'all',  label: 'All',    emoji: '📋' },
+  { id: '30m',  label: '30 Min', emoji: '⚡' },
+  { id: '1h',   label: '1 Hour', emoji: '🕐' },
+  { id: '4h',   label: '4 Hours',emoji: '🕓' },
+  { id: '1d',   label: '1 Day',  emoji: '📅' },
+]
+
+function parseNewsDate(pub) {
+  if (!pub) return null
+  try { return new Date(pub) } catch { return null }
+}
+
+function getNewsAge(pub) {
+  const d = parseNewsDate(pub)
+  if (!d || isNaN(d.getTime())) return null
+  return (Date.now() - d.getTime()) / 60000 // minutes ago
+}
+
+function formatNewsAge(ageMin) {
+  if (ageMin === null) return null
+  if (ageMin < 1) return 'Just now'
+  if (ageMin < 60) return `${Math.floor(ageMin)}m ago`
+  if (ageMin < 1440) return `${Math.floor(ageMin / 60)}h ago`
+  return `${Math.floor(ageMin / 1440)}d ago`
+}
+
+function filterNewsByTimeframe(items, tf) {
+  if (tf === 'all') return items
+  return items.filter(n => {
+    const age = getNewsAge(n.published_at || n.date)
+    if (age === null) return tf === '1d' // unparse-able → show under 1day bucket
+    if (tf === '30m') return age <= 30
+    if (tf === '1h')  return age <= 60
+    if (tf === '4h')  return age <= 240
+    if (tf === '1d')  return age <= 1440
+    return true
+  })
 }
 
 function NewsTab() {
@@ -955,6 +1399,7 @@ function NewsTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [tfFilter, setTfFilter] = useState('all')
 
   const fetchNews = useCallback(() => {
     getNews()
@@ -973,18 +1418,22 @@ function NewsTab() {
     return () => clearInterval(id)
   }, [fetchNews])
 
-  const items = (Array.isArray(data) ? data : data?.news || data?.articles || [])
-    // Items from RSS feeds use `title`; some API sources may use `headline` — filter out any with neither
+  const allItems = (Array.isArray(data) ? data : data?.news || data?.articles || [])
     .filter((n) => n.title || n.headline)
-  const sources = [...new Set(items.map((n) => n.source).filter(Boolean))]
+
+  const items = filterNewsByTimeframe(allItems, tfFilter)
+  const sources = [...new Set(allItems.map((n) => n.source).filter(Boolean))]
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-text-primary text-sm font-semibold">Market News</h3>
-          {items.length > 0 && (
-            <span className="text-text-muted text-xs">({items.length} articles)</span>
+          <h3 className="text-text-primary text-sm font-semibold">📰 Market News</h3>
+          <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/30 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>LIVE
+          </span>
+          {allItems.length > 0 && (
+            <span className="text-text-muted text-xs">({allItems.length} articles)</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -1003,6 +1452,23 @@ function NewsTab() {
           </button>
         </div>
       </div>
+
+      {/* Timeframe filter */}
+      <div className="flex flex-wrap gap-1.5">
+        {NEWS_TIMEFRAMES.map(({ id, label, emoji }) => {
+          const cnt = id === 'all' ? allItems.length : filterNewsByTimeframe(allItems, id).length
+          return (
+            <button
+              key={id}
+              onClick={() => setTfFilter(id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${tfFilter === id ? 'bg-accent-blue text-bg-primary border-accent-blue' : 'bg-bg-card border-border-default text-text-secondary hover:border-accent-blue/40'}`}
+            >
+              {emoji} {label} <span className="opacity-60">({cnt})</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Source badges */}
       {sources.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -1013,36 +1479,49 @@ function NewsTab() {
           ))}
         </div>
       )}
-      {loading && items.length === 0 ? <LoadingSpinner text="Fetching market news…" /> : error && items.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
-            <Newspaper size={32} className="text-text-muted" />
+
+      {loading && allItems.length === 0 ? <LoadingSpinner text="Fetching market news…" /> : error && allItems.length === 0 ? <ErrorBox msg={error} /> : items.length === 0 ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
+            <Newspaper size={28} className="text-text-muted" />
           </div>
-          <p className="text-text-secondary font-medium mb-2">No news available</p>
-          <p className="text-text-muted text-sm">Market news feed is currently empty.</p>
+          <p className="text-text-secondary font-medium mb-2">No news in this window</p>
+          <p className="text-text-muted text-sm">Try a wider timeframe or refresh.</p>
         </div>
-      ) : items.map((n, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 hover:border-accent-blue/30 transition-all">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <a href={n.url || '#'} target="_blank" rel="noopener noreferrer" className="text-text-primary font-medium hover:text-accent-blue transition-colors leading-snug">
-                {n.title || n.headline || 'News Article'}
-              </a>
-              {n.summary && <p className="text-text-secondary text-xs mt-1 line-clamp-2">{n.summary}</p>}
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {n.source && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_COLORS[n.source] || 'bg-bg-secondary text-text-muted'}`}>
-                    {n.source}
+      ) : (
+        <div className="space-y-2">
+          {items.map((n, i) => {
+            const ageMin = getNewsAge(n.published_at || n.date)
+            const ageLabel = formatNewsAge(ageMin)
+            const isRecent = ageMin !== null && ageMin <= 30
+            return (
+              <div key={i} className={`bg-bg-card border rounded-xl p-3 hover:border-accent-blue/30 transition-all ${isRecent ? 'border-accent-green/25' : 'border-border-default'}`}>
+                {isRecent && (
+                  <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/20 px-1.5 py-0.5 rounded-full mb-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>Breaking
                   </span>
                 )}
-                {(n.published_at || n.date) && (
-                  <span className="text-text-muted text-xs">{n.published_at || n.date}</span>
-                )}
+                <a href={n.url || '#'} target="_blank" rel="noopener noreferrer"
+                  className="text-text-primary font-medium hover:text-accent-blue transition-colors leading-snug text-sm block mb-1">
+                  {n.title || n.headline || 'News Article'}
+                </a>
+                {n.summary && <p className="text-text-secondary text-xs mt-1 line-clamp-2 leading-relaxed">{n.summary}</p>}
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {n.source && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_COLORS[n.source] || 'bg-bg-secondary text-text-muted'}`}>
+                      {n.source}
+                    </span>
+                  )}
+                  {ageLabel && <span className="text-text-muted text-xs">🕐 {ageLabel}</span>}
+                  {!ageLabel && (n.published_at || n.date) && (
+                    <span className="text-text-muted text-xs">{n.published_at || n.date}</span>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })}
         </div>
-      ))}
+      )}
     </div>
   )
 }
@@ -1141,22 +1620,38 @@ function AlertsTab() {
     <div className="space-y-5">
       {/* Price Alerts */}
       <div>
-        <h3 className="text-text-primary text-sm font-semibold mb-3">🔔 Price Alerts</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-text-primary text-sm font-semibold">🔔 Price Alerts</h3>
+          <span className="inline-flex items-center gap-1 text-xs text-accent-green bg-accent-green/10 border border-accent-green/30 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block"/>Live prices • 30s
+          </span>
+        </div>
+
+        {/* Live price strip for alert pair */}
+        {livePrices[alertPair] != null && (
+          <div className="flex items-center gap-3 px-3 py-2 bg-accent-blue/10 border border-accent-blue/25 rounded-lg mb-3">
+            <span className="w-2 h-2 rounded-full bg-accent-blue animate-pulse flex-shrink-0"/>
+            <span className="text-text-muted text-xs">Live {alertPair}:</span>
+            <span className="font-mono text-accent-blue font-bold text-sm">{livePrices[alertPair]}</span>
+            <span className="text-text-muted text-xs ml-auto">Updates every 30s</span>
+          </div>
+        )}
+
         <form onSubmit={addAlert} className="flex flex-wrap gap-2 mb-3">
           <select
             value={alertPair}
             onChange={(e) => setAlertPair(e.target.value)}
             className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
           >
-            {ALERT_PAIRS.map((p) => <option key={p} value={p}>{p}</option>)}
+            {ALERT_PAIRS.map((p) => <option key={p} value={p}>{p}{livePrices[p] != null ? ` (${livePrices[p]})` : ''}</option>)}
           </select>
           <select
             value={alertDir}
             onChange={(e) => setAlertDir(e.target.value)}
             className="bg-bg-secondary border border-border-default rounded-lg px-2 py-1.5 text-text-primary text-xs input-animated"
           >
-            <option value="above">Above</option>
-            <option value="below">Below</option>
+            <option value="above">Rises Above ↑</option>
+            <option value="below">Falls Below ↓</option>
           </select>
           <input
             type="number" step="any" value={alertTarget} onChange={(e) => setAlertTarget(e.target.value)}
@@ -1167,38 +1662,45 @@ function AlertsTab() {
             Set Alert
           </button>
         </form>
-        {livePrices[alertPair] != null && (
-          <p className="text-text-muted text-xs mb-3">
-            Live {alertPair}: <span className="font-mono text-accent-blue font-semibold">{livePrices[alertPair]}</span>
-            <span className="text-text-muted ml-1">(updates every 30s)</span>
-          </p>
-        )}
+
         {priceAlerts.length > 0 ? (
           <div className="space-y-2">
-            {priceAlerts.map((a) => (
-              <div key={a.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${a.triggered ? 'bg-accent-green/10 border-accent-green/30' : 'bg-bg-card border-border-default'}`}>
-                <div className="flex items-center gap-2">
-                  <Bell size={12} className={a.triggered ? 'text-accent-green' : 'text-text-muted'} />
-                  <span className="text-text-primary font-medium">{a.pair}</span>
-                  <span className="text-text-muted">{a.dir === 'above' ? '≥' : '≤'}</span>
-                  <span className="font-mono text-text-secondary">{a.target}</span>
-                  {livePrices[a.pair] != null && !a.triggered && (
-                    <span className="text-text-muted">now: <span className="font-mono text-accent-blue">{livePrices[a.pair]}</span></span>
+            {priceAlerts.map((a) => {
+              const live = livePrices[a.pair]
+              const dist = live != null ? Math.abs(live - a.target) : null
+              const distPct = live != null && a.target > 0 ? (dist / a.target * 100).toFixed(3) : null
+              const nearTarget = dist != null && distPct < 0.1
+              return (
+                <div key={a.id} className={`rounded-xl border text-xs p-3 ${a.triggered ? 'bg-accent-green/10 border-accent-green/30' : nearTarget ? 'bg-accent-yellow/10 border-accent-yellow/30' : 'bg-bg-card border-border-default'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Bell size={12} className={a.triggered ? 'text-accent-green' : nearTarget ? 'text-accent-yellow' : 'text-text-muted'} />
+                      <span className="text-text-primary font-semibold">{a.pair}</span>
+                      <span className={`font-medium ${a.dir === 'above' ? 'text-accent-green' : 'text-accent-red'}`}>
+                        {a.dir === 'above' ? '↑ ≥' : '↓ ≤'}
+                      </span>
+                      <span className="font-mono text-text-secondary font-bold">{a.target}</span>
+                    </div>
+                    <button onClick={() => removeAlert(a.id)} className="text-text-muted hover:text-accent-red transition-colors ml-2">✕</button>
+                  </div>
+                  {live != null && !a.triggered && (
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-text-muted">Now: <span className="font-mono text-accent-blue font-semibold">{live}</span></span>
+                      {distPct !== null && <span className="text-text-muted">Gap: <span className={nearTarget ? 'text-accent-yellow font-semibold' : 'text-text-secondary'}>{distPct}%</span></span>}
+                      {nearTarget && <span className="text-accent-yellow font-semibold animate-pulse">⚠️ Near target!</span>}
+                    </div>
                   )}
-                </div>
-                <div className="flex items-center gap-2">
                   {a.triggered && (
-                    <span className="text-accent-green font-semibold">
-                      ✓ {new Date(a.triggeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-accent-green font-semibold">✓ Triggered at {new Date(a.triggeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
                   )}
-                  <button onClick={() => removeAlert(a.id)} className="text-text-muted hover:text-accent-red transition-colors">✕</button>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
-          <p className="text-text-muted text-xs">No active price alerts. Add one above.</p>
+          <p className="text-text-muted text-xs">No active price alerts. Set one above to get notified when price crosses your target.</p>
         )}
       </div>
 
