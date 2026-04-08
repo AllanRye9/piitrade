@@ -1395,6 +1395,139 @@ function NewsTab() {
   )
 }
 
+// ─── Pair Selector ────────────────────────────────────────────────────────────
+function PairSelector({ selectedPair, onSelect, majorList, minorList, exoticList }) {
+  const [search, setSearch] = useState('')
+  const [showAll, setShowAll] = useState(false)
+
+  const allPairs = [...majorList, ...minorList, ...exoticList]
+  const filteredPairs = search.trim().length > 0
+    ? allPairs.filter((p) => p.toLowerCase().replace('/', '').includes(search.toLowerCase().replace('/', '')))
+    : []
+
+  const handleSelect = (pair) => {
+    onSelect(pair)
+    setSearch('')
+    setShowAll(false)
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Major pairs quick-access row */}
+      <div className="flex flex-wrap gap-1.5">
+        {majorList.map((pair) => (
+          <button
+            key={pair}
+            onClick={() => handleSelect(pair)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all btn-interactive ${
+              selectedPair === pair
+                ? 'bg-accent-blue text-bg-primary border-accent-blue shadow-sm shadow-accent-blue/30'
+                : 'bg-bg-secondary border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'
+            }`}
+          >
+            {pair}
+          </button>
+        ))}
+        {(minorList.length > 0 || exoticList.length > 0) && (
+          <button
+            onClick={() => { setShowAll((v) => !v); setSearch('') }}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all btn-interactive ${
+              showAll
+                ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
+                : 'bg-bg-secondary border-border-default text-text-muted hover:border-accent-purple/40 hover:text-text-primary'
+            }`}
+          >
+            {showAll ? '▲ Less' : '▼ More'}
+          </button>
+        )}
+      </div>
+
+      {/* Search input */}
+      <div className="relative">
+        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setShowAll(false) }}
+          placeholder="Search pair (e.g. GBP/JPY, EURCAD…)"
+          className="w-full pl-7 pr-3 py-1.5 bg-bg-secondary border border-border-default rounded-lg text-sm text-text-primary placeholder-text-muted input-animated focus:border-accent-blue/50 outline-none"
+        />
+      </div>
+
+      {/* Search results */}
+      {search.trim().length > 0 && (
+        <div className="bg-bg-card border border-border-default rounded-xl p-2 max-h-40 overflow-y-auto">
+          {filteredPairs.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {filteredPairs.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handleSelect(p)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all btn-interactive ${
+                    selectedPair === p
+                      ? 'bg-accent-blue text-bg-primary border-accent-blue'
+                      : 'bg-bg-secondary border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-text-muted text-xs px-1">No pairs found for &ldquo;{search}&rdquo;</p>
+          )}
+        </div>
+      )}
+
+      {/* Expanded minor / exotic list */}
+      {showAll && search.trim().length === 0 && (
+        <div className="bg-bg-card border border-border-default rounded-xl p-3 space-y-3">
+          {minorList.length > 0 && (
+            <div>
+              <p className="text-text-muted text-xs uppercase tracking-wider font-semibold mb-1.5">Minor Pairs</p>
+              <div className="flex flex-wrap gap-1.5">
+                {minorList.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => handleSelect(p)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all btn-interactive ${
+                      selectedPair === p
+                        ? 'bg-accent-blue text-bg-primary border-accent-blue'
+                        : 'bg-bg-secondary border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {exoticList.length > 0 && (
+            <div>
+              <p className="text-text-muted text-xs uppercase tracking-wider font-semibold mb-1.5">Exotic Pairs</p>
+              <div className="flex flex-wrap gap-1.5">
+                {exoticList.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => handleSelect(p)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all btn-interactive ${
+                      selectedPair === p
+                        ? 'bg-accent-blue text-bg-primary border-accent-blue'
+                        : 'bg-bg-secondary border-border-default text-text-secondary hover:border-accent-blue/50 hover:text-text-primary'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ForexDashboard() {
   const [allPairsData, setAllPairsData] = useState(null)
@@ -1415,6 +1548,13 @@ export default function ForexDashboard() {
       .then((data) => setAllPairsData(data))
       .catch(() => setAllPairsData(null))
   }, [])
+
+  // Update page title dynamically for SEO
+  useEffect(() => {
+    const dir = signal?.signal || signal?.direction
+    const titleDir = dir ? ` – ${dir.toUpperCase()}` : ''
+    document.title = `${selectedPair}${titleDir} AI Forex Signal | PiiTrade`
+  }, [selectedPair, signal])
 
   // Fetch signal when pair changes
   const fetchSignal = useCallback(async () => {
@@ -1519,37 +1659,28 @@ export default function ForexDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-bg-card border border-border-default rounded-xl p-3 flex flex-wrap items-center gap-3 card-hover"
+          className="bg-bg-card border border-border-default rounded-xl p-3 card-hover"
         >
-          <label className="text-text-secondary text-sm font-medium flex-shrink-0">Trading Pair:</label>
-          <select
-            value={selectedPair}
-            onChange={(e) => setSelectedPair(e.target.value)}
-            className="bg-bg-secondary border border-border-default rounded-lg px-3 py-1.5 text-text-primary text-sm input-animated"
-          >
-            {majorList.length > 0 && (
-              <optgroup label="Major">
-                {majorList.map((p) => <option key={p} value={p}>{p}</option>)}
-              </optgroup>
-            )}
-            {minorList.length > 0 && (
-              <optgroup label="Minor">
-                {minorList.map((p) => <option key={p} value={p}>{p}</option>)}
-              </optgroup>
-            )}
-            {exoticList.length > 0 && (
-              <optgroup label="Exotic">
-                {exoticList.map((p) => <option key={p} value={p}>{p}</option>)}
-              </optgroup>
-            )}
-          </select>
-          {signal && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${dirBg(signal.signal || signal.direction)}`}>
-              <span className={dirColor(signal.signal || signal.direction)}>
-                {(signal.signal || signal.direction || '—').toUpperCase()}
-              </span>
-            </span>
-          )}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-text-secondary text-sm font-medium">Trading Pair:</span>
+              <span className="text-text-primary font-bold text-sm">{selectedPair}</span>
+              {signal && (
+                <span className={`text-xs font-bold px-2 py-0.5 rounded border ${dirBg(signal.signal || signal.direction)}`}>
+                  <span className={dirColor(signal.signal || signal.direction)}>
+                    {(signal.signal || signal.direction || '—').toUpperCase()}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+          <PairSelector
+            selectedPair={selectedPair}
+            onSelect={setSelectedPair}
+            majorList={majorList}
+            minorList={minorList}
+            exoticList={exoticList}
+          />
         </motion.div>
 
         {/* Gamebar */}

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp, Zap, Globe, BarChart2, Shield, CheckCircle,
@@ -128,6 +129,10 @@ const whitepaperSections = [
 ]
 
 export default function Roadmap() {
+  useEffect(() => {
+    document.title = 'PiiTrade Roadmap – Crypto & Stock Signals Coming Soon | PiiTrade'
+  }, [])
+
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Hero */}

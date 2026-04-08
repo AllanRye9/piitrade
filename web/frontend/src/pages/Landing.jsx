@@ -163,6 +163,13 @@ export default function Landing() {
   const featuresRef = useRef(null)
   const featuresInView = useInView(featuresRef, { once: true, margin: '-100px' })
 
+  // Set page title for SEO
+  useEffect(() => {
+    document.title = 'PiiTrade – Free AI Forex Signals | Live Technical Analysis & Market Intelligence'
+    const desc = document.querySelector('meta[name="description"]')
+    if (desc) desc.setAttribute('content', 'PiiTrade delivers free AI-powered forex signals for 35+ currency pairs using LightGBM machine learning. Get live Buy/Sell/Hold signals, FVG scanner, Support & Resistance, BOS, CHoCH, market news, and economic calendar — no subscription required.')
+  }, [])
+
   // Fetch live signals for the preview section
   useEffect(() => {
     let cancelled = false
