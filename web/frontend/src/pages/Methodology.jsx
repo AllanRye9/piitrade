@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 import { Database, Cpu, TrendingUp, AlertTriangle, BookOpen, LineChart } from 'lucide-react'
 import PartnerCards from '../components/PartnerCard'
 
@@ -63,6 +64,10 @@ const features = [
 ]
 
 export default function Methodology() {
+  useEffect(() => {
+    document.title = 'How PiiTrade AI Forex Signals Work – LightGBM Methodology | PiiTrade'
+  }, [])
+
   return (
     <div className="min-h-screen bg-bg-primary pt-20 pb-16" style={{ paddingLeft: 'var(--page-margin-x)', paddingRight: 'var(--page-margin-x)' }}>
       <div className="max-w-4xl mx-auto">
