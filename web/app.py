@@ -7,16 +7,11 @@ FastAPI application with auth, admin dashboard, and security hardening.
 import asyncio
 import hashlib
 import os
-import re as _re
 import secrets
 import smtplib
-import time
-import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from html import unescape
 from pathlib import Path
 from threading import Lock
 from typing import Any, Optional
@@ -34,6 +29,9 @@ from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+
+from routers import alerts as _alerts_router
+from routers import news as _news_router
 
 
 
@@ -989,86 +987,6 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
 }
 
-# ─── News feed ─────────────────────────────────────────────────────────────────
-_NEWS_FEEDS: list[tuple[str, str]] = [
-    ("ForexLive", "https://www.forexlive.com/feed/"),
-    ("FXStreet", "https://www.fxstreet.com/rss/news"),
-    ("Investing.com", "https://www.investing.com/rss/news_25.rss"),
-    ("DailyFX", "https://www.dailyfx.com/feeds/all"),
-    ("Reuters", "https://feeds.reuters.com/reuters/businessNews"),
-    ("MarketWatch", "https://feeds.content.dowjones.io/public/rss/mw_forex"),
-    ("Yahoo Finance", "https://finance.yahoo.com/rss/topfinstories"),
-]
-
-_news_cache: dict[str, Any] = {"items": [], "ts": 0.0}
-_NEWS_CACHE_TTL = 300  # 5 minutes
-_NEWS_DEDUP_PREFIX_LEN = 60  # characters of title used to detect duplicate articles
-
-
-def _fetch_rss_feed(name: str, url: str) -> list[dict[str, Any]]:
-    """Fetch and parse a single RSS feed. Returns [] on any error."""
-    try:
-        resp = _requests.get(
-            url,
-            timeout=4,
-            headers={"User-Agent": "PiiTrade/1.0 (+https://piitrade.com)"},
-        )
-        resp.raise_for_status()
-        root = ET.fromstring(resp.content)
-        items: list[dict[str, Any]] = []
-        for item in root.findall(".//item")[:8]:
-            title = (item.findtext("title") or "").strip()
-            if not title:
-                continue
-            link = (item.findtext("link") or "").strip()
-            pub = (item.findtext("pubDate") or "").strip()
-            desc_raw = item.findtext("description") or ""
-            # Strip HTML tags from description
-            desc = _re.sub(r"<[^>]+>", "", unescape(desc_raw)).strip()[:240]
-            items.append({
-                "title": unescape(title),
-                "url": link,
-                "source": name,
-                "published_at": pub,
-                "summary": desc,
-            })
-        return items
-    except Exception:
-        return []
-
-
-def _make_news_items() -> list[dict[str, Any]]:
-    """Return live news from multiple RSS feeds with 5-minute caching.
-    Returns an empty list if all feeds are unreachable."""
-    now = time.time()
-    if _news_cache["items"] and now - _news_cache["ts"] < _NEWS_CACHE_TTL:
-        return _news_cache["items"]
-
-    results: list[dict[str, Any]] = []
-    try:
-        with ThreadPoolExecutor(max_workers=len(_NEWS_FEEDS)) as executor:
-            futures = {executor.submit(_fetch_rss_feed, name, url): name for name, url in _NEWS_FEEDS}
-            for fut in as_completed(futures, timeout=6):
-                try:
-                    results.extend(fut.result())
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    # Deduplicate by title
-    seen: set[str] = set()
-    unique: list[dict[str, Any]] = []
-    for item in results:
-        key = item.get("title", "")[:_NEWS_DEDUP_PREFIX_LEN].lower()
-        if key not in seen:
-            seen.add(key)
-            unique.append(item)
-
-    _news_cache["items"] = unique[:25]
-    _news_cache["ts"] = now
-    return _news_cache["items"]
-
 _PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
 
 
@@ -1370,6 +1288,9 @@ app.add_middleware(
 )
 app.add_middleware(_SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+app.include_router(_news_router.router)
+app.include_router(_alerts_router.router)
 
 class _CachedStaticFiles(StaticFiles):
     """StaticFiles subclass that adds long-lived cache headers to all static files."""
@@ -2301,104 +2222,6 @@ async def forex_live_prices():
     return JSONResponse({"prices": result})
 
 
-@app.get("/api/forex/news")
-async def forex_news():
-    return JSONResponse({"news": _make_news_items()})
-
-
-# ─── Economic Calendar ─────────────────────────────────────────────────────────
-
-_ECO_CALENDAR_CACHE: dict[str, Any] = {"items": [], "ts": 0.0}
-_ECO_CALENDAR_TTL = 3600  # refresh at most once per hour
-
-_IMPACT_LABEL = {"High": "High", "Medium": "Medium", "Low": "Low"}
-
-_FALLBACK_EVENTS: list[dict[str, Any]] = [
-    {"time": "Mon 12:30", "event": "US CPI y/y", "currency": "USD", "impact": "High"},
-    {"time": "Tue 12:45", "event": "ECB Rate Decision", "currency": "EUR", "impact": "High"},
-    {"time": "Wed 09:00", "event": "UK Unemployment Rate", "currency": "GBP", "impact": "Medium"},
-    {"time": "Thu 00:00", "event": "Japan Tankan Index", "currency": "JPY", "impact": "Medium"},
-    {"time": "Fri 12:30", "event": "US Non-Farm Payrolls", "currency": "USD", "impact": "High"},
-    {"time": "Mon 14:00", "event": "ISM Manufacturing PMI", "currency": "USD", "impact": "Medium"},
-    {"time": "Tue 09:30", "event": "UK GDP m/m", "currency": "GBP", "impact": "High"},
-    {"time": "Wed 12:30", "event": "Canadian CPI", "currency": "CAD", "impact": "High"},
-    {"time": "Thu 12:30", "event": "US Retail Sales m/m", "currency": "USD", "impact": "Medium"},
-    {"time": "Fri 01:30", "event": "Australian Employment Change", "currency": "AUD", "impact": "High"},
-]
-
-_ECO_CURRENCY_MAP = {
-    "usd": "USD", "eur": "EUR", "gbp": "GBP", "jpy": "JPY",
-    "aud": "AUD", "cad": "CAD", "chf": "CHF", "nzd": "NZD",
-    "cny": "CNY", "mxn": "MXN", "sek": "SEK", "nok": "NOK",
-}
-
-
-def _fetch_economic_calendar() -> list[dict[str, Any]]:
-    """Fetch current-week economic events from ForexFactory public JSON feed.
-
-    Falls back to curated static events when the feed is unreachable.
-    """
-    now = time.time()
-    if _ECO_CALENDAR_CACHE["items"] and now - _ECO_CALENDAR_CACHE["ts"] < _ECO_CALENDAR_TTL:
-        return _ECO_CALENDAR_CACHE["items"]
-
-    events: list[dict[str, Any]] = []
-    try:
-        resp = _requests.get(
-            "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
-            timeout=6,
-            headers={"User-Agent": "PiiTrade/1.0 (+https://piitrade.com)"},
-        )
-        resp.raise_for_status()
-        raw: list[dict[str, Any]] = resp.json()
-        for item in raw:
-            impact_raw = (item.get("impact") or "").strip().lower()
-            if impact_raw == "holiday":
-                continue
-            # Map impact level
-            if "high" in impact_raw:
-                impact = "High"
-            elif "medium" in impact_raw or "moderate" in impact_raw:
-                impact = "Medium"
-            else:
-                impact = "Low"
-            # Parse ISO-8601 date/time to a readable label
-            date_str = item.get("date") or ""
-            try:
-                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                day_abbr = dt.strftime("%a")
-                time_label = dt.strftime("%H:%M")
-                display_time = f"{day_abbr} {time_label}"
-            except Exception:
-                display_time = date_str[:16] if date_str else "—"
-
-            currency_raw = (item.get("country") or "").strip().lower()
-            currency = _ECO_CURRENCY_MAP.get(currency_raw, currency_raw.upper() or "—")
-
-            events.append({
-                "time": display_time,
-                "event": item.get("title") or item.get("name") or "Economic Event",
-                "currency": currency,
-                "impact": impact,
-                "actual": item.get("actual"),
-                "forecast": item.get("forecast"),
-                "previous": item.get("previous"),
-            })
-    except Exception:
-        pass
-
-    if not events:
-        events = list(_FALLBACK_EVENTS)
-
-    _ECO_CALENDAR_CACHE["items"] = events[:30]
-    _ECO_CALENDAR_CACHE["ts"] = now
-    return _ECO_CALENDAR_CACHE["items"]
-
-
-@app.get("/api/forex/economic-calendar")
-async def forex_economic_calendar():
-    """Return upcoming economic events for the current week."""
-    return JSONResponse({"events": _fetch_economic_calendar()})
 
 
 def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
