@@ -57,6 +57,29 @@
 
 <body>
 
+  <!-- ═══════════════════════════════ RISK DISCLAIMER POPUP ══════════════════ -->
+  <script>
+    (function () {
+      var accepted = sessionStorage.getItem("pii_disclaimer_accepted");
+      if (!accepted) {
+        var ok = window.confirm(
+          "⚠️ RISK DISCLAIMER\n\n" +
+          "Trading forex and financial instruments involves substantial risk and may not be suitable for all investors.\n\n" +
+          "• You could lose some or all of your invested capital.\n" +
+          "• AI signals are for informational purposes only — not financial advice.\n" +
+          "• Always conduct your own research and consult a licensed financial advisor.\n" +
+          "• Past performance does not guarantee future results.\n\n" +
+          "By clicking OK you acknowledge these risks and agree to the full Risk Disclaimer. Click Cancel to leave."
+        );
+        if (ok) {
+          sessionStorage.setItem("pii_disclaimer_accepted", "1");
+        } else {
+          window.location.href = "/";
+        }
+      }
+    })();
+  </script>
+
   <!-- ═══════════════════════════════ LOADING OVERLAY ════════════════════════ -->
   <div id="piitrade-loading-overlay" class="piitrade-loading-overlay" aria-live="polite" aria-label="Loading">
     <div class="piitrade-loader-text" id="piitrade-loader-text">.... PIITRADE ....</div>
@@ -83,8 +106,6 @@
 
     </div>
     <nav class="fx-nav">
-      <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
-        aria-pressed="true">🔔</button>
       <a href="/">Home</a>
       {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
@@ -116,10 +137,6 @@
         aria-label="Pair Success Rates">🏆 Success</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-patterns"
         aria-label="Structure & Pattern Scanner">🔮 Scanner</button>
-      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-news" aria-label="Market News">📰
-        News</button>
-      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-alerts"
-        aria-label="Market Alerts & Events">🔔 Alerts</button>
     </nav>
     <button class="fx-tab-scroll-btn fx-tab-scroll-right" id="tab-scroll-right" aria-label="Scroll tabs right"
       type="button">›</button>
@@ -467,7 +484,7 @@
             <!-- Current Price (live) -->
             <div class="ta-card ta-card-wide">
               <div class="ta-card-title">
-                💱 Current Price
+                Entry price:
                 <span id="ta-live-price-badge" class="fx-data-source live" style="margin-left:8px;font-size:.72rem">🟢
                   Live</span>
               </div>
@@ -725,98 +742,6 @@
           </div>
         </section>
 
-        <!-- 6. Real-Time News Feed ──────────────────────────────────────────────── -->
-        <section id="section-news">
-          <div class="fx-section-title">📰 Market News
-            <span id="news-new-badge" class="news-new-badge" style="display:none">🔔 New</span>
-          </div>
-          <!-- News category tabs -->
-          <div class="news-cat-tabs" role="tablist" aria-label="News categories">
-            <button class="news-cat-tab active" data-cat="all" role="tab" aria-selected="true">🌐 All</button>
-            <button class="news-cat-tab" data-cat="forex" role="tab" aria-selected="false">💱 Forex</button>
-          </div>
-          <div class="fx-news-wrap">
-            <div id="news-loading">Loading headlines…</div>
-            <div id="news-list"></div>
-          </div>
-        </section>
-
-        <!-- 7. Alerts & Events ─────────────────────────────────────────────────── -->
-        <section id="section-alerts">
-          <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
-            Tracks impactful market events, institutional activity, and significant price surges in real time.
-            Use this section to stay ahead of major catalysts that move markets.
-          </p>
-
-          <!-- Alert category tabs -->
-          <div class="alerts-cat-tabs">
-            <button class="alerts-cat-tab active" data-alert-cat="all">📋 All Events</button>
-            <button class="alerts-cat-tab" data-alert-cat="institutional">🏦 Institutional</button>
-            <button class="alerts-cat-tab" data-alert-cat="surge">🚀 Price Surges</button>
-            <button class="alerts-cat-tab" data-alert-cat="economic">📅 Economic</button>
-          </div>
-
-          <!-- Live alert feed -->
-          <div id="alerts-feed" class="alerts-feed">
-            <div style="color:let(--text2);padding:32px 0;text-align:center;font-size:.95rem">
-              No market alerts at this time. Check back later.
-            </div>
-          </div>
-
-          <!-- Email subscription (moved below alerts feed) -->
-          <div class="alerts-subscribe-section">
-            <div class="fx-section-title" style="font-size:1rem;margin-bottom:12px">📧 Get Signal Alerts by Email</div>
-            <p style="color:let(--text2);font-size:.85rem;margin:0 0 14px">
-              Receive an email the moment a new AI signal is generated for your chosen pairs.
-            </p>
-            <form class="subscribe-form" id="subscribe-form" novalidate>
-              <div class="email-row">
-                <input type="email" id="email-input" class="email-input" placeholder="your@email.com"
-                  autocomplete="email" aria-label="Email address" />
-                <button type="submit" class="btn-subscribe">Subscribe</button>
-              </div>
-              <div class="pair-checkboxes" aria-label="Select pairs to receive alerts for">
-                <label><input type="checkbox" value="EUR/USD" checked /> EUR/USD</label>
-                <label><input type="checkbox" value="GBP/USD" /> GBP/USD</label>
-                <label><input type="checkbox" value="USD/JPY" /> USD/JPY</label>
-                <label><input type="checkbox" value="USD/CHF" /> USD/CHF</label>
-                <label><input type="checkbox" value="AUD/USD" /> AUD/USD</label>
-                <label><input type="checkbox" value="USD/CAD" /> USD/CAD</label>
-                <label><input type="checkbox" value="NZD/USD" /> NZD/USD</label>
-                <label><input type="checkbox" value="EUR/GBP" /> EUR/GBP</label>
-                <label><input type="checkbox" value="EUR/JPY" /> EUR/JPY</label>
-                <label><input type="checkbox" value="EUR/AUD" /> EUR/AUD</label>
-                <label><input type="checkbox" value="EUR/CAD" /> EUR/CAD</label>
-                <label><input type="checkbox" value="EUR/CHF" /> EUR/CHF</label>
-                <label><input type="checkbox" value="EUR/NZD" /> EUR/NZD</label>
-                <label><input type="checkbox" value="GBP/JPY" /> GBP/JPY</label>
-                <label><input type="checkbox" value="GBP/CHF" /> GBP/CHF</label>
-                <label><input type="checkbox" value="GBP/AUD" /> GBP/AUD</label>
-                <label><input type="checkbox" value="GBP/CAD" /> GBP/CAD</label>
-                <label><input type="checkbox" value="GBP/NZD" /> GBP/NZD</label>
-                <label><input type="checkbox" value="AUD/JPY" /> AUD/JPY</label>
-                <label><input type="checkbox" value="AUD/CAD" /> AUD/CAD</label>
-                <label><input type="checkbox" value="AUD/CHF" /> AUD/CHF</label>
-                <label><input type="checkbox" value="AUD/NZD" /> AUD/NZD</label>
-                <label><input type="checkbox" value="NZD/JPY" /> NZD/JPY</label>
-                <label><input type="checkbox" value="NZD/CAD" /> NZD/CAD</label>
-                <label><input type="checkbox" value="NZD/CHF" /> NZD/CHF</label>
-                <label><input type="checkbox" value="CAD/JPY" /> CAD/JPY</label>
-                <label><input type="checkbox" value="CHF/JPY" /> CHF/JPY</label>
-                <label><input type="checkbox" value="USD/MXN" /> USD/MXN</label>
-                <label><input type="checkbox" value="USD/NOK" /> USD/NOK</label>
-                <label><input type="checkbox" value="USD/SEK" /> USD/SEK</label>
-                <label><input type="checkbox" value="USD/SGD" /> USD/SGD</label>
-                <label><input type="checkbox" value="USD/HKD" /> USD/HKD</label>
-                <label><input type="checkbox" value="USD/TRY" /> USD/TRY</label>
-                <label><input type="checkbox" value="USD/ZAR" /> USD/ZAR</label>
-                <label><input type="checkbox" value="USD/CNY" /> USD/CNY</label>
-              </div>
-              <div class="subscribe-status" id="subscribe-status" role="status"></div>
-            </form>
-          </div>
-        </section>
 
       </main>
 
