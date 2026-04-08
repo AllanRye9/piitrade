@@ -69,7 +69,9 @@ function OverviewTab({ stats, loading, error, onRefresh, lastUpdated }) {
   if (error) return <ErrorBox msg={error} />
   if (!stats) return null
 
-  const serverTime = stats.server_time ? new Date(stats.server_time).toLocaleTimeString() : '—'
+  const serverTime = stats.server_time
+    ? new Date(stats.server_time).toLocaleTimeString([], { timeZone: 'UTC', timeZoneName: 'short' })
+    : '—'
 
   const cards = [
     { label: 'Total Users',         value: stats.total_users,         icon: Users,      color: 'text-accent-blue',   sub: `${stats.admin_users ?? 0} admin · ${stats.regular_users ?? 0} regular` },

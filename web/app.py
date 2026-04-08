@@ -2001,7 +2001,7 @@ async def admin_stats(request: Request):
         total_visitors = len(_VISITOR_LOG)
         visitors_today = sum(
             1 for v in _VISITOR_LOG.values()
-            if v.get("last_seen", "")[:10] == today_str or v.get("first_date", "") == today_str
+            if v.get("last_seen", "")[:10] == today_str
         )
         unique_countries = len({
             v["country"] for v in _VISITOR_LOG.values()
