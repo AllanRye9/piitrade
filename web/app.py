@@ -1996,6 +1996,30 @@ async def admin_stats(request: Request):
             1 for u in _USERS.values()
             if u.get("role") != "admin" and u.get("subscription_status") == "active"
         )
+    today_str = date.today().isoformat()
+    with _VISITOR_LOG_LOCK:
+        total_visitors = len(_VISITOR_LOG)
+        visitors_today = sum(
+            1 for v in _VISITOR_LOG.values()
+            if v.get("last_seen", "")[:10] == today_str
+        )
+        unique_countries = len({
+            v["country"] for v in _VISITOR_LOG.values()
+            if v.get("country") and v["country"] != "Local"
+        })
+        country_counts: dict[str, int] = {}
+        for v in _VISITOR_LOG.values():
+            c = v.get("country", "")
+            if c and c != "Local":
+                country_counts[c] = country_counts.get(c, 0) + 1
+        top_countries = sorted(country_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        recent_visitors = sorted(
+            _VISITOR_LOG.items(),
+            key=lambda x: x[1].get("last_seen", ""),
+            reverse=True,
+        )[:20]
+    with _TOTAL_PAGE_VIEWS_LOCK:
+        total_page_views = _TOTAL_PAGE_VIEWS
     return JSONResponse({
         "total_users": total_users,
         "admin_users": admin_count,
@@ -2005,7 +2029,53 @@ async def admin_stats(request: Request):
         "total_pairs": len(_SUPPORTED_PAIRS),
         "cache_entries": len(_RATE_CACHE),
         "server_time": datetime.now(timezone.utc).isoformat(),
+        "total_visitors": total_visitors,
+        "visitors_today": visitors_today,
+        "unique_countries": unique_countries,
+        "total_page_views": total_page_views,
+        "top_countries": {c: n for c, n in top_countries},
+        "recent_visitors": [
+            {
+                "ip": _mask_ip(ip),
+                "country": data.get("country", "Unknown"),
+                "first_seen": data.get("first_seen", "")[:10],
+                "last_seen": data.get("last_seen", "")[:10],
+                "page_views": data.get("page_views", 0),
+            }
+            for ip, data in recent_visitors
+        ],
     })
+
+
+@app.get("/api/admin/users")
+async def admin_list_users(request: Request):
+    if not _is_admin(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=status.HTTP_403_FORBIDDEN)
+    with _USERS_LOCK:
+        users_list = [
+            {
+                "username": k,
+                "email": v.get("email", ""),
+                "role": v.get("role", "user"),
+                "created_at": v.get("created_at", ""),
+                "subscription_status": v.get("subscription_status", "inactive"),
+                "plan": v.get("plan"),
+                "subscription_end": v.get("subscription_end"),
+            }
+            for k, v in _USERS.items()
+        ]
+    return JSONResponse({"users": users_list})
+
+
+@app.get("/api/admin/payments")
+async def admin_list_payments(request: Request):
+    if not _is_admin(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=status.HTTP_403_FORBIDDEN)
+    payments = [
+        {"idx": i, **p}
+        for i, p in enumerate(_PAYMENT_CONFIRMATIONS)
+    ]
+    return JSONResponse({"payments": payments})
 
 
 @app.delete("/api/admin/users/{target_username}")
