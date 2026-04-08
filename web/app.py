@@ -34,13 +34,11 @@ try:
     from web.routers import alerts as _alerts_router
     from web.routers import forex as _forex_router
     from web.routers import news as _news_router
-    from web.routers import smc as _smc_router
 except ImportError:
     # Fallback when running directly from within the `web` directory.
     from routers import alerts as _alerts_router
     from routers import forex as _forex_router
     from routers import news as _news_router
-    from routers import smc as _smc_router
 
 
 
@@ -1301,7 +1299,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(_news_router.router)
 app.include_router(_alerts_router.router)
 app.include_router(_forex_router.router)
-app.include_router(_smc_router.router)
+# SMC router is temporarily disabled in production.
+# It requires writable local storage, which is unavailable on Vercel's read-only /var/task.
 
 class _CachedStaticFiles(StaticFiles):
     """StaticFiles subclass that adds long-lived cache headers to all static files."""
