@@ -229,5 +229,5 @@ async def forex_news():
             "news": normalized,
         })
     except Exception as exc:
-        logger.error("forex_news error: %s", exc)
+        logger.error("news error: %s", exc)
         return JSONResponse({"status": "error", "error": "Internal server error."}, status_code=500)
