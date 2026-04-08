@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, Minus, Search, RefreshCw, Volume2, VolumeX,
   BarChart2, AlertTriangle, Target, Layers, Zap,
-  Star, Award, Flame, ChevronRight, ChevronLeft,
+  Star, Award, Flame, ChevronRight, ChevronLeft, X,
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
@@ -1337,9 +1337,15 @@ export default function ForexDashboard() {
   const [signalError, setSignalError] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [successTabClicks, setSuccessTabClicks] = useState(0)
+  const [showDisclaimer, setShowDisclaimer] = useState(true)
   const prevDirRef = useRef(null)
   const tabsRef = useRef(null)
   const contentRef = useRef(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowDisclaimer(false), 30000)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Load all pairs — API returns {major, minor, exotic, all, ecb_live}
   useEffect(() => {
@@ -1445,6 +1451,40 @@ export default function ForexDashboard() {
             </button>
           </div>
         </motion.div>
+
+        {/* Pair selector row */}
+        <AnimatePresence>
+          {showDisclaimer && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="bg-accent-yellow/5 border border-accent-yellow/30 rounded-xl p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <AlertTriangle size={16} className="text-accent-yellow flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-accent-yellow text-xs font-semibold uppercase tracking-wide mb-1">Important Disclaimer</p>
+                    <p className="text-text-secondary text-xs leading-relaxed">
+                      The signals and information provided by PiiTrade are for informational and educational purposes only and do not constitute financial advice.
+                      Forex and CFD trading involves significant risk of loss. Past performance is not indicative of future results.
+                      Always verify signals with your broker and seek independent financial advice before trading.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDisclaimer(false)}
+                  className="btn-interactive flex-shrink-0 p-1 rounded-lg text-text-muted hover:text-text-primary"
+                  title="Dismiss disclaimer"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Pair selector row */}
         <motion.div
