@@ -1236,59 +1236,50 @@ document.querySelectorAll('.news-cat-tab').forEach(tab => {
 });
 
 // ─── Alert Subscription ───────────────────────────────────────────────────────
-if (subscribeForm) {
-  subscribeForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = emailInput ? emailInput.value.trim() : '';
-    const pairs = [...subscribeForm.querySelectorAll('input[type="checkbox"]:checked')]
-      .map(cb => cb.value);
+subscribeForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = emailInput.value.trim();
+  const pairs = [...subscribeForm.querySelectorAll('input[type="checkbox"]:checked')]
+    .map(cb => cb.value);
 
-    if (subscribeStatus) {
-      subscribeStatus.className = 'subscribe-status';
-      subscribeStatus.textContent = '';
-    }
+  subscribeStatus.className = 'subscribe-status';
+  subscribeStatus.textContent = '';
 
-    if (!email) {
-      showSubscribeStatus('error', 'Please enter your email address.');
-      return;
-    }
-    if (pairs.length === 0) {
-      showSubscribeStatus('error', 'Please select at least one currency pair.');
-      return;
-    }
+  if (!email) {
+    showSubscribeStatus('error', 'Please enter your email address.');
+    return;
+  }
+  if (pairs.length === 0) {
+    showSubscribeStatus('error', 'Please select at least one currency pair.');
+    return;
+  }
 
-    const submitBtn = subscribeForm.querySelector('.btn-subscribe');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Subscribing…';
-    }
+  const submitBtn = subscribeForm.querySelector('.btn-subscribe');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Subscribing…';
 
-    try {
-      const res = await fetch('/api/forex/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, pairs }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showSubscribeStatus('success', data.message);
-        if (emailInput) emailInput.value = '';
-      } else {
-        showSubscribeStatus('error', data.error || 'Subscription failed. Please try again.');
-      }
-    } catch (err) {
-      showSubscribeStatus('error', 'Network error. Please try again.');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Subscribe';
-      }
+  try {
+    const res = await fetch('/api/forex/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pairs }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showSubscribeStatus('success', data.message);
+      emailInput.value = '';
+    } else {
+      showSubscribeStatus('error', data.error || 'Subscription failed. Please try again.');
     }
-  });
-}
+  } catch (err) {
+    showSubscribeStatus('error', 'Network error. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Subscribe';
+  }
+});
 
 function showSubscribeStatus(type, msg) {
-  if (!subscribeStatus) return;
   subscribeStatus.className = `subscribe-status ${type}`;
   subscribeStatus.textContent = msg;
 }
