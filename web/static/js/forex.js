@@ -14,7 +14,7 @@ let signalData        = null;
 let refreshTimer      = null;
 let previousDirection = null;
 let soundEnabled      = true;
-const REFRESH_INTERVAL_MS   = 60_000; // 1 minute
+const REFRESH_INTERVAL_MS   = 30_000; // 30 seconds
 const PAIR_FETCH_DELAY_MS   = 120;    // delay between sequential pair API calls (rate-limit friendly)
 
 // ─── Gamification state (persisted in localStorage) ──────────────────────────
@@ -196,7 +196,7 @@ const ALL_SECTIONS = [
   'section-signal', 'section-history', 'section-risk',
   'section-technical', 'section-fvg', 'section-sr-breaks',
   'section-volatile', 'section-reversal',
-  'section-success', 'section-patterns', 'section-news', 'section-alerts',
+  'section-success', 'section-patterns', 'section-smc', 'section-news', 'section-alerts',
 ];
 
 // Sections belonging to each tab
@@ -210,11 +210,13 @@ const TAB_SECTIONS = {
   'section-reversal':  ['section-reversal'],
   'section-success':   ['section-success'],
   'section-patterns':  ['section-patterns'],
+  'section-smc':       ['section-smc'],
   'section-news':      ['section-news'],
   'section-alerts':    ['section-alerts'],
 };
 
 function activateTab(targetSection) {
+  const tabsNav = document.getElementById('fx-tabs-nav');
   // Update tab active states
   document.querySelectorAll('.fx-tab').forEach(tab => {
     const isActive = tab.dataset.section === targetSection;
@@ -222,7 +224,15 @@ function activateTab(targetSection) {
     tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     // Scroll active tab into view within the tab bar
     if (isActive) {
-      tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      if (tabsNav && window.matchMedia('(max-width: 768px)').matches) {
+        const navRect = tabsNav.getBoundingClientRect();
+        const tabRect = tab.getBoundingClientRect();
+        const current = tabsNav.scrollLeft;
+        const target = current + (tabRect.left - navRect.left) - ((navRect.width - tabRect.width) / 2);
+        tabsNav.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+      } else {
+        tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
     }
   });
 
@@ -258,6 +268,16 @@ document.querySelectorAll('.fx-tab').forEach(tab => {
     }
     if (tab.dataset.section === 'section-sr-breaks' && !srBreakoutsLoaded) {
       loadSrBreakouts();
+    }
+    if (tab.dataset.section === 'section-alerts') {
+      // Always refresh when opening the Alerts tab so it never looks stale/empty.
+      loadAlerts({ preferCache: true });
+    }
+    if (tab.dataset.section === 'section-smc') {
+      const smcInput = document.getElementById('smc-image-input');
+      if (smcInput && !smcInput.dataset.bound) {
+        bindSmcAnalyzer();
+      }
     }
   });
 });
@@ -337,6 +357,21 @@ const taFvgContent    = document.getElementById('ta-fvg-content');
 const taBosContent    = document.getElementById('ta-bos-content');
 const taChochContent  = document.getElementById('ta-choch-content');
 const taVolumeContent = document.getElementById('ta-volume-content');
+const smcImageInput   = document.getElementById('smc-image-input');
+const smcAnalyzeBtn   = document.getElementById('smc-analyze-btn');
+const smcStatusEl     = document.getElementById('smc-status');
+const smcReportEl     = document.getElementById('smc-report');
+const smcPreviewEl    = document.getElementById('smc-preview');
+const smcPreviewEmpty = document.getElementById('smc-preview-empty');
+const smcTrendEl      = document.getElementById('smc-trend');
+const smcConfidenceEl = document.getElementById('smc-confidence');
+const smcDetectCount  = document.getElementById('smc-detection-count');
+const smcDetectionsEl = document.getElementById('smc-detections');
+const smcTradeBiasEl  = document.getElementById('smc-trade-bias');
+const smcTradeEntryEl = document.getElementById('smc-trade-entry');
+const smcTradeSlEl    = document.getElementById('smc-trade-sl');
+const smcTradeTpEl    = document.getElementById('smc-trade-tp');
+const smcStructureEl  = document.getElementById('smc-structure');
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 function formatDate(isoStr) {
@@ -1134,6 +1169,10 @@ let _knownNewsHeadlines = new Set();
 let _newsInitialLoad = true;
 let _allNewsItems = [];
 let _activeNewsCat = 'all';
+let _allAlerts = [];
+let _activeAlertCat = 'all';
+const ALERTS_CACHE_KEY = 'fxAlertsCacheV1';
+const ALERTS_CACHE_TTL_MS = 120_000;
 
 async function loadNews() {
   try {
@@ -1151,10 +1190,24 @@ async function loadNews() {
 function renderNews(items) {
   if (newsLoadingEl) newsLoadingEl.style.display = 'none';
 
+  // Normalize mixed payload shapes from different backends/caches.
+  const normalizedItems = (items || []).map((item) => {
+    const headline = (item && (item.headline || item.title || item.summary || '')).toString().trim();
+    return {
+      headline: headline || 'Market update',
+      source: (item?.source || 'Unknown Source').toString(),
+      published_at: (item?.published_at || item?.publishedAt || '').toString(),
+      sentiment: (item?.sentiment || 'neutral').toString(),
+      category: (item?.category || 'forex').toString(),
+      summary: (item?.summary || '').toString(),
+      url: (item?.url || item?.link || '').toString(),
+    };
+  });
+
   // Discard news items older than 48 hours
   const NEWS_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
   const cutoff = Date.now() - NEWS_MAX_AGE_MS;
-  const recent = items.filter(item => {
+  const recent = normalizedItems.filter(item => {
     try {
       return new Date(item.published_at).getTime() >= cutoff;
     } catch {
@@ -1236,7 +1289,7 @@ document.querySelectorAll('.news-cat-tab').forEach(tab => {
 });
 
 // ─── Alert Subscription ───────────────────────────────────────────────────────
-subscribeForm.addEventListener('submit', async (e) => {
+if (subscribeForm) subscribeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = emailInput.value.trim();
   const pairs = [...subscribeForm.querySelectorAll('input[type="checkbox"]:checked')]
@@ -1259,7 +1312,7 @@ subscribeForm.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Subscribing…';
 
   try {
-    const res = await fetch('/api/forex/subscribe', {
+    const res = await fetch('/api/forex/alerts/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, pairs }),
@@ -1284,16 +1337,232 @@ function showSubscribeStatus(type, msg) {
   subscribeStatus.textContent = msg;
 }
 
+function readAlertsCache() {
+  try {
+    const raw = localStorage.getItem(ALERTS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.alerts) || !parsed.ts) return null;
+    if (Date.now() - Number(parsed.ts) > ALERTS_CACHE_TTL_MS) return null;
+    return parsed.alerts;
+  } catch {
+    return null;
+  }
+}
+
+function writeAlertsCache(alerts) {
+  try {
+    localStorage.setItem(ALERTS_CACHE_KEY, JSON.stringify({ alerts, ts: Date.now() }));
+  } catch {
+    // Ignore localStorage quota/private mode issues.
+  }
+}
+
+function normalizeAlerts(items) {
+  return (items || []).map((item, idx) => ({
+    id: String(item?.id || `alert-${idx}`),
+    type: String(item?.type || 'economic'),
+    priority: String(item?.priority || 'low').toLowerCase(),
+    title: String(item?.title || item?.event || 'Market Alert'),
+    time: String(item?.time || item?.published_at || '--'),
+    body: String(item?.body || item?.summary || ''),
+    impact: String(item?.impact || 'Low'),
+  }));
+}
+
+function renderAlerts(items) {
+  const feed = document.getElementById('alerts-feed');
+  if (!feed) return;
+  const normalized = normalizeAlerts(items);
+  const filtered = _activeAlertCat === 'all'
+    ? normalized
+    : normalized.filter(a => a.type === _activeAlertCat);
+
+  const iconByType = {
+    institutional: '🏦',
+    surge: '🚀',
+    economic: '📅',
+  };
+
+  if (filtered.length === 0) {
+    feed.innerHTML = '<div style="color:var(--text2);padding:24px 0;text-align:center">No market alerts for this category right now.</div>';
+    return;
+  }
+
+  feed.innerHTML = filtered.map((a, idx) => {
+    const type = ['institutional', 'surge', 'economic'].includes(a.type) ? a.type : 'economic';
+    const priority = ['high', 'medium', 'low'].includes(a.priority) ? a.priority : 'low';
+    const impactClass = priority === 'high' ? 'negative' : priority === 'medium' ? 'neutral' : 'positive';
+    return `
+      <article class="alert-card ${priority}" data-alert-type="${escapeHtml(type)}" style="animation-delay:${idx * 45}ms">
+        <div class="alert-header">
+          <span class="alert-icon">${iconByType[type] || '🔔'}</span>
+          <div class="alert-title">${escapeHtml(a.title)}</div>
+          <span class="alert-badge ${escapeHtml(type)}">${escapeHtml(type)}</span>
+          <span class="alert-time">${escapeHtml(a.time)}</span>
+        </div>
+        <div class="alert-body">${escapeHtml(a.body || 'No additional details available.')}</div>
+        <div class="alert-impact">
+          <span class="alert-impact-label">Impact</span>
+          <span class="alert-impact-value ${impactClass}">${escapeHtml(a.impact)}</span>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+async function loadAlerts(options = {}) {
+  const { preferCache = true } = options;
+  const feed = document.getElementById('alerts-feed');
+  if (feed && !_allAlerts.length) {
+    feed.innerHTML = '<div style="color:var(--text2);padding:24px 0;text-align:center">Loading alerts...</div>';
+  }
+  if (preferCache) {
+    const cached = readAlertsCache();
+    if (cached && cached.length) {
+      _allAlerts = cached;
+      renderAlerts(_allAlerts);
+    }
+  }
+
+  try {
+    const res = await fetch('/api/forex/alerts');
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    _allAlerts = normalizeAlerts(data.alerts || []);
+    if (_allAlerts.length === 0) {
+      throw new Error('Alerts endpoint returned empty payload');
+    }
+    writeAlertsCache(_allAlerts);
+    renderAlerts(_allAlerts);
+  } catch (err) {
+    // Fallback path: transform economic calendar response into alerts.
+    try {
+      const fallbackRes = await fetch('/api/forex/economic-calendar');
+      if (!fallbackRes.ok) throw new Error(await fallbackRes.text());
+      const fallbackData = await fallbackRes.json();
+      const fallbackAlerts = (fallbackData.events || []).map((ev, idx) => ({
+        id: `eco-fallback-${idx}`,
+        type: 'economic',
+        priority: String(ev?.impact || 'Low').toLowerCase().includes('high')
+          ? 'high'
+          : String(ev?.impact || 'Low').toLowerCase().includes('medium')
+            ? 'medium'
+            : 'low',
+        title: ev?.event || 'Economic Event',
+        time: ev?.time || '--',
+        body: `Currency: ${ev?.currency || '--'} | Impact: ${ev?.impact || 'Low'}`,
+        impact: ev?.impact || 'Low',
+      }));
+      _allAlerts = normalizeAlerts(fallbackAlerts);
+      writeAlertsCache(_allAlerts);
+      renderAlerts(_allAlerts);
+      return;
+    } catch {
+      if (!_allAlerts.length) {
+        const feed = document.getElementById('alerts-feed');
+        if (feed) {
+          feed.innerHTML = '<div style="color:var(--text2);padding:24px 0;text-align:center">Could not load alerts at this time.</div>';
+        }
+      }
+      console.error('Failed to load alerts:', err);
+    }
+  }
+}
+
+function bindSmcAnalyzer() {
+  if (!smcImageInput || !smcAnalyzeBtn || !smcStatusEl || !smcReportEl) return;
+  smcImageInput.dataset.bound = '1';
+
+  const updatePreview = () => {
+    const file = smcImageInput.files && smcImageInput.files[0];
+    if (!file || !smcPreviewEl || !smcPreviewEmpty) return;
+    const url = URL.createObjectURL(file);
+    smcPreviewEl.src = url;
+    smcPreviewEl.hidden = false;
+    smcPreviewEmpty.hidden = true;
+  };
+
+  const renderSmcResult = (result) => {
+    const structure = result?.structure || {};
+    const trade = result?.trade || {};
+    const detections = Array.isArray(result?.detections) ? result.detections : [];
+
+    if (smcTrendEl) smcTrendEl.textContent = String(structure.trend || 'neutral').toUpperCase();
+    if (smcConfidenceEl) smcConfidenceEl.textContent = `${((trade.confidence || 0) * 100).toFixed(1)}%`;
+    if (smcDetectCount) smcDetectCount.textContent = String(detections.length);
+
+    if (smcDetectionsEl) {
+      if (!detections.length) {
+        smcDetectionsEl.innerHTML = '<span class="smc-chip">No detections found</span>';
+      } else {
+        smcDetectionsEl.innerHTML = detections.map((d) => {
+          const label = String(d?.label || 'UNK').toUpperCase();
+          const conf = Number(d?.confidence || 0);
+          const cls = label.toLowerCase();
+          return `<span class="smc-chip ${escapeHtml(cls)}">${escapeHtml(label)} ${Math.round(conf * 100)}%</span>`;
+        }).join('');
+      }
+    }
+
+    if (smcTradeBiasEl) smcTradeBiasEl.textContent = String(trade.bias || 'neutral');
+    if (smcTradeEntryEl) smcTradeEntryEl.textContent = String(trade.entry || '-');
+    if (smcTradeSlEl) smcTradeSlEl.textContent = String(trade.stop_loss || '-');
+    if (smcTradeTpEl) smcTradeTpEl.textContent = String(trade.take_profit || '-');
+
+    if (smcStructureEl) {
+      const bos = (structure.bos || []).length;
+      const choch = (structure.choch || []).length;
+      const ob = (structure.order_blocks || []).length;
+      const fvg = (structure.fvg || []).length;
+      smcStructureEl.textContent = `BOS: ${bos} | CHoCH: ${choch} | OB: ${ob} | FVG: ${fvg}`;
+    }
+  };
+
+  smcImageInput.addEventListener('change', () => {
+    updatePreview();
+    smcStatusEl.textContent = 'Image ready. Click Analyze Image.';
+  });
+
+  smcAnalyzeBtn.addEventListener('click', async () => {
+    const file = smcImageInput.files && smcImageInput.files[0];
+    if (!file) {
+      smcStatusEl.textContent = 'Please choose a chart image first.';
+      return;
+    }
+
+    smcAnalyzeBtn.disabled = true;
+    smcStatusEl.textContent = 'Analyzing chart image...';
+    smcReportEl.textContent = 'Running SMC detection...';
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/smc/analyze', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(data.message || 'SMC analysis failed');
+      }
+
+      const report = data?.data?.report || 'No report generated.';
+      const trade = data?.data?.trade || {};
+      renderSmcResult(data?.data || {});
+      smcStatusEl.textContent = `Done. Bias: ${trade.bias || 'neutral'} | Confidence: ${((trade.confidence || 0) * 100).toFixed(1)}%`;
+      smcReportEl.textContent = report;
+    } catch (err) {
+      smcStatusEl.textContent = 'SMC analysis failed. Please try another image.';
+      smcReportEl.textContent = String(err?.message || err);
+    } finally {
+      smcAnalyzeBtn.disabled = false;
+    }
+  });
+}
+
 // ─── Alerts Category Tabs ─────────────────────────────────────────────────────
 document.querySelectorAll('.alerts-cat-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.alerts-cat-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    const cat = tab.dataset.alertCat;
-    document.querySelectorAll('#alerts-feed .alert-card').forEach(card => {
-      const cardType = card.dataset.alertType;
-      card.style.display = (cat === 'all' || cardType === cat) ? '' : 'none';
-    });
+    _activeAlertCat = tab.dataset.alertCat || 'all';
+    renderAlerts(_allAlerts);
   });
 });
 
@@ -1762,7 +2031,11 @@ refreshBtn.addEventListener('click', () => {
 
 function resetAutoRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => loadSignal(currentPair), REFRESH_INTERVAL_MS);
+  refreshTimer = setInterval(() => {
+    loadSignal(currentPair);
+    loadNews();
+    loadAlerts({ preferCache: false });
+  }, REFRESH_INTERVAL_MS);
 }
 
 // ─── Resize chart on window resize ───────────────────────────────────────────
@@ -1873,7 +2146,7 @@ activateTab('section-signal');
 
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
-Promise.all([loadSignal(currentPair), loadNews()])
+Promise.all([loadSignal(currentPair), loadNews(), loadAlerts()])
   .finally(() => {
     hidePageLoader();
     // Pre-fetch all other tab resources silently in the background so that
@@ -1883,6 +2156,7 @@ Promise.all([loadSignal(currentPair), loadNews()])
     loadVolatilePairs(currentVolatileTf);
     loadReversalPairs();
     loadPatternScanner();
+    bindSmcAnalyzer();
   });
 resetAutoRefresh();
 

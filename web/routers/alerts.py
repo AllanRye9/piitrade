@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any
 
 import requests as _requests
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -17,6 +17,8 @@ router = APIRouter()
 
 _ECO_CALENDAR_CACHE: dict[str, Any] = {"items": [], "ts": 0.0}
 _ECO_CALENDAR_TTL = 3600  # refresh at most once per hour
+_ALERTS_CACHE: dict[str, Any] = {"items": [], "ts": 0.0}
+_ALERTS_TTL = 120  # short cache for snappy UI while staying fresh
 
 _FALLBACK_EVENTS: list[dict[str, Any]] = [
     {"time": "Mon 12:30", "event": "US CPI y/y", "currency": "USD", "impact": "High"},
@@ -36,6 +38,13 @@ _ECO_CURRENCY_MAP = {
     "aud": "AUD", "cad": "CAD", "chf": "CHF", "nzd": "NZD",
     "cny": "CNY", "mxn": "MXN", "sek": "SEK", "nok": "NOK",
 }
+
+_INSTITUTIONAL_TOKENS = (
+    "rate decision", "fomc", "ecb", "boe", "boj", "rba", "boc", "snb", "minutes",
+)
+_SURGE_TOKENS = (
+    "cpi", "nfp", "non-farm", "payroll", "gdp", "inflation", "pmi", "employment", "retail sales",
+)
 
 
 def _fetch_economic_calendar() -> list[dict[str, Any]]:
@@ -100,7 +109,125 @@ def _fetch_economic_calendar() -> list[dict[str, Any]]:
     return _ECO_CALENDAR_CACHE["items"]
 
 
+def _classify_alert_type(event_name: str) -> str:
+    text = (event_name or "").lower()
+    if any(token in text for token in _INSTITUTIONAL_TOKENS):
+        return "institutional"
+    if any(token in text for token in _SURGE_TOKENS):
+        return "surge"
+    return "economic"
+
+
+def _impact_to_priority(impact: str) -> str:
+    val = (impact or "").strip().lower()
+    if "high" in val:
+        return "high"
+    if "medium" in val:
+        return "medium"
+    return "low"
+
+
+def _build_alerts() -> list[dict[str, Any]]:
+    now = time.time()
+    if _ALERTS_CACHE["items"] and now - _ALERTS_CACHE["ts"] < _ALERTS_TTL:
+        return _ALERTS_CACHE["items"]
+
+    events = _fetch_economic_calendar()
+    alerts: list[dict[str, Any]] = []
+    for idx, event in enumerate(events):
+        event_name = event.get("event") or "Economic Event"
+        currency = event.get("currency") or "--"
+        impact = event.get("impact") or "Low"
+        alert_type = _classify_alert_type(event_name)
+        priority = _impact_to_priority(impact)
+
+        detail_parts = [f"Currency: {currency}", f"Impact: {impact}"]
+        if event.get("forecast") not in (None, ""):
+            detail_parts.append(f"Forecast: {event.get('forecast')}")
+        if event.get("previous") not in (None, ""):
+            detail_parts.append(f"Previous: {event.get('previous')}")
+
+        alerts.append({
+            "id": f"eco-{idx}",
+            "type": alert_type,
+            "priority": priority,
+            "title": event_name,
+            "time": event.get("time") or "--",
+            "body": " | ".join(detail_parts),
+            "impact": impact,
+            "currency": currency,
+        })
+
+    _ALERTS_CACHE["items"] = alerts
+    _ALERTS_CACHE["ts"] = now
+    return alerts
+
+
+def _core():
+    """Load app core so router can reuse shared helpers/constants."""
+    try:
+        from web import app as core  # type: ignore
+    except ImportError:
+        import app as core  # type: ignore
+    return core
+
+
 @router.get("/api/forex/economic-calendar")
 async def forex_economic_calendar():
     """Return upcoming economic events for the current week."""
     return JSONResponse({"events": _fetch_economic_calendar()})
+
+
+@router.get("/api/forex/alerts")
+async def forex_alerts():
+    """Return normalized alert cards used by the Alerts tab in templates."""
+    items = _build_alerts()
+    return JSONResponse({
+        "alerts": items,
+        "count": len(items),
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+    })
+
+
+@router.post("/api/forex/alerts/subscribe")
+async def alerts_subscribe(request: Request):
+    """Receive alert subscriptions and forward details to support inbox."""
+    try:
+        payload: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"success": False, "error": "Invalid JSON payload."}, status_code=400)
+
+    email = str(payload.get("email", "")).strip().lower()
+    pairs = payload.get("pairs") or []
+
+    if not email or "@" not in email:
+        return JSONResponse({"success": False, "error": "Valid email is required."}, status_code=400)
+    if not isinstance(pairs, list) or not pairs:
+        return JSONResponse({"success": False, "error": "Select at least one pair."}, status_code=400)
+
+    safe_pairs = [str(p).strip() for p in pairs if str(p).strip()]
+    if not safe_pairs:
+        return JSONResponse({"success": False, "error": "Select at least one pair."}, status_code=400)
+
+    core = _core()
+    pair_list = ", ".join(safe_pairs[:40])
+    body = (
+        "<h2>New Alerts Subscription</h2>"
+        f"<p><strong>Email:</strong> {email}</p>"
+        f"<p><strong>Pairs:</strong> {pair_list}</p>"
+        f"<p><strong>Requested At:</strong> {datetime.utcnow().isoformat()}Z</p>"
+    )
+    recipient = getattr(core, "_SUPPORT_ALERT_EMAIL", "support@yotweek.com")
+    sent = core._send_email(recipient, "PiiTrade Alerts Subscription", body)
+
+    if not sent:
+        # Keep success response so user flow is not blocked when SMTP is absent.
+        return JSONResponse({
+            "success": True,
+            "message": "Subscription received. Support team will process your request.",
+        })
+
+    return JSONResponse({
+        "success": True,
+        "message": "Subscription received and forwarded to support@yotweek.com.",
+    })

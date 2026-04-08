@@ -116,6 +116,8 @@
         aria-label="Pair Success Rates">🏆 Success</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-patterns"
         aria-label="Structure & Pattern Scanner">🔮 Scanner</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-smc"
+        aria-label="SMC Image Analyzer">🧠 SMC</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-news" aria-label="Market News">📰
         News</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-alerts"
@@ -467,9 +469,9 @@
             <!-- Current Price (live) -->
             <div class="ta-card ta-card-wide">
               <div class="ta-card-title">
-                💱 Current Price
+                💱 Entry Price
                 <span id="ta-live-price-badge" class="fx-data-source live" style="margin-left:8px;font-size:.72rem">🟢
-                  Live</span>
+                  AI Mode </span>
               </div>
               <div id="ta-current-price-display" class="ta-live-price-row">
                 <span id="ta-current-price" class="ta-live-price-value">–</span>
@@ -741,7 +743,74 @@
           </div>
         </section>
 
-        <!-- 7. Alerts & Events ─────────────────────────────────────────────────── -->
+        <!-- 7. SMC Image Analyzer ───────────────────────────────────────────── -->
+        <section id="section-smc" class="fx-hidden">
+          <div class="fx-section-title">🧠 SMC Image Analyzer</div>
+          <p class="smc-intro">
+            Upload your chart screenshot to detect SMC elements (BOS, CHoCH, OB, FVG) and generate an AI trade report.
+          </p>
+
+          <div class="smc-layout">
+            <div class="smc-upload-card">
+              <label class="smc-file-label" for="smc-image-input">Chart Image</label>
+              <input id="smc-image-input" class="smc-file-input" type="file" accept="image/*" />
+              <button id="smc-analyze-btn" type="button" class="btn-refresh smc-analyze-btn">Analyze Image</button>
+
+              <div class="smc-preview-wrap">
+                <img id="smc-preview" class="smc-preview" alt="SMC chart preview" hidden />
+                <div id="smc-preview-empty" class="smc-preview-empty">No image selected</div>
+              </div>
+
+              <div id="smc-status" class="smc-status">Choose an image to begin analysis.</div>
+            </div>
+
+            <div class="smc-results-card">
+              <div class="smc-kpi-grid">
+                <div class="smc-kpi">
+                  <div class="smc-kpi-label">Trend</div>
+                  <div id="smc-trend" class="smc-kpi-value">Neutral</div>
+                </div>
+                <div class="smc-kpi">
+                  <div class="smc-kpi-label">Confidence</div>
+                  <div id="smc-confidence" class="smc-kpi-value">0.0%</div>
+                </div>
+                <div class="smc-kpi">
+                  <div class="smc-kpi-label">Detections</div>
+                  <div id="smc-detection-count" class="smc-kpi-value">0</div>
+                </div>
+              </div>
+
+              <div class="smc-detections-wrap">
+                <div class="smc-subtitle">Detected Patterns</div>
+                <div id="smc-detections" class="smc-detections">
+                  <span class="smc-chip">No detections yet</span>
+                </div>
+              </div>
+
+              <div class="smc-trade-wrap">
+                <div class="smc-subtitle">Trade Setup</div>
+                <div class="smc-trade-grid">
+                  <div class="smc-trade-item"><span>Bias</span><strong id="smc-trade-bias">neutral</strong></div>
+                  <div class="smc-trade-item"><span>Entry</span><strong id="smc-trade-entry">-</strong></div>
+                  <div class="smc-trade-item"><span>Stop Loss</span><strong id="smc-trade-sl">-</strong></div>
+                  <div class="smc-trade-item"><span>Take Profit</span><strong id="smc-trade-tp">-</strong></div>
+                </div>
+              </div>
+
+              <div class="smc-structure-wrap">
+                <div class="smc-subtitle">Structure Summary</div>
+                <div id="smc-structure" class="smc-structure">BOS: 0 | CHoCH: 0 | OB: 0 | FVG: 0</div>
+              </div>
+
+              <div class="smc-report-wrap">
+                <div class="smc-subtitle">AI Trade Report</div>
+                <pre id="smc-report" class="smc-report">Upload a chart image to generate an SMC report.</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. Alerts & Events ─────────────────────────────────────────────────── -->
         <section id="section-alerts">
           <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">

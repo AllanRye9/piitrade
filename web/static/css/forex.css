@@ -4054,6 +4054,195 @@ a:hover {
   color: var(--warn);
 }
 
+/* SMC Analyzer UI */
+.smc-intro {
+  color: var(--text2);
+  font-size: .9rem;
+  margin: 0 0 14px;
+}
+
+.smc-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+}
+
+.smc-upload-card,
+.smc-results-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.smc-file-label {
+  display: inline-block;
+  color: var(--text2);
+  font-size: .8rem;
+  margin-bottom: 7px;
+}
+
+.smc-file-input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.smc-analyze-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.smc-preview-wrap {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  min-height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.smc-preview {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  display: block;
+}
+
+.smc-preview-empty {
+  color: var(--text2);
+  font-size: .82rem;
+}
+
+.smc-status {
+  color: var(--text2);
+  font-size: .82rem;
+  margin-top: 10px;
+}
+
+.smc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.smc-kpi {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.smc-kpi-label {
+  color: var(--text2);
+  font-size: .75rem;
+}
+
+.smc-kpi-value {
+  color: var(--text);
+  font-size: .95rem;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.smc-subtitle {
+  color: var(--text2);
+  font-size: .78rem;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.smc-detections-wrap {
+  margin-bottom: 12px;
+}
+
+.smc-trade-wrap,
+.smc-structure-wrap {
+  margin-bottom: 12px;
+}
+
+.smc-trade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.smc-trade-item {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.smc-trade-item span {
+  display: block;
+  font-size: .72rem;
+  color: var(--text2);
+}
+
+.smc-trade-item strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--text);
+  font-size: .82rem;
+}
+
+.smc-structure {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px 10px;
+  color: var(--text2);
+  font-size: .8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.smc-detections {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.smc-chip {
+  font-size: .75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--text2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.smc-chip.bos,
+.smc-chip.choch {
+  border-color: rgba(88, 166, 255, .45);
+  color: var(--accent);
+}
+
+.smc-chip.ob {
+  border-color: rgba(63, 185, 80, .45);
+  color: var(--buy-color);
+}
+
+.smc-chip.fvg {
+  border-color: rgba(248, 161, 73, .45);
+  color: var(--warn);
+}
+
+.smc-report {
+  white-space: pre-wrap;
+  background: #0f1420;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 170px;
+  color: #c9d1d9;
+  font-size: .83rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
 /* Email subscribe subsection within alerts */
 .alerts-subscribe-section {
   margin-top: 28px;
@@ -4253,6 +4442,20 @@ canvas {
   .fx-tab {
     padding: 9px 11px;
     font-size: 0.79rem;
+  }
+
+  .smc-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .smc-trade-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .smc-layout {
+    grid-template-columns: 1fr;
   }
 }
 
