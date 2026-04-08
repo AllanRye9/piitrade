@@ -8,7 +8,7 @@ const PARTNERS = [
     tagline: 'Discover Great Games',
     description: 'Join millions of gamers on TapTap — find, share, and review the hottest mobile games from around the world. Independent, honest, and community-driven.',
     cta: 'Explore Games',
-    href: 'https://www.taptap.io/',
+    href: 'https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d',
     accentColor: '#f59e0b',
     accentBg: 'rgba(245,158,11,0.1)',
     accentBorder: 'rgba(245,158,11,0.25)',

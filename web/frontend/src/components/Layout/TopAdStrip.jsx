@@ -9,7 +9,7 @@ export default function TopAdStrip() {
           <span key={copy} className="inline-flex items-center gap-8 pr-8">
             {/* TapTap ad */}
             <a
-              href="https://www.taptap.io/"
+              href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors"
@@ -37,7 +37,7 @@ export default function TopAdStrip() {
 
             {/* TapTap repeat */}
             <a
-              href="https://www.taptap.io/"
+              href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors"
