@@ -8,6 +8,7 @@ import { useTheme, THEMES } from '../../context/ThemeContext'
 const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'Dashboard', path: '/forex' },
+  { label: 'SMC', path: '/smc' },
   { label: 'Methodology', path: '/methodology' },
   { label: 'Disclaimer', path: '/disclaimer' },
 ]
