@@ -209,21 +209,25 @@ def _make_news_items() -> list[dict[str, Any]]:
 
 @router.get("/api/forex/news")
 async def forex_news():
-    items = _make_news_items()
-    normalized = [
-        {
-            "headline": item.get("title", ""),
-            "url": item.get("url", ""),
-            "source": item.get("source", ""),
-            "published_at": item.get("published_at", ""),
-            "summary": item.get("summary", ""),
-            "sentiment": _infer_sentiment(f"{item.get('title', '')} {item.get('summary', '')}"),
-            "category": _infer_category(item.get("source", ""), item.get("title", "")),
-        }
-        for item in items
-    ]
-    return JSONResponse({
-        "status": "ok",
-        "count": len(normalized),
-        "news": normalized,
-    })
+    try:
+        items = _make_news_items()
+        normalized = [
+            {
+                "headline": item.get("title", ""),
+                "url": item.get("url", ""),
+                "source": item.get("source", ""),
+                "published_at": item.get("published_at", ""),
+                "summary": item.get("summary", ""),
+                "sentiment": _infer_sentiment(f"{item.get('title', '')} {item.get('summary', '')}"),
+                "category": _infer_category(item.get("source", ""), item.get("title", "")),
+            }
+            for item in items
+        ]
+        return JSONResponse({
+            "status": "ok",
+            "count": len(normalized),
+            "news": normalized,
+        })
+    except Exception as exc:
+        logger.error("news error: %s", exc)
+        return JSONResponse({"status": "error", "error": "Internal server error."}, status_code=500)
