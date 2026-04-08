@@ -4,7 +4,6 @@ PiiTrade – AI Forex Signal Hub
 FastAPI application with auth, admin dashboard, and security hardening.
 """
 
-import asyncio
 import hashlib
 import os
 import re as _re
@@ -2157,10 +2156,8 @@ async def forex_signals(pair: str = "EUR/USD"):
     signal: dict[str, Any] = dict(_FOREX_SIGNALS[pair])
     signal["pair"] = pair
 
-    live_rate, hist_rates = await asyncio.gather(
-        asyncio.to_thread(_fetch_live_rate, pair),
-        asyncio.to_thread(_fetch_historical_rates, pair, 30),
-    )
+    live_rate = _fetch_live_rate(pair)
+    hist_rates = _fetch_historical_rates(pair, 30)
 
     if live_rate is not None:
         signal["entry_price"] = live_rate
@@ -2224,7 +2221,7 @@ async def forex_technical(pair: str = "EUR/USD"):
             {"error": f"Unsupported pair. Choose from: {', '.join(_SUPPORTED_PAIRS)}"},
             status_code=400,
         )
-    live_rate = await asyncio.to_thread(_fetch_live_rate, pair)
+    live_rate = _fetch_live_rate(pair)
     return JSONResponse(_build_technical_analysis(pair, live_rate))
 
 
@@ -2246,7 +2243,7 @@ async def forex_pairs():
         else:
             minor.append(p)
     # Check if Frankfurter/ECB API is available
-    ecb_live = await asyncio.to_thread(_fetch_live_rate, "EUR/USD") is not None
+    ecb_live = _fetch_live_rate("EUR/USD") is not None
     return JSONResponse({
         "major": major,
         "minor": minor,
@@ -2265,13 +2262,9 @@ _TICKER_PAIRS = [
 @app.get("/api/forex/live-prices")
 async def forex_live_prices():
     """Return live prices and 24h change for the main ticker pairs."""
-    # Fetch all live rates and 2-day history concurrently
-    live_rates, histories = await asyncio.gather(
-        asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _TICKER_PAIRS]),
-        asyncio.gather(*[asyncio.to_thread(_fetch_historical_rates, p, 2) for p in _TICKER_PAIRS]),
-    )
     result = []
-    for pair, current, hist in zip(_TICKER_PAIRS, live_rates, histories):
+    for pair in _TICKER_PAIRS:
+        current = _fetch_live_rate(pair)
         if current is None:
             # Fall back to static signal entry price
             entry = _FOREX_SIGNALS.get(pair, {}).get("entry_price")
@@ -2283,6 +2276,7 @@ async def forex_live_prices():
             })
             continue
         # Use last 2 days of history to compute change
+        hist = _fetch_historical_rates(pair, 2)
         prev_values = list(hist.values())
         if len(prev_values) >= 2:
             prev = prev_values[-2]
@@ -2440,16 +2434,12 @@ async def forex_volatile(timeframe: str = "24h"):
     window_map = {"1h": 2, "4h": 5, "24h": 10}
     window = window_map[timeframe]
 
-    # Fetch all live rates concurrently to avoid blocking the event loop
-    live_rates = await asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _SUPPORTED_PAIRS])
-    live_rate_map = dict(zip(_SUPPORTED_PAIRS, live_rates))
-
     results: list[dict[str, Any]] = []
     for pair in _SUPPORTED_PAIRS:
         prices = _get_prices_for_pair(pair, 30)
         vol = _compute_volatility(prices, window)
         signal_info = _FOREX_SIGNALS[pair]
-        live_rate = live_rate_map[pair]
+        live_rate = _fetch_live_rate(pair)
         results.append({
             "pair": pair,
             "volatility_pct": vol,
@@ -2488,10 +2478,6 @@ def _detect_reversal(prices: list[float]) -> dict[str, Any]:
 @app.get("/api/forex/reversals")
 async def forex_reversals():
     """Return pairs with detected potential trend reversals."""
-    # Fetch all live rates concurrently to avoid blocking the event loop
-    live_rates = await asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _SUPPORTED_PAIRS])
-    live_rate_map = dict(zip(_SUPPORTED_PAIRS, live_rates))
-
     results: list[dict[str, Any]] = []
     for pair in _SUPPORTED_PAIRS:
         prices = _get_prices_for_pair(pair, 30)
@@ -2499,7 +2485,7 @@ async def forex_reversals():
         if rev["reversal"] == "none":
             continue
         signal_info = _FOREX_SIGNALS[pair]
-        live_rate = live_rate_map[pair]
+        live_rate = _fetch_live_rate(pair)
         results.append({
             "pair": pair,
             "reversal_type": rev["reversal"],
@@ -2531,11 +2517,8 @@ async def forex_fvg_scanner():
     # Track which pairs already have an entry in each bucket so only one entry
     # per pair per status category is shown (the closest / most relevant one).
     seen_in_bucket: dict[str, set[str]] = {k: set() for k in grouped}
-    # Fetch all live rates concurrently to avoid blocking the event loop
-    live_rates = await asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _SUPPORTED_PAIRS])
-    live_rate_map = dict(zip(_SUPPORTED_PAIRS, live_rates))
     for pair in _SUPPORTED_PAIRS:
-        live_rate = live_rate_map[pair]
+        live_rate = _fetch_live_rate(pair)
         # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
         # unavailable — static fallback prices would not match market conditions.
         if pair in _YF_PAIRS and live_rate is None:
@@ -2594,11 +2577,8 @@ async def forex_sr_breakouts():
     # Track which pairs already have an entry in each status group so only the
     # closest level per pair per group is displayed (avoids duplicate pair rows).
     seen_in_sr: dict[str, set[str]] = {k: set() for k in sr_groups}
-    # Fetch all live rates concurrently to avoid blocking the event loop
-    live_rates = await asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _SUPPORTED_PAIRS])
-    live_rate_map = dict(zip(_SUPPORTED_PAIRS, live_rates))
     for pair in _SUPPORTED_PAIRS:
-        live_rate = live_rate_map[pair]
+        live_rate = _fetch_live_rate(pair)
         # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
         # unavailable — static fallback prices would not match market conditions.
         if pair in _YF_PAIRS and live_rate is None:
@@ -2661,12 +2641,8 @@ async def forex_pattern_scanner(timeframe: str = "1h"):
     # Collect all raw pattern candidates then deduplicate to one per pair.
     _all_candidates: list[dict[str, Any]] = []
 
-    # Fetch all live rates concurrently to avoid blocking the event loop
-    live_rates = await asyncio.gather(*[asyncio.to_thread(_fetch_live_rate, p) for p in _SUPPORTED_PAIRS])
-    live_rate_map = dict(zip(_SUPPORTED_PAIRS, live_rates))
-
     for pair in _SUPPORTED_PAIRS:
-        live_rate = live_rate_map[pair]
+        live_rate = _fetch_live_rate(pair)
         # Skip YF-sourced pairs (stocks, commodities, crypto) when live data is
         # unavailable — static fallback prices would not match market conditions.
         if pair in _YF_PAIRS and live_rate is None:
