@@ -1311,7 +1311,8 @@ class _CachedStaticFiles(StaticFiles):
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 
-app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
+if _STATIC_DIR.exists():
+    app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 
 # Serve repository-level marketing/media images (e.g. /img/exness_*.png, /img/taptap.jfif)
 _IMG_DIR = _DIR.parent / "img"
