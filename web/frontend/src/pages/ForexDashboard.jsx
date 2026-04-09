@@ -1002,38 +1002,72 @@ function VolatileTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
-        {['1h', '4h', '24h'].map((tf) => (
-          <button
-            key={tf}
-            onClick={() => setTimeframe(tf)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${timeframe === tf ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
-          >
-            {tf}
-          </button>
-        ))}
+      {/* Timeframe selector + legend */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          {['1h', '4h', '24h'].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${timeframe === tf ? 'bg-accent-blue text-bg-primary' : 'bg-bg-card border border-border-default text-text-secondary hover:border-accent-blue/50'}`}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+        <span className="text-text-muted text-xs">Volatility % over <span className="text-accent-yellow font-medium">{timeframe}</span></span>
       </div>
+
+      {/* Column headers */}
+      {!loading && !error && items.length > 0 && (
+        <div className="grid grid-cols-[2rem_1fr_5rem] gap-2 px-3 pb-1 border-b border-border-default">
+          <span className="text-text-muted text-xs">#</span>
+          <span className="text-text-muted text-xs">Pair</span>
+          <span className="text-text-muted text-xs text-right">Volatility</span>
+        </div>
+      )}
+
       {loading ? <LoadingSpinner text="Ranking volatile pairs…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No data" desc="Volatility data not available." />
       ) : (
         <div className="space-y-2">
-          {items.slice(0, 20).map((p, i) => (
-            <div key={i} className="bg-bg-card border border-border-default rounded-lg p-3">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-text-muted text-xs font-medium w-5">{i + 1}</span>
-                  <span className="text-text-primary font-medium">{p.pair || p.symbol || '—'}</span>
+          {items.slice(0, 20).map((p, i) => {
+            const volVal = typeof (p.volatility_pct ?? p.volatility) === 'number' ? (p.volatility_pct ?? p.volatility) : 0
+            const barPct = maxVol > 0 ? (volVal / maxVol) * 100 : 0
+            const volLabel = volVal > 0 ? volVal.toFixed(2) : (p.volatility_pct ?? p.volatility) || '—'
+            const isHigh = barPct >= 75
+            const barColor = isHigh ? 'bg-accent-red' : barPct >= 40 ? 'bg-accent-yellow' : 'bg-accent-green'
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.25 }}
+                className="bg-bg-card border border-border-default rounded-lg p-3"
+              >
+                <div className="grid grid-cols-[2rem_1fr_5rem] gap-2 items-center mb-2">
+                  <span className="text-text-muted text-xs font-medium">{i + 1}</span>
+                  <div className="min-w-0">
+                    <span className="text-text-primary font-semibold text-sm truncate block">{p.pair || p.symbol || '—'}</span>
+                    {p.atr != null && (
+                      <span className="text-text-muted text-xs">ATR: {Number(p.atr).toFixed(5)}</span>
+                    )}
+                  </div>
+                  <span className={`font-mono text-sm font-bold text-right whitespace-nowrap ${isHigh ? 'text-accent-red' : 'text-accent-yellow'}`}>
+                    {volLabel}%
+                  </span>
                 </div>
-                <span className="text-accent-yellow font-mono text-sm">{typeof (p.volatility_pct ?? p.volatility) === 'number' ? (p.volatility_pct ?? p.volatility).toFixed(2) : (p.volatility_pct ?? p.volatility) || '—'}%</span>
-              </div>
-              <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-accent-yellow rounded-full transition-all"
-                  style={{ width: `${maxVol > 0 ? (((p.volatility_pct ?? p.volatility) || 0) / maxVol) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
-          ))}
+                <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full ${barColor} rounded-full`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${barPct}%` }}
+                    transition={{ delay: i * 0.03 + 0.1, duration: 0.5, ease: 'easeOut' }}
+                  />
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -1062,20 +1096,63 @@ function ReversalTab() {
 
   return (
     <div className="space-y-3">
+      {/* Header */}
+      {!loading && !error && items.length > 0 && (
+        <div className="flex items-center justify-between px-1 pb-1 border-b border-border-default">
+          <span className="text-text-muted text-xs uppercase tracking-wider">Reversal Signals Detected</span>
+          <span className="text-accent-blue text-xs font-medium">{items.length} pair{items.length !== 1 ? 's' : ''}</span>
+        </div>
+      )}
       {loading ? <LoadingSpinner text="Detecting reversal patterns…" /> : error && !data ? <ErrorBox msg={error} /> : items.length === 0 ? (
         <EmptyState title="No reversals" desc="No reversal signals detected." />
-      ) : items.map((r, i) => (
-        <div key={i} className="bg-bg-card border border-border-default rounded-xl p-3 flex items-center justify-between">
-          <div>
-            <p className="text-text-primary font-medium">{r.pair || r.symbol || '—'}</p>
-            <p className="text-text-muted text-xs">{r.reversal_type || r.pattern || r.type || 'Reversal'}{r.strength != null ? ` — strength: ${r.strength}%` : ''}</p>
-          </div>
-          <div className={`flex items-center gap-2 font-semibold ${dirColor(r.direction)}`}>
-            <DirIcon dir={r.direction} size={16} />
-            <span>{r.direction || '—'}</span>
-          </div>
-        </div>
-      ))}
+      ) : items.map((r, i) => {
+        const strength = r.strength != null ? Number(r.strength) : null
+        const tf = r.timeframe || r.tf || null
+        return (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.25 }}
+            className="bg-bg-card border border-border-default rounded-xl p-3"
+          >
+            <div className="flex items-start justify-between gap-3 mb-2">
+              {/* Left: pair + type */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-text-primary font-semibold text-sm">{r.pair || r.symbol || '—'}</p>
+                  {tf && (
+                    <span className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border-default text-text-muted text-xs">{tf}</span>
+                  )}
+                </div>
+                <p className="text-text-muted text-xs mt-0.5 truncate">{r.reversal_type || r.pattern || r.type || 'Reversal'}</p>
+              </div>
+              {/* Right: direction badge */}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold text-sm flex-shrink-0 ${dirBg(r.direction)} ${dirColor(r.direction)}`}>
+                <DirIcon dir={r.direction} size={14} />
+                <span>{r.direction || '—'}</span>
+              </div>
+            </div>
+            {/* Strength bar */}
+            {strength != null && (
+              <div className="mt-1">
+                <div className="flex justify-between text-xs text-text-muted mb-1">
+                  <span>Signal Strength</span>
+                  <span className="font-mono font-semibold text-text-secondary">{strength}%</span>
+                </div>
+                <div className="h-1.5 bg-bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${strength >= 70 ? 'bg-accent-green' : strength >= 40 ? 'bg-accent-yellow' : 'bg-accent-red'}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${strength}%` }}
+                    transition={{ delay: i * 0.04 + 0.15, duration: 0.5, ease: 'easeOut' }}
+                  />
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )
+      })}
     </div>
   )
 }

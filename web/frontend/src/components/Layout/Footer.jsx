@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Activity, Database, Lock } from 'lucide-react'
+import { TrendingUp, ExternalLink, Globe, Shield, BarChart2, BrainCircuit, Clock, Mail, BookOpen, Zap, Target, Newspaper, Activity, Database, Lock, X, PlayCircle, MessageCircle } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -49,7 +49,21 @@ export default function Footer() {
               Central Bank (ECB) Frankfurter API, live RSS news feeds from ForexLive, FXStreet, DailyFX,
               Reuters, and MarketWatch, plus real-time economic calendar events.
             </p>
+
+            {/* Social & contact */}
             <div className="flex items-center gap-3 mt-2">
+              <a href="https://twitter.com/piitrade" target="_blank" rel="noopener noreferrer"
+                className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="PiiTrade on X / Twitter">
+                <X size={15} />
+              </a>
+              <a href="https://www.youtube.com/@piitrade" target="_blank" rel="noopener noreferrer"
+                className="text-text-muted hover:text-accent-red transition-colors duration-200" title="PiiTrade on YouTube">
+                <PlayCircle size={15} />
+              </a>
+              <a href="https://t.me/piitrade" target="_blank" rel="noopener noreferrer"
+                className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="PiiTrade Telegram">
+                <MessageCircle size={15} />
+              </a>
               <a href="https://www.exness.com/" target="_blank" rel="noopener noreferrer"
                 className="text-text-muted hover:text-accent-blue transition-colors duration-200" title="Partner: Exness">
                 <ExternalLink size={15} />
@@ -80,6 +94,25 @@ export default function Footer() {
                 <li key={l.path}>
                   <Link to={l.path}
                     className="text-text-secondary hover:text-accent-blue transition-all duration-200 text-sm hover:translate-x-1 inline-block">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="text-text-primary font-semibold mt-6 mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+              <Shield size={14} className="text-accent-blue" /> Legal
+            </h4>
+            <ul className="space-y-2">
+              {[
+                { label: 'Disclaimer & Risk Warning', path: '/disclaimer' },
+                { label: 'Privacy Policy', path: '/disclaimer#privacy' },
+                { label: 'Terms of Use', path: '/disclaimer#terms' },
+                { label: 'Cookie Policy', path: '/disclaimer#cookies' },
+              ].map((l) => (
+                <li key={l.label}>
+                  <Link to={l.path}
+                    className="text-text-muted hover:text-accent-blue transition-all duration-200 text-xs hover:translate-x-1 inline-block">
                     {l.label}
                   </Link>
                 </li>
@@ -180,6 +213,25 @@ export default function Footer() {
               Our platform is built on transparency — every signal comes with its confidence score,
               data source attribution, and an explanation of what market conditions led to the prediction.
             </p>
+
+            {/* Contact */}
+            <h4 className="text-text-primary font-semibold mt-6 mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+              <Mail size={14} className="text-accent-blue" /> Contact Us
+            </h4>
+            <ul className="space-y-2">
+              <li className="text-text-muted text-xs flex items-center gap-1.5">
+                <Mail size={11} className="text-accent-blue flex-shrink-0" />
+                <a href="mailto:support@piitrade.com" className="hover:text-accent-blue transition-colors">support@piitrade.com</a>
+              </li>
+              <li className="text-text-muted text-xs flex items-center gap-1.5">
+                <Globe size={11} className="text-accent-blue flex-shrink-0" />
+                <a href="https://piitrade.com" className="hover:text-accent-blue transition-colors">www.piitrade.com</a>
+              </li>
+              <li className="text-text-muted text-xs flex items-center gap-1.5">
+                <MessageCircle size={11} className="text-accent-blue flex-shrink-0" />
+                <a href="https://t.me/piitrade" target="_blank" rel="noopener noreferrer" className="hover:text-accent-blue transition-colors">Telegram Community</a>
+              </li>
+            </ul>
           </motion.div>
         </div>
 
@@ -203,6 +255,8 @@ export default function Footer() {
               <span>© {new Date().getFullYear()} PiiTrade. All rights reserved.</span>
               <span className="hidden sm:inline text-border-default">|</span>
               <a href="https://piitrade.com" className="hover:text-accent-blue transition-colors">piitrade.com</a>
+              <span className="hidden sm:inline text-border-default">|</span>
+              <Link to="/disclaimer" className="hover:text-accent-blue transition-colors">Disclaimer</Link>
               <span className="hidden sm:inline text-border-default">|</span>
               <span>Not financial advice. Trade responsibly.</span>
             </div>
