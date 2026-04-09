@@ -1388,6 +1388,33 @@ async def exness_banner_image_3():
     return FileResponse(str(_banner), media_type="image/png")
 
 
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    """Serve sitemap.xml for search engine indexing."""
+    candidates = [
+        _REACT_DIST_DIR / "sitemap.xml",
+        _DIR / "frontend" / "public" / "sitemap.xml",
+    ]
+    for path in candidates:
+        if path.exists():
+            return FileResponse(str(path), media_type="application/xml")
+    return JSONResponse({"error": "Not found"}, status_code=404)
+
+
+@app.get("/googlea792e3e93ca1f64f.html")
+async def google_site_verification():
+    """Serve the Google Search Console site verification file."""
+    candidates = [
+        _REACT_DIST_DIR / "googlea792e3e93ca1f64f.html",
+        _DIR / "frontend" / "public" / "googlea792e3e93ca1f64f.html",
+        _TEMPLATES_DIR / "googlea792e3e93ca1f64f.html",
+    ]
+    for path in candidates:
+        if path.exists():
+            return FileResponse(str(path), media_type="text/html")
+    return JSONResponse({"error": "Not found"}, status_code=404)
+
+
 def _serve_react_or_template(request: Request, template: str, **kwargs):
     """Serve the React SPA index.html if the build exists, else a legacy template."""
     _record_visit(_get_client_ip(request))

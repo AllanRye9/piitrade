@@ -1020,7 +1020,7 @@ function VolatileTab() {
 
       {/* Column headers */}
       {!loading && !error && items.length > 0 && (
-        <div className="grid grid-cols-[2rem_1fr_5rem] gap-2 px-3 pb-1 border-b border-border-default">
+        <div className="grid grid-cols-[1.5rem_1fr_4rem] sm:grid-cols-[2rem_1fr_5rem] gap-1 sm:gap-2 px-2 sm:px-3 pb-1 border-b border-border-default">
           <span className="text-text-muted text-xs">#</span>
           <span className="text-text-muted text-xs">Pair</span>
           <span className="text-text-muted text-xs text-right">Volatility</span>
@@ -1045,15 +1045,15 @@ function VolatileTab() {
                 transition={{ delay: i * 0.03, duration: 0.25 }}
                 className="bg-bg-card border border-border-default rounded-lg p-3"
               >
-                <div className="grid grid-cols-[2rem_1fr_5rem] gap-2 items-center mb-2">
+                <div className="grid grid-cols-[1.5rem_1fr_4rem] sm:grid-cols-[2rem_1fr_5rem] gap-1 sm:gap-2 items-center mb-2">
                   <span className="text-text-muted text-xs font-medium">{i + 1}</span>
                   <div className="min-w-0">
-                    <span className="text-text-primary font-semibold text-sm truncate block">{p.pair || p.symbol || '—'}</span>
+                    <span className="text-text-primary font-semibold text-xs sm:text-sm truncate block">{p.pair || p.symbol || '—'}</span>
                     {p.atr != null && (
                       <span className="text-text-muted text-xs">ATR: {Number(p.atr).toFixed(5)}</span>
                     )}
                   </div>
-                  <span className={`font-mono text-sm font-bold text-right whitespace-nowrap ${isHigh ? 'text-accent-red' : 'text-accent-yellow'}`}>
+                  <span className={`font-mono text-xs sm:text-sm font-bold text-right whitespace-nowrap ${isHigh ? 'text-accent-red' : 'text-accent-yellow'}`}>
                     {volLabel}%
                   </span>
                 </div>
@@ -1116,11 +1116,11 @@ function ReversalTab() {
             transition={{ delay: i * 0.04, duration: 0.25 }}
             className="bg-bg-card border border-border-default rounded-xl p-3"
           >
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
               {/* Left: pair + type */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-text-primary font-semibold text-sm">{r.pair || r.symbol || '—'}</p>
+                  <p className="text-text-primary font-semibold text-xs sm:text-sm">{r.pair || r.symbol || '—'}</p>
                   {tf && (
                     <span className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border-default text-text-muted text-xs">{tf}</span>
                   )}
@@ -1128,8 +1128,8 @@ function ReversalTab() {
                 <p className="text-text-muted text-xs mt-0.5 truncate">{r.reversal_type || r.pattern || r.type || 'Reversal'}</p>
               </div>
               {/* Right: direction badge */}
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold text-sm flex-shrink-0 ${dirBg(r.direction)} ${dirColor(r.direction)}`}>
-                <DirIcon dir={r.direction} size={14} />
+              <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border font-semibold text-xs sm:text-sm flex-shrink-0 ${dirBg(r.direction)} ${dirColor(r.direction)}`}>
+                <DirIcon dir={r.direction} size={12} />
                 <span>{r.direction || '—'}</span>
               </div>
             </div>
