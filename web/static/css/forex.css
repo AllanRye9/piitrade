@@ -2,7 +2,7 @@
    AI Forex Signal Hub – Styles
    ─────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Google Fonts (Inter) loaded non-blocking via HTML <link rel="preload"> */
 
 :root {
   --bg: #0d1117;
