@@ -1875,15 +1875,19 @@ function applyFvgFilter(filter) {
     }
     group.classList.toggle('fx-hidden', groupName !== filter);
   });
-  // Update active button state
-  document.querySelectorAll('.fvg-filter-btn').forEach(btn => {
+  // Update active button state — only for FVG filter buttons (not S/R buttons)
+  document.querySelectorAll('.fvg-filter-btn:not(.sr-filter-btn)').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === filter);
   });
 }
 
-// FVG filter button listeners
-document.querySelectorAll('.fvg-filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => applyFvgFilter(btn.dataset.filter));
+// FVG filter button listeners — exclude S/R filter buttons
+document.querySelectorAll('.fvg-filter-btn:not(.sr-filter-btn)').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyFvgFilter(btn.dataset.filter);
+    // If data hasn't loaded yet, trigger load so the page isn't left empty
+    if (!fvgLoaded) loadFvgScanner();
+  });
 });
 
 const refreshFvgBtn = document.getElementById('btn-refresh-fvg');
