@@ -160,14 +160,14 @@
 
   <!-- ═══════════════════════════════ ADVANCED FEATURE PROMO ══════════════ -->
   <div id="adv-promo-banner" style="
-    margin: 12px 5% 0;
+    margin: 8px 5% 0;
     background: linear-gradient(135deg, #161b22 0%, rgba(88,166,255,.08) 50%, rgba(62,207,142,.06) 100%);
     border: 1px solid rgba(88,166,255,.3);
-    border-radius: 14px;
-    padding: 16px 20px;
+    border-radius: 10px;
+    padding: 10px 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
     position: relative;
     overflow: hidden;
@@ -299,7 +299,7 @@
   </script>
 
   <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
-  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:10px auto;">
+  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:6px auto;">
     <!-- DISCLAIMER -->
     <div class="global-disclaimer" id="disclaimerBox" role="alert" style="width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;
               background:#111;color:#fff;padding:8px;gap:8px;border-radius:6px;box-sizing:border-box;font-size:14px;">
@@ -440,8 +440,46 @@
             <span id="data-source-badge" class="fx-data-source"></span>
           </div>
 
-          <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
-          <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
+          <!-- ─── Interactive Price Chart (shown first, before signal card) ──── -->
+          <div class="fx-section-title" style="margin-top:16px">📈 Market Price Chart
+            <span id="fx-chart-pair-label" class="fx-chart-pair-label"></span>
+          </div>
+          <!-- Chart controls: timeframe + type + fullscreen -->
+          <div class="fx-chart-controls">
+            <div class="fx-tf-nav">
+              <button class="fx-tf-btn" data-tf="1H" title="7-day 1-hour bars">1H</button>
+              <button class="fx-tf-btn" data-tf="4H" title="30-day 4-hour bars">4H</button>
+              <button class="fx-tf-btn fx-tf-btn-active" data-tf="1D" title="90 daily bars">1D</button>
+              <button class="fx-tf-btn" data-tf="1W" title="1-year weekly bars">1W</button>
+            </div>
+            <div class="fx-ct-nav">
+              <button class="fx-ct-btn fx-ct-btn-active" data-ct="candle" title="Candlestick">🕯 Candles</button>
+              <button class="fx-ct-btn" data-ct="line" title="Line chart">📈 Line</button>
+            </div>
+            <button id="fx-chart-fullscreen" class="fx-zoom-btn" title="Toggle fullscreen">⛶ Fullscreen</button>
+          </div>
+          <div class="fx-chart-wrap" id="fx-chart-wrap">
+            <div id="fx-lw-chart" style="position:absolute;inset:0;"></div>
+            <div class="fx-chart-live-badge" id="fx-chart-live-badge">
+              <span class="fx-live-dot"></span>
+              <span id="fx-chart-live-val">–</span>
+            </div>
+            <div class="fx-chart-loading" id="fx-chart-loading">
+              <span class="refresh-icon" style="animation:fx-spin 1s linear infinite;display:inline-block">↻</span>&nbsp;Loading chart…
+            </div>
+            <div class="fx-chart-error" id="fx-chart-error" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:var(--text2,#888);font-size:.9rem;text-align:center;padding:1rem;"></div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-line"></div> Price</div>
+            <div class="legend-item"><span style="color:#f0c040;font-size:1em">⚡</span> AI Entry</div>
+            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">✅</span> Take Profit</div>
+            <div class="legend-item"><span style="color:#f85149;font-size:1em">🛑</span> Stop Loss</div>
+            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">▲</span> BUY signal</div>
+            <div class="legend-item"><span style="color:#f85149;font-size:1em">▼</span> SELL signal</div>
+          </div>
+
+          <!-- 2. Live Signal Dashboard ─────────────────────────────────────────── -->
+          <div class="fx-section-title" style="margin-top:16px">📊 Live Signal</div>
           <div class="fx-signal-card" id="fx-signal-card">
             <!-- Live data unavailable overlay (shown when pair feed is offline) -->
             <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
@@ -495,46 +533,6 @@
                 <span id="features-list"></span>
               </div>
             </div>
-          </div>
-        </section>
-
-        <!-- ─── Interactive Price Chart ──────────────────────────────────────── -->
-        <section id="section-history">
-          <div class="fx-section-title">📈 Market Price Chart
-            <span id="fx-chart-pair-label" class="fx-chart-pair-label"></span>
-          </div>
-          <!-- Chart controls: timeframe + type + fullscreen -->
-          <div class="fx-chart-controls">
-            <div class="fx-tf-nav">
-              <button class="fx-tf-btn" data-tf="1H" title="7-day 1-hour bars">1H</button>
-              <button class="fx-tf-btn" data-tf="4H" title="30-day 4-hour bars">4H</button>
-              <button class="fx-tf-btn fx-tf-btn-active" data-tf="1D" title="90 daily bars">1D</button>
-              <button class="fx-tf-btn" data-tf="1W" title="1-year weekly bars">1W</button>
-            </div>
-            <div class="fx-ct-nav">
-              <button class="fx-ct-btn fx-ct-btn-active" data-ct="candle" title="Candlestick">🕯 Candles</button>
-              <button class="fx-ct-btn" data-ct="line" title="Line chart">📈 Line</button>
-            </div>
-            <button id="fx-chart-fullscreen" class="fx-zoom-btn" title="Toggle fullscreen">⛶ Fullscreen</button>
-          </div>
-          <div class="fx-chart-wrap" id="fx-chart-wrap">
-            <div id="fx-lw-chart" style="position:absolute;inset:0;"></div>
-            <div class="fx-chart-live-badge" id="fx-chart-live-badge">
-              <span class="fx-live-dot"></span>
-              <span id="fx-chart-live-val">–</span>
-            </div>
-            <div class="fx-chart-loading" id="fx-chart-loading">
-              <span class="refresh-icon" style="animation:fx-spin 1s linear infinite;display:inline-block">↻</span>&nbsp;Loading chart…
-            </div>
-            <div class="fx-chart-error" id="fx-chart-error" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:var(--text2,#888);font-size:.9rem;text-align:center;padding:1rem;"></div>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-line"></div> Price</div>
-            <div class="legend-item"><span style="color:#f0c040;font-size:1em">⚡</span> AI Entry</div>
-            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">✅</span> Take Profit</div>
-            <div class="legend-item"><span style="color:#f85149;font-size:1em">🛑</span> Stop Loss</div>
-            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">▲</span> BUY signal</div>
-            <div class="legend-item"><span style="color:#f85149;font-size:1em">▼</span> SELL signal</div>
           </div>
         </section>
 

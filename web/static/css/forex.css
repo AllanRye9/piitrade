@@ -71,6 +71,8 @@
 .piitrade-loading-overlay.hidden {
   animation: piitrade-fade-out 0.4s ease forwards;
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .piitrade-loader-text {
@@ -360,12 +362,12 @@ a:hover {
 .fx-gamebar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 6px 24px;
+  padding: 4px 24px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .gamebar-item {
@@ -546,10 +548,10 @@ a:hover {
 .fx-main {
   max-width: 960px;
   margin: 0 auto;
-  padding: 24px 2.25% 64px;
+  padding: 16px 2.25% 48px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 20px;
   overflow-x: hidden;
 }
 
@@ -576,9 +578,9 @@ a:hover {
 
 /* ── Section headings ── */
 .fx-section-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   color: var(--text);
   display: flex;
   align-items: center;
@@ -598,8 +600,8 @@ a:hover {
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: var(--radius);
-  padding: 8px 14px;
-  font-size: 1rem;
+  padding: 6px 12px;
+  font-size: 0.9rem;
   font-family: inherit;
   cursor: pointer;
   min-width: 140px;
@@ -705,11 +707,11 @@ a:hover {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
+  padding: 16px;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto;
-  gap: 20px 28px;
+  gap: 14px 20px;
   align-items: start;
   box-shadow: var(--shadow);
   transition: box-shadow 0.3s, border-color 0.3s;
@@ -779,10 +781,10 @@ a:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 110px;
-  height: 110px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: 1px;
   border: 3px solid currentColor;
@@ -846,7 +848,7 @@ a:hover {
 .signal-meta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .signal-confidence-row {
@@ -914,11 +916,11 @@ a:hover {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 14px;
+  padding: 7px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 100px;
+  gap: 3px;
+  min-width: 90px;
   animation: level-in 0.4s ease;
 }
 
@@ -984,8 +986,8 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  height: 420px;
-  min-height: 260px;
+  height: 320px;
+  min-height: 220px;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -1047,8 +1049,8 @@ a:hover {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 .fx-tf-nav,
 .fx-ct-nav {
@@ -1107,8 +1109,8 @@ a:hover {
 
 .chart-legend {
   display: flex;
-  gap: 14px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 8px;
   flex-wrap: wrap;
 }
 
