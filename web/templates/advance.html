@@ -25,10 +25,10 @@
       --card: #161b22;
     }
 
-    /* ── Page layout with 7.5% side margins ── */
+    /* ── Page layout — full-width with minimal edge padding ── */
     .adv-page-wrapper {
       width: 100%;
-      padding: 0 7.5%;
+      padding: 0 12px;
       box-sizing: border-box;
     }
 
@@ -613,7 +613,7 @@
 
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .adv-page-wrapper { padding: 0 5%; }
+      .adv-page-wrapper { padding: 0 8px; }
       .adv-footer-grid { grid-template-columns: 1fr 1fr; }
       .adv-footer-brand { grid-column: 1 / -1; }
     }
@@ -621,7 +621,7 @@
       .sr-grid { grid-template-columns: 1fr; }
       .adv-meta-grid { grid-template-columns: repeat(2, 1fr); }
       .adv-footer-grid { grid-template-columns: 1fr; }
-      .adv-page-wrapper { padding: 0 4%; }
+      .adv-page-wrapper { padding: 0 6px; }
     }
 
     /* ── Market Structure Chart ── */
@@ -682,6 +682,19 @@
     }
     .adv-legend-item.price-line::before {
       background: none; border-top: 2px dashed rgba(230,237,243,.6); height: 0; margin-top: 5px;
+    }
+    .adv-legend-item.ai-entry::before {
+      background: none; border-top: 2px solid rgba(88,166,255,.8); height: 0; margin-top: 5px;
+    }
+    .adv-legend-item.ai-tp::before {
+      background: none; border-top: 2px dashed #3ecf8e; height: 0; margin-top: 5px;
+    }
+    .adv-legend-item.ai-sl::before {
+      background: none; border-top: 2px dashed #f85149; height: 0; margin-top: 5px;
+    }
+    @keyframes priceGlowPulse {
+      0%,100% { box-shadow: 0 0 6px 2px rgba(88,166,255,.6); }
+      50%      { box-shadow: 0 0 18px 6px rgba(88,166,255,.2); }
     }
     .adv-chart-wrap {
       position: relative;
@@ -846,6 +859,7 @@
         <div class="adv-tf-nav">
           <button class="adv-tf-btn" data-tf="1H">1H</button>
           <button class="adv-tf-btn" data-tf="4H">4H</button>
+          <button class="adv-tf-btn" data-tf="30D">30D</button>
           <button class="adv-tf-btn active" data-tf="1D">1D</button>
         </div>
       </div>
@@ -856,6 +870,9 @@
         <span class="adv-legend-item fvg-bear">FVG (Bearish)</span>
         <span class="adv-legend-item choch-line">CHoCH Level</span>
         <span class="adv-legend-item price-line">Current Price</span>
+        <span class="adv-legend-item ai-entry">AI Entry</span>
+        <span class="adv-legend-item ai-tp">Take Profit ▲</span>
+        <span class="adv-legend-item ai-sl">Stop Loss ▼</span>
       </div>
       <div class="adv-chart-wrap" id="adv-chart-wrap">
         <canvas id="adv-chart-canvas"></canvas>
@@ -998,6 +1015,9 @@ var AdvChart = (function () {
   var timeframe = '1D';
   var animFrame = null, animProgress = 0;
   var hoverIdx = -1, preparedData = null;
+  var aiSignalData = null;
+  var glowLoopId = null;
+  var lastGlowRender = 0;
 
   /* Deterministic pseudo-random number generator (seeded) so synthetic
      sub-daily bars are stable across timeframe switches. */
@@ -1043,9 +1063,10 @@ var AdvChart = (function () {
     });
   }
 
-  function updateData(history, tech) {
+  function updateData(history, tech, sig) {
     rawHistory = history;
     techData   = tech;
+    if (sig !== undefined) aiSignalData = sig;
     var loadEl = document.getElementById('adv-chart-loading');
     if (loadEl) loadEl.style.display = 'none';
     prepare();
@@ -1076,6 +1097,18 @@ var AdvChart = (function () {
           var noise = (rand() - 0.5) * 0.0005 * p;
           prices.push(prev + (p - prev) * ((j + 1) / 6) + noise);
           dates.push(srcD[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
+        }
+      });
+    } else if (timeframe === '30D') {
+      /* 30 days at 4H resolution: 30 × 6 = 180 bars */
+      var src30 = dailyPrices.slice(-30), srcD30 = dailyDates.slice(-30);
+      prices = []; dates = [];
+      src30.forEach(function (p, i) {
+        var prev = i > 0 ? src30[i - 1] : p;
+        for (var j = 0; j < 6; j++) {
+          var noise = (rand() - 0.5) * 0.0005 * p;
+          prices.push(prev + (p - prev) * ((j + 1) / 6) + noise);
+          dates.push(srcD30[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
         }
       });
     } else { /* 1H – 24 bars/day from the last 7 days */
@@ -1113,11 +1146,13 @@ var AdvChart = (function () {
       obZones:      obZones,
       fvgZones:     techData.fvg    || [],
       chochLevels:  techData.choch  || [],
-      currentPrice: cp
+      currentPrice: cp,
+      aiSignal:     aiSignalData
     };
   }
 
   function startAnim() {
+    stopGlowLoop();
     if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
     animProgress = 0;
     var start = null, dur = 1100;
@@ -1127,9 +1162,30 @@ var AdvChart = (function () {
       /* Cubic ease-out */
       animProgress = 1 - Math.pow(1 - raw, 3);
       render(animProgress);
-      if (raw < 1) animFrame = requestAnimationFrame(step);
+      if (raw < 1) {
+        animFrame = requestAnimationFrame(step);
+      } else {
+        animFrame = null;
+        startGlowLoop();
+      }
     }
     animFrame = requestAnimationFrame(step);
+  }
+
+  function startGlowLoop() {
+    if (glowLoopId) return;
+    function loop(ts) {
+      if (ts - lastGlowRender >= 50) { /* ~20 fps for glow */
+        lastGlowRender = ts;
+        render(1);
+      }
+      glowLoopId = requestAnimationFrame(loop);
+    }
+    glowLoopId = requestAnimationFrame(loop);
+  }
+
+  function stopGlowLoop() {
+    if (glowLoopId) { cancelAnimationFrame(glowLoopId); glowLoopId = null; }
   }
 
   function pDec(p) {
@@ -1163,6 +1219,13 @@ var AdvChart = (function () {
     preparedData.fvgZones.forEach(function (f) { allY.push(f.top, f.bottom); });
     preparedData.chochLevels.forEach(function (c) { allY.push(c.level); });
     allY.push(preparedData.currentPrice);
+    /* Include AI prediction levels in range so they stay visible */
+    if (preparedData.aiSignal) {
+      var ais = preparedData.aiSignal;
+      if (ais.entry_price) allY.push(parseFloat(ais.entry_price));
+      if (ais.take_profit)  allY.push(parseFloat(ais.take_profit));
+      if (ais.stop_loss)    allY.push(parseFloat(ais.stop_loss));
+    }
 
     var minP = Math.min.apply(null, allY), maxP = Math.max.apply(null, allY);
     var padY = (maxP - minP) * 0.15 || minP * 0.01 || 0.001;
@@ -1179,7 +1242,7 @@ var AdvChart = (function () {
     ctx.fillRect(0, 0, W, H);
 
     /* ── Grid lines ── */
-    ctx.strokeStyle = 'rgba(48,54,61,0.65)';
+    ctx.strokeStyle = 'rgba(48,54,61,0.75)';
     ctx.lineWidth   = 0.5;
     var nGridY = 5;
     for (var g = 0; g <= nGridY; g++) {
@@ -1188,8 +1251,8 @@ var AdvChart = (function () {
     }
 
     /* ── Y-axis price labels ── */
-    ctx.fillStyle    = '#6e7681';
-    ctx.font         = '10px monospace';
+    ctx.fillStyle    = '#8b949e';
+    ctx.font         = '11px monospace';
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'middle';
     for (var g = 0; g <= nGridY; g++) {
@@ -1198,8 +1261,8 @@ var AdvChart = (function () {
     }
 
     /* ── X-axis date labels ── */
-    ctx.fillStyle    = '#6e7681';
-    ctx.font         = '9px monospace';
+    ctx.fillStyle    = '#8b949e';
+    ctx.font         = '10px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
     var xStep = Math.max(1, Math.floor(n / 7));
@@ -1233,12 +1296,12 @@ var AdvChart = (function () {
 
       /* Label for the nearest order block only */
       if (nearest && h >= 10) {
-        ctx.fillStyle    = 'rgba(' + clr + ',0.9)';
-        ctx.font         = 'bold 9px Inter,sans-serif';
+        ctx.fillStyle    = 'rgba(' + clr + ',0.95)';
+        ctx.font         = 'bold 10px Inter,sans-serif';
         ctx.textAlign    = 'left';
         ctx.textBaseline = 'middle';
         var tag = (bull ? '▲ OB' : '▼ OB') + (z.strength === 'high' ? ' ★' : '');
-        ctx.fillText(tag, PL + 5, y1 + h / 2);
+        ctx.fillText(tag, PL + 6, y1 + h / 2);
       }
     });
 
@@ -1254,17 +1317,17 @@ var AdvChart = (function () {
       ctx.fillRect(PL, y1, cw, h);
 
       if (!f.filled) {
-        ctx.strokeStyle = 'rgba(' + clr + ',0.35)';
-        ctx.lineWidth   = 0.7;
+        ctx.strokeStyle = 'rgba(' + clr + ',0.45)';
+        ctx.lineWidth   = 0.8;
         ctx.setLineDash([3, 3]);
         ctx.strokeRect(PL, y1, cw, h);
         ctx.setLineDash([]);
         if (h >= 8) {
-          ctx.fillStyle    = 'rgba(' + clr + ',0.8)';
-          ctx.font         = '8px monospace';
+          ctx.fillStyle    = 'rgba(' + clr + ',0.9)';
+          ctx.font         = '9px monospace';
           ctx.textAlign    = 'right';
           ctx.textBaseline = 'middle';
-          ctx.fillText('FVG', PL + cw - 3, y1 + h / 2);
+          ctx.fillText('FVG', PL + cw - 4, y1 + h / 2);
         }
       }
     });
@@ -1274,34 +1337,73 @@ var AdvChart = (function () {
       var y   = py(c.level);
       var col = (c.type === 'bullish') ? '#3ecf8e' : '#f85149';
       ctx.strokeStyle  = col;
-      ctx.lineWidth    = 1.4;
+      ctx.lineWidth    = 1.5;
       ctx.setLineDash([5, 3]);
       ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + cw, y); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle    = col;
-      ctx.font         = 'bold 9px Inter,sans-serif';
+      ctx.font         = 'bold 10px Inter,sans-serif';
       ctx.textAlign    = 'right';
       ctx.textBaseline = 'bottom';
-      ctx.fillText('CHoCH', PL + cw - 3, y - 2);
+      ctx.fillText('CHoCH ' + (c.type === 'bullish' ? '▲' : '▼'), PL + cw - 4, y - 2);
     });
 
-    /* ── Current price reference line + label ── */
-    var cpy = py(preparedData.currentPrice);
-    ctx.strokeStyle = 'rgba(230,237,243,0.5)';
-    ctx.lineWidth   = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(PL, cpy); ctx.lineTo(PL + cw, cpy); ctx.stroke();
-    ctx.setLineDash([]);
+    /* ── AI Prediction lines (drawn before price line so line draws over them) ── */
+    if (preparedData.aiSignal) {
+      var ais = preparedData.aiSignal;
+      var dir = ais.direction || 'HOLD';
+      var ePx = parseFloat(ais.entry_price);
+      var tpPx = parseFloat(ais.take_profit);
+      var slPx = parseFloat(ais.stop_loss);
+      var conf = parseFloat(ais.confidence) || 0;
+      var dirClr = dir === 'BUY' ? '62,207,142' : dir === 'SELL' ? '248,81,73' : '255,193,7';
 
-    var cpTxt = preparedData.currentPrice.toFixed(pDec(preparedData.currentPrice));
-    ctx.font         = 'bold 9px monospace';
-    ctx.textAlign    = 'right';
-    ctx.textBaseline = 'middle';
-    var bw = ctx.measureText(cpTxt).width + 8;
-    ctx.fillStyle = '#e6edf3';
-    ctx.fillRect(PL - bw - 1, cpy - 7, bw + 1, 14);
-    ctx.fillStyle = '#0d1117';
-    ctx.fillText(cpTxt, PL - 3, cpy);
+      /* Entry line */
+      if (ePx && !isNaN(ePx)) {
+        var ey = py(ePx);
+        ctx.strokeStyle = 'rgba(' + dirClr + ',0.85)';
+        ctx.lineWidth   = 1.5;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath(); ctx.moveTo(PL, ey); ctx.lineTo(PL + cw, ey); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle    = 'rgba(' + dirClr + ',1)';
+        ctx.font         = 'bold 10px monospace';
+        ctx.textAlign    = 'left';
+        ctx.textBaseline = 'bottom';
+        var eArr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
+        ctx.fillText(eArr + ' ENTRY ' + ePx.toFixed(pDec(ePx)), PL + 5, ey - 2);
+      }
+
+      /* Take Profit line */
+      if (tpPx && !isNaN(tpPx)) {
+        var tpy2 = py(tpPx);
+        ctx.strokeStyle = 'rgba(62,207,142,0.75)';
+        ctx.lineWidth   = 1.2;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath(); ctx.moveTo(PL, tpy2); ctx.lineTo(PL + cw, tpy2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle    = '#3ecf8e';
+        ctx.font         = 'bold 10px monospace';
+        ctx.textAlign    = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('▲ TP ' + tpPx.toFixed(pDec(tpPx)), PL + cw - 5, tpy2 - 2);
+      }
+
+      /* Stop Loss line */
+      if (slPx && !isNaN(slPx)) {
+        var sly2 = py(slPx);
+        ctx.strokeStyle = 'rgba(248,81,73,0.75)';
+        ctx.lineWidth   = 1.2;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath(); ctx.moveTo(PL, sly2); ctx.lineTo(PL + cw, sly2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle    = '#f85149';
+        ctx.font         = 'bold 10px monospace';
+        ctx.textAlign    = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText('▼ SL ' + slPx.toFixed(pDec(slPx)), PL + cw - 5, sly2 + 2);
+      }
+    }
 
     /* ── Animated price line ── */
     var vis = Math.max(2, Math.round(n * progress));
@@ -1356,15 +1458,92 @@ var AdvChart = (function () {
     /* Leading pulse dot at tip of animation */
     if (vis > 0) {
       var lx = px(vis - 1), ly = py(prices[vis - 1]);
-      ctx.beginPath(); ctx.arc(lx, ly, 4, 0, 2 * Math.PI);
+      var glowPulse = 0.5 + 0.5 * Math.sin(Date.now() / 400);
+      var ldr = 4 + glowPulse;
+      ctx.beginPath(); ctx.arc(lx, ly, ldr, 0, 2 * Math.PI);
       ctx.fillStyle = '#58a6ff';
+      ctx.shadowColor = 'rgba(88,166,255,0.8)';
+      ctx.shadowBlur  = 6 + 6 * glowPulse;
       ctx.fill();
+      ctx.shadowBlur  = 0;
       if (progress >= 0.98) {
-        ctx.beginPath(); ctx.arc(lx, ly, 8, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(88,166,255,0.28)';
-        ctx.lineWidth   = 1.5;
+        ctx.beginPath(); ctx.arc(lx, ly, 10 + 4 * glowPulse, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(88,166,255,' + (0.15 + 0.2 * glowPulse) + ')';
+        ctx.lineWidth   = 2;
         ctx.stroke();
       }
+    }
+
+    /* ── Glowing current price line (drawn AFTER price line, so it stays on top) ── */
+    var glowPulse2 = 0.5 + 0.5 * Math.sin(Date.now() / 500 + 1);
+    var cpy = py(preparedData.currentPrice);
+    ctx.shadowColor = 'rgba(88,166,255,' + (0.5 + 0.4 * glowPulse2) + ')';
+    ctx.shadowBlur  = 8 + 8 * glowPulse2;
+    ctx.strokeStyle = 'rgba(88,166,255,' + (0.75 + 0.25 * glowPulse2) + ')';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(PL, cpy); ctx.lineTo(PL + cw, cpy); ctx.stroke();
+    ctx.shadowBlur  = 0;
+    ctx.setLineDash([]);
+
+    /* Current price label pill on Y-axis */
+    var cpTxt = preparedData.currentPrice.toFixed(pDec(preparedData.currentPrice));
+    ctx.font         = 'bold 11px monospace';
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'middle';
+    var bw = ctx.measureText(cpTxt).width + 10;
+    /* Pill background */
+    ctx.fillStyle = 'rgba(88,166,255,' + (0.85 + 0.15 * glowPulse2) + ')';
+    ctx.beginPath();
+    var px0 = PL - bw - 2, py0 = cpy - 9, pbr = 4;
+    ctx.moveTo(px0 + pbr, py0);
+    ctx.lineTo(px0 + bw + 2 - pbr, py0);
+    ctx.arcTo(px0 + bw + 2, py0, px0 + bw + 2, py0 + pbr, pbr);
+    ctx.lineTo(px0 + bw + 2, py0 + 18 - pbr);
+    ctx.arcTo(px0 + bw + 2, py0 + 18, px0 + bw + 2 - pbr, py0 + 18, pbr);
+    ctx.lineTo(px0 + pbr, py0 + 18);
+    ctx.arcTo(px0, py0 + 18, px0, py0 + 18 - pbr, pbr);
+    ctx.lineTo(px0, py0 + pbr);
+    ctx.arcTo(px0, py0, px0 + pbr, py0, pbr);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#0d1117';
+    ctx.fillText(cpTxt, PL - 4, cpy);
+
+    /* ── AI direction badge (top-right corner of chart) ── */
+    if (preparedData.aiSignal) {
+      var abDir  = preparedData.aiSignal.direction || 'HOLD';
+      var abConf = parseFloat(preparedData.aiSignal.confidence) || 0;
+      var abArr  = abDir === 'BUY' ? '▲' : abDir === 'SELL' ? '▼' : '→';
+      var abClr  = abDir === 'BUY' ? '62,207,142' : abDir === 'SELL' ? '248,81,73' : '255,193,7';
+      var abTxt  = abArr + ' AI ' + abDir + ' · ' + (abConf * 100).toFixed(0) + '%';
+      ctx.font   = 'bold 11px Inter,sans-serif';
+      ctx.textAlign    = 'right';
+      ctx.textBaseline = 'top';
+      var btw = ctx.measureText(abTxt).width + 18;
+      var bth = 24;
+      var bx2 = PL + cw - btw;
+      var by2 = PT + 8;
+      /* Badge background */
+      ctx.fillStyle   = 'rgba(' + abClr + ',0.18)';
+      ctx.strokeStyle = 'rgba(' + abClr + ',0.55)';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      var bbr = 5;
+      ctx.moveTo(bx2 + bbr, by2);
+      ctx.lineTo(bx2 + btw - bbr, by2);
+      ctx.arcTo(bx2 + btw, by2, bx2 + btw, by2 + bbr, bbr);
+      ctx.lineTo(bx2 + btw, by2 + bth - bbr);
+      ctx.arcTo(bx2 + btw, by2 + bth, bx2 + btw - bbr, by2 + bth, bbr);
+      ctx.lineTo(bx2 + bbr, by2 + bth);
+      ctx.arcTo(bx2, by2 + bth, bx2, by2 + bth - bbr, bbr);
+      ctx.lineTo(bx2, by2 + bbr);
+      ctx.arcTo(bx2, by2, bx2 + bbr, by2, bbr);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(' + abClr + ',1)';
+      ctx.fillText(abTxt, PL + cw - 6, by2 + 6);
     }
 
     /* Hover crosshair */
@@ -1409,6 +1588,7 @@ var AdvChart = (function () {
     var d   = preparedData.dates[idx] || '';
     var h   = (timeframe === '1D' && rawHistory) ? rawHistory[idx] : null;
     var dec = pDec(p);
+    var ais = preparedData.aiSignal;
     var html =
       '<div class="adv-tip-date">' + d + '</div>' +
       '<div class="adv-tip-price">' + p.toFixed(dec) + '</div>';
@@ -1416,18 +1596,38 @@ var AdvChart = (function () {
       html += '<span class="adv-tip-tag ' + (h.correct ? 'correct' : 'wrong') + '">' +
         (h.correct ? '✓ Signal Correct' : '✗ Signal Missed') + '</span>';
     }
+    if (ais && ais.direction) {
+      var dir = ais.direction;
+      var arr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
+      var tc  = dir === 'BUY' ? '#3ecf8e' : dir === 'SELL' ? '#f85149' : '#ffc107';
+      html += '<div style="font-size:.72rem;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)">' +
+        '<span style="color:' + tc + ';font-weight:700">' + arr + ' ' + dir + '</span>' +
+        ' <span style="color:#8b949e">AI Signal</span>' +
+        (ais.confidence ? ' · <span style="color:#8b949e">' + (parseFloat(ais.confidence) * 100).toFixed(0) + '% conf</span>' : '') +
+        '</div>';
+    }
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
     var wRect = (wrap || canvas).getBoundingClientRect();
     var left  = cx - wRect.left + 14;
     var top   = cy - wRect.top  - 72;
-    if (left + 140 > wRect.width)  left = cx - wRect.left - 150;
+    if (left + 160 > wRect.width)  left = cx - wRect.left - 170;
     if (top < 4) top = 4;
     tooltip.style.left = left + 'px';
     tooltip.style.top  = top  + 'px';
   }
 
-  return { init: init, updateData: updateData };
+  function updateSignal(sig) {
+    aiSignalData = sig;
+    if (preparedData) {
+      preparedData.aiSignal = sig;
+      /* Recompute Y-range to include new AI price levels */
+      prepare();
+      if (!animFrame && !glowLoopId) startGlowLoop();
+    }
+  }
+
+  return { init: init, updateData: updateData, updateSignal: updateSignal };
 }());
 
 (function () {
@@ -1733,7 +1933,7 @@ var AdvChart = (function () {
       document.getElementById('adv-last-updated').textContent =
         'Updated ' + pad(now.getUTCHours()) + ':' + pad(now.getUTCMinutes()) + ' UTC';
       if (lastSig && lastSig.history && lastTech) {
-        AdvChart.updateData(lastSig.history, lastTech);
+        AdvChart.updateData(lastSig.history, lastTech, lastSig);
       }
     }
 
