@@ -2033,7 +2033,7 @@ var AdvChart = (function () {
     if (fsBtn) {
       fsBtn.addEventListener('click', function () {
         if (!document.fullscreenElement) {
-          wrapEl.requestFullscreen().catch(function () {});
+          wrapEl.requestFullscreen().catch(function (err) { console.warn('Fullscreen not available:', err.message); });
         } else {
           document.exitFullscreen();
         }

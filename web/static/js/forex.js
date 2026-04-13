@@ -718,7 +718,7 @@ const FxPriceChart = (function () {
     const fsBtn = document.getElementById('fx-chart-fullscreen');
     if (fsBtn) {
       fsBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) { wrapEl.requestFullscreen().catch(() => {}); }
+        if (!document.fullscreenElement) { wrapEl.requestFullscreen().catch(err => console.warn('Fullscreen not available:', err.message)); }
         else { document.exitFullscreen(); }
       });
       document.addEventListener('fullscreenchange', () => {
