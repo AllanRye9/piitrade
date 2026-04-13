@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, Minus, Search, RefreshCw, Volume2, VolumeX,
   BarChart2, AlertTriangle, Target, Layers, Zap,
   Star, Award, Flame, ChevronRight, ChevronLeft, Newspaper, ExternalLink,
+  ArrowRight,
 } from 'lucide-react'
 import {
   getPairs, getSignals, getTechnical, getVolatile, getReversals,
@@ -102,6 +104,89 @@ const FALLBACK_PAIRS = [
   'NZD/JPY', 'NZD/CAD', 'NZD/CHF', 'CAD/JPY', 'CHF/JPY',
   'USD/MXN', 'USD/NOK', 'USD/SEK', 'USD/SGD', 'USD/HKD', 'USD/TRY', 'USD/ZAR', 'USD/CNY',
 ]
+
+// ─── Advance Feature Promo Banner ────────────────────────────────────────────
+function AdvancePromo() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem('advance_promo_dismissed') === '1' } catch { return false }
+  })
+
+  const dismiss = () => {
+    try { localStorage.setItem('advance_promo_dismissed', '1') } catch { /* ignore */ }
+    setDismissed(true)
+  }
+
+  if (dismissed) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.98 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="relative overflow-hidden rounded-xl border border-accent-blue/25 bg-gradient-to-r from-accent-blue/5 via-accent-purple/5 to-accent-green/5 p-3"
+      >
+        {/* Animated background pulse */}
+        <motion.div
+          animate={{ opacity: [0.04, 0.1, 0.04] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 pointer-events-none"
+        />
+
+        <div className="relative z-10 flex items-center gap-3">
+          {/* Live indicator */}
+          <div className="relative flex-shrink-0 flex items-center justify-center w-7 h-7">
+            {[0, 1].map((i) => (
+              <motion.span
+                key={i}
+                className="absolute rounded-full border border-accent-green"
+                initial={{ opacity: 0.6, scale: 0.3 }}
+                animate={{ opacity: 0, scale: 2 }}
+                transition={{ duration: 1.8, delay: i * 0.9, repeat: Infinity, ease: 'easeOut' }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            ))}
+            <motion.span
+              className="relative z-10 w-2.5 h-2.5 rounded-full bg-accent-green shadow-[0_0_6px_2px_rgba(63,185,80,0.5)]"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-text-primary text-xs font-bold">✨ Advanced Tools Available</span>
+              <span className="hidden sm:inline text-text-muted text-xs">
+                — FVG Scanner, S/R Breakouts, Volatility Rankings, Pattern Scanner &amp; more
+              </span>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <Link
+            to="/advance"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-accent-blue text-bg-primary text-xs font-bold rounded-lg hover:bg-blue-400 transition-colors shadow-sm shadow-accent-blue/25 whitespace-nowrap"
+          >
+            <Zap size={11} />
+            Explore
+            <ArrowRight size={11} />
+          </Link>
+
+          {/* Dismiss */}
+          <button
+            onClick={dismiss}
+            className="flex-shrink-0 p-1 text-text-muted hover:text-text-primary transition-colors rounded"
+            aria-label="Dismiss"
+          >
+            <span className="text-xs leading-none">✕</span>
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
 
 // ─── sub-components ─────────────────────────────────────────────────────────
 function LoadingSpinner({ text = 'Loading…' }) {
@@ -1730,6 +1815,9 @@ export default function ForexDashboard() {
             </button>
           </div>
         </motion.div>
+
+        {/* Advance feature promo */}
+        <AdvancePromo />
 
         {/* Pair selector row */}
         <motion.div

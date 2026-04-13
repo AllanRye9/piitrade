@@ -86,6 +86,7 @@ export default function Footer() {
               {[
                 { label: 'Home', path: '/' },
                 { label: 'Live Dashboard', path: '/forex' },
+                { label: 'Advanced Tools', path: '/advance' },
                 { label: 'Methodology', path: '/methodology' },
                 { label: 'Roadmap', path: '/roadmap' },
                 { label: 'Disclaimer', path: '/disclaimer' },
