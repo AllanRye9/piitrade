@@ -1149,11 +1149,11 @@
     /* ── Live price badge flash on update ── */
     @keyframes priceFlashUp {
       0%   { background: rgba(62,207,142,.35);  border-color: rgba(62,207,142,.8); }
-      100% { background: rgba(13,17,23,.85);    border-color: rgba(88,166,255,.4); }
+      100% { background: rgba(13,17,23,.90);    border-color: rgba(88,166,255,.4); }
     }
     @keyframes priceFlashDown {
       0%   { background: rgba(248,81,73,.30);   border-color: rgba(248,81,73,.7); }
-      100% { background: rgba(13,17,23,.85);    border-color: rgba(88,166,255,.4); }
+      100% { background: rgba(13,17,23,.90);    border-color: rgba(88,166,255,.4); }
     }
     .adv-chart-live-price.flash-up   { animation: priceFlashUp   .7s ease both; }
     .adv-chart-live-price.flash-down { animation: priceFlashDown .7s ease both; }
@@ -1650,10 +1650,12 @@ var SessionAlerts = (function () {
       ctx.resume();
     }
   }
-  document.addEventListener('click', unlockAudio, { once: false });
-  document.addEventListener('touchstart', unlockAudio, { once: false });
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockAudio, { once: true });
 
-  /* Check all sessions and fire alerts if 15-min boundary is crossed */
+  /* Check all sessions and fire alerts if 15-min boundary is crossed.
+     Alert fires when exactly 15 minutes remain (toX === 15). The _fired
+     flag prevents re-firing for the same event; it resets after 60+ min. */
   function check(sessions) {
     var now = new Date();
     var utcH = now.getUTCHours();
@@ -1664,7 +1666,6 @@ var SessionAlerts = (function () {
       var openMin  = s.open  * 60;
       var closeMin = s.close * 60;
 
-      /* normalise close for sessions that wrap midnight */
       var openKey  = s.name + ':open';
       var closeKey = s.name + ':close';
 
@@ -1677,24 +1678,24 @@ var SessionAlerts = (function () {
       var toOpen  = minsUntil(openMin);
       var toClose = minsUntil(closeMin);
 
-      /* Fire open alert once when 14 ≤ mins-to-open < 16 */
-      if (toOpen >= 14 && toOpen < 16) {
+      /* Fire open alert exactly once when 15 minutes remain */
+      if (toOpen === 15) {
         if (!_fired[openKey]) {
           _fired[openKey] = true;
           playMarketAlert(s.name, true);
-          _showToast(s.flag + ' ' + s.name + ' opens in ~15 min', 'warn');
+          _showToast(s.flag + ' ' + s.name + ' opens in 15 min', 'warn');
         }
       } else if (toOpen >= 60) {
         /* Reset after cooldown so next day's alert fires again */
         delete _fired[openKey];
       }
 
-      /* Fire close alert once when 14 ≤ mins-to-close < 16 */
-      if (toClose >= 14 && toClose < 16) {
+      /* Fire close alert exactly once when 15 minutes remain */
+      if (toClose === 15) {
         if (!_fired[closeKey]) {
           _fired[closeKey] = true;
           playMarketAlert(s.name, false);
-          _showToast(s.flag + ' ' + s.name + ' closes in ~15 min', 'info');
+          _showToast(s.flag + ' ' + s.name + ' closes in 15 min', 'info');
         }
       } else if (toClose >= 60) {
         delete _fired[closeKey];
@@ -2321,8 +2322,12 @@ var AdvChart = (function () {
       badgeWrap.classList.remove('flash-up', 'flash-down');
       /* Force reflow to restart animation */
       void badgeWrap.offsetWidth;
-      badgeWrap.classList.add(price > prevPrice ? 'flash-up' : 'flash-down');
-      setTimeout(function () { badgeWrap.classList.remove('flash-up', 'flash-down'); }, 750);
+      var flashClass = price > prevPrice ? 'flash-up' : 'flash-down';
+      badgeWrap.classList.add(flashClass);
+      badgeWrap.addEventListener('animationend', function cleanup() {
+        badgeWrap.classList.remove('flash-up', 'flash-down');
+        badgeWrap.removeEventListener('animationend', cleanup);
+      });
     }
 
     /* Update last bar with new close */
@@ -2444,9 +2449,6 @@ var AdvChart = (function () {
 
   function renderSessions() {
     const grid = document.getElementById('session-grid');
-    /* check alerts on every render tick */
-    SessionAlerts.check(SESSIONS);
-
     grid.innerHTML = SESSIONS.map(function (s) {
       const active = isSessionActive(s.open, s.close);
       const countdown = minsUntilEvent(s.open, s.close);
@@ -2467,7 +2469,7 @@ var AdvChart = (function () {
 
       var colorClass = s.colorClass ? ' ' + s.colorClass : '';
 
-      var countdownEl = '<div class="session-countdown ' + cdClass + '">' +
+      var countdownEl = '<div class="session-countdown ' + cdClass + '" data-session="' + s.name + '">' +
         cdLabel + fmtCountdown(mins) +
       '</div>';
 
@@ -2483,9 +2485,53 @@ var AdvChart = (function () {
       '</div>';
     }).join('');
   }
+
+  /* Lightweight per-second tick: only update countdown text + warning classes.
+     Full DOM rebuild happens once per minute (or on active-state change). */
+  var _prevActiveStates = {};
+  function tickSessions() {
+    SessionAlerts.check(SESSIONS);
+
+    /* Detect whether any session's active state changed */
+    var stateChanged = false;
+    SESSIONS.forEach(function (s) {
+      var active = isSessionActive(s.open, s.close);
+      if (_prevActiveStates[s.name] !== active) {
+        _prevActiveStates[s.name] = active;
+        stateChanged = true;
+      }
+    });
+
+    if (stateChanged) {
+      renderSessions(); /* full rebuild on state transition */
+      return;
+    }
+
+    /* Otherwise just patch countdown text in-place */
+    SESSIONS.forEach(function (s) {
+      var el = document.querySelector('.session-countdown[data-session="' + s.name + '"]');
+      if (!el) return;
+      var active = isSessionActive(s.open, s.close);
+      var countdown = minsUntilEvent(s.open, s.close);
+      var mins = countdown.mins;
+      var warn = mins <= 15;
+      var cdLabel = active ? '⏱ Closes in ' : '⏳ Opens in ';
+      el.textContent = cdLabel + fmtCountdown(mins);
+      el.className = 'session-countdown ' + (active ? 'closes-in' : 'opens-in') + (warn ? ' warning' : '');
+
+      /* Sync warning card classes */
+      var card = el.closest('.session-card');
+      if (card) {
+        card.classList.toggle('warning-open',  warn && !active);
+        card.classList.toggle('warning-close', warn && active);
+      }
+    });
+  }
+
   renderSessions();
-  /* Update every second for smooth countdown, check alerts every minute */
-  setInterval(renderSessions, 1000);
+  /* Initialise active-state snapshot after first render */
+  SESSIONS.forEach(function (s) { _prevActiveStates[s.name] = isSessionActive(s.open, s.close); });
+  setInterval(tickSessions, 1000);
 
   /* Wire up sound toggle button */
   var soundBtn = document.getElementById('adv-sound-btn');
