@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>/* Apply saved theme before any render to avoid flash */
-  (function(){var t=localStorage.getItem('pii-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+  <script>
+    /* Apply saved theme before any render to avoid flash of unstyled content */
+    (function () {
+      var t = localStorage.getItem('pii-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    }());
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Advanced Market Analysis – PiiTrade | SMC, Sessions &amp; Structure</title>
@@ -76,13 +81,16 @@
       background: rgba(255,255,255,.08);
     }
 
-    /* ── Page layout — 7.5% side margins ── */
+    /* ── Page layout — 7.5% side margins, capped for large screens ── */
     .adv-page-wrapper {
       width: 100%;
       padding: 0 7.5%;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
+      max-width: 1600px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     /* ── Keyframes ── */
@@ -2060,7 +2068,7 @@ var AdvChart = (function () {
   // ── Theme switcher ──────────────────────────────────────────────────────
   (function () {
     var saved = localStorage.getItem('pii-theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
+    /* data-theme is already set by the head script; only sync button states here */
     document.querySelectorAll('.adv-theme-btn').forEach(function (btn) {
       if (btn.dataset.t === saved) btn.classList.add('active');
       btn.addEventListener('click', function () {
