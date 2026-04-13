@@ -23,6 +23,42 @@ AI and machine-learning backed **Forex-only** trading signal platform delivering
 - img/trader.png used as site favicon and branding icon
 - Flutter mobile app (Android & iOS)
 
+## Advanced Market Analysis Page (`/advance`)
+
+The `/advance` page is a comprehensive SMC (Smart Money Concepts) charting and analysis dashboard designed to be accessible for beginners while offering professional-grade insights.
+
+### Chart Features
+
+- **Interactive Canvas Chart** with four timeframes in ascending order: **1H → 4H → 1D → 30D**
+- **Real-time current price** displayed as a glowing blinking line — updated every 20 seconds via live-price API polling
+- **ENTRY, TAKE PROFIT (TP), STOP LOSS (SL)** are clearly marked on the chart with bold pill labels and distinct colours:
+  - ⚡ **ENTRY** — direction-coloured dashed line + pill badge
+  - ✅ **TAKE PROFIT** — green dashed line + pill badge
+  - 🛑 **STOP LOSS** — red dashed line + pill badge
+- **Order Blocks (OB)**: Green (bullish) and red (bearish) shaded zones; the nearest block to current price is fully highlighted
+- **Fair Value Gaps (FVG)**: Blue (bullish) and orange (bearish) shaded zones with "FVG" label
+- **CHoCH levels**: Dashed lines with direction arrows marking Change of Character
+- **Liquidity Zones**: Dotted support (💧S) and resistance (💧R) lines drawn from the S/R data
+- **Current Price pill**: Animated glowing horizontal line with price badge on Y-axis
+- **Live price overlay badge**: Top-right corner of chart shows the real-time price with a pulsing green dot
+- **Chart legend**: All visual elements labelled with emoji for quick identification
+- **Hover tooltip**: Shows price, date, signal correctness, and AI signal on mouseover
+
+### Signal Card
+
+- Prominently displays **ENTRY**, **TAKE PROFIT**, and **STOP LOSS** in a 3-column grid with colour-coded borders and large bold values
+- AI direction badge (BUY / SELL / HOLD) with confidence bar
+- Data source masking for user-friendly display
+
+### Navigation & UX
+
+- **Theme dropdown**: Select Dark 🌑, Ocean 🌊, or Light ☀️ theme from a compact dropdown in the nav bar (persisted in localStorage)
+- **8.5% side margins** for comfortable reading on all screen sizes
+- **Beginner Guide** (collapsible `<details>` panel): Explains ENTRY, TP, SL, Order Blocks, FVG, Liquidity Zones, BOS/CHoCH in plain language
+- **Section descriptions**: Each analysis section has a one-line plain-English summary
+- **Trading Sessions**: Live/closed status for Sydney, Tokyo, London, New York sessions with killzone tips
+- **Auto-refresh**: Data reloads every 90 seconds automatically
+
 ## What Was Removed
 
 - ❌ Cryptocurrencies (BTC, ETH, BNB, XRP, SOL)
