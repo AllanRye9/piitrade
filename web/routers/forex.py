@@ -620,3 +620,184 @@ async def forex_subscribe(request: Request):
     except Exception as exc:
         logger.error("forex_subscribe error: %s", exc)
         return JSONResponse({"success": False, "error": "Internal server error."}, status_code=500)
+
+
+# ── OHLC helpers ────────────────────────────────────────────────────────────
+
+
+def _seeded_rand(seed_val: float):
+    """Simple LCG pseudo-random generator for deterministic OHLC noise.
+
+    Uses the classic Park-Miller LCG:
+      s_next = s * 16807 mod (2^31 - 1)
+    where 16807 is the multiplier, 2147483647 = 2^31 - 1 is a Mersenne prime
+    commonly chosen as the modulus for full-period LCGs.
+    """
+    s = [max(1, abs(int(seed_val * 999997)) % 2147483647)]  # seed must be in [1, m-1]
+
+    def _next() -> float:
+        s[0] = s[0] * 16807 % 2147483647
+        return (s[0] - 1) / 2147483646.0
+
+    return _next
+
+
+def _build_ohlc(
+    daily_closes: list[tuple[str, float]],
+    tf: str,
+    dec: int,
+    max_bars: int,
+) -> list[dict[str, Any]]:
+    """Convert a list of (date_str, close) into OHLC bars for the given timeframe."""
+    if not daily_closes:
+        return []
+
+    seed_val = sum(v for _, v in daily_closes[:5]) if daily_closes else 1.0
+    rand = _seeded_rand(seed_val)
+
+    closes = [c for _, c in daily_closes]
+    dates = [d for d, _ in daily_closes]
+
+    if tf == "1W":
+        bars: list[dict[str, Any]] = []
+        i = 0
+        while i < len(closes) - 4:
+            wk = closes[i : i + 5]
+            # ATR: average of |close[j] - close[j-1]| over the 4 day-to-day differences
+            atr = sum(abs(wk[j] - wk[j - 1]) for j in range(1, len(wk))) / max(1, len(wk) - 1)
+            o = round(wk[0], dec)
+            c = round(wk[-1], dec)
+            h = round(max(wk) + atr * (0.3 + rand() * 0.4), dec)
+            l = round(min(wk) - atr * (0.3 + rand() * 0.4), dec)
+            bars.append({"time": dates[i], "open": o, "high": h, "low": l, "close": c})
+            i += 5
+        return bars[-max_bars:]
+
+    elif tf in ("1H", "4H"):
+        sub_per_day = 24 if tf == "1H" else 6
+        hours_per_bar = 24 // sub_per_day
+        bars = []
+        for i in range(1, len(closes)):
+            prev = closes[i - 1]
+            curr = closes[i]
+            date_str = dates[i]
+            for j in range(sub_per_day):
+                frac = (j + 1) / sub_per_day
+                noise_scale = abs(curr - prev) * 0.1 + curr * 0.00005
+                sub_close = round(
+                    prev + (curr - prev) * frac + (rand() - 0.5) * noise_scale, dec
+                )
+                sub_open = (
+                    prev
+                    if j == 0
+                    else (bars[-1]["close"] if bars else sub_close)
+                )
+                noise = abs(sub_close - sub_open) * 0.4 + curr * 0.00008
+                sub_high = round(max(sub_open, sub_close) + noise * rand(), dec)
+                sub_low = round(min(sub_open, sub_close) - noise * rand(), dec)
+                hour = j * hours_per_bar
+                time_str = f"{date_str}T{hour:02d}:00:00"
+                bars.append(
+                    {
+                        "time": time_str,
+                        "open": sub_open,
+                        "high": sub_high,
+                        "low": sub_low,
+                        "close": sub_close,
+                    }
+                )
+        return bars[-max_bars:]
+
+    else:  # 1D
+        bars = []
+        for i in range(len(closes)):
+            o = round(closes[i - 1] if i > 0 else closes[i], dec)
+            c = round(closes[i], dec)
+            spread = abs(c - o)
+            noise = spread * 0.5 + c * 0.0002
+            h = round(max(o, c) + noise * rand(), dec)
+            l = round(min(o, c) - noise * rand(), dec)
+            bars.append({"time": dates[i], "open": o, "high": h, "low": l, "close": c})
+        return bars[-max_bars:]
+
+
+@router.get("/api/forex/candles")
+async def forex_candles(pair: str = "EUR/USD", tf: str = "1D", bars: int = 365):
+    """Return OHLC candle data for the advanced chart.
+
+    tf values: 1H | 4H | 1D | 1W
+    bars: number of bars to return (max 1825 for 1D/1W; 720 for 1H/4H)
+    """
+    try:
+        core = _core()
+        if pair not in core._SUPPORTED_PAIRS:
+            return JSONResponse(
+                {"error": f"Unsupported pair. Choose from: {', '.join(core._SUPPORTED_PAIRS)}"},
+                status_code=400,
+            )
+
+        _pip, dec = core._pair_pip_dec(pair)
+        tf_upper = tf.upper()
+
+        # Determine how many daily bars to fetch.
+        # 1H: need bars/24 days worth of data; min 14 days for decent history, max 30 days
+        # 4H: need bars/6 days; min 14, max 90
+        # 1W: need bars * 7 calendar days + buffer for aggregation
+        # 1D: direct mapping with a small look-back buffer
+        if tf_upper == "1H":
+            fetch_days = min(max(bars // 24 + 3, 14), 30)
+            bars = min(bars, 720)
+        elif tf_upper == "4H":
+            fetch_days = min(max(bars // 6 + 5, 14), 90)
+            bars = min(bars, 1080)
+        elif tf_upper == "1W":
+            fetch_days = min(bars * 7 + 30, 1825)
+            bars = min(bars, 260)
+        else:  # 1D
+            fetch_days = min(bars + 15, 1825)
+            bars = min(bars, 1825)
+
+        hist_rates = core._fetch_historical_rates(pair, fetch_days)
+
+        if hist_rates:
+            daily_closes = sorted(hist_rates.items())
+        else:
+            # Fallback to static sequences
+            base_price, pip, seq = core._FOREX_HIST_SEQUENCES[pair]
+            price = base_price
+            from datetime import date as _date, timedelta as _td
+
+            start = _date.today() - _td(days=len(seq))
+            daily_closes = []
+            for idx, (_, _, delta) in enumerate(seq):
+                price = round(price + delta * pip, dec)
+                daily_closes.append(
+                    ((start + _td(days=idx)).isoformat(), price)
+                )
+
+        candles = _build_ohlc(daily_closes, tf_upper, dec, bars)
+
+        live_rate = core._fetch_live_rate(pair)
+        # Update the last candle's close with the live rate if available
+        if live_rate is not None and candles:
+            last = candles[-1]
+            candles[-1] = {
+                "time": last["time"],
+                "open": last["open"],
+                "high": max(last["high"], round(live_rate, dec)),
+                "low": min(last["low"], round(live_rate, dec)),
+                "close": round(live_rate, dec),
+            }
+
+        return JSONResponse(
+            {
+                "pair": pair,
+                "tf": tf_upper,
+                "bars": len(candles),
+                "candles": candles,
+                "live": live_rate,
+            }
+        )
+    except Exception as exc:
+        logger.error("forex_candles error: %s", exc)
+        return JSONResponse({"error": "Internal server error."}, status_code=500)
