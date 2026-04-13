@@ -3,7 +3,7 @@ PiiTrade – Forex resources router
 Hosts API endpoints used by the dashboard tabs and clients.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date as _date
 import logging
 from typing import Any
 
@@ -696,7 +696,7 @@ def _build_ohlc(
                 sub_high = round(max(sub_open, sub_close) + noise * rand(), dec)
                 sub_low = round(min(sub_open, sub_close) - noise * rand(), dec)
                 hour = j * hours_per_bar
-                time_str = f"{date_str}T{hour:02d}:00:00"
+                time_str = f"{date_str}T{hour:02d}:00:00Z"
                 bars.append(
                     {
                         "time": time_str,
@@ -778,16 +778,32 @@ async def forex_candles(pair: str = "EUR/USD", tf: str = "1D", bars: int = 365):
         candles = _build_ohlc(daily_closes, tf_upper, dec, bars)
 
         live_rate = core._fetch_live_rate(pair)
-        # Update the last candle's close with the live rate if available
+        # Update or extend the candle series with the live rate
         if live_rate is not None and candles:
-            last = candles[-1]
-            candles[-1] = {
-                "time": last["time"],
-                "open": last["open"],
-                "high": max(last["high"], round(live_rate, dec)),
-                "low": min(last["low"], round(live_rate, dec)),
-                "close": round(live_rate, dec),
-            }
+            today_str = _date.today().isoformat()
+            last_time = candles[-1]["time"]
+            last_date_str = last_time[:10]  # works for both "YYYY-MM-DD" and "YYYY-MM-DDTHH:…"
+
+            if tf_upper == "1D" and last_date_str < today_str and _date.today().weekday() < 5:
+                # Add a partial "today" bar so the chart is current
+                prev_close = candles[-1]["close"]
+                candles.append({
+                    "time": today_str,
+                    "open": round(prev_close, dec),
+                    "high": round(max(prev_close, live_rate), dec),
+                    "low": round(min(prev_close, live_rate), dec),
+                    "close": round(live_rate, dec),
+                })
+            else:
+                # Update the last candle's close with the live rate
+                last = candles[-1]
+                candles[-1] = {
+                    "time": last["time"],
+                    "open": last["open"],
+                    "high": max(last["high"], round(live_rate, dec)),
+                    "low": min(last["low"], round(live_rate, dec)),
+                    "close": round(live_rate, dec),
+                }
 
         return JSONResponse(
             {
