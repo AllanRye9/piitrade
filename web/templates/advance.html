@@ -1479,8 +1479,11 @@ var AdvChart = (function () {
     if (!p || isNaN(p)) return 4;
     if (p >= 1000) return 2;
     if (p >= 100)  return 3;
-    return 4;
+    if (p >= 1)    return 4;
+    return 5;
   }
+
+  var PRICE_FORMAT = { type: 'price', precision: 4, minMove: 0.0001 };
 
   function getThemeColors() {
     var t = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1558,13 +1561,13 @@ var AdvChart = (function () {
         borderDownColor:c.down,
         wickUpColor:    c.up,
         wickDownColor:  c.down,
-        priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
+        priceFormat: PRICE_FORMAT,
       });
     } else if (chartType === 'bar') {
       mainSeries = chart.addBarSeries({
         upColor:   c.up,
         downColor: c.down,
-        priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
+        priceFormat: PRICE_FORMAT,
       });
     } else {
       mainSeries = chart.addLineSeries({
@@ -1572,7 +1575,7 @@ var AdvChart = (function () {
         lineWidth: 2,
         crosshairMarkerVisible: true,
         crosshairMarkerRadius:  4,
-        priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
+        priceFormat: PRICE_FORMAT,
       });
     }
   }
