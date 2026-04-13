@@ -768,29 +768,47 @@
       .sr-grid { grid-template-columns: 1fr; }
       .adv-meta-grid { grid-template-columns: repeat(2, 1fr); }
       .adv-footer-grid { grid-template-columns: 1fr; }
+      /* Remove side margins on mobile — chart fills full width */
+      .adv-page-wrapper { padding-left: 0; padding-right: 0; }
+      .adv-hero, .adv-bar, .adv-section, .adv-guide, .adv-disclaimer, footer.adv-footer {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box;
+      }
+      .adv-bar { margin-left: 8px; margin-right: 8px; }
+      .adv-chart-section { padding-left: 0 !important; padding-right: 0 !important; }
+      .adv-chart-legend { gap: 8px; font-size: .68rem; }
+      .adv-chart-controls { flex-wrap: wrap; gap: 6px; }
+      .adv-chart-wrap { border-radius: 0; border-left: none; border-right: none; }
     }
 
     /* ── Market Structure Chart ── */
     .adv-chart-section .adv-section-title {
       align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-left: 4px;
+      padding-right: 4px;
     }
     .adv-tf-nav {
       display: flex;
       gap: 4px;
       margin-left: auto;
+      flex-wrap: wrap;
     }
     .adv-tf-btn {
-      padding: 4px 14px;
+      padding: 4px 10px;
       border-radius: 8px;
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text2);
-      font-size: .78rem;
+      font-size: .75rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       transition: background .18s, border-color .18s, color .18s;
       outline: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .adv-tf-btn:hover { border-color: var(--accent); color: var(--accent); }
     .adv-tf-btn.active {
@@ -798,15 +816,70 @@
       border-color: var(--accent);
       color: var(--accent);
     }
+
+    /* ── Chart controls row (type selector + zoom) ── */
+    .adv-chart-controls {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 10px;
+      padding: 0 4px;
+      flex-wrap: wrap;
+    }
+    .adv-ct-nav, .adv-zoom-nav {
+      display: -webkit-flex;
+      display: flex;
+      gap: 3px;
+    }
+    .adv-ct-btn, .adv-zoom-btn {
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      font-size: .72rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      outline: none;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .adv-ct-btn:hover, .adv-zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .adv-ct-btn.active {
+      background: rgba(88,166,255,.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .adv-zoom-sep {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+      margin: 0 4px;
+    }
+    .adv-chart-hint {
+      margin-left: auto;
+      font-size: .68rem;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+    @media (max-width: 500px) { .adv-chart-hint { display: none; } }
+
     .adv-chart-legend {
+      display: -webkit-flex;
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
-      margin: 10px 0 12px;
-      font-size: .76rem;
+      gap: 10px 14px;
+      margin: 8px 4px 12px;
+      font-size: .73rem;
     }
     .adv-legend-item {
+      display: -webkit-flex;
       display: flex;
+      -webkit-align-items: center;
       align-items: center;
       gap: 5px;
       color: var(--text2);
@@ -814,8 +887,8 @@
     .adv-legend-item::before {
       content: '';
       display: inline-block;
-      width: 14px;
-      height: 10px;
+      width: 13px;
+      height: 9px;
       border-radius: 2px;
       flex-shrink: 0;
     }
@@ -849,13 +922,24 @@
       border-radius: 14px;
       overflow: hidden;
       min-height: 300px;
+      -webkit-user-select: none;
+      user-select: none;
     }
-    .adv-chart-wrap canvas { display: block; width: 100%; }
+    .adv-chart-wrap canvas {
+      display: block;
+      width: 100%;
+      cursor: crosshair;
+      -ms-touch-action: none;
+      touch-action: none;
+    }
     .adv-chart-loading {
       position: absolute;
       inset: 0;
+      display: -webkit-flex;
       display: flex;
+      -webkit-align-items: center;
       align-items: center;
+      -webkit-justify-content: center;
       justify-content: center;
       color: var(--text2);
       font-size: .9rem;
@@ -1067,16 +1151,31 @@
           <button class="adv-tf-btn" data-tf="30D" title="30 days – 4-hour bars (full view)">30D</button>
         </div>
       </div>
+      <!-- Chart controls: type selector + zoom buttons -->
+      <div class="adv-chart-controls">
+        <div class="adv-ct-nav">
+          <button class="adv-ct-btn active" data-ct="candle" title="Japanese Candlestick (default)">🕯 Candles</button>
+          <button class="adv-ct-btn" data-ct="line" title="Line chart">📈 Line</button>
+          <button class="adv-ct-btn" data-ct="bar" title="OHLC Bar chart">📊 Bars</button>
+        </div>
+        <div class="adv-zoom-sep"></div>
+        <div class="adv-zoom-nav">
+          <button class="adv-zoom-btn" id="adv-zoom-in" title="Zoom In">🔍+</button>
+          <button class="adv-zoom-btn" id="adv-zoom-out" title="Zoom Out">🔍−</button>
+          <button class="adv-zoom-btn" id="adv-zoom-reset" title="Reset zoom and pan">↺</button>
+        </div>
+        <span class="adv-chart-hint">Scroll to zoom · Drag to pan</span>
+      </div>
       <div class="adv-chart-legend">
-        <span class="adv-legend-item ob-bull">📦 Bullish Order Block</span>
-        <span class="adv-legend-item ob-bear">📦 Bearish Order Block</span>
-        <span class="adv-legend-item fvg-bull">🌀 FVG (Bullish)</span>
-        <span class="adv-legend-item fvg-bear">🌀 FVG (Bearish)</span>
-        <span class="adv-legend-item choch-line">🔀 CHoCH Level</span>
-        <span class="adv-legend-item price-line">📍 Current Price</span>
-        <span class="adv-legend-item ai-entry">⚡ AI Entry</span>
-        <span class="adv-legend-item ai-tp">✅ Take Profit (TP)</span>
-        <span class="adv-legend-item ai-sl">🛑 Stop Loss (SL)</span>
+        <span class="adv-legend-item ob-bull">📦 Order Block ▲</span>
+        <span class="adv-legend-item ob-bear">📦 Order Block ▼</span>
+        <span class="adv-legend-item fvg-bull">🌀 FVG (Bull)</span>
+        <span class="adv-legend-item fvg-bear">🌀 FVG (Bear)</span>
+        <span class="adv-legend-item choch-line">🔀 CHoCH</span>
+        <span class="adv-legend-item price-line">📍 Live Price</span>
+        <span class="adv-legend-item ai-entry">⚡ Entry</span>
+        <span class="adv-legend-item ai-tp">✅ TP</span>
+        <span class="adv-legend-item ai-sl">🛑 SL</span>
       </div>
       <div class="adv-chart-wrap" id="adv-chart-wrap">
         <canvas id="adv-chart-canvas"></canvas>
@@ -1229,11 +1328,19 @@ var AdvChart = (function () {
   var canvas, ctx, wrap, tooltip;
   var rawHistory = null, techData = null;
   var timeframe = '1H';
+  var chartType = 'candle';   /* 'candle' | 'line' | 'bar' */
   var animFrame = null, animProgress = 0;
   var hoverIdx = -1, preparedData = null;
   var aiSignalData = null;
   var glowLoopId = null;
   var lastGlowRender = 0;
+
+  /* Zoom / pan state */
+  var zoomLevel  = 1.0;   /* 1 = all bars visible, higher = fewer bars (zoom in) */
+  var panOffset  = 1.0;   /* 0 = scroll to start, 1 = scroll to end (latest) */
+  var isPanning  = false;
+  var panLastX   = 0;
+  var touchDist0 = 0, touchZoom0 = 1.0;
 
   /* Deterministic pseudo-random number generator (seeded) so synthetic
      sub-daily bars are stable across timeframe switches. */
@@ -1245,6 +1352,69 @@ var AdvChart = (function () {
     };
   }
 
+  function clampPan() {
+    if (panOffset < 0) panOffset = 0;
+    if (panOffset > 1) panOffset = 1;
+  }
+
+  function getVisibleRange(n) {
+    var visCount = Math.round(n / zoomLevel);
+    if (visCount < 5)  visCount = 5;
+    if (visCount > n)  visCount = n;
+    var maxStart = n - visCount;
+    if (maxStart < 0) maxStart = 0;
+    var start = Math.round(panOffset * maxStart);
+    if (start < 0)        start = 0;
+    if (start > maxStart) start = maxStart;
+    return { start: start, end: start + visCount };
+  }
+
+  function adjustZoomAt(newZoom, xFrac, n) {
+    var oldVis   = getVisibleRange(n);
+    var oldRange = oldVis.end - oldVis.start;
+    var fixedIdx = oldVis.start + xFrac * oldRange;
+    zoomLevel = newZoom;
+    var newCount = Math.round(n / newZoom);
+    if (newCount < 5) newCount = 5;
+    if (newCount > n) newCount = n;
+    var newMax = n - newCount;
+    if (newMax <= 0) { panOffset = 1.0; return; }
+    var newStart = fixedIdx - xFrac * newCount;
+    panOffset = newStart / newMax;
+    clampPan();
+  }
+
+  function applyZoom(factor, xFrac) {
+    if (!preparedData) return;
+    var n = preparedData.prices.length;
+    var newZoom = zoomLevel * factor;
+    if (newZoom < 1)  newZoom = 1;
+    if (newZoom > 20) newZoom = 20;
+    adjustZoomAt(newZoom, xFrac !== undefined ? xFrac : 0.5, n);
+    render(1);
+  }
+
+  function doPan(dx) {
+    if (!preparedData) return;
+    var n = preparedData.prices.length;
+    var W  = (wrap ? wrap.offsetWidth : 800) || 800;
+    var isMob = W < 500;
+    var PL = isMob ? 54 : 72, PR = isMob ? 8 : 12;
+    var cw = W - PL - PR;
+    var visCount = Math.round(n / zoomLevel);
+    if (visCount < 5)  visCount = 5;
+    if (visCount > n)  visCount = n;
+    var maxStart = n - visCount;
+    if (maxStart <= 0) return;
+    /* dx>0 = drag right = scroll toward earlier bars */
+    panOffset -= dx / cw / zoomLevel;
+    clampPan();
+    render(1);
+  }
+
+  function getPL(W) { return W < 500 ? 54 : 72; }
+  function getPR(W) { return W < 500 ? 8  : 12; }
+
   function init() {
     canvas  = document.getElementById('adv-chart-canvas');
     wrap    = document.getElementById('adv-chart-wrap');
@@ -1252,6 +1422,7 @@ var AdvChart = (function () {
     if (!canvas) return;
     ctx = canvas.getContext('2d');
 
+    /* ── Timeframe buttons ── */
     var btns = document.querySelectorAll('.adv-tf-btn');
     Array.prototype.forEach.call(btns, function (btn) {
       btn.addEventListener('click', function () {
@@ -1260,18 +1431,106 @@ var AdvChart = (function () {
           function (b) { b.classList.remove('active'); }
         );
         btn.classList.add('active');
-        timeframe = btn.dataset.tf;
+        timeframe  = btn.dataset.tf;
+        zoomLevel  = 1.0;
+        panOffset  = 1.0;
         if (rawHistory && techData) { prepare(); startAnim(); }
       });
     });
 
-    canvas.addEventListener('mousemove', onMouseMove);
+    /* ── Chart type buttons ── */
+    var ctBtns = document.querySelectorAll('.adv-ct-btn');
+    Array.prototype.forEach.call(ctBtns, function (btn) {
+      btn.addEventListener('click', function () {
+        Array.prototype.forEach.call(ctBtns, function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        chartType = btn.dataset.ct;
+        if (preparedData) render(1);
+      });
+    });
+
+    /* ── Zoom buttons ── */
+    var zIn  = document.getElementById('adv-zoom-in');
+    var zOut = document.getElementById('adv-zoom-out');
+    var zRes = document.getElementById('adv-zoom-reset');
+    if (zIn)  zIn.addEventListener('click',  function () { applyZoom(1.5,   0.5); });
+    if (zOut) zOut.addEventListener('click', function () { applyZoom(1/1.5, 0.5); });
+    if (zRes) zRes.addEventListener('click', function () {
+      zoomLevel = 1.0; panOffset = 1.0;
+      if (preparedData) render(1);
+    });
+
+    /* ── Mouse wheel zoom ── */
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var rect  = canvas.getBoundingClientRect();
+      var xFrac = (e.clientX - rect.left) / rect.width;
+      applyZoom(e.deltaY > 0 ? 1 / 1.12 : 1.12, xFrac);
+    }, { passive: false });
+
+    /* ── Mouse drag to pan ── */
+    canvas.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      isPanning = true;
+      panLastX  = e.clientX;
+      canvas.style.cursor = 'grabbing';
+    });
+    canvas.addEventListener('mousemove', function (e) {
+      if (isPanning) {
+        doPan(e.clientX - panLastX);
+        panLastX = e.clientX;
+      } else {
+        onMouseMove(e);
+      }
+    });
+    canvas.addEventListener('mouseup',   function () { isPanning = false; canvas.style.cursor = 'crosshair'; });
     canvas.addEventListener('mouseleave', function () {
+      isPanning = false;
+      canvas.style.cursor = '';
       hoverIdx = -1;
       if (tooltip) tooltip.style.display = 'none';
       if (preparedData) render(1);
     });
 
+    /* ── Touch events: pinch-to-zoom + swipe-to-pan ── */
+    canvas.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 2) {
+        var dx = e.touches[1].clientX - e.touches[0].clientX;
+        var dy = e.touches[1].clientY - e.touches[0].clientY;
+        touchDist0 = Math.sqrt(dx * dx + dy * dy) || 1;
+        touchZoom0 = zoomLevel;
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        isPanning = true;
+        panLastX  = e.touches[0].clientX;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2) {
+        var dx2 = e.touches[1].clientX - e.touches[0].clientX;
+        var dy2 = e.touches[1].clientY - e.touches[0].clientY;
+        var d2  = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
+        var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        var rect2 = canvas.getBoundingClientRect();
+        var frac2 = (midX - rect2.left) / rect2.width;
+        if (!preparedData) return;
+        var newZoom2 = touchZoom0 * (d2 / touchDist0);
+        if (newZoom2 < 1)  newZoom2 = 1;
+        if (newZoom2 > 20) newZoom2 = 20;
+        adjustZoomAt(newZoom2, frac2, preparedData.prices.length);
+        render(1);
+        e.preventDefault();
+      } else if (e.touches.length === 1 && isPanning) {
+        doPan(e.touches[0].clientX - panLastX);
+        panLastX = e.touches[0].clientX;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function () { isPanning = false; });
+
+    /* ── Window resize ── */
     var resizeTimer;
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
@@ -1294,8 +1553,6 @@ var AdvChart = (function () {
 
     var dailyPrices = rawHistory.map(function (h) { return h.entry || 0; });
     var dailyDates  = rawHistory.map(function (h) { return h.day  || ''; });
-    /* Seed the PRNG with a value derived from the daily prices so the same
-       pair always generates the same synthetic bars. */
     var seedVal = dailyPrices.reduce(function (a, b) { return a + b; }, 0);
     var rand = seededRand(seedVal * 997 | 0);
 
@@ -1304,19 +1561,17 @@ var AdvChart = (function () {
       prices = dailyPrices.slice();
       dates  = dailyDates.slice();
     } else if (timeframe === '4H') {
-      /* Build 6 × 4-hour bars per day from the last 15 daily prices. */
-      var src = dailyPrices.slice(-15), srcD = dailyDates.slice(-15);
+      var src4 = dailyPrices.slice(-15), srcD4 = dailyDates.slice(-15);
       prices = []; dates = [];
-      src.forEach(function (p, i) {
-        var prev = i > 0 ? src[i - 1] : p;
+      src4.forEach(function (p, i) {
+        var prev = i > 0 ? src4[i - 1] : p;
         for (var j = 0; j < 6; j++) {
           var noise = (rand() - 0.5) * 0.0005 * p;
           prices.push(prev + (p - prev) * ((j + 1) / 6) + noise);
-          dates.push(srcD[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
+          dates.push(srcD4[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
         }
       });
     } else if (timeframe === '30D') {
-      /* 30 days at 4H resolution: 30 × 6 = 180 bars */
       var src30 = dailyPrices.slice(-30), srcD30 = dailyDates.slice(-30);
       prices = []; dates = [];
       src30.forEach(function (p, i) {
@@ -1327,7 +1582,7 @@ var AdvChart = (function () {
           dates.push(srcD30[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
         }
       });
-    } else { /* 1H – 24 bars/day from the last 7 days */
+    } else { /* 1H */
       var src7 = dailyPrices.slice(-7), srcD7 = dailyDates.slice(-7);
       prices = []; dates = [];
       src7.forEach(function (p, i) {
@@ -1340,37 +1595,38 @@ var AdvChart = (function () {
       });
     }
 
+    /* Build OHLC bars for candlestick / bar chart types */
+    var ohlcBars = prices.map(function (close, i) {
+      var open   = i > 0 ? prices[i - 1] : close;
+      var spread = Math.abs(close - open);
+      var noise  = spread * 0.35 + close * 0.00015;
+      var hi     = Math.max(open, close) + noise * rand();
+      var lo     = Math.min(open, close) - noise * rand();
+      return { open: open, high: hi, low: lo, close: close };
+    });
+
     var cp = techData.current_price || dailyPrices[dailyPrices.length - 1] || 1;
 
-    /* Sort order blocks so the nearest to current price comes first —
-       it will be drawn with full emphasis. */
     var obZones = (techData.high_volume_zones || []).slice().sort(function (a, b) {
       return Math.abs((a.top + a.bottom) / 2 - cp) -
              Math.abs((b.top + b.bottom) / 2 - cp);
     }).map(function (z) {
       return {
-        top:      z.top,
-        bottom:   z.bottom,
-        strength: z.strength || 'medium',
-        type:     ((z.top + z.bottom) / 2 < cp) ? 'bull' : 'bear'
+        top: z.top, bottom: z.bottom, strength: z.strength || 'medium',
+        type: ((z.top + z.bottom) / 2 < cp) ? 'bull' : 'bear'
       };
     });
 
-    /* Build liquidity zone lines from support/resistance levels */
     var sr = (techData.support_resistance || {});
     var liqZones = [];
-    (sr.support || []).forEach(function (l) { liqZones.push({ level: l, side: 'support' }); });
+    (sr.support    || []).forEach(function (l) { liqZones.push({ level: l, side: 'support' }); });
     (sr.resistance || []).forEach(function (l) { liqZones.push({ level: l, side: 'resistance' }); });
 
     preparedData = {
-      prices:       prices,
-      dates:        dates,
-      obZones:      obZones,
-      fvgZones:     techData.fvg    || [],
-      chochLevels:  techData.choch  || [],
-      liqZones:     liqZones,
-      currentPrice: cp,
-      aiSignal:     aiSignalData
+      prices: prices, ohlc: ohlcBars, dates: dates,
+      obZones: obZones, fvgZones: techData.fvg || [],
+      chochLevels: techData.choch || [], liqZones: liqZones,
+      currentPrice: cp, aiSignal: aiSignalData
     };
   }
 
@@ -1382,7 +1638,6 @@ var AdvChart = (function () {
     function step(ts) {
       if (!start) start = ts;
       var raw = Math.min(1, (ts - start) / dur);
-      /* Cubic ease-out */
       animProgress = 1 - Math.pow(1 - raw, 3);
       render(animProgress);
       if (raw < 1) {
@@ -1398,7 +1653,7 @@ var AdvChart = (function () {
   function startGlowLoop() {
     if (glowLoopId) return;
     function loop(ts) {
-      if (ts - lastGlowRender >= 50) { /* 50ms interval ≈ 20fps for glow */
+      if (ts - lastGlowRender >= 50) {
         lastGlowRender = ts;
         render(1);
       }
@@ -1418,10 +1673,11 @@ var AdvChart = (function () {
   function render(progress) {
     if (!canvas || !preparedData) return;
 
-    /* Responsive sizing */
+    /* ── Responsive canvas sizing ── */
     var W = (wrap ? wrap.offsetWidth : 800) || 800;
     if (W < 200) W = 200;
-    var H = Math.round(Math.max(280, Math.min(440, W * 0.43)));
+    var isMob = W < 500;
+    var H   = Math.round(Math.max(isMob ? 260 : 280, Math.min(isMob ? 380 : 460, W * (isMob ? 0.55 : 0.46))));
     var dpr = window.devicePixelRatio || 1;
     if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
       canvas.width  = Math.round(W * dpr);
@@ -1431,24 +1687,40 @@ var AdvChart = (function () {
     canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    var PL = 72, PR = 12, PT = 18, PB = 42;
+    var PL = isMob ? 54 : 72;
+    var PR = isMob ? 8  : 12;
+    var PT = isMob ? 14 : 18;
+    var PB = isMob ? 30 : 42;
     var cw = W - PL - PR, ch = H - PT - PB;
+
     var prices = preparedData.prices, n = prices.length;
     if (n < 2) return;
 
-    /* Compute Y range to include all drawn elements */
-    var allY = prices.slice();
-    preparedData.obZones.forEach(function (z) { allY.push(z.top, z.bottom); });
-    preparedData.fvgZones.forEach(function (f) { allY.push(f.top, f.bottom); });
+    /* ── Zoom/pan: compute visible index range ── */
+    var visR  = getVisibleRange(n);
+    var visS  = visR.start, visE  = visR.end;
+    var visN  = visE - visS;
+    if (visN < 2) return;
+
+    /* ── Compute Y range from visible bars + all overlays ── */
+    var allY = [];
+    for (var vi = visS; vi < visE; vi++) { allY.push(prices[vi]); }
+    if (chartType !== 'line') {
+      for (var vi2 = visS; vi2 < visE; vi2++) {
+        var ob2 = preparedData.ohlc[vi2];
+        if (ob2) { allY.push(ob2.high, ob2.low); }
+      }
+    }
+    preparedData.obZones.forEach(function (z)  { allY.push(z.top, z.bottom); });
+    preparedData.fvgZones.forEach(function (f)  { allY.push(f.top, f.bottom); });
     preparedData.chochLevels.forEach(function (c) { allY.push(c.level); });
     (preparedData.liqZones || []).forEach(function (z) { allY.push(z.level); });
     allY.push(preparedData.currentPrice);
-    /* Include AI prediction levels in range so they stay visible */
     if (preparedData.aiSignal) {
-      var ais = preparedData.aiSignal;
-      if (ais.entry_price) allY.push(parseFloat(ais.entry_price));
-      if (ais.take_profit)  allY.push(parseFloat(ais.take_profit));
-      if (ais.stop_loss)    allY.push(parseFloat(ais.stop_loss));
+      var aisY = preparedData.aiSignal;
+      if (aisY.entry_price) allY.push(parseFloat(aisY.entry_price));
+      if (aisY.take_profit) allY.push(parseFloat(aisY.take_profit));
+      if (aisY.stop_loss)   allY.push(parseFloat(aisY.stop_loss));
     }
 
     var minP = Math.min.apply(null, allY), maxP = Math.max.apply(null, allY);
@@ -1457,7 +1729,8 @@ var AdvChart = (function () {
     var rng = maxP - minP;
 
     function py(p) { return PT + (1 - (p - minP) / rng) * ch; }
-    function px(i) { return PL + (i / (n - 1)) * cw; }
+    function pxI(i) { return PL + ((i - visS) / (visN - 1)) * cw; }
+    var barW = Math.max(1, (cw / visN) * 0.72);
 
     ctx.clearRect(0, 0, W, H);
 
@@ -1466,9 +1739,9 @@ var AdvChart = (function () {
     ctx.fillRect(0, 0, W, H);
 
     /* ── Grid lines ── */
+    var nGridY = isMob ? 4 : 5;
     ctx.strokeStyle = 'rgba(48,54,61,0.75)';
     ctx.lineWidth   = 0.5;
-    var nGridY = 5;
     for (var g = 0; g <= nGridY; g++) {
       var gy = PT + (g / nGridY) * ch;
       ctx.beginPath(); ctx.moveTo(PL, gy); ctx.lineTo(PL + cw, gy); ctx.stroke();
@@ -1476,30 +1749,28 @@ var AdvChart = (function () {
 
     /* ── Y-axis price labels ── */
     ctx.fillStyle    = '#8b949e';
-    ctx.font         = '11px monospace';
+    ctx.font         = (isMob ? 9 : 11) + 'px monospace';
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'middle';
-    for (var g = 0; g <= nGridY; g++) {
-      var gp = maxP - (g / nGridY) * rng;
-      ctx.fillText(gp.toFixed(pDec(gp)), PL - 5, PT + (g / nGridY) * ch);
+    for (var g2 = 0; g2 <= nGridY; g2++) {
+      var gp = maxP - (g2 / nGridY) * rng;
+      ctx.fillText(gp.toFixed(pDec(gp)), PL - 4, PT + (g2 / nGridY) * ch);
     }
 
     /* ── X-axis date labels ── */
     ctx.fillStyle    = '#8b949e';
-    ctx.font         = '10px monospace';
+    ctx.font         = (isMob ? 8 : 10) + 'px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
-    var xStep = Math.max(1, Math.floor(n / 7));
-    for (var i = 0; i < n; i += xStep) {
-      var d = preparedData.dates[i] || '';
-      /* Show "MM-DD HH:mm" for intraday, "MM-DD" for daily */
-      var lbl = d.length > 10 ? d.slice(5, 16) : d.slice(5);
-      ctx.fillText(lbl, px(i), PT + ch + 6);
+    var xStep = Math.max(1, Math.floor(visN / (isMob ? 4 : 7)));
+    for (var xi = visS; xi < visE; xi += xStep) {
+      var dl  = preparedData.dates[xi] || '';
+      var lbl = dl.length > 10 ? dl.slice(5, 16) : dl.slice(5);
+      if (isMob && lbl.length > 8) lbl = lbl.slice(0, 8);
+      ctx.fillText(lbl, pxI(xi), PT + ch + 4);
     }
 
-    /* ── Order block zones ──
-       Nearest to current price → full opacity + bright border + label.
-       Rest → reduced opacity, thinner border, no label. */
+    /* ── Order block zones ── */
     preparedData.obZones.forEach(function (z, zi) {
       var nearest = (zi === 0);
       var bull    = (z.type === 'bull');
@@ -1508,313 +1779,394 @@ var AdvChart = (function () {
       var strokeA = nearest ? 0.70 : 0.22;
       var y1 = Math.min(py(z.top), py(z.bottom));
       var y2 = Math.max(py(z.top), py(z.bottom));
-      var h  = Math.max(1, y2 - y1);
-
+      var zH = Math.max(1, y2 - y1);
       ctx.fillStyle   = 'rgba(' + clr + ',' + fillA + ')';
-      ctx.fillRect(PL, y1, cw, h);
-
+      ctx.fillRect(PL, y1, cw, zH);
       ctx.strokeStyle = 'rgba(' + clr + ',' + strokeA + ')';
       ctx.lineWidth   = nearest ? 1.2 : 0.5;
       ctx.setLineDash([]);
-      ctx.strokeRect(PL, y1, cw, h);
-
-      /* Label for the nearest order block only */
-      if (nearest && h >= 10) {
+      ctx.strokeRect(PL, y1, cw, zH);
+      if (nearest && zH >= 8) {
+        var tag = (bull ? '▲ OB' : '▼ OB') + (z.strength === 'high' ? ' ★' : '');
+        ctx.font = 'bold ' + (isMob ? 8 : 10) + 'px Inter,sans-serif';
+        var tagW = ctx.measureText(tag).width;
+        /* Dark pill background so label never blends into candles */
+        ctx.fillStyle = 'rgba(13,17,23,0.72)';
+        ctx.fillRect(PL + 4, y1 + zH / 2 - 7, tagW + 8, 14);
         ctx.fillStyle    = 'rgba(' + clr + ',0.95)';
-        ctx.font         = 'bold 10px Inter,sans-serif';
         ctx.textAlign    = 'left';
         ctx.textBaseline = 'middle';
-        var tag = (bull ? '▲ OB' : '▼ OB') + (z.strength === 'high' ? ' ★' : '');
-        ctx.fillText(tag, PL + 6, y1 + h / 2);
+        ctx.fillText(tag, PL + 8, y1 + zH / 2);
       }
     });
 
     /* ── FVG zones ── */
     preparedData.fvgZones.forEach(function (f) {
-      var bull = (f.type === 'bullish');
-      var clr  = bull ? '88,166,255' : '255,150,50';
-      var y1   = Math.min(py(f.top), py(f.bottom));
-      var y2   = Math.max(py(f.top), py(f.bottom));
-      var h    = Math.max(1, y2 - y1);
-
-      ctx.fillStyle = 'rgba(' + clr + ',' + (f.filled ? 0.04 : 0.11) + ')';
-      ctx.fillRect(PL, y1, cw, h);
-
+      var fBull = (f.type === 'bullish');
+      var fClr  = fBull ? '88,166,255' : '255,150,50';
+      var fy1   = Math.min(py(f.top), py(f.bottom));
+      var fy2   = Math.max(py(f.top), py(f.bottom));
+      var fH    = Math.max(1, fy2 - fy1);
+      ctx.fillStyle = 'rgba(' + fClr + ',' + (f.filled ? 0.04 : 0.11) + ')';
+      ctx.fillRect(PL, fy1, cw, fH);
       if (!f.filled) {
-        ctx.strokeStyle = 'rgba(' + clr + ',0.45)';
+        ctx.strokeStyle = 'rgba(' + fClr + ',0.45)';
         ctx.lineWidth   = 0.8;
         ctx.setLineDash([3, 3]);
-        ctx.strokeRect(PL, y1, cw, h);
+        ctx.strokeRect(PL, fy1, cw, fH);
         ctx.setLineDash([]);
-        if (h >= 8) {
-          ctx.fillStyle    = 'rgba(' + clr + ',0.9)';
-          ctx.font         = '9px monospace';
+        if (fH >= 6) {
+          var fvgTxt = 'FVG';
+          ctx.font = (isMob ? 8 : 9) + 'px monospace';
+          var fvgW = ctx.measureText(fvgTxt).width;
+          ctx.fillStyle = 'rgba(13,17,23,0.65)';
+          ctx.fillRect(PL + cw - fvgW - 10, fy1 + fH / 2 - 6, fvgW + 8, 12);
+          ctx.fillStyle    = 'rgba(' + fClr + ',0.9)';
           ctx.textAlign    = 'right';
           ctx.textBaseline = 'middle';
-          ctx.fillText('FVG', PL + cw - 4, y1 + h / 2);
+          ctx.fillText(fvgTxt, PL + cw - 4, fy1 + fH / 2);
         }
       }
     });
 
-    /* ── CHoCH (Change of Character) levels ── */
+    /* ── CHoCH levels — track used Y positions to avoid label overlap ── */
+    var usedLabelY = [];
+    function findLabelY(idealY, minGap) {
+      var ly = idealY;
+      for (var attempt = 0; attempt < 20; attempt++) {
+        var ok = true;
+        for (var k = 0; k < usedLabelY.length; k++) {
+          if (Math.abs(usedLabelY[k] - ly) < minGap) { ok = false; break; }
+        }
+        if (ok) break;
+        ly += minGap;
+      }
+      usedLabelY.push(ly);
+      return ly;
+    }
+
     preparedData.chochLevels.forEach(function (c) {
-      var y   = py(c.level);
-      var col = (c.type === 'bullish') ? '#3ecf8e' : '#f85149';
-      ctx.strokeStyle  = col;
+      var cy   = py(c.level);
+      var cCol = (c.type === 'bullish') ? '#3ecf8e' : '#f85149';
+      ctx.strokeStyle  = cCol;
       ctx.lineWidth    = 1.5;
       ctx.setLineDash([5, 3]);
-      ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + cw, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(PL, cy); ctx.lineTo(PL + cw, cy); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle    = col;
-      ctx.font         = 'bold 10px Inter,sans-serif';
+      var clbl = 'CHoCH ' + (c.type === 'bullish' ? '▲' : '▼');
+      ctx.font = 'bold ' + (isMob ? 8 : 10) + 'px Inter,sans-serif';
+      var clblW = ctx.measureText(clbl).width;
+      var labelY2 = findLabelY(cy - 2, isMob ? 12 : 14);
+      ctx.fillStyle = 'rgba(13,17,23,0.72)';
+      ctx.fillRect(PL + cw - clblW - 10, labelY2 - 8, clblW + 8, 14);
+      ctx.fillStyle    = cCol;
       ctx.textAlign    = 'right';
       ctx.textBaseline = 'bottom';
-      ctx.fillText('CHoCH ' + (c.type === 'bullish' ? '▲' : '▼'), PL + cw - 4, y - 2);
+      ctx.fillText(clbl, PL + cw - 4, labelY2);
     });
 
-    /* ── Liquidity zones (Support / Resistance) ── */
+    /* ── Liquidity zones ── */
     (preparedData.liqZones || []).forEach(function (z) {
-      var y = py(z.level);
-      var isSupport = (z.side === 'support');
-      var col = isSupport ? '62,207,142' : '248,81,73';
-      ctx.strokeStyle  = 'rgba(' + col + ',0.28)';
+      var ly2   = py(z.level);
+      var isSup = (z.side === 'support');
+      var lcol  = isSup ? '62,207,142' : '248,81,73';
+      ctx.strokeStyle  = 'rgba(' + lcol + ',0.28)';
       ctx.lineWidth    = 1;
       ctx.setLineDash([2, 5]);
-      ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + cw, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(PL, ly2); ctx.lineTo(PL + cw, ly2); ctx.stroke();
       ctx.setLineDash([]);
-      /* Small side label */
-      ctx.fillStyle    = 'rgba(' + col + ',0.7)';
-      ctx.font         = '9px monospace';
+      ctx.fillStyle    = 'rgba(' + lcol + ',0.7)';
+      ctx.font         = (isMob ? 7 : 9) + 'px monospace';
       ctx.textAlign    = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText((isSupport ? '💧S' : '💧R'), PL + 3, y);
+      ctx.fillText((isSup ? '💧S' : '💧R'), PL + 3, ly2);
     });
 
-    /* ── AI Prediction lines (drawn before price line so line draws over them) ── */
+    /* ── AI Prediction lines (drawn before price data so data overlays them) ── */
     if (preparedData.aiSignal) {
       var ais = preparedData.aiSignal;
-      var dir = ais.direction || 'HOLD';
-      var ePx = parseFloat(ais.entry_price);
+      var dir  = ais.direction || 'HOLD';
+      var ePx  = parseFloat(ais.entry_price);
       var tpPx = parseFloat(ais.take_profit);
       var slPx = parseFloat(ais.stop_loss);
-      var conf = parseFloat(ais.confidence) || 0;
       var dirClr = dir === 'BUY' ? '62,207,142' : dir === 'SELL' ? '248,81,73' : '255,193,7';
 
-      /* ── Helper: draw a labelled level pill ── */
-      function drawLevelPill(yPos, txt, r, g, b, alignRight, baseline) {
-        ctx.font = 'bold 11px monospace';
+      function drawLevelPill(yPos, txt, r, g, b, alignRight) {
+        var fs = isMob ? 9 : 11;
+        ctx.font = 'bold ' + fs + 'px monospace';
         ctx.textAlign    = alignRight ? 'right' : 'left';
-        ctx.textBaseline = baseline || 'middle';
-        var tw = ctx.measureText(txt).width;
-        var pw = tw + 16, ph = 18, pbr = 4;
-        var px0 = alignRight ? (PL + cw - pw - 2) : (PL + 3);
-        var py0 = yPos - ph / 2;
-        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.22)';
-        ctx.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.7)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(px0 + pbr, py0);
-        ctx.lineTo(px0 + pw - pbr, py0);
-        ctx.arcTo(px0 + pw, py0, px0 + pw, py0 + pbr, pbr);
-        ctx.lineTo(px0 + pw, py0 + ph - pbr);
-        ctx.arcTo(px0 + pw, py0 + ph, px0 + pw - pbr, py0 + ph, pbr);
-        ctx.lineTo(px0 + pbr, py0 + ph);
-        ctx.arcTo(px0, py0 + ph, px0, py0 + ph - pbr, pbr);
-        ctx.lineTo(px0, py0 + pbr);
-        ctx.arcTo(px0, py0, px0 + pbr, py0, pbr);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',1)';
         ctx.textBaseline = 'middle';
-        ctx.fillText(txt, alignRight ? (PL + cw - 10) : (px0 + 8), yPos);
+        var tw = ctx.measureText(txt).width;
+        var ph = isMob ? 15 : 18, pw = tw + (isMob ? 10 : 16), pbr = 4;
+        var pillX = alignRight ? (PL + cw - pw - 2) : (PL + 3);
+        var pillY = yPos - ph / 2;
+        ctx.fillStyle   = 'rgba(' + r + ',' + g + ',' + b + ',0.22)';
+        ctx.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.8)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(pillX + pbr, pillY);
+        ctx.lineTo(pillX + pw - pbr, pillY);
+        ctx.arcTo(pillX + pw, pillY, pillX + pw, pillY + pbr, pbr);
+        ctx.lineTo(pillX + pw, pillY + ph - pbr);
+        ctx.arcTo(pillX + pw, pillY + ph, pillX + pw - pbr, pillY + ph, pbr);
+        ctx.lineTo(pillX + pbr, pillY + ph);
+        ctx.arcTo(pillX, pillY + ph, pillX, pillY + ph - pbr, pbr);
+        ctx.lineTo(pillX, pillY + pbr);
+        ctx.arcTo(pillX, pillY, pillX + pbr, pillY, pbr);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',1)';
+        ctx.fillText(txt, alignRight ? (PL + cw - (isMob ? 6 : 10)) : (pillX + (isMob ? 5 : 8)), yPos);
       }
 
-      /* Entry line */
       if (ePx && !isNaN(ePx)) {
         var ey = py(ePx);
         ctx.strokeStyle = 'rgba(' + dirClr + ',0.9)';
-        ctx.lineWidth   = 2;
-        ctx.setLineDash([10, 4]);
+        ctx.lineWidth   = 2.5; ctx.setLineDash([10, 4]);
         ctx.beginPath(); ctx.moveTo(PL, ey); ctx.lineTo(PL + cw, ey); ctx.stroke();
         ctx.setLineDash([]);
         var eArr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
-        var eClrParts = dir === 'BUY' ? [62,207,142] : dir === 'SELL' ? [248,81,73] : [255,193,7];
-        drawLevelPill(ey, eArr + ' ENTRY  ' + ePx.toFixed(pDec(ePx)), eClrParts[0], eClrParts[1], eClrParts[2], false);
+        var eClr = dir === 'BUY' ? [62,207,142] : dir === 'SELL' ? [248,81,73] : [255,193,7];
+        drawLevelPill(ey, eArr + ' ENTRY', eClr[0], eClr[1], eClr[2], false);
       }
-
-      /* Take Profit line */
       if (tpPx && !isNaN(tpPx)) {
         var tpy2 = py(tpPx);
         ctx.strokeStyle = 'rgba(62,207,142,0.9)';
-        ctx.lineWidth   = 2;
-        ctx.setLineDash([8, 4]);
+        ctx.lineWidth   = 2; ctx.setLineDash([8, 4]);
         ctx.beginPath(); ctx.moveTo(PL, tpy2); ctx.lineTo(PL + cw, tpy2); ctx.stroke();
         ctx.setLineDash([]);
-        drawLevelPill(tpy2, '✅ TP  ' + tpPx.toFixed(pDec(tpPx)), 62, 207, 142, true);
+        drawLevelPill(tpy2, '✅ TP', 62, 207, 142, true);
       }
-
-      /* Stop Loss line */
       if (slPx && !isNaN(slPx)) {
         var sly2 = py(slPx);
         ctx.strokeStyle = 'rgba(248,81,73,0.9)';
-        ctx.lineWidth   = 2;
-        ctx.setLineDash([8, 4]);
+        ctx.lineWidth   = 2; ctx.setLineDash([8, 4]);
         ctx.beginPath(); ctx.moveTo(PL, sly2); ctx.lineTo(PL + cw, sly2); ctx.stroke();
         ctx.setLineDash([]);
-        drawLevelPill(sly2, '🛑 SL  ' + slPx.toFixed(pDec(slPx)), 248, 81, 73, true);
+        drawLevelPill(sly2, '🛑 SL', 248, 81, 73, true);
       }
     }
 
-    /* ── Animated price line ── */
-    var vis = Math.max(2, Math.round(n * progress));
+    /* ── Price data bars (animated) ── */
+    var visAnim = Math.max(2, Math.round(visN * progress));
 
-    /* Gradient fill under line */
-    var grad = ctx.createLinearGradient(0, PT, 0, PT + ch);
-    grad.addColorStop(0, 'rgba(88,166,255,0.14)');
-    grad.addColorStop(1, 'rgba(88,166,255,0)');
-    ctx.beginPath();
-    for (var i = 0; i < vis; i++) {
-      var x = px(i), y = py(prices[i]);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.lineTo(px(vis - 1), PT + ch);
-    ctx.lineTo(PL, PT + ch);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
+    if (chartType === 'candle' || chartType === 'bar') {
+      /* ── Candlestick / OHLC Bar rendering ── */
+      for (var ci = 0; ci < visAnim; ci++) {
+        var absI = visS + ci;
+        var bar  = preparedData.ohlc[absI];
+        if (!bar) continue;
+        var bx   = pxI(absI);
+        var yO   = py(bar.open),  yC  = py(bar.close);
+        var yHi  = py(bar.high),  yLo = py(bar.low);
+        var isBullBar = bar.close >= bar.open;
+        var bclr = isBullBar ? '#3ecf8e' : '#f85149';
 
-    /* Price line with glow */
-    ctx.shadowColor = 'rgba(88,166,255,0.35)';
-    ctx.shadowBlur  = 6;
-    ctx.beginPath();
-    for (var i = 0; i < vis; i++) {
-      var x = px(i), y = py(prices[i]);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = 'rgba(88,166,255,0.9)';
-    ctx.lineWidth   = 2;
-    ctx.lineJoin    = 'round';
-    ctx.setLineDash([]);
-    ctx.stroke();
-    ctx.shadowBlur  = 0;
+        if (chartType === 'candle') {
+          /* Wick */
+          ctx.strokeStyle = bclr;
+          ctx.lineWidth   = Math.max(0.8, barW * 0.15);
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(bx, yHi); ctx.lineTo(bx, yLo); ctx.stroke();
+          /* Body */
+          var bodyTop = Math.min(yO, yC);
+          var bodyH   = Math.max(1, Math.abs(yO - yC));
+          if (barW >= 3) {
+            ctx.fillStyle = bclr;
+            ctx.fillRect(bx - barW / 2, bodyTop, barW, bodyH);
+          } else {
+            ctx.beginPath(); ctx.moveTo(bx, bodyTop); ctx.lineTo(bx, bodyTop + bodyH); ctx.stroke();
+          }
+        } else {
+          /* OHLC bar */
+          var tickW = Math.max(2, barW * 0.4);
+          ctx.strokeStyle = bclr;
+          ctx.lineWidth   = Math.max(0.8, barW * 0.15);
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(bx, yHi); ctx.lineTo(bx, yLo); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(bx - tickW, yO); ctx.lineTo(bx, yO); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(bx, yC);  ctx.lineTo(bx + tickW, yC); ctx.stroke();
+        }
+      }
 
-    /* Signal accuracy dots (1D view only) */
-    if (timeframe === '1D' && rawHistory) {
-      for (var i = 0; i < Math.min(vis, rawHistory.length); i++) {
-        var h  = rawHistory[i];
-        var x  = px(i), y = py(prices[i]);
-        var r  = (i === hoverIdx) ? 5 : 2.5;
-        ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = h.correct ? 'rgba(62,207,142,0.9)' : 'rgba(248,81,73,0.8)';
+      /* Leading pulse dot */
+      if (visAnim > 0) {
+        var lastAbs = visS + visAnim - 1;
+        var lpx = pxI(lastAbs), lpy = py(prices[lastAbs]);
+        var gp0 = 0.5 + 0.5 * Math.sin(Date.now() / 400);
+        ctx.beginPath(); ctx.arc(lpx, lpy, 4 + gp0, 0, 2 * Math.PI);
+        ctx.fillStyle   = '#58a6ff';
+        ctx.shadowColor = 'rgba(88,166,255,0.8)';
+        ctx.shadowBlur  = 6 + 6 * gp0;
         ctx.fill();
-        if (i === hoverIdx) {
-          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-          ctx.lineWidth   = 1;
+        ctx.shadowBlur  = 0;
+      }
+
+    } else {
+      /* ── Line chart rendering ── */
+      var grad = ctx.createLinearGradient(0, PT, 0, PT + ch);
+      grad.addColorStop(0, 'rgba(88,166,255,0.14)');
+      grad.addColorStop(1, 'rgba(88,166,255,0)');
+      ctx.beginPath();
+      for (var li = 0; li < visAnim; li++) {
+        var labsI = visS + li;
+        var lx2 = pxI(labsI), ly2 = py(prices[labsI]);
+        if (li === 0) ctx.moveTo(lx2, ly2); else ctx.lineTo(lx2, ly2);
+      }
+      ctx.lineTo(pxI(visS + visAnim - 1), PT + ch);
+      ctx.lineTo(PL, PT + ch);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.shadowColor = 'rgba(88,166,255,0.35)';
+      ctx.shadowBlur  = 6;
+      ctx.beginPath();
+      for (var li2 = 0; li2 < visAnim; li2++) {
+        var labsI2 = visS + li2;
+        var lx3 = pxI(labsI2), ly3 = py(prices[labsI2]);
+        if (li2 === 0) ctx.moveTo(lx3, ly3); else ctx.lineTo(lx3, ly3);
+      }
+      ctx.strokeStyle = 'rgba(88,166,255,0.9)';
+      ctx.lineWidth   = 2;
+      ctx.lineJoin    = 'round';
+      ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.shadowBlur  = 0;
+
+      /* Signal accuracy dots (1D view only) */
+      if (timeframe === '1D' && rawHistory) {
+        for (var di = 0; di < visAnim; di++) {
+          var dabsI = visS + di;
+          if (dabsI >= rawHistory.length) break;
+          var dh = rawHistory[dabsI];
+          var dx2 = pxI(dabsI), dy2 = py(prices[dabsI]);
+          var dr  = (dabsI === hoverIdx) ? 5 : 2.5;
+          ctx.beginPath(); ctx.arc(dx2, dy2, dr, 0, 2 * Math.PI);
+          ctx.fillStyle = dh.correct ? 'rgba(62,207,142,0.9)' : 'rgba(248,81,73,0.8)';
+          ctx.fill();
+          if (dabsI === hoverIdx) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth   = 1;
+            ctx.stroke();
+          }
+        }
+      }
+
+      /* Leading pulse dot */
+      if (visAnim > 0) {
+        var lastAbs2 = visS + visAnim - 1;
+        var lpx2 = pxI(lastAbs2), lpy2 = py(prices[lastAbs2]);
+        var gp2  = 0.5 + 0.5 * Math.sin(Date.now() / 400);
+        ctx.beginPath(); ctx.arc(lpx2, lpy2, 4 + gp2, 0, 2 * Math.PI);
+        ctx.fillStyle   = '#58a6ff';
+        ctx.shadowColor = 'rgba(88,166,255,0.8)';
+        ctx.shadowBlur  = 6 + 6 * gp2;
+        ctx.fill();
+        ctx.shadowBlur  = 0;
+        if (progress >= 0.98) {
+          ctx.beginPath(); ctx.arc(lpx2, lpy2, 10 + 4 * gp2, 0, 2 * Math.PI);
+          ctx.strokeStyle = 'rgba(88,166,255,' + (0.15 + 0.2 * gp2) + ')';
+          ctx.lineWidth   = 2;
           ctx.stroke();
         }
       }
     }
 
-    /* Leading pulse dot at tip of animation */
-    if (vis > 0) {
-      var lx = px(vis - 1), ly = py(prices[vis - 1]);
-      var glowPulse = 0.5 + 0.5 * Math.sin(Date.now() / 400);
-      var ldr = 4 + glowPulse;
-      ctx.beginPath(); ctx.arc(lx, ly, ldr, 0, 2 * Math.PI);
-      ctx.fillStyle = '#58a6ff';
-      ctx.shadowColor = 'rgba(88,166,255,0.8)';
-      ctx.shadowBlur  = 6 + 6 * glowPulse;
-      ctx.fill();
-      ctx.shadowBlur  = 0;
-      if (progress >= 0.98) {
-        ctx.beginPath(); ctx.arc(lx, ly, 10 + 4 * glowPulse, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(88,166,255,' + (0.15 + 0.2 * glowPulse) + ')';
-        ctx.lineWidth   = 2;
-        ctx.stroke();
-      }
-    }
+    /* ── Enhanced current price line — prominent glow band ── */
+    var glowP = 0.5 + 0.5 * Math.sin(Date.now() / 500 + 1);
+    var cpy2  = py(preparedData.currentPrice);
+    var cpBandH = rng * 0.008;   /* visible band height ≈ 0.8% of range */
 
-    /* ── Glowing current price line (drawn AFTER price line, so it stays on top) ── */
-    var glowPulse2 = 0.5 + 0.5 * Math.sin(Date.now() / 500 + 1);
-    var cpy = py(preparedData.currentPrice);
-    ctx.shadowColor = 'rgba(88,166,255,' + (0.5 + 0.4 * glowPulse2) + ')';
-    ctx.shadowBlur  = 8 + 8 * glowPulse2;
-    ctx.strokeStyle = 'rgba(88,166,255,' + (0.75 + 0.25 * glowPulse2) + ')';
-    ctx.lineWidth   = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(PL, cpy); ctx.lineTo(PL + cw, cpy); ctx.stroke();
+    /* Band fill */
+    var cpGrad = ctx.createLinearGradient(0, cpy2 - cpBandH, 0, cpy2 + cpBandH);
+    cpGrad.addColorStop(0,   'rgba(88,166,255,0)');
+    cpGrad.addColorStop(0.5, 'rgba(88,166,255,' + (0.09 + 0.07 * glowP) + ')');
+    cpGrad.addColorStop(1,   'rgba(88,166,255,0)');
+    ctx.fillStyle = cpGrad;
+    ctx.fillRect(PL, cpy2 - cpBandH, cw, cpBandH * 2);
+
+    /* Dashed line */
+    ctx.shadowColor = 'rgba(88,166,255,' + (0.65 + 0.35 * glowP) + ')';
+    ctx.shadowBlur  = isMob ? (10 + 8 * glowP) : (14 + 10 * glowP);
+    ctx.strokeStyle = 'rgba(88,166,255,' + (0.85 + 0.15 * glowP) + ')';
+    ctx.lineWidth   = isMob ? 2.5 : 3;
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath(); ctx.moveTo(PL, cpy2); ctx.lineTo(PL + cw, cpy2); ctx.stroke();
     ctx.shadowBlur  = 0;
     ctx.setLineDash([]);
 
-    /* Current price label pill on Y-axis */
-    var cpTxt = preparedData.currentPrice.toFixed(pDec(preparedData.currentPrice));
-    ctx.font         = 'bold 11px monospace';
+    /* Price pill on Y-axis */
+    var cpTxt   = preparedData.currentPrice.toFixed(pDec(preparedData.currentPrice));
+    var cpFont  = isMob ? 9 : 11;
+    ctx.font    = 'bold ' + cpFont + 'px monospace';
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'middle';
-    var bw = ctx.measureText(cpTxt).width + 10;
-    /* Pill background */
-    ctx.fillStyle = 'rgba(88,166,255,' + (0.85 + 0.15 * glowPulse2) + ')';
+    var cpPillW = ctx.measureText(cpTxt).width + (isMob ? 8 : 12);
+    var cpPillH = isMob ? 16 : 20;
+    var cpPillX = PL - cpPillW - 2;
+    var cpPillY = cpy2 - cpPillH / 2;
+    var cpPR    = 4;
+    ctx.fillStyle   = 'rgba(88,166,255,' + (0.9 + 0.1 * glowP) + ')';
+    ctx.shadowColor = 'rgba(88,166,255,' + (0.4 * glowP) + ')';
+    ctx.shadowBlur  = 6 * glowP;
     ctx.beginPath();
-    var px0 = PL - bw - 2, py0 = cpy - 9, pbr = 4;
-    ctx.moveTo(px0 + pbr, py0);
-    ctx.lineTo(px0 + bw + 2 - pbr, py0);
-    ctx.arcTo(px0 + bw + 2, py0, px0 + bw + 2, py0 + pbr, pbr);
-    ctx.lineTo(px0 + bw + 2, py0 + 18 - pbr);
-    ctx.arcTo(px0 + bw + 2, py0 + 18, px0 + bw + 2 - pbr, py0 + 18, pbr);
-    ctx.lineTo(px0 + pbr, py0 + 18);
-    ctx.arcTo(px0, py0 + 18, px0, py0 + 18 - pbr, pbr);
-    ctx.lineTo(px0, py0 + pbr);
-    ctx.arcTo(px0, py0, px0 + pbr, py0, pbr);
+    ctx.moveTo(cpPillX + cpPR, cpPillY);
+    ctx.lineTo(cpPillX + cpPillW - cpPR, cpPillY);
+    ctx.arcTo(cpPillX + cpPillW, cpPillY, cpPillX + cpPillW, cpPillY + cpPR, cpPR);
+    ctx.lineTo(cpPillX + cpPillW, cpPillY + cpPillH - cpPR);
+    ctx.arcTo(cpPillX + cpPillW, cpPillY + cpPillH, cpPillX + cpPillW - cpPR, cpPillY + cpPillH, cpPR);
+    ctx.lineTo(cpPillX + cpPR, cpPillY + cpPillH);
+    ctx.arcTo(cpPillX, cpPillY + cpPillH, cpPillX, cpPillY + cpPillH - cpPR, cpPR);
+    ctx.lineTo(cpPillX, cpPillY + cpPR);
+    ctx.arcTo(cpPillX, cpPillY, cpPillX + cpPR, cpPillY, cpPR);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#0d1117';
-    ctx.fillText(cpTxt, PL - 4, cpy);
+    ctx.shadowBlur  = 0;
+    ctx.fillStyle   = '#0d1117';
+    ctx.fillText(cpTxt, PL - (isMob ? 4 : 6), cpy2);
 
-    /* ── AI direction badge (top-right corner of chart) ── */
+    /* ── AI direction badge (top-right corner) ── */
     if (preparedData.aiSignal) {
       var abDir  = preparedData.aiSignal.direction || 'HOLD';
       var abConf = parseFloat(preparedData.aiSignal.confidence) || 0;
       var abArr  = abDir === 'BUY' ? '▲' : abDir === 'SELL' ? '▼' : '→';
       var abClr  = abDir === 'BUY' ? '62,207,142' : abDir === 'SELL' ? '248,81,73' : '255,193,7';
-      var abTxt  = abArr + ' AI ' + abDir + ' · ' + abConf.toFixed(0) + '%';
-      ctx.font   = 'bold 11px Inter,sans-serif';
+      var abTxt  = abArr + ' ' + abDir + ' ' + abConf.toFixed(0) + '%';
+      ctx.font   = 'bold ' + (isMob ? 9 : 11) + 'px Inter,sans-serif';
       ctx.textAlign    = 'right';
       ctx.textBaseline = 'top';
-      var btw = ctx.measureText(abTxt).width + 18;
-      var bth = 24;
-      var bx2 = PL + cw - btw;
-      var by2 = PT + 8;
-      /* Badge background */
+      var abW = ctx.measureText(abTxt).width + (isMob ? 12 : 18);
+      var abH = isMob ? 18 : 24;
+      var abX = PL + cw - abW, abY = PT + 6;
+      var abbr = 5;
       ctx.fillStyle   = 'rgba(' + abClr + ',0.18)';
       ctx.strokeStyle = 'rgba(' + abClr + ',0.55)';
       ctx.lineWidth   = 1;
       ctx.beginPath();
-      var bbr = 5;
-      ctx.moveTo(bx2 + bbr, by2);
-      ctx.lineTo(bx2 + btw - bbr, by2);
-      ctx.arcTo(bx2 + btw, by2, bx2 + btw, by2 + bbr, bbr);
-      ctx.lineTo(bx2 + btw, by2 + bth - bbr);
-      ctx.arcTo(bx2 + btw, by2 + bth, bx2 + btw - bbr, by2 + bth, bbr);
-      ctx.lineTo(bx2 + bbr, by2 + bth);
-      ctx.arcTo(bx2, by2 + bth, bx2, by2 + bth - bbr, bbr);
-      ctx.lineTo(bx2, by2 + bbr);
-      ctx.arcTo(bx2, by2, bx2 + bbr, by2, bbr);
+      ctx.moveTo(abX + abbr, abY);
+      ctx.lineTo(abX + abW - abbr, abY);
+      ctx.arcTo(abX + abW, abY, abX + abW, abY + abbr, abbr);
+      ctx.lineTo(abX + abW, abY + abH - abbr);
+      ctx.arcTo(abX + abW, abY + abH, abX + abW - abbr, abY + abH, abbr);
+      ctx.lineTo(abX + abbr, abY + abH);
+      ctx.arcTo(abX, abY + abH, abX, abY + abH - abbr, abbr);
+      ctx.lineTo(abX, abY + abbr);
+      ctx.arcTo(abX, abY, abX + abbr, abY, abbr);
       ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      ctx.fill(); ctx.stroke();
       ctx.fillStyle = 'rgba(' + abClr + ',1)';
-      ctx.fillText(abTxt, PL + cw - 6, by2 + 6);
+      ctx.fillText(abTxt, PL + cw - (isMob ? 4 : 6), abY + (isMob ? 5 : 6));
     }
 
     /* Hover crosshair */
-    if (hoverIdx >= 0 && hoverIdx < n) {
+    if (hoverIdx >= 0 && hoverIdx >= visS && hoverIdx < visE) {
       ctx.strokeStyle = 'rgba(255,255,255,0.12)';
       ctx.lineWidth   = 1;
       ctx.setLineDash([2, 3]);
       ctx.beginPath();
-      ctx.moveTo(px(hoverIdx), PT);
-      ctx.lineTo(px(hoverIdx), PT + ch);
+      ctx.moveTo(pxI(hoverIdx), PT);
+      ctx.lineTo(pxI(hoverIdx), PT + ch);
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -1823,22 +2175,32 @@ var AdvChart = (function () {
     ctx.strokeStyle = 'rgba(48,54,61,0.9)';
     ctx.lineWidth   = 1;
     ctx.strokeRect(PL, PT, cw, ch);
+
+    /* Zoom level indicator (bottom-left inside chart) */
+    if (zoomLevel > 1.05) {
+      ctx.fillStyle    = 'rgba(88,166,255,0.5)';
+      ctx.font         = (isMob ? 8 : 9) + 'px monospace';
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(zoomLevel.toFixed(1) + 'x', PL + 4, PT + ch - 3);
+    }
   }
 
   function onMouseMove(e) {
-    if (!preparedData) return;
-    var rect = canvas.getBoundingClientRect();
-    var scaleX = canvas.offsetWidth / (rect.right - rect.left);
-    var xPos = (e.clientX - rect.left) * scaleX;
-    var PL = 72, PR = 12;
-    var cw = canvas.offsetWidth - PL - PR;
-    var n  = preparedData.prices.length;
-    var idx = Math.round((xPos - PL) / cw * (n - 1));
-    idx = Math.max(0, Math.min(n - 1, idx));
-    if (idx !== hoverIdx) {
-      hoverIdx = idx;
-      render(1);
-    }
+    if (!preparedData || isPanning) return;
+    var rect  = canvas.getBoundingClientRect();
+    var W     = canvas.offsetWidth;
+    var isMob = W < 500;
+    var PL    = isMob ? 54 : 72, PR = isMob ? 8 : 12;
+    var cw    = W - PL - PR;
+    var n     = preparedData.prices.length;
+    var visR2 = getVisibleRange(n);
+    var visN2 = visR2.end - visR2.start;
+    var xPos  = (e.clientX - rect.left) * (W / (rect.right - rect.left));
+    var frac  = (xPos - PL) / cw;
+    var idx   = Math.round(visR2.start + frac * (visN2 - 1));
+    idx = Math.max(visR2.start, Math.min(visR2.end - 1, idx));
+    if (idx !== hoverIdx) { hoverIdx = idx; render(1); }
     showTip(idx, e.clientX, e.clientY);
   }
 
@@ -1847,24 +2209,30 @@ var AdvChart = (function () {
     var p = preparedData.prices[idx];
     if (p === undefined) return;
     var d   = preparedData.dates[idx] || '';
-    var h   = (timeframe === '1D' && rawHistory) ? rawHistory[idx] : null;
+    var rh  = (timeframe === '1D' && rawHistory) ? rawHistory[idx] : null;
     var dec = pDec(p);
     var ais = preparedData.aiSignal;
+    var bar = preparedData.ohlc[idx];
     var html =
       '<div class="adv-tip-date">' + d + '</div>' +
       '<div class="adv-tip-price">' + p.toFixed(dec) + '</div>';
-    if (h) {
-      html += '<span class="adv-tip-tag ' + (h.correct ? 'correct' : 'wrong') + '">' +
-        (h.correct ? '✓ Signal Correct' : '✗ Signal Missed') + '</span>';
+    if (bar && chartType !== 'line') {
+      html += '<div style="font-size:.7rem;color:#8b949e;margin-top:3px">' +
+        'O:' + bar.open.toFixed(dec) + ' H:' + bar.high.toFixed(dec) +
+        '<br>L:' + bar.low.toFixed(dec)  + ' C:' + bar.close.toFixed(dec) + '</div>';
+    }
+    if (rh) {
+      html += '<span class="adv-tip-tag ' + (rh.correct ? 'correct' : 'wrong') + '">' +
+        (rh.correct ? '✓ Correct' : '✗ Missed') + '</span>';
     }
     if (ais && ais.direction) {
-      var dir = ais.direction;
-      var arr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
-      var tc  = dir === 'BUY' ? '#3ecf8e' : dir === 'SELL' ? '#f85149' : '#ffc107';
+      var dir2 = ais.direction;
+      var arr2 = dir2 === 'BUY' ? '▲' : dir2 === 'SELL' ? '▼' : '→';
+      var tc2  = dir2 === 'BUY' ? '#3ecf8e' : dir2 === 'SELL' ? '#f85149' : '#ffc107';
       html += '<div style="font-size:.72rem;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)">' +
-        '<span style="color:' + tc + ';font-weight:700">' + arr + ' ' + dir + '</span>' +
-        ' <span style="color:#8b949e">AI Signal</span>' +
-        (ais.confidence ? ' · <span style="color:#8b949e">' + parseFloat(ais.confidence).toFixed(0) + '% conf</span>' : '') +
+        '<span style="color:' + tc2 + ';font-weight:700">' + arr2 + ' ' + dir2 + '</span>' +
+        ' <span style="color:#8b949e">AI</span>' +
+        (ais.confidence ? ' · <span style="color:#8b949e">' + parseFloat(ais.confidence).toFixed(0) + '%</span>' : '') +
         '</div>';
     }
     tooltip.innerHTML = html;
@@ -1882,25 +2250,26 @@ var AdvChart = (function () {
     aiSignalData = sig;
     if (preparedData) {
       preparedData.aiSignal = sig;
-      /* Recompute Y-range to include new AI price levels */
       prepare();
-      /* Start glow loop only if no animation and no loop already running */
       if (!glowLoopId) startGlowLoop();
     }
   }
 
-  /* Update the live current price (called by live-price polling) */
   function updateCurrentPrice(price) {
     if (!price || isNaN(price)) return;
     if (preparedData) {
       preparedData.currentPrice = price;
-      /* Also update the trailing price in the series so the blinking dot
-         sits right at the real market price */
       if (preparedData.prices && preparedData.prices.length > 0) {
-        preparedData.prices[preparedData.prices.length - 1] = price;
+        var lastIdx = preparedData.prices.length - 1;
+        preparedData.prices[lastIdx] = price;
+        var lastBar = preparedData.ohlc[lastIdx];
+        if (lastBar) {
+          lastBar.close = price;
+          if (price > lastBar.high) lastBar.high = price;
+          if (price < lastBar.low)  lastBar.low  = price;
+        }
       }
     }
-    /* Update the overlay badge */
     var badge = document.getElementById('adv-chart-live-price-val');
     if (badge) badge.textContent = Number(price).toFixed(pDec(price));
   }
