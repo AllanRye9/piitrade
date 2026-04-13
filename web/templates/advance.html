@@ -1175,7 +1175,7 @@ var AdvChart = (function () {
   function startGlowLoop() {
     if (glowLoopId) return;
     function loop(ts) {
-      if (ts - lastGlowRender >= 50) { /* ~20 fps for glow */
+      if (ts - lastGlowRender >= 50) { /* 50ms interval ≈ 20fps for glow */
         lastGlowRender = ts;
         render(1);
       }
@@ -1623,7 +1623,8 @@ var AdvChart = (function () {
       preparedData.aiSignal = sig;
       /* Recompute Y-range to include new AI price levels */
       prepare();
-      if (!animFrame && !glowLoopId) startGlowLoop();
+      /* Start glow loop only if no animation and no loop already running */
+      if (!glowLoopId) startGlowLoop();
     }
   }
 
