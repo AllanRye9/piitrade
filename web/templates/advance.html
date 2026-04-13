@@ -528,6 +528,14 @@
     var n = parseFloat(v);
     return isNaN(n) ? '–' : n.toPrecision(6);
   }
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
   function dirClass(d) {
     if (d === 'BUY') return 'bull';
     if (d === 'SELL') return 'bear';
@@ -537,7 +545,7 @@
     return d === 'BUY' ? '↑' : d === 'SELL' ? '↓' : '→';
   }
   function showError(elId, msg) {
-    document.getElementById(elId).innerHTML = '<div class="adv-error">⚠️ ' + msg + '</div>';
+    document.getElementById(elId).innerHTML = '<div class="adv-error">⚠️ ' + escHtml(msg) + '</div>';
   }
 
   function renderSignal(sig) {
@@ -551,8 +559,8 @@
         '<div class="adv-signal-row">' +
           '<span class="adv-dir-badge ' + dir + '">' + arrow(dir) + ' ' + dir + '</span>' +
           '<div>' +
-            '<div style="font-size:.8rem;color:var(--text2)">AI Signal for <strong style="color:var(--text)">' + currentPair + '</strong></div>' +
-            '<div style="font-size:.75rem;color:var(--text2);margin-top:2px">' + live + ' · ' + src + '</div>' +
+            '<div style="font-size:.8rem;color:var(--text2)">AI Signal for <strong style="color:var(--text)">' + escHtml(currentPair) + '</strong></div>' +
+            '<div style="font-size:.75rem;color:var(--text2);margin-top:2px">' + escHtml(live) + ' · ' + escHtml(src) + '</div>' +
           '</div>' +
         '</div>' +
         '<div style="margin-bottom:10px">' +
@@ -565,8 +573,8 @@
           _metaItem('Entry', fmtNum(sig.entry_price), dirClass(dir)) +
           _metaItem('Take Profit', fmtNum(sig.take_profit), 'bull') +
           _metaItem('Stop Loss', fmtNum(sig.stop_loss), 'bear') +
-          _metaItem('30-day Accuracy', (sig.accuracy_30d || '–') + '%', '') +
-          _metaItem('AI Label', sig.ai_label || '–', '') +
+          _metaItem('30-day Accuracy', escHtml((sig.accuracy_30d || '–') + '%'), '') +
+          _metaItem('AI Label', escHtml(sig.ai_label || '–'), '') +
         '</div>' +
       '</div>';
     document.getElementById('adv-signal-wrap').innerHTML = html;
@@ -602,11 +610,11 @@
     rows.forEach(function (r) {
       var bc = r.subtype === 'bullish' ? 'bull' : 'bear';
       html += '<tr>' +
-        '<td><span class="tag neutral">' + r.type + '</span></td>' +
-        '<td><span class="tag ' + bc + '">' + (r.subtype || '–') + '</span></td>' +
+        '<td><span class="tag neutral">' + escHtml(r.type) + '</span></td>' +
+        '<td><span class="tag ' + bc + '">' + escHtml(r.subtype || '–') + '</span></td>' +
         '<td style="font-family:monospace">' + fmtNum(r.level) + '</td>' +
-        '<td style="font-size:.78rem;color:var(--text2)">' + (r.date || '–') + '</td>' +
-        '<td style="font-size:.78rem;color:var(--text2)">' + (r.desc || '–') + '</td>' +
+        '<td style="font-size:.78rem;color:var(--text2)">' + escHtml(r.date || '–') + '</td>' +
+        '<td style="font-size:.78rem;color:var(--text2)">' + escHtml(r.desc || '–') + '</td>' +
       '</tr>';
     });
     html += '</tbody></table></div>';
@@ -629,13 +637,13 @@
       var bc = f.type === 'bullish' ? 'bull' : 'bear';
       var status = f.filled ? '<span class="tag filled">Filled</span>' : '<span class="tag ' + bc + '">Active</span>';
       html += '<tr>' +
-        '<td><span class="tag ' + bc + '">' + (f.type || '–') + '</span></td>' +
+        '<td><span class="tag ' + bc + '">' + escHtml(f.type || '–') + '</span></td>' +
         '<td style="font-family:monospace">' + fmtNum(f.top) + '</td>' +
         '<td style="font-family:monospace">' + fmtNum(f.bottom) + '</td>' +
         '<td style="font-family:monospace">' + mid + '</td>' +
         '<td>' + status + '</td>' +
-        '<td style="font-size:.78rem;color:var(--text2)">' + (f.created || '–') + '</td>' +
-        '<td style="font-size:.78rem;color:var(--text2)">' + (f.description || '–') + '</td>' +
+        '<td style="font-size:.78rem;color:var(--text2)">' + escHtml(f.created || '–') + '</td>' +
+        '<td style="font-size:.78rem;color:var(--text2)">' + escHtml(f.description || '–') + '</td>' +
       '</tr>';
     });
     html += '</tbody></table></div>';
@@ -653,9 +661,9 @@
     zones.forEach(function (z) {
       var str = z.strength || 'medium';
       html += '<div class="hvz-card">' +
-        '<div class="hvz-strength ' + str + '">● ' + str.toUpperCase() + ' VOLUME</div>' +
+        '<div class="hvz-strength ' + escHtml(str) + '">● ' + escHtml(str.toUpperCase()) + ' VOLUME</div>' +
         '<div class="hvz-range">' + fmtNum(z.bottom) + ' – ' + fmtNum(z.top) + '</div>' +
-        '<div class="hvz-desc">' + (z.description || '') + '</div>' +
+        '<div class="hvz-desc">' + escHtml(z.description || '') + '</div>' +
       '</div>';
     });
     html += '</div>';
