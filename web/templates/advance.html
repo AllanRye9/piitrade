@@ -454,19 +454,23 @@
     .adv-chart-live-price {
       position: absolute;
       top: 10px; right: 14px;
-      background: rgba(13,17,23,.85);
+      background: rgba(13,17,23,.90);
       border: 1px solid rgba(88,166,255,.4);
-      border-radius: 8px;
-      padding: 5px 11px;
-      font-size: .78rem;
-      font-family: monospace;
+      border-radius: 10px;
+      padding: 6px 13px;
+      font-size: .88rem;
+      font-family: 'Inter', monospace;
       color: var(--accent);
       font-weight: 700;
       pointer-events: none;
       z-index: 2;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
+      box-shadow: 0 2px 12px rgba(88,166,255,.12), 0 0 0 1px rgba(88,166,255,.08);
+      backdrop-filter: blur(4px);
+      letter-spacing: .01em;
+      transition: background .3s, border-color .3s;
     }
     .adv-live-dot {
       width: 7px; height: 7px;
@@ -478,6 +482,17 @@
     @keyframes livePulse {
       0%,100% { opacity: 1; transform: scale(1); }
       50%      { opacity: .4; transform: scale(1.5); }
+    }
+    .adv-live-label {
+      font-size: .65rem;
+      font-weight: 600;
+      color: #3ecf8e;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+    .adv-live-price-val {
+      font-size: .95rem;
     }
     .adv-conf-bar-wrap { height: 6px; background: var(--bg); border-radius: 4px; margin-top: 4px; overflow: hidden; }
     .adv-conf-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.22,1,.36,1); }
@@ -1077,6 +1092,96 @@
       border-color: var(--accent);
       background: rgba(88,166,255,.06);
     }
+
+    /* ── Session countdown timer ── */
+    .session-countdown {
+      font-size: .78rem;
+      font-family: monospace;
+      font-weight: 700;
+      margin: 6px 0 8px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: inline-block;
+      letter-spacing: .03em;
+    }
+    .session-countdown.opens-in {
+      background: rgba(88,166,255,.10);
+      border: 1px solid rgba(88,166,255,.25);
+      color: var(--accent);
+    }
+    .session-countdown.closes-in {
+      background: rgba(62,207,142,.10);
+      border: 1px solid rgba(62,207,142,.25);
+      color: #3ecf8e;
+    }
+    .session-countdown.warning {
+      background: rgba(255,193,7,.13);
+      border: 1px solid rgba(255,193,7,.35);
+      color: #ffc107;
+      animation: warnPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes warnPulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .55; }
+    }
+    .session-card.warning-open {
+      border-color: #ffc107 !important;
+      box-shadow: 0 0 0 1px rgba(255,193,7,.3), 0 0 24px rgba(255,193,7,.12) !important;
+    }
+    .session-card.warning-close {
+      border-color: #f85149 !important;
+      box-shadow: 0 0 0 1px rgba(248,81,73,.3), 0 0 24px rgba(248,81,73,.1) !important;
+    }
+
+    /* ── Sound toggle button ── */
+    .adv-sound-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      font-size: .72rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      outline: none;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .adv-sound-btn.on {
+      background: rgba(62,207,142,.10);
+      border-color: rgba(62,207,142,.35);
+      color: #3ecf8e;
+    }
+    .adv-sound-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Live price badge flash on update ── */
+    @keyframes priceFlashUp {
+      0%   { background: rgba(62,207,142,.35);  border-color: rgba(62,207,142,.8); }
+      100% { background: rgba(13,17,23,.90);    border-color: rgba(88,166,255,.4); }
+    }
+    @keyframes priceFlashDown {
+      0%   { background: rgba(248,81,73,.30);   border-color: rgba(248,81,73,.7); }
+      100% { background: rgba(13,17,23,.90);    border-color: rgba(88,166,255,.4); }
+    }
+    .adv-chart-live-price.flash-up   { animation: priceFlashUp   .7s ease both; }
+    .adv-chart-live-price.flash-down { animation: priceFlashDown .7s ease both; }
+
+    /* ── Session colour accents per market ── */
+    .session-card.adv-session-purple.active { border-color: #b392f0 !important; box-shadow: 0 0 0 1px rgba(179,146,240,.3), 0 0 28px rgba(179,146,240,.1) !important; background: linear-gradient(135deg, var(--card) 0%, rgba(179,146,240,.04) 100%) !important; }
+    .session-card.adv-session-blue.active   { border-color: #58a6ff !important; box-shadow: 0 0 0 1px rgba(88,166,255,.3),  0 0 28px rgba(88,166,255,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(88,166,255,.04) 100%) !important;  }
+    .session-card.adv-session-green.active  { border-color: #3ecf8e !important; box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(62,207,142,.04) 100%) !important;  }
+    .session-card.adv-session-yellow.active { border-color: #f0c040 !important; box-shadow: 0 0 0 1px rgba(240,192,64,.35),  0 0 28px rgba(240,192,64,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(240,192,64,.04) 100%) !important; }
+    .session-card.adv-session-purple::before { background: linear-gradient(90deg, transparent, #b392f0, transparent) !important; }
+    .session-card.adv-session-blue::before   { background: linear-gradient(90deg, transparent, #58a6ff, transparent) !important; }
+    .session-card.adv-session-yellow::before { background: linear-gradient(90deg, transparent, #f0c040, transparent) !important; }
   </style>
   <!-- Lightweight Charts (used for the market structure chart) -->
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -1300,7 +1405,8 @@
             <canvas id="adv-chart-canvas" style="display:none;"></canvas>
             <div class="adv-chart-live-price" id="adv-chart-live-badge">
               <span class="adv-live-dot"></span>
-              <span id="adv-chart-live-price-val">Loading…</span>
+              <span class="adv-live-label">Live</span>
+              <span id="adv-chart-live-price-val" class="adv-live-price-val">Loading…</span>
             </div>
             <div class="adv-chart-loading" id="adv-chart-loading">
               <span class="spin"></span>&nbsp;Loading chart…
@@ -1369,8 +1475,10 @@
 
     <!-- ═══ TRADING SESSIONS ═══ -->
     <div class="adv-section">
-    <div class="adv-section-title">🌐 Trading Sessions</div>
-    <p class="adv-section-desc">See which markets are open right now. Trade during the highlighted LIVE sessions for the best price action and liquidity.</p>
+    <div class="adv-section-title">🌐 Trading Sessions
+      <button id="adv-sound-btn" class="adv-sound-btn on" type="button" title="Toggle session sound alerts">🔔 Alerts ON</button>
+    </div>
+    <p class="adv-section-desc">See which markets are open right now. Trade during the highlighted LIVE sessions for the best price action and liquidity. 🔔 = sound alert 15 min before open/close.</p>
     <div class="session-grid" id="session-grid">
       <!-- Populated by JS -->
     </div>
@@ -1491,6 +1599,163 @@
 
 
 <script>
+/* ── Session Sound & Alert System ───────────────────────────────────────────
+   Uses Web Audio API to generate distinct beep tones for each market session.
+   Fires a single alert when a session is exactly 15 minutes from opening or
+   closing. Respects a user-controlled sound toggle.
+   ─────────────────────────────────────────────────────────────────────────── */
+var SessionAlerts = (function () {
+  'use strict';
+
+  var ALERT_THRESHOLD_MIN = 15;   /* minutes before open/close to fire the alert */
+  var ALERT_RESET_MIN     = 60;   /* minutes after event before re-arming the alert */
+
+  var _soundOn = true;
+  var _ctx = null;
+  var _fired = {};   // tracks which alerts have fired: key = "SessionName:open|close"
+
+  /* ── Per-market tone profiles ── */
+  var TONES = {
+    Sydney:     { freq: 880, freq2: 1320, type: 'sine',     dur: 0.18 },
+    Tokyo:      { freq: 660, freq2: 990,  type: 'triangle', dur: 0.22 },
+    London:     { freq: 528, freq2: 792,  type: 'square',   dur: 0.15 },
+    'New York': { freq: 440, freq2: 660,  type: 'sawtooth', dur: 0.20 },
+  };
+
+  function _getCtx() {
+    if (!_ctx) {
+      try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    }
+    return _ctx;
+  }
+
+  function _beep(freq, type, dur, vol) {
+    var ctx = _getCtx();
+    if (!ctx) return;
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(vol || 0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + dur);
+    } catch (e) {}
+  }
+
+  /* Play a double-beep chord (root + fifth) characteristic of each market */
+  function playMarketAlert(name, isOpen) {
+    if (!_soundOn) return;
+    var t = TONES[name] || TONES['New York'];
+    /* Primary beep immediately, then a second note slightly delayed */
+    _beep(t.freq,  t.type, t.dur + 0.1, 0.20);
+    setTimeout(function () {
+      _beep(t.freq2, t.type, t.dur, 0.14);
+    }, 160);
+    /* For open events add a 3rd accent after 350ms */
+    if (isOpen) {
+      setTimeout(function () {
+        _beep(t.freq * 1.5, 'sine', t.dur * 0.8, 0.10);
+      }, 350);
+    }
+  }
+
+  /* Unlock AudioContext on first user gesture (required by browsers) */
+  function unlockAudio() {
+    var ctx = _getCtx();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume();
+    }
+  }
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockAudio, { once: true });
+
+  /* Check all sessions and fire alerts if 15-min boundary is crossed.
+     Alert fires when exactly 15 minutes remain (toX === 15). The _fired
+     flag prevents re-firing for the same event; it resets after 60+ min. */
+  function check(sessions) {
+    var now = new Date();
+    var utcH = now.getUTCHours();
+    var utcM = now.getUTCMinutes();
+    var totalMin = utcH * 60 + utcM;
+
+    sessions.forEach(function (s) {
+      var openMin  = s.open  * 60;
+      var closeMin = s.close * 60;
+
+      var openKey  = s.name + ':open';
+      var closeKey = s.name + ':close';
+
+      function minsUntil(targetMin) {
+        var diff = targetMin - totalMin;
+        if (diff < 0) diff += 1440;
+        return diff;
+      }
+
+      var toOpen  = minsUntil(openMin);
+      var toClose = minsUntil(closeMin);
+
+      /* Fire open alert exactly once when ALERT_THRESHOLD_MIN minutes remain */
+      if (toOpen === ALERT_THRESHOLD_MIN) {
+        if (!_fired[openKey]) {
+          _fired[openKey] = true;
+          playMarketAlert(s.name, true);
+          _showToast(s.flag + ' ' + s.name + ' opens in ' + ALERT_THRESHOLD_MIN + ' min', 'warn');
+        }
+      } else if (toOpen >= ALERT_RESET_MIN) {
+        /* Reset after cooldown so next day's alert fires again */
+        delete _fired[openKey];
+      }
+
+      /* Fire close alert exactly once when ALERT_THRESHOLD_MIN minutes remain */
+      if (toClose === ALERT_THRESHOLD_MIN) {
+        if (!_fired[closeKey]) {
+          _fired[closeKey] = true;
+          playMarketAlert(s.name, false);
+          _showToast(s.flag + ' ' + s.name + ' closes in ' + ALERT_THRESHOLD_MIN + ' min', 'info');
+        }
+      } else if (toClose >= ALERT_RESET_MIN) {
+        delete _fired[closeKey];
+      }
+    });
+  }
+
+  function _showToast(msg, type) {
+    var tc = document.getElementById('toast-container');
+    if (!tc) return;
+    var el = document.createElement('div');
+    var cssType = type === 'warn' ? 'toast-warn' : 'toast-info';
+    var icon = type === 'warn' ? '⏰' : '📊';
+    el.className = 'toast ' + cssType;
+    el.innerHTML = '<span class="toast-icon">' + icon + '</span>' +
+      '<div class="toast-body"><div class="toast-title">Session Alert</div>' +
+      '<div class="toast-msg">' + msg + '</div></div>';
+    tc.appendChild(el);
+    var remove = function () {
+      el.classList.add('toast-out');
+      el.addEventListener('animationend', function () { el.remove(); }, { once: true });
+    };
+    var timer = setTimeout(remove, 7000);
+    el.addEventListener('click', function () { clearTimeout(timer); remove(); });
+  }
+
+  function toggle() {
+    _soundOn = !_soundOn;
+    var btn = document.getElementById('adv-sound-btn');
+    if (btn) {
+      btn.textContent = _soundOn ? '🔔 Alerts ON' : '🔕 Alerts OFF';
+      btn.classList.toggle('on', _soundOn);
+    }
+    /* Play a short click-confirmation beep */
+    if (_soundOn) _beep(880, 'sine', 0.07, 0.10);
+  }
+
+  return { check: check, toggle: toggle, playMarketAlert: playMarketAlert };
+}());
+
 /* ── AdvChart: TradingView-style chart using lightweight-charts ──────────────
    Replaces the previous canvas implementation.
    Supports: Candlestick · OHLC Bar · Line
@@ -2077,6 +2342,9 @@ var AdvChart = (function () {
 
   function updateCurrentPrice(price) {
     if (!price || isNaN(price)) return;
+    /* Use null (not 0) as the sentinel for "no previous price" so the initial
+       price load never incorrectly triggers a flash-down animation. */
+    var prevPrice = (techData && techData.current_price != null) ? techData.current_price : null;
     if (techData) techData.current_price = price;
 
     /* Refresh live-price line */
@@ -2087,9 +2355,21 @@ var AdvChart = (function () {
     }
     currentPriceLine = addPriceLine(price, '#58a6ff', 'Live ●', 0, 2);
 
-    /* Update badge */
+    /* Update badge with flash animation on price change (only when prev is known) */
     var badge = document.getElementById('adv-chart-live-price-val');
+    var badgeWrap = document.getElementById('adv-chart-live-badge');
     if (badge) badge.textContent = Number(price).toFixed(pDec(price));
+    if (badgeWrap && prevPrice !== null && price !== prevPrice) {
+      badgeWrap.classList.remove('flash-up', 'flash-down');
+      /* Force reflow to restart animation */
+      void badgeWrap.offsetWidth;
+      var flashClass = price > prevPrice ? 'flash-up' : 'flash-down';
+      badgeWrap.classList.add(flashClass);
+      badgeWrap.addEventListener('animationend', function cleanup() {
+        badgeWrap.classList.remove('flash-up', 'flash-down');
+        badgeWrap.removeEventListener('animationend', cleanup);
+      });
+    }
 
     /* Update last bar with new close */
     var activeBars = candleData || (rawHistory && buildBars(rawHistory, timeframe)) || null;
@@ -2182,26 +2462,121 @@ var AdvChart = (function () {
     return open < close ? h >= open && h < close : h >= open || h < close;
   }
 
+  /* ── Compute minutes until the session opens or closes ── */
+  function minsUntilEvent(open, close) {
+    var now = new Date();
+    var totalMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+    var openMin  = open * 60;
+    var closeMin = close * 60;
+
+    function diff(target) {
+      var d = target - totalMin;
+      return d < 0 ? d + 1440 : d;
+    }
+
+    var active = isSessionActive(open, close);
+    if (active) {
+      return { event: 'close', mins: diff(closeMin) };
+    } else {
+      return { event: 'open', mins: diff(openMin) };
+    }
+  }
+
+  function fmtCountdown(mins) {
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return (h > 0 ? h + 'h ' : '') + m + 'm';
+  }
+
   function renderSessions() {
     const grid = document.getElementById('session-grid');
     grid.innerHTML = SESSIONS.map(function (s) {
       const active = isSessionActive(s.open, s.close);
+      const countdown = minsUntilEvent(s.open, s.close);
+      const mins = countdown.mins;
+      const warn = mins <= 15;
+
       const liveBadge = active
         ? '<span class="session-badge live"><span class="live-dot"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>LIVE</span>'
         : '<span class="session-badge closed">⚫ CLOSED</span>';
-      return '<div class="session-card' + (active ? ' active' : '') + '">' +
+
+      var cdClass = active ? 'closes-in' : 'opens-in';
+      var cdLabel = active ? '⏱ Closes in ' : '⏳ Opens in ';
+      if (warn) cdClass += ' warning';
+
+      var warnClass = '';
+      if (warn && !active) warnClass = ' warning-open';
+      else if (warn && active) warnClass = ' warning-close';
+
+      var colorClass = s.colorClass ? ' ' + s.colorClass : '';
+
+      var countdownEl = '<div class="session-countdown ' + cdClass + '" data-session="' + s.name + '">' +
+        cdLabel + fmtCountdown(mins) +
+      '</div>';
+
+      return '<div class="session-card' + (active ? ' active' : '') + warnClass + colorClass + '">' +
         '<div class="session-flag">' + s.flag + '</div>' +
         '<div class="session-name">' + s.name + '</div>' +
         '<div class="session-time">' + pad(s.open) + ':00 – ' + pad(s.close) + ':00 UTC</div>' +
         liveBadge +
+        countdownEl +
         '<div class="session-pairs">' + s.pairs + '</div>' +
         '<div class="session-pips">📊 ' + s.pipRange + '</div>' +
         '<div class="session-kz">⚡ ' + s.kzTip + '</div>' +
       '</div>';
     }).join('');
   }
+
+  /* Lightweight per-second tick: only update countdown text + warning classes.
+     Full DOM rebuild happens once per minute (or on active-state change). */
+  var _prevActiveStates = {};
+  function tickSessions() {
+    SessionAlerts.check(SESSIONS);
+
+    /* Detect whether any session's active state changed */
+    var stateChanged = false;
+    SESSIONS.forEach(function (s) {
+      var active = isSessionActive(s.open, s.close);
+      if (_prevActiveStates[s.name] !== active) {
+        _prevActiveStates[s.name] = active;
+        stateChanged = true;
+      }
+    });
+
+    if (stateChanged) {
+      renderSessions(); /* full rebuild on state transition */
+      return;
+    }
+
+    /* Otherwise just patch countdown text in-place */
+    SESSIONS.forEach(function (s) {
+      var el = document.querySelector('.session-countdown[data-session="' + s.name + '"]');
+      if (!el) return;
+      var active = isSessionActive(s.open, s.close);
+      var countdown = minsUntilEvent(s.open, s.close);
+      var mins = countdown.mins;
+      var warn = mins <= 15;
+      var cdLabel = active ? '⏱ Closes in ' : '⏳ Opens in ';
+      el.textContent = cdLabel + fmtCountdown(mins);
+      el.className = 'session-countdown ' + (active ? 'closes-in' : 'opens-in') + (warn ? ' warning' : '');
+
+      /* Sync warning card classes */
+      var card = el.closest('.session-card');
+      if (card) {
+        card.classList.toggle('warning-open',  warn && !active);
+        card.classList.toggle('warning-close', warn && active);
+      }
+    });
+  }
+
   renderSessions();
-  setInterval(renderSessions, 60000);
+  /* Initialise active-state snapshot after first render */
+  SESSIONS.forEach(function (s) { _prevActiveStates[s.name] = isSessionActive(s.open, s.close); });
+  setInterval(tickSessions, 1000);
+
+  /* Wire up sound toggle button */
+  var soundBtn = document.getElementById('adv-sound-btn');
+  if (soundBtn) soundBtn.addEventListener('click', function () { SessionAlerts.toggle(); });
 
   // ── Data loading ─────────────────────────────────────────────────────────
   var currentPair = 'EUR/USD';
