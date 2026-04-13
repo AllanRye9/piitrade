@@ -846,7 +846,7 @@
         <div class="adv-tf-nav">
           <button class="adv-tf-btn" data-tf="1H">1H</button>
           <button class="adv-tf-btn" data-tf="4H">4H</button>
-          <button class="adv-tf-btn active" data-tf="1D">30D</button>
+          <button class="adv-tf-btn active" data-tf="1D">1D</button>
         </div>
       </div>
       <div class="adv-chart-legend">
@@ -1016,11 +1016,13 @@ var AdvChart = (function () {
     if (!canvas) return;
     ctx = canvas.getContext('2d');
 
-    document.querySelectorAll('.adv-tf-btn').forEach(function (btn) {
+    var btns = document.querySelectorAll('.adv-tf-btn');
+    Array.prototype.forEach.call(btns, function (btn) {
       btn.addEventListener('click', function () {
-        document.querySelectorAll('.adv-tf-btn').forEach(function (b) {
-          b.classList.remove('active');
-        });
+        Array.prototype.forEach.call(
+          document.querySelectorAll('.adv-tf-btn'),
+          function (b) { b.classList.remove('active'); }
+        );
         btn.classList.add('active');
         timeframe = btn.dataset.tf;
         if (rawHistory && techData) { prepare(); startAnim(); }
@@ -1073,7 +1075,7 @@ var AdvChart = (function () {
         for (var j = 0; j < 6; j++) {
           var noise = (rand() - 0.5) * 0.0005 * p;
           prices.push(prev + (p - prev) * ((j + 1) / 6) + noise);
-          dates.push(srcD[i] + ' ' + String(j * 4).padStart(2, '0') + ':00');
+          dates.push(srcD[i] + ' ' + ('0' + (j * 4)).slice(-2) + ':00');
         }
       });
     } else { /* 1H – 24 bars/day from the last 7 days */
@@ -1084,7 +1086,7 @@ var AdvChart = (function () {
         for (var j = 0; j < 24; j++) {
           var noise = (rand() - 0.5) * 0.00025 * p;
           prices.push(prev + (p - prev) * ((j + 1) / 24) + noise);
-          dates.push(srcD7[i] + ' ' + String(j).padStart(2, '0') + ':00');
+          dates.push(srcD7[i] + ' ' + ('0' + j).slice(-2) + ':00');
         }
       });
     }
