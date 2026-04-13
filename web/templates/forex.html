@@ -61,6 +61,8 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
   <link rel="stylesheet" href="/static/css/forex.css" />
   <link rel="icon" type="image/png" href="/img/trader.png" />
+  <!-- Lightweight Charts — TradingView-style interactive price chart -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
 <body>
@@ -496,23 +498,42 @@
           </div>
         </section>
 
-        <!-- ─── Historical Accuracy Chart (inside Signal section) ──────────────── -->
+        <!-- ─── Interactive Price Chart ──────────────────────────────────────── -->
         <section id="section-history">
-          <div class="fx-section-title">📉 Historical Accuracy – Last 30 Days</div>
-          <div class="fx-chart-wrap">
-            <canvas id="accuracy-chart" height="400"
-              aria-label="Historical price and prediction accuracy chart"></canvas>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <div class="legend-line"></div> Actual exit price
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot correct"></div> Correct prediction
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot incorrect"></div> Incorrect prediction
-              </div>
+          <div class="fx-section-title">📈 Market Price Chart
+            <span id="fx-chart-pair-label" class="fx-chart-pair-label"></span>
+          </div>
+          <!-- Chart controls: timeframe + type + fullscreen -->
+          <div class="fx-chart-controls">
+            <div class="fx-tf-nav">
+              <button class="fx-tf-btn" data-tf="1H" title="7-day 1-hour bars">1H</button>
+              <button class="fx-tf-btn" data-tf="4H" title="30-day 4-hour bars">4H</button>
+              <button class="fx-tf-btn fx-tf-btn-active" data-tf="1D" title="90 daily bars">1D</button>
+              <button class="fx-tf-btn" data-tf="1W" title="1-year weekly bars">1W</button>
             </div>
+            <div class="fx-ct-nav">
+              <button class="fx-ct-btn fx-ct-btn-active" data-ct="candle" title="Candlestick">🕯 Candles</button>
+              <button class="fx-ct-btn" data-ct="line" title="Line chart">📈 Line</button>
+            </div>
+            <button id="fx-chart-fullscreen" class="fx-zoom-btn" title="Toggle fullscreen">⛶ Fullscreen</button>
+          </div>
+          <div class="fx-chart-wrap" id="fx-chart-wrap">
+            <div id="fx-lw-chart" style="position:absolute;inset:0;"></div>
+            <div class="fx-chart-live-badge" id="fx-chart-live-badge">
+              <span class="fx-live-dot"></span>
+              <span id="fx-chart-live-val">–</span>
+            </div>
+            <div class="fx-chart-loading" id="fx-chart-loading">
+              <span class="refresh-icon" style="animation:fx-spin 1s linear infinite;display:inline-block">↻</span>&nbsp;Loading chart…
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-line"></div> Price</div>
+            <div class="legend-item"><span style="color:#f0c040;font-size:1em">⚡</span> AI Entry</div>
+            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">✅</span> Take Profit</div>
+            <div class="legend-item"><span style="color:#f85149;font-size:1em">🛑</span> Stop Loss</div>
+            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">▲</span> BUY signal</div>
+            <div class="legend-item"><span style="color:#f85149;font-size:1em">▼</span> SELL signal</div>
           </div>
         </section>
 

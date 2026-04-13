@@ -332,7 +332,6 @@ const newsLoadingEl   = document.getElementById('news-loading');
 const subscribeForm   = document.getElementById('subscribe-form');
 const emailInput      = document.getElementById('email-input');
 const subscribeStatus = document.getElementById('subscribe-status');
-const chartCanvas     = document.getElementById('accuracy-chart');
 
 // Risk calculator DOM refs
 const calcBalance   = document.getElementById('calc-balance');
@@ -454,9 +453,11 @@ async function loadSignal(pair) {
 
     renderSignal(signalData);
 
-    // Only draw chart, update calculator, and fire notifications when live data is available
+    // Always update the price chart with signal level lines (entry/TP/SL)
+    FxPriceChart.updateSignal(signalData);
+
+    // Update calculator and fire notifications when live data is available
     if (signalData.is_live !== false) {
-      drawChart(signalData.history);
       autoFillCalculator(signalData);
       runCalculator();
       updateSuccessRateCard(pair, signalData);
@@ -574,222 +575,214 @@ function formatPrice(price, pair) {
   return Number(price).toFixed(getPairDecimals(pair));
 }
 
-// ─── Accuracy Chart ───────────────────────────────────────────────────────────
-let _chartRafId = null; // animation frame handle
+// ─── FxPriceChart — lightweight-charts TradingView-style price chart ─────────
+const FxPriceChart = (function () {
+  'use strict';
 
-/** Ease-out cubic: accelerates quickly then decelerates smoothly. */
-function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  let chart      = null;
+  let mainSeries = null;
+  let wrapEl     = null;
+  let resizeObs  = null;
+  let chartType  = 'candle';
+  let currentTf  = '1D';
+  const priceLines = [];
+  let currentPriceLine = null;
 
-function drawChart(history) {
-  if (!chartCanvas || !history || history.length === 0) return;
+  const TF_PARAMS = {
+    '1H': { tf: '1H', bars: 168 },
+    '4H': { tf: '4H', bars: 180 },
+    '1D': { tf: '1D', bars: 90  },
+    '1W': { tf: '1W', bars: 52  },
+  };
 
-  // Cancel any in-progress animation before starting a new one
-  if (_chartRafId) { cancelAnimationFrame(_chartRafId); _chartRafId = null; }
+  function pDec(p) {
+    if (!p || isNaN(p)) return 4;
+    if (p >= 1000) return 2;
+    if (p >= 100)  return 3;
+    if (p >= 1)    return 4;
+    return 5;
+  }
 
-  const dpr = window.devicePixelRatio || 1;
-  const W   = chartCanvas.offsetWidth || 860;
-  const H   = 400; // Increased height for better visibility
-  chartCanvas.width  = W * dpr;
-  chartCanvas.height = H * dpr;
-  chartCanvas.style.height = H + 'px';
+  function getColors() {
+    const t = document.documentElement.getAttribute('data-theme') || 'dark';
+    if (t === 'ocean') return { bg: '#071520', text: '#d4eeff', border: '#1a4060', grid: '#0f2538', up: '#3ecf8e', down: '#f85149' };
+    if (t === 'white') return { bg: '#ffffff', text: '#1f2328', border: '#d0d7de', grid: '#eaecef', up: '#1a7f37', down: '#cf222e' };
+    return { bg: '#0d1117', text: '#e6edf3', border: '#30363d', grid: '#21262d', up: '#3ecf8e', down: '#f85149' };
+  }
 
-  const ctx = chartCanvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  function buildOpts(w, h) {
+    const c = getColors();
+    return {
+      width: w, height: h,
+      layout: { background: { type: 'solid', color: c.bg }, textColor: c.text, fontSize: 11, fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,sans-serif' },
+      grid: { vertLines: { color: c.grid, style: 1 }, horzLines: { color: c.grid, style: 1 } },
+      crosshair: { mode: 1 },
+      rightPriceScale: { borderColor: c.border, autoScale: true, scaleMargins: { top: 0.08, bottom: 0.12 } },
+      timeScale: { borderColor: c.border, timeVisible: true, secondsVisible: false, rightOffset: 6, barSpacing: 6, minBarSpacing: 2 },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+      handleScale: { axisPressedMouseMove: { time: true, price: true }, mouseWheel: true, pinch: true },
+      watermark: { visible: true, fontSize: 14, horzAlign: 'left', vertAlign: 'bottom', color: 'rgba(88,166,255,0.18)', text: 'PiiTrade' },
+    };
+  }
 
-  // Extra top/bottom padding to accommodate signal pin icons
-  const PAD    = { top: 42, right: 20, bottom: 52, left: 62 };
-  const cw     = W - PAD.left - PAD.right;
-  const ch     = H - PAD.top  - PAD.bottom;
-  const n      = history.length;
-  const dec    = history[0] && history[0].entry > 10 ? 2 : 4;
-  const DOT_R  = 4.5; // radius of correctness dots
+  function clearLines() {
+    if (mainSeries) priceLines.forEach(pl => { try { mainSeries.removePriceLine(pl); } catch (e) {} });
+    priceLines.length = 0;
+    currentPriceLine = null;
+  }
 
-  const allPrices = history.flatMap(h => [h.entry, h.exit]);
-  const minP  = Math.min(...allPrices);
-  const maxP  = Math.max(...allPrices);
-  const range = (maxP - minP) || 1;
+  function addLine(price, color, title, style, width) {
+    if (!mainSeries || !price || isNaN(price)) return null;
+    const pl = mainSeries.createPriceLine({ price, color, lineStyle: style ?? 2, lineWidth: width ?? 1, axisLabelVisible: true, title: title || '' });
+    priceLines.push(pl);
+    return pl;
+  }
 
-  const xOf = i => PAD.left + (n > 1 ? (i / (n - 1)) * cw : cw / 2);
-  const yOf = p => PAD.top + ch - ((p - minP) / range) * ch;
-
-  // ── Static background: grid, axes, date labels ──
-  function drawBackground() {
-    ctx.clearRect(0, 0, W, H);
-    const gridCount = 5;
-    for (let g = 0; g <= gridCount; g++) {
-      const gy = PAD.top + (g / gridCount) * ch;
-      ctx.strokeStyle = 'rgba(48,54,61,0.7)';
-      ctx.lineWidth   = 1;
-      ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cw, gy); ctx.stroke();
-      const price = maxP - (g / gridCount) * range;
-      ctx.fillStyle    = 'rgba(139,148,158,0.85)';
-      ctx.font         = '11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
-      ctx.textAlign    = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(price.toFixed(dec), PAD.left - 6, gy);
+  function createSeries() {
+    if (mainSeries) { try { chart.removeSeries(mainSeries); } catch (e) {} mainSeries = null; }
+    clearLines();
+    const c = getColors();
+    const PRICE_FMT = { type: 'price', precision: 4, minMove: 0.0001 };
+    if (chartType === 'candle') {
+      mainSeries = chart.addCandlestickSeries({ upColor: c.up, downColor: c.down, borderUpColor: c.up, borderDownColor: c.down, wickUpColor: c.up, wickDownColor: c.down, priceFormat: PRICE_FMT });
+    } else {
+      mainSeries = chart.addLineSeries({ color: '#58a6ff', lineWidth: 2, crosshairMarkerVisible: true, crosshairMarkerRadius: 4, priceFormat: PRICE_FMT });
     }
-    // Axis lines
-    ctx.strokeStyle = 'rgba(48,54,61,0.9)';
-    ctx.lineWidth   = 1;
-    ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + ch + 6); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PAD.left - 4, PAD.top + ch); ctx.lineTo(PAD.left + cw, PAD.top + ch); ctx.stroke();
-    // X-axis date labels
-    ctx.fillStyle    = 'rgba(139,148,158,0.85)';
-    ctx.font         = '10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'alphabetic';
-    const step = Math.ceil(n / 6);
-    history.forEach((h, i) => {
-      if (i % step !== 0 && i !== n - 1) return;
-      ctx.fillText(h.day.slice(5), xOf(i), H - PAD.bottom + 16);
+  }
+
+  function toTs(d) { return Math.floor(new Date(d).getTime() / 1000); }
+  function dedup(arr) {
+    const seen = Object.create(null);
+    return arr.filter(d => { if (seen[d.time]) return false; seen[d.time] = true; return true; });
+  }
+
+  function renderCandles(candles) {
+    if (!mainSeries || !candles || !candles.length) return;
+    if (chartType === 'line') {
+      const data = dedup(candles.map(b => { const t = typeof b.time === 'string' ? toTs(b.time) : b.time; return { time: t, value: b.close }; }));
+      mainSeries.setData(data);
+    } else {
+      const data = dedup(candles.map(b => { const t = typeof b.time === 'string' ? toTs(b.time) : b.time; return { time: t, open: b.open, high: b.high, low: b.low, close: b.close }; }));
+      mainSeries.setData(data);
+    }
+    chart.timeScale().scrollToRealTime();
+  }
+
+  function setSignalLines(sig) {
+    clearLines();
+    if (!sig) return;
+    const ep = parseFloat(sig.entry_price);
+    const tp = parseFloat(sig.take_profit);
+    const sl = parseFloat(sig.stop_loss);
+    if (ep > 0) addLine(ep, '#f0c040', '⚡ Entry', 2, 2);
+    if (tp > 0) addLine(tp, '#3ecf8e', '✅ TP',    2, 1);
+    if (sl > 0) addLine(sl, '#f85149', '🛑 SL',    2, 1);
+  }
+
+  function setLivePriceLine(price) {
+    if (currentPriceLine && mainSeries) { try { mainSeries.removePriceLine(currentPriceLine); } catch (e) {} const idx = priceLines.indexOf(currentPriceLine); if (idx >= 0) priceLines.splice(idx, 1); }
+    currentPriceLine = null;
+    if (!price || isNaN(price)) return;
+    currentPriceLine = addLine(price, '#58a6ff', 'Live', 0, 2);
+    const badge = document.getElementById('fx-chart-live-val');
+    if (badge) badge.textContent = Number(price).toFixed(pDec(price));
+  }
+
+  function init() {
+    wrapEl = document.getElementById('fx-chart-wrap');
+    if (!wrapEl || typeof LightweightCharts === 'undefined') return;
+
+    let chartDiv = document.getElementById('fx-lw-chart');
+    if (!chartDiv) { chartDiv = document.createElement('div'); chartDiv.id = 'fx-lw-chart'; chartDiv.style.cssText = 'position:absolute;inset:0;'; wrapEl.insertBefore(chartDiv, wrapEl.firstChild); }
+
+    const h = wrapEl.offsetHeight || 420;
+    const opts = buildOpts(wrapEl.offsetWidth, h < 260 ? 420 : h);
+    chart = LightweightCharts.createChart(chartDiv, opts);
+    createSeries();
+
+    if (resizeObs) resizeObs.disconnect();
+    resizeObs = new ResizeObserver(() => {
+      if (!chart) return;
+      chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight || 420, 260) });
+    });
+    resizeObs.observe(wrapEl);
+
+    // Theme change
+    new MutationObserver(() => {
+      if (!chart) return;
+      chart.applyOptions(buildOpts(wrapEl.offsetWidth, Math.max(wrapEl.offsetHeight || 420, 260)));
+      createSeries();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Fullscreen
+    const fsBtn = document.getElementById('fx-chart-fullscreen');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) { wrapEl.requestFullscreen().catch(err => console.warn('Fullscreen not available:', err.message)); }
+        else { document.exitFullscreen(); }
+      });
+      document.addEventListener('fullscreenchange', () => {
+        fsBtn.textContent = document.fullscreenElement ? '✕ Exit' : '⛶ Fullscreen';
+        setTimeout(() => { if (chart) chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight, 260) }); }, 100);
+      });
+    }
+
+    // Timeframe buttons
+    document.querySelectorAll('.fx-tf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.fx-tf-btn').forEach(b => b.classList.remove('fx-tf-btn-active'));
+        btn.classList.add('fx-tf-btn-active');
+        currentTf = btn.dataset.tf;
+        if (typeof window._fxLoadCandles === 'function') window._fxLoadCandles(window._fxCurrentPair || 'EUR/USD', currentTf);
+      });
+    });
+
+    // Chart-type buttons
+    document.querySelectorAll('.fx-ct-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.fx-ct-btn').forEach(b => b.classList.remove('fx-ct-btn-active'));
+        btn.classList.add('fx-ct-btn-active');
+        chartType = btn.dataset.ct;
+        createSeries();
+        if (typeof window._fxLoadCandles === 'function') window._fxLoadCandles(window._fxCurrentPair || 'EUR/USD', currentTf);
+      });
     });
   }
 
-  // ── Animated price line (exit prices) ──
-  function drawPriceLine(progress) {
-    if (n < 2) return;
-    const progIdx = progress * (n - 1);
-    ctx.beginPath();
-    ctx.strokeStyle = '#58a6ff';
-    ctx.lineWidth   = 2;
-    ctx.lineJoin    = 'round';
-    const limit = Math.floor(progIdx);
-    for (let i = 0; i <= limit && i < n; i++) {
-      const x = xOf(i), y = yOf(history[i].exit);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    // Interpolate the partial final segment
-    if (limit < n - 1) {
-      const frac = progIdx - limit;
-      const x0 = xOf(limit),     y0 = yOf(history[limit].exit);
-      const x1 = xOf(limit + 1), y1 = yOf(history[limit + 1].exit);
-      ctx.lineTo(x0 + (x1 - x0) * frac, y0 + (y1 - y0) * frac);
-    }
-    ctx.stroke();
+  function load(pair, tf) {
+    window._fxCurrentPair = pair;
+    currentTf = tf || currentTf;
+    if (!chart) init();
+    if (!chart) return; // LightweightCharts not available
+
+    const loadEl = document.getElementById('fx-chart-loading');
+    if (loadEl) loadEl.style.display = 'flex';
+
+    const pairLabel = document.getElementById('fx-chart-pair-label');
+    if (pairLabel) pairLabel.textContent = '— ' + pair;
+
+    const params = TF_PARAMS[currentTf] || TF_PARAMS['1D'];
+    fetch('/api/forex/candles?pair=' + encodeURIComponent(pair) + '&tf=' + params.tf + '&bars=' + params.bars)
+      .then(r => r.json())
+      .then(d => {
+        if (loadEl) loadEl.style.display = 'none';
+        if (d.error || !d.candles || !d.candles.length) return;
+        createSeries();
+        renderCandles(d.candles);
+        if (d.live) setLivePriceLine(parseFloat(d.live));
+      })
+      .catch(() => { if (loadEl) loadEl.style.display = 'none'; });
   }
 
-  // ── Signal pin icon (thumbtack style) at the entry price ──
-  function drawSignalPin(x, tipY, direction) {
-    const isBuy  = direction === 'BUY';
-    const isSell = direction === 'SELL';
-    if (!isBuy && !isSell) return;
-
-    const color    = isBuy ? '#3fb950' : '#f85149';
-    const stemLen  = 18;
-    const headR    = 6;
-    const arrowHW  = 5; // half-width of arrowhead
-    const arrowH   = 7; // height of arrowhead
-
-    ctx.save();
-    ctx.lineCap = 'round';
-
-    if (isBuy) {
-      // Pin above entry: arrowhead points DOWN at tipY, head circle above
-      const headY = tipY - stemLen - headR;
-      // Arrowhead (points down to tipY)
-      ctx.beginPath();
-      ctx.moveTo(x - arrowHW, tipY - arrowH);
-      ctx.lineTo(x + arrowHW, tipY - arrowH);
-      ctx.lineTo(x, tipY);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-      // Stem
-      ctx.beginPath();
-      ctx.moveTo(x, tipY - arrowH);
-      ctx.lineTo(x, headY + headR);
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 2;
-      ctx.stroke();
-      // Head circle
-      ctx.beginPath();
-      ctx.arc(x, headY, headR, 0, Math.PI * 2);
-      ctx.fillStyle   = color;
-      ctx.strokeStyle = 'rgba(13,17,23,0.5)';
-      ctx.lineWidth   = 1;
-      ctx.fill();
-      ctx.stroke();
-      // Label
-      ctx.fillStyle    = '#fff';
-      ctx.font         = 'bold 7px sans-serif';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('B', x, headY);
-    } else {
-      // Pin below entry: arrowhead points UP at tipY, head circle below
-      const headY = tipY + stemLen + headR;
-      // Arrowhead (points up to tipY)
-      ctx.beginPath();
-      ctx.moveTo(x - arrowHW, tipY + arrowH);
-      ctx.lineTo(x + arrowHW, tipY + arrowH);
-      ctx.lineTo(x, tipY);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-      // Stem
-      ctx.beginPath();
-      ctx.moveTo(x, tipY + arrowH);
-      ctx.lineTo(x, headY - headR);
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 2;
-      ctx.stroke();
-      // Head circle
-      ctx.beginPath();
-      ctx.arc(x, headY, headR, 0, Math.PI * 2);
-      ctx.fillStyle   = color;
-      ctx.strokeStyle = 'rgba(13,17,23,0.5)';
-      ctx.lineWidth   = 1;
-      ctx.fill();
-      ctx.stroke();
-      // Label
-      ctx.fillStyle    = '#fff';
-      ctx.font         = 'bold 7px sans-serif';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('S', x, headY);
-    }
-
-    ctx.restore();
+  function updateSignal(sig) {
+    setSignalLines(sig);
+    if (sig && sig.entry_price) setLivePriceLine(parseFloat(sig.entry_price));
   }
 
-  // ── Correctness dots revealed progressively ──
-  function drawSignalsAndDots(progress) {
-    const upTo = Math.floor(progress * (n - 1));
-    history.forEach((h, i) => {
-      if (i > upTo) return;
-      const x      = xOf(i);
-      const exitY  = yOf(h.exit);
-      // Correctness dot at exit price
-      ctx.beginPath();
-      ctx.arc(x, exitY, DOT_R, 0, Math.PI * 2);
-      ctx.fillStyle   = h.correct ? '#3fb950' : '#f85149';
-      ctx.strokeStyle = 'rgba(13,17,23,0.7)';
-      ctx.lineWidth   = 1.5;
-      ctx.fill();
-      ctx.stroke();
-    });
-  }
+  return { init, load, updateSignal, setLivePriceLine };
+}());
 
-  // ── Animation loop (ease-out cubic, 1400 ms) ──
-  const DURATION = 1400;
-  let startTime = null;
-
-  function animate(ts) {
-    if (!startTime) startTime = ts;
-    const t    = Math.min((ts - startTime) / DURATION, 1);
-    const ease = easeOutCubic(t);
-    drawBackground();
-    drawPriceLine(ease);
-    drawSignalsAndDots(ease);
-    if (t < 1) {
-      _chartRafId = requestAnimationFrame(animate);
-    } else {
-      _chartRafId = null;
-    }
-  }
-
-  _chartRafId = requestAnimationFrame(animate);
-}
+window._fxLoadCandles = FxPriceChart.load;
 
 // ─── Risk Management Calculator ───────────────────────────────────────────────
 
@@ -2034,6 +2027,7 @@ pairSelect.addEventListener('change', () => {
   // has genuinely changed since the last time this pair was viewed.
   previousDirection = lastDirectionByPair[currentPair] ?? null;
   loadSignal(currentPair);
+  FxPriceChart.load(currentPair);
   resetAutoRefresh();
   // Keep live technical price in sync when pair changes
   if (_techPriceTimer !== null) startTechPricePolling();
@@ -2084,9 +2078,7 @@ function startScannerAutoRefresh() {
 let resizeDebounce = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeDebounce);
-  resizeDebounce = setTimeout(() => {
-    if (signalData) drawChart(signalData.history);
-  }, 200);
+  resizeDebounce = setTimeout(() => { /* FxPriceChart handles resize via ResizeObserver */ }, 200);
 });
 
 // ─── Loading Overlay ──────────────────────────────────────────────────────────
@@ -2210,6 +2202,10 @@ activateTab('section-signal');
   sel.addEventListener('change', cleanup, { once: true });
   sel.addEventListener('focus',  cleanup, { once: true });
 })();
+
+// Initialise the price chart and load initial candle data
+FxPriceChart.init();
+FxPriceChart.load(currentPair);
 
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
