@@ -1423,6 +1423,18 @@ def _serve_react_or_template(request: Request, template: str, **kwargs):
     return templates.TemplateResponse(request, template, _ctx(request, **kwargs))
 
 
+def _serve_react_spa(request: Request):
+    """Serve the React SPA index.html for React-only pages (no Jinja2 fallback template).
+
+    Falls back to the landing page redirect when the React build is unavailable.
+    """
+    _record_visit(_get_client_ip(request))
+    _react_index = _REACT_DIST_DIR / "index.html"
+    if _react_index.exists():
+        return FileResponse(str(_react_index), media_type="text/html")
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+
 def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
     """Return historical prices with static fallback for server-rendered pages."""
     hist = _fetch_historical_rates(pair, days)
@@ -1506,6 +1518,18 @@ async def disclaimer_page(request: Request):
     if _REACT_INDEX.exists():
         return FileResponse(str(_REACT_INDEX), media_type="text/html")
     return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
+
+
+@app.get("/smc", response_class=HTMLResponse)
+async def smc_page(request: Request):
+    """SMC Analyzer – order blocks, liquidity sweeps, supply/demand zones & trading sessions."""
+    return _serve_react_spa(request)
+
+
+@app.get("/roadmap", response_class=HTMLResponse)
+async def roadmap_page(request: Request):
+    """Product roadmap page (React SPA)."""
+    return _serve_react_spa(request)
 
 
 # ─── Auth routes ──────────────────────────────────────────────────────────────
