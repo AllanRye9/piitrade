@@ -790,6 +790,97 @@
       padding-left: 4px;
       padding-right: 4px;
     }
+
+    /* ── Chart + SMC layout row ── */
+    .adv-chart-layout {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .adv-chart-main {
+      flex: 1;
+      min-width: 0;
+    }
+    @media (max-width: 768px) {
+      .adv-chart-layout { flex-direction: column; }
+      .adv-smc-sidebar  { width: 100% !important; position: static !important; }
+    }
+
+    /* ── SMC Sidebar (outside chart) ── */
+    .adv-smc-sidebar {
+      width: 172px;
+      flex-shrink: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px 18px;
+      position: sticky;
+      top: 72px;
+    }
+    .adv-smc-sidebar-title {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text2);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .adv-smc-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      font-size: .72rem;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 3px 0;
+    }
+    .adv-smc-row:last-child { margin-bottom: 0; }
+    .adv-smc-swatch {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .adv-smc-line {
+      display: inline-block;
+      width: 16px;
+      height: 0;
+      flex-shrink: 0;
+    }
+    /* Animated live dot next to the Live Price row */
+    .adv-smc-live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #3ecf8e;
+      flex-shrink: 0;
+      animation: beepCore 1.4s ease-in-out infinite;
+    }
+    /* Animated glow on the Entry/TP/SL rows */
+    .adv-smc-row.anim-entry { animation: smcEntryPulse 2.8s ease-in-out infinite; }
+    .adv-smc-row.anim-tp    { animation: smcTpPulse    3.2s ease-in-out infinite; }
+    .adv-smc-row.anim-sl    { animation: smcSlPulse    3.0s ease-in-out infinite; }
+    @keyframes smcEntryPulse {
+      0%,100% { opacity: 1; } 50% { opacity: .55; }
+    }
+    @keyframes smcTpPulse {
+      0%,100% { opacity: 1; } 50% { opacity: .55; }
+    }
+    @keyframes smcSlPulse {
+      0%,100% { opacity: 1; } 50% { opacity: .55; }
+    }
+    /* Divider between groups */
+    .adv-smc-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 7px 0;
+    }
     .adv-tf-nav {
       display: flex;
       gap: 4px;
@@ -921,7 +1012,7 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
-      height: 440px;
+      height: 480px;
       min-height: 300px;
       -webkit-user-select: none;
       user-select: none;
@@ -980,62 +1071,6 @@
       color: var(--accent);
       border-color: var(--accent);
       background: rgba(88,166,255,.06);
-    }
-    /* ── SMC floating panel (top-right of chart) ── */
-    .adv-smc-panel {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 20;
-      background: rgba(13, 17, 23, 0.88);
-      border: 1px solid rgba(48, 54, 61, 0.9);
-      border-radius: 9px;
-      padding: 8px 11px;
-      min-width: 148px;
-      box-shadow: 0 4px 16px rgba(0,0,0,.55);
-      pointer-events: none;
-      backdrop-filter: blur(4px);
-    }
-    [data-theme="ocean"] .adv-smc-panel {
-      background: rgba(7, 21, 32, 0.90);
-      border-color: rgba(26, 64, 96, 0.9);
-    }
-    [data-theme="white"] .adv-smc-panel {
-      background: rgba(246, 248, 250, 0.92);
-      border-color: rgba(208, 215, 222, 0.9);
-    }
-    .adv-smc-panel-title {
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      color: var(--text2);
-      text-transform: uppercase;
-      margin-bottom: 7px;
-      border-bottom: 1px solid rgba(48,54,61,.7);
-      padding-bottom: 5px;
-    }
-    .adv-smc-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-      font-size: .70rem;
-      color: var(--text);
-      white-space: nowrap;
-    }
-    .adv-smc-row:last-child { margin-bottom: 0; }
-    .adv-smc-swatch {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-    .adv-smc-line {
-      display: inline-block;
-      width: 14px;
-      height: 0;
-      flex-shrink: 0;
     }
   </style>
   <!-- Lightweight Charts (used for the market structure chart) -->
@@ -1219,7 +1254,7 @@
             <div class="adv-guide-desc"><strong>Break of Structure (BOS)</strong>: price confirms the current trend by breaking past a key level. <strong>Change of Character (CHoCH)</strong>: signals a potential trend reversal — pay attention!</div>
           </div>
         </div>
-        <p class="adv-guide-footer">💡 <strong>Tip:</strong> Use the pair selector above to switch between currency pairs. Use the timeframe buttons (1H, 4H, 1D, 30D) to zoom in/out. The chart updates every 90 seconds.</p>
+        <p class="adv-guide-footer">💡 <strong>Tip:</strong> Use the pair selector above to switch between currency pairs. Use the timeframe buttons (1H → 5Y) to navigate from intraday to 5 years of history. Scroll to zoom, drag to pan — vertical drag on the price axis zooms the price scale. The chart updates every 90 seconds.</p>
       </div>
     </details>
 
@@ -1228,9 +1263,11 @@
       <div class="adv-section-title">📈 Market Structure Chart
         <div class="adv-tf-nav">
           <button class="adv-tf-btn active" data-tf="1H" title="Last 7 days – 1-hour bars">1H</button>
-          <button class="adv-tf-btn" data-tf="4H" title="Last 15 days – 4-hour bars">4H</button>
-          <button class="adv-tf-btn" data-tf="1D" title="30-day daily bars">1D</button>
-          <button class="adv-tf-btn" data-tf="30D" title="30 days – 4-hour bars (full view)">30D</button>
+          <button class="adv-tf-btn" data-tf="4H" title="Last 30 days – 4-hour bars">4H</button>
+          <button class="adv-tf-btn" data-tf="1D" title="90-day daily bars">1D</button>
+          <button class="adv-tf-btn" data-tf="1W" title="1-year weekly bars">1W</button>
+          <button class="adv-tf-btn" data-tf="1Y" title="365 daily bars – 1 year">1Y</button>
+          <button class="adv-tf-btn" data-tf="5Y" title="5-year weekly bars">5Y</button>
         </div>
       </div>
       <!-- Chart controls: type selector + zoom buttons -->
@@ -1246,78 +1283,81 @@
           <button class="adv-zoom-btn" id="adv-zoom-out" title="Zoom Out">🔍−</button>
           <button class="adv-zoom-btn" id="adv-zoom-reset" title="Reset zoom and pan">↺</button>
         </div>
-        <span class="adv-chart-hint">Scroll to zoom · Drag to pan</span>
+        <span class="adv-chart-hint">Scroll to zoom · Drag to pan · Alt+drag = vertical zoom</span>
       </div>
-      <div class="adv-chart-legend">
-        <span class="adv-legend-item ob-bull">📦 Order Block ▲</span>
-        <span class="adv-legend-item ob-bear">📦 Order Block ▼</span>
-        <span class="adv-legend-item fvg-bull">🌀 FVG (Bull)</span>
-        <span class="adv-legend-item fvg-bear">🌀 FVG (Bear)</span>
-        <span class="adv-legend-item choch-line">🔀 CHoCH</span>
-        <span class="adv-legend-item price-line">📍 Live Price</span>
-        <span class="adv-legend-item ai-entry">⚡ Entry</span>
-        <span class="adv-legend-item ai-tp">✅ TP</span>
-        <span class="adv-legend-item ai-sl">🛑 SL</span>
-      </div>
-      <div class="adv-chart-wrap" id="adv-chart-wrap">
-        <div id="adv-lw-chart" style="position:absolute;inset:0;"></div>
-        <canvas id="adv-chart-canvas" style="display:none;"></canvas>
-        <div class="adv-chart-live-price" id="adv-chart-live-badge">
-          <span class="adv-live-dot"></span>
-          <span id="adv-chart-live-price-val">Loading…</span>
+      <!-- Chart layout: canvas on left, SMC sidebar on right -->
+      <div class="adv-chart-layout">
+        <!-- Chart area -->
+        <div class="adv-chart-main">
+          <div class="adv-chart-wrap" id="adv-chart-wrap">
+            <div id="adv-lw-chart" style="position:absolute;inset:0;"></div>
+            <canvas id="adv-chart-canvas" style="display:none;"></canvas>
+            <div class="adv-chart-live-price" id="adv-chart-live-badge">
+              <span class="adv-live-dot"></span>
+              <span id="adv-chart-live-price-val">Loading…</span>
+            </div>
+            <div class="adv-chart-loading" id="adv-chart-loading">
+              <span class="spin"></span>&nbsp;Loading chart…
+            </div>
+            <div class="adv-chart-tooltip" id="adv-chart-tooltip" style="display:none"></div>
+          </div>
         </div>
-        <!-- SMC floating legend panel (top-right) -->
-        <div class="adv-smc-panel" id="adv-smc-panel" aria-label="SMC Legend">
-          <div class="adv-smc-panel-title">📊 SMC Zones</div>
+        <!-- SMC Sidebar: legend with animated indicators -->
+        <div class="adv-smc-sidebar" id="adv-smc-sidebar">
+          <div class="adv-smc-sidebar-title">📊 SMC Zones</div>
           <div class="adv-smc-row">
             <span class="adv-smc-swatch" style="background:rgba(62,207,142,.4);border:1px solid rgba(62,207,142,.85);"></span>
-            📦 OB Bullish ▲
+            OB Bullish ▲
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-swatch" style="background:rgba(248,81,73,.4);border:1px solid rgba(248,81,73,.85);"></span>
-            📦 OB Bearish ▼
+            OB Bearish ▼
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-swatch" style="background:rgba(88,166,255,.28);border:1px dashed rgba(88,166,255,.75);"></span>
-            🌀 FVG Bull ▲
+            FVG Bull ▲
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-swatch" style="background:rgba(255,150,50,.28);border:1px dashed rgba(255,150,50,.75);"></span>
-            🌀 FVG Bear ▼
+            FVG Bear ▼
           </div>
+          <div class="adv-smc-divider"></div>
           <div class="adv-smc-row">
             <span class="adv-smc-line" style="border-top:2px dashed #b392f0;"></span>
             🔀 CHoCH
           </div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px solid #58a6ff;"></span>
-            📍 Live Price
+            <span class="adv-smc-line" style="border-top:2px solid #3ecf8e;"></span>
+            📊 BOS ▲
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
-            🟢 Support (S)
+            🟢 Support
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
-            🔴 Resistance (R)
+            🔴 Resistance
           </div>
+          <div class="adv-smc-divider"></div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px dashed #f0c040;"></span>
+            <span class="adv-smc-live-dot"></span>
+            📍 Live Price
+          </div>
+          <div class="adv-smc-row anim-entry">
+            <span class="adv-smc-line" style="border-top:2px solid #f0c040;"></span>
             ⚡ Entry
           </div>
-          <div class="adv-smc-row">
+          <div class="adv-smc-row anim-tp">
             <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
             ✅ TP
           </div>
-          <div class="adv-smc-row">
+          <div class="adv-smc-row anim-sl">
             <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
             🛑 SL
           </div>
+          <div class="adv-smc-divider"></div>
+          <div id="adv-smc-live-vals" style="font-size:.7rem;color:var(--text2);line-height:1.8;"></div>
         </div>
-        <div class="adv-chart-loading" id="adv-chart-loading">
-          <span class="spin"></span>&nbsp;Loading chart…
-        </div>
-        <div class="adv-chart-tooltip" id="adv-chart-tooltip" style="display:none"></div>
       </div>
     </div>
 
@@ -1457,7 +1497,7 @@ var AdvChart = (function () {
 
   var chart      = null;
   var mainSeries = null;
-  var rawHistory = null, techData = null, aiSignalData = null;
+  var rawHistory = null, techData = null, aiSignalData = null, candleData = null;
   var timeframe  = '1H';
   var chartType  = 'candle';
   var priceLineHandles = [];
@@ -1516,22 +1556,28 @@ var AdvChart = (function () {
       rightPriceScale: {
         borderColor: c.border,
         autoScale: true,
-        scaleMargins: { top: 0.12, bottom: 0.18 },
+        scaleMargins: { top: 0.10, bottom: 0.15 },
       },
       timeScale: {
         borderColor: c.border,
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 5,
+        rightOffset: 8,
         fixLeftEdge: false,
+        barSpacing: 6,
+        minBarSpacing: 2,
       },
       handleScroll: {
         mouseWheel: true,
         pressedMouseMove: true,
         horzTouchDrag: true,
-        vertTouchDrag: false,
+        vertTouchDrag: true,
       },
-      handleScale:  { axisPressedMouseMove: { time: true, price: false } },
+      handleScale: {
+        axisPressedMouseMove: { time: true, price: true },
+        mouseWheel: true,
+        pinch: true,
+      },
       watermark: {
         visible: true,
         fontSize: 16,
@@ -1605,7 +1651,7 @@ var AdvChart = (function () {
     return pl;
   }
 
-  /* ── Build OHLC bars from daily history ── */
+  /* ── Build OHLC bars from daily history (legacy – used as fallback only) ── */
   function buildBars(history, tf) {
     var dailyPrices = history.map(function (h) { return h.entry || 0; });
     var dailyDates  = history.map(function (h) { return h.day   || ''; });
@@ -1614,7 +1660,7 @@ var AdvChart = (function () {
 
     var prices, dates;
 
-    if (tf === '1D') {
+    if (tf === '1D' || tf === '1Y') {
       prices = dailyPrices.slice();
       dates  = dailyDates.slice();
     } else if (tf === '4H') {
@@ -1628,7 +1674,7 @@ var AdvChart = (function () {
           dates.push(d4[i] + 'T' + ('0' + (j * 4)).slice(-2) + ':00:00');
         }
       });
-    } else if (tf === '30D') {
+    } else if (tf === '30D' || tf === '1W' || tf === '5Y') {
       var s30 = dailyPrices.slice(-30), d30 = dailyDates.slice(-30);
       prices = []; dates = [];
       s30.forEach(function (p, i) {
@@ -1679,31 +1725,112 @@ var AdvChart = (function () {
     });
   }
 
+  /* ── Build series markers for SMC labels ── */
+  function buildSMCMarkers(tech, sig, candleData) {
+    var markers = [];
+    if (!tech || !candleData || !candleData.length) return markers;
+
+    // Helper: find closest bar by ISO date string
+    function nearestByDate(dateStr) {
+      var target = toTimestamp(dateStr + (dateStr.indexOf('T') < 0 ? 'T00:00:00' : ''));
+      var best = null; var bestDiff = Infinity;
+      for (var i = 0; i < candleData.length; i++) {
+        var bt = typeof candleData[i].time === 'string'
+          ? toTimestamp(candleData[i].time)
+          : candleData[i].time;
+        var d = Math.abs(bt - target);
+        if (d < bestDiff) { bestDiff = d; best = candleData[i]; }
+      }
+      return best;
+    }
+
+    // CHoCH markers
+    (tech.choch || []).forEach(function (c) {
+      var bar = nearestByDate(c.date || '');
+      if (!bar) return;
+      var t = typeof bar.time === 'string' ? toTimestamp(bar.time) : bar.time;
+      markers.push({
+        time: t,
+        position: c.type === 'bullish' ? 'belowBar' : 'aboveBar',
+        color: '#b392f0',
+        shape: c.type === 'bullish' ? 'arrowUp' : 'arrowDown',
+        text: 'CHoCH',
+        size: 1.2,
+      });
+    });
+
+    // BOS markers
+    (tech.bos || []).forEach(function (b) {
+      var bar = nearestByDate(b.date || '');
+      if (!bar) return;
+      var t = typeof bar.time === 'string' ? toTimestamp(bar.time) : bar.time;
+      markers.push({
+        time: t,
+        position: b.type === 'bullish' ? 'belowBar' : 'aboveBar',
+        color: b.type === 'bullish' ? '#3ecf8e' : '#f85149',
+        shape: b.type === 'bullish' ? 'arrowUp' : 'arrowDown',
+        text: 'BOS',
+        size: 1.0,
+      });
+    });
+
+    // AI Entry signal on the most recent bar
+    if (sig && candleData.length) {
+      var lastBar = candleData[candleData.length - 1];
+      var lt = typeof lastBar.time === 'string' ? toTimestamp(lastBar.time) : lastBar.time;
+      var dir = sig.direction || 'HOLD';
+      if (dir === 'BUY') {
+        markers.push({ time: lt, position: 'belowBar', color: '#f0c040', shape: 'arrowUp',   text: '⚡ Entry', size: 1.5 });
+      } else if (dir === 'SELL') {
+        markers.push({ time: lt, position: 'aboveBar', color: '#f0c040', shape: 'arrowDown', text: '⚡ Entry', size: 1.5 });
+      }
+    }
+
+    // Sort by time (required by lightweight-charts)
+    markers.sort(function (a, b) { return a.time - b.time; });
+    return markers;
+  }
+
   /* ── Render chart data ── */
   function renderData() {
-    if (!chart || !mainSeries || !rawHistory || !rawHistory.length) return;
+    if (!chart || !mainSeries) return;
+    if (!candleData && (!rawHistory || !rawHistory.length)) return;
 
-    var bars = buildBars(rawHistory, timeframe);
+    var bars;
+    if (candleData && candleData.length) {
+      // Direct OHLC data from /api/forex/candles
+      bars = candleData;
+    } else {
+      // Legacy fallback: build from signal history
+      bars = buildBars(rawHistory, timeframe);
+    }
 
     if (chartType === 'line') {
-      mainSeries.setData(dedup(bars.map(function (b) {
-        return { time: toTimestamp(b.date), value: b.close };
-      })));
+      var lineData = bars.map(function (b) {
+        var t = b.time;
+        if (typeof t === 'string') t = toTimestamp(t);
+        return { time: t, value: b.close };
+      });
+      mainSeries.setData(dedup(lineData));
     } else {
-      mainSeries.setData(dedup(bars.map(function (b) {
-        return {
-          time:  toTimestamp(b.date),
-          open:  b.open,
-          high:  b.high,
-          low:   b.low,
-          close: b.close,
-        };
-      })));
+      var ohlcData = bars.map(function (b) {
+        var t = b.time;
+        if (typeof t === 'string') t = toTimestamp(t);
+        return { time: t, open: b.open, high: b.high, low: b.low, close: b.close };
+      });
+      mainSeries.setData(dedup(ohlcData));
     }
+
+    /* Apply SMC markers (BOS, CHoCH, Entry) */
+    try {
+      var markers = buildSMCMarkers(techData, aiSignalData, bars);
+      if (markers.length) mainSeries.setMarkers(markers);
+    } catch (e) { /* markers optional */ }
 
     chart.timeScale().scrollToRealTime();
     addIndicators();
     updateBadge();
+    updateSMCSidebar();
   }
 
   /* ── Add indicator price lines ── */
@@ -1715,7 +1842,7 @@ var AdvChart = (function () {
 
     /* Live price — solid blue, thicker */
     if (cp > 0) {
-      currentPriceLine = addPriceLine(cp, '#58a6ff', 'Live', 0, 2);
+      currentPriceLine = addPriceLine(cp, '#58a6ff', 'Live ●', 0, 2);
     }
 
     /* AI signal levels */
@@ -1723,43 +1850,65 @@ var AdvChart = (function () {
       var ep = parseFloat(aiSignalData.entry_price);
       var tp = parseFloat(aiSignalData.take_profit);
       var sl = parseFloat(aiSignalData.stop_loss);
-      if (ep > 0) addPriceLine(ep, '#f0c040', '⚡ Entry', 2, 1);
-      if (tp > 0) addPriceLine(tp, '#3ecf8e', '✅ TP',    2, 1);
-      if (sl > 0) addPriceLine(sl, '#f85149', '🛑 SL',    2, 1);
+      if (ep > 0) addPriceLine(ep, '#f0c040', '⚡ Entry', 2, 2);
+      if (tp > 0) addPriceLine(tp, '#3ecf8e', '✅ TP',    2, 2);
+      if (sl > 0) addPriceLine(sl, '#f85149', '🛑 SL',    2, 2);
     }
 
     if (!techData) return;
 
-    /* CHoCH levels */
-    (techData.choch_levels || []).slice(0, 3).forEach(function (lvl) {
-      var price = parseFloat(lvl.price !== undefined ? lvl.price : lvl);
+    /* CHoCH levels — from .choch array in technical data */
+    (techData.choch || []).slice(0, 3).forEach(function (c) {
+      var price = parseFloat(c.level !== undefined ? c.level : c);
       if (price > 0) addPriceLine(price, '#b392f0', '🔀 CHoCH', 2, 1);
     });
 
     /* Support / Resistance */
     var sr = techData.support_resistance || {};
-    (sr.support    || []).slice(0, 2).forEach(function (s) {
+    (sr.support    || []).slice(0, 3).forEach(function (s) {
       addPriceLine(parseFloat(s), '#3ecf8e', 'S', 3, 1);
     });
-    (sr.resistance || []).slice(0, 2).forEach(function (r) {
+    (sr.resistance || []).slice(0, 3).forEach(function (r) {
       addPriceLine(parseFloat(r), '#f85149', 'R', 3, 1);
     });
 
     /* Order-block zone boundaries (top + bottom per zone) */
     (techData.high_volume_zones || []).slice(0, 4).forEach(function (z) {
       var isBull = z.bottom < cp;
-      var col = isBull ? 'rgba(62,207,142,0.6)' : 'rgba(248,81,73,0.6)';
+      var col = isBull ? 'rgba(62,207,142,0.7)' : 'rgba(248,81,73,0.7)';
       if (z.top    > 0) addPriceLine(z.top,    col, isBull ? 'OB▲' : 'OB▼', 1, 1);
       if (z.bottom > 0) addPriceLine(z.bottom, col, '',                        1, 1);
     });
 
     /* FVG zone boundaries */
-    (techData.fvg_zones || []).slice(0, 4).forEach(function (z) {
+    (techData.fvg || []).slice(0, 4).forEach(function (z) {
       var isBull = (z.type || '').toLowerCase() === 'bullish';
-      var col = isBull ? 'rgba(62,207,142,0.45)' : 'rgba(248,81,73,0.45)';
+      var col = isBull ? 'rgba(88,166,255,0.55)' : 'rgba(255,150,50,0.55)';
       if (z.top    > 0) addPriceLine(z.top,    col, isBull ? 'FVG▲' : 'FVG▼', 1, 1);
       if (z.bottom > 0) addPriceLine(z.bottom, col, '',                          1, 1);
     });
+  }
+
+  /* ── Update SMC sidebar live values ── */
+  function updateSMCSidebar() {
+    var el = document.getElementById('adv-smc-live-vals');
+    if (!el) return;
+    var lines = [];
+    if (aiSignalData) {
+      var ep = parseFloat(aiSignalData.entry_price);
+      var tp = parseFloat(aiSignalData.take_profit);
+      var sl = parseFloat(aiSignalData.stop_loss);
+      var dir = aiSignalData.direction || 'HOLD';
+      var dirColor = dir === 'BUY' ? '#3ecf8e' : dir === 'SELL' ? '#f85149' : '#ffc107';
+      lines.push('<span style="color:' + dirColor + ';font-weight:700;">' + dir + '</span>');
+      if (ep > 0) lines.push('<span style="color:#f0c040">⚡ ' + Number(ep).toFixed(pDec(ep)) + '</span>');
+      if (tp > 0) lines.push('<span style="color:#3ecf8e">✅ ' + Number(tp).toFixed(pDec(tp)) + '</span>');
+      if (sl > 0) lines.push('<span style="color:#f85149">🛑 ' + Number(sl).toFixed(pDec(sl)) + '</span>');
+    }
+    if (techData && techData.current_price) {
+      lines.push('<span style="color:#58a6ff">📍 ' + Number(techData.current_price).toFixed(pDec(techData.current_price)) + '</span>');
+    }
+    el.innerHTML = lines.join('<br>');
   }
 
   function updateBadge() {
@@ -1793,10 +1942,6 @@ var AdvChart = (function () {
     wrapEl = document.getElementById('adv-chart-wrap');
     if (!wrapEl) return;
 
-    /* Ensure loading overlay is hidden once we start */
-    var loadEl = document.getElementById('adv-chart-loading');
-    /* (keep it visible until data arrives — hidden in updateData) */
-
     /* Chart container div */
     var chartDiv = document.getElementById('adv-lw-chart');
     if (!chartDiv) {
@@ -1806,8 +1951,8 @@ var AdvChart = (function () {
       wrapEl.insertBefore(chartDiv, wrapEl.firstChild);
     }
 
-    var h = wrapEl.offsetHeight || 420;
-    if (h < 300) h = 420;
+    var h = wrapEl.offsetHeight || 460;
+    if (h < 300) h = 460;
 
     var opts = buildChartOptions();
     opts.width  = wrapEl.offsetWidth;
@@ -1833,13 +1978,13 @@ var AdvChart = (function () {
       if (!chart) return;
       chart.applyOptions(buildChartOptions());
       createMainSeries();
-      if (rawHistory) renderData();
+      if (candleData || rawHistory) renderData();
     });
     themeObs.observe(document.documentElement, {
       attributes: true, attributeFilter: ['data-theme'],
     });
 
-    /* Timeframe buttons */
+    /* Timeframe buttons — trigger a new candles fetch when clicked */
     Array.prototype.forEach.call(document.querySelectorAll('.adv-tf-btn'), function (btn) {
       btn.addEventListener('click', function () {
         Array.prototype.forEach.call(document.querySelectorAll('.adv-tf-btn'), function (b) {
@@ -1847,7 +1992,12 @@ var AdvChart = (function () {
         });
         btn.classList.add('active');
         timeframe = btn.dataset.tf;
-        if (rawHistory) renderData();
+        /* Reload candles for the new timeframe — currentPair is accessible via closure */
+        if (typeof window._advLoadCandles === 'function') {
+          window._advLoadCandles(window._advCurrentPair || 'EUR/USD', timeframe);
+        } else if (candleData || rawHistory) {
+          renderData();
+        }
       });
     });
 
@@ -1860,7 +2010,7 @@ var AdvChart = (function () {
         btn.classList.add('active');
         chartType = btn.dataset.ct;
         createMainSeries();
-        if (rawHistory) renderData();
+        if (candleData || rawHistory) renderData();
       });
     });
 
@@ -1874,10 +2024,20 @@ var AdvChart = (function () {
   }
 
   /* ── Public API ── */
-  function updateData(history, tech, sig) {
-    rawHistory = history;
-    techData   = tech;
-    if (sig !== undefined) aiSignalData = sig;
+  function updateData(ohlcBars, tech, sig) {
+    /* ohlcBars: array of {time, open, high, low, close} from /api/forex/candles
+       Pass null to update only tech/sig without touching candle data */
+    if (ohlcBars !== null && ohlcBars !== undefined) {
+      if (ohlcBars.length && ohlcBars[0] && ohlcBars[0].open !== undefined) {
+        candleData = ohlcBars;
+        rawHistory = null;
+      } else if (ohlcBars.length) {
+        rawHistory = ohlcBars;
+        candleData = null;
+      }
+    }
+    if (tech !== null && tech !== undefined) techData = tech;
+    if (sig !== undefined && sig !== null) aiSignalData = sig;
     var loadEl = document.getElementById('adv-chart-loading');
     if (loadEl) loadEl.style.display = 'none';
     if (!chart) init();
@@ -1887,6 +2047,7 @@ var AdvChart = (function () {
   function updateSignal(sig) {
     aiSignalData = sig;
     addIndicators();
+    updateSMCSidebar();
   }
 
   function updateCurrentPrice(price) {
@@ -1899,18 +2060,18 @@ var AdvChart = (function () {
       var idx = priceLineHandles.indexOf(currentPriceLine);
       if (idx >= 0) priceLineHandles.splice(idx, 1);
     }
-    currentPriceLine = addPriceLine(price, '#58a6ff', 'Live', 0, 2);
+    currentPriceLine = addPriceLine(price, '#58a6ff', 'Live ●', 0, 2);
 
     /* Update badge */
     var badge = document.getElementById('adv-chart-live-price-val');
     if (badge) badge.textContent = Number(price).toFixed(pDec(price));
 
     /* Update last bar with new close */
-    if (mainSeries && rawHistory && rawHistory.length) {
-      var bars = buildBars(rawHistory, timeframe);
-      var last = bars[bars.length - 1];
+    var activeBars = candleData || (rawHistory && buildBars(rawHistory, timeframe)) || null;
+    if (mainSeries && activeBars && activeBars.length) {
+      var last = activeBars[activeBars.length - 1];
       if (last) {
-        var ts = toTimestamp(last.date);
+        var ts = typeof last.time === 'string' ? toTimestamp(last.time) : last.time;
         if (chartType === 'line') {
           try { mainSeries.update({ time: ts, value: price }); } catch (e) {}
         } else {
@@ -1926,6 +2087,9 @@ var AdvChart = (function () {
         }
       }
     }
+
+    /* Update sidebar live value */
+    updateSMCSidebar();
   }
 
   return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice };
@@ -2231,7 +2395,36 @@ var AdvChart = (function () {
     document.getElementById(id).innerHTML = '<div class="adv-loading"><span class="spin"></span>Loading…</div>';
   }
 
+  // ── Timeframe → candles API params ─────────────────────────────────────
+  var TF_PARAMS = {
+    '1H':  { tf: '1H',  bars: 168  },  // 7 days × 24h
+    '4H':  { tf: '4H',  bars: 180  },  // 30 days × 6 bars
+    '1D':  { tf: '1D',  bars: 90   },  // 90 daily bars
+    '1W':  { tf: '1W',  bars: 52   },  // 1 year weekly
+    '1Y':  { tf: '1D',  bars: 365  },  // 365 daily bars
+    '5Y':  { tf: '1W',  bars: 260  },  // 5 years weekly
+  };
+
+  function loadCandles(pair, tf) {
+    var params = TF_PARAMS[tf] || TF_PARAMS['1D'];
+    var url = '/api/forex/candles?pair=' + encodeURIComponent(pair) +
+              '&tf=' + params.tf + '&bars=' + params.bars;
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error || !d.candles || !d.candles.length) return;
+        AdvChart.updateData(d.candles, lastTech, lastSig);
+        /* Update live price from candles response */
+        if (d.live) AdvChart.updateCurrentPrice(parseFloat(d.live));
+      })
+      .catch(function () { /* silently ignore — candles are supplementary */ });
+  }
+
+  /* Expose loadCandles so the AdvChart timeframe buttons can trigger it */
+  window._advLoadCandles = loadCandles;
+
   function loadPairData(pair) {
+    window._advCurrentPair = pair;
     document.getElementById('adv-last-updated').textContent = '';
     setLoading('adv-signal-wrap');
     setLoading('adv-structure-wrap');
@@ -2239,25 +2432,38 @@ var AdvChart = (function () {
     setLoading('adv-hvz-wrap');
     setLoading('adv-sr-wrap');
 
-    var sigDone = false, techDone = false;
-    var sigData = null, techData = null;
+    var sigDone = false, techDone = false, candlesDone = false;
+    var sigData = null, techDataLocal = null;
 
     function tryFinish() {
-      if (!sigDone || !techDone) return;
+      if (!sigDone || !techDone || !candlesDone) return;
       var now = new Date();
       document.getElementById('adv-last-updated').textContent =
         'Updated ' + pad(now.getUTCHours()) + ':' + pad(now.getUTCMinutes()) + ' UTC';
-      if (lastSig && lastSig.history && lastTech) {
-        AdvChart.updateData(lastSig.history, lastTech, lastSig);
-      }
     }
+
+    // Candles data (primary chart data source)
+    var activeTf = document.querySelector('.adv-tf-btn.active');
+    var tfKey = activeTf ? activeTf.dataset.tf : '1H';
+    var params = TF_PARAMS[tfKey] || TF_PARAMS['1H'];
+    fetch('/api/forex/candles?pair=' + encodeURIComponent(pair) +
+          '&tf=' + params.tf + '&bars=' + params.bars)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.error && d.candles && d.candles.length) {
+          AdvChart.updateData(d.candles, lastTech, lastSig);
+          if (d.live) AdvChart.updateCurrentPrice(parseFloat(d.live));
+        }
+        candlesDone = true; tryFinish();
+      })
+      .catch(function () { candlesDone = true; tryFinish(); });
 
     // Signal data
     fetch('/api/forex/signals?pair=' + encodeURIComponent(pair))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (d.error) { showError('adv-signal-wrap', d.error); }
-        else { renderSignal(d); lastSig = d; }
+        else { renderSignal(d); lastSig = d; AdvChart.updateSignal(d); }
         sigDone = true; tryFinish();
       })
       .catch(function (e) {
@@ -2279,6 +2485,8 @@ var AdvChart = (function () {
           renderHVZ(d);
           renderSR(d);
           lastTech = d;
+          /* Update chart indicators with fresh technical data */
+          AdvChart.updateData(null, d, lastSig);
         }
         techDone = true; tryFinish();
       })
@@ -2341,6 +2549,7 @@ var AdvChart = (function () {
     var sel = document.getElementById('adv-theme-select');
     if (sel) {
       sel.value = saved;
+      document.documentElement.setAttribute('data-theme', saved);
       sel.addEventListener('change', function () {
         document.documentElement.setAttribute('data-theme', sel.value);
         localStorage.setItem('pii-theme', sel.value);
