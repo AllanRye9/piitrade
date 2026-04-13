@@ -981,8 +981,64 @@
       border-color: var(--accent);
       background: rgba(88,166,255,.06);
     }
+    /* ── SMC floating panel (top-right of chart) ── */
+    .adv-smc-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 20;
+      background: rgba(13, 17, 23, 0.88);
+      border: 1px solid rgba(48, 54, 61, 0.9);
+      border-radius: 9px;
+      padding: 8px 11px;
+      min-width: 148px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.55);
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+    [data-theme="ocean"] .adv-smc-panel {
+      background: rgba(7, 21, 32, 0.90);
+      border-color: rgba(26, 64, 96, 0.9);
+    }
+    [data-theme="white"] .adv-smc-panel {
+      background: rgba(246, 248, 250, 0.92);
+      border-color: rgba(208, 215, 222, 0.9);
+    }
+    .adv-smc-panel-title {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text2);
+      text-transform: uppercase;
+      margin-bottom: 7px;
+      border-bottom: 1px solid rgba(48,54,61,.7);
+      padding-bottom: 5px;
+    }
+    .adv-smc-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: .70rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .adv-smc-row:last-child { margin-bottom: 0; }
+    .adv-smc-swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .adv-smc-line {
+      display: inline-block;
+      width: 14px;
+      height: 0;
+      flex-shrink: 0;
+    }
   </style>
-  <!-- TradingView Lightweight Charts -->
+  <!-- Lightweight Charts (used for the market structure chart) -->
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -1210,6 +1266,54 @@
           <span class="adv-live-dot"></span>
           <span id="adv-chart-live-price-val">Loading…</span>
         </div>
+        <!-- SMC floating legend panel (top-right) -->
+        <div class="adv-smc-panel" id="adv-smc-panel" aria-label="SMC Legend">
+          <div class="adv-smc-panel-title">📊 SMC Zones</div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-swatch" style="background:rgba(62,207,142,.4);border:1px solid rgba(62,207,142,.85);"></span>
+            📦 OB Bullish ▲
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-swatch" style="background:rgba(248,81,73,.4);border:1px solid rgba(248,81,73,.85);"></span>
+            📦 OB Bearish ▼
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-swatch" style="background:rgba(88,166,255,.28);border:1px dashed rgba(88,166,255,.75);"></span>
+            🌀 FVG Bull ▲
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-swatch" style="background:rgba(255,150,50,.28);border:1px dashed rgba(255,150,50,.75);"></span>
+            🌀 FVG Bear ▼
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #b392f0;"></span>
+            🔀 CHoCH
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px solid #58a6ff;"></span>
+            📍 Live Price
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
+            🟢 Support (S)
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
+            🔴 Resistance (R)
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #f0c040;"></span>
+            ⚡ Entry
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
+            ✅ TP
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
+            🛑 SL
+          </div>
+        </div>
         <div class="adv-chart-loading" id="adv-chart-loading">
           <span class="spin"></span>&nbsp;Loading chart…
         </div>
@@ -1372,12 +1476,14 @@ var AdvChart = (function () {
   }
 
   function pDec(p) {
-    if (!p || isNaN(p)) return 5;
-    if (p >= 10)  return 3;
-    if (p >= 1)   return 4;
-    if (p >= 0.1) return 5;
-    return 6;
+    if (!p || isNaN(p)) return 4;
+    if (p >= 1000) return 2;
+    if (p >= 100)  return 3;
+    if (p >= 1)    return 4;
+    return 5;
   }
+
+  var PRICE_FORMAT = { type: 'price', precision: 4, minMove: 0.0001 };
 
   function getThemeColors() {
     var t = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1417,10 +1523,23 @@ var AdvChart = (function () {
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 5,
-        fixLeftEdge: true,
+        fixLeftEdge: false,
       },
-      handleScroll: { vertTouchDrag: false },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
       handleScale:  { axisPressedMouseMove: { time: true, price: false } },
+      watermark: {
+        visible: true,
+        fontSize: 16,
+        horzAlign: 'left',
+        vertAlign: 'bottom',
+        color: 'rgba(88, 166, 255, 0.20)',
+        text: 'PiiTrade',
+      },
     };
   }
 
@@ -1442,11 +1561,13 @@ var AdvChart = (function () {
         borderDownColor:c.down,
         wickUpColor:    c.up,
         wickDownColor:  c.down,
+        priceFormat: PRICE_FORMAT,
       });
     } else if (chartType === 'bar') {
       mainSeries = chart.addBarSeries({
         upColor:   c.up,
         downColor: c.down,
+        priceFormat: PRICE_FORMAT,
       });
     } else {
       mainSeries = chart.addLineSeries({
@@ -1454,6 +1575,7 @@ var AdvChart = (function () {
         lineWidth: 2,
         crosshairMarkerVisible: true,
         crosshairMarkerRadius:  4,
+        priceFormat: PRICE_FORMAT,
       });
     }
   }
@@ -1900,7 +2022,10 @@ var AdvChart = (function () {
   function fmtNum(v) {
     if (v === null || v === undefined) return '–';
     var n = parseFloat(v);
-    return isNaN(n) ? '–' : n.toPrecision(6);
+    if (isNaN(n)) return '–';
+    if (n >= 1000) return n.toFixed(2);
+    if (n >= 100)  return n.toFixed(3);
+    return n.toFixed(4);
   }
   function escHtml(s) {
     return String(s)
@@ -2076,7 +2201,7 @@ var AdvChart = (function () {
     function pctDiff(level) {
       if (!price) return '';
       var d = Math.abs(level - price) / price * 100;
-      return d.toFixed(2) + '% away';
+      return d.toFixed(4) + '% away';
     }
 
     var html = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;">' +
