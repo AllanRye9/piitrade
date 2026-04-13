@@ -198,7 +198,7 @@ function showToast(type, icon, title, msg, durationMs = 4000) {
 
 // ─── Tab Navigation ──────────────────────────────────────────────────────────
 const ALL_SECTIONS = [
-  'section-signal', 'section-history', 'section-risk',
+  'section-signal', 'section-risk',
   'section-technical', 'section-fvg', 'section-sr-breaks',
   'section-volatile', 'section-reversal',
   'section-success', 'section-patterns', 'section-smc', 'section-news', 'section-alerts',
@@ -206,7 +206,7 @@ const ALL_SECTIONS = [
 
 // Sections belonging to each tab
 const TAB_SECTIONS = {
-  'section-signal':    ['section-signal', 'section-history'],
+  'section-signal':    ['section-signal'],
   'section-risk':      ['section-risk'],
   'section-technical': ['section-technical'],
   'section-fvg':       ['section-fvg'],
@@ -709,15 +709,15 @@ const FxPriceChart = (function () {
     let chartDiv = document.getElementById('fx-lw-chart');
     if (!chartDiv) { chartDiv = document.createElement('div'); chartDiv.id = 'fx-lw-chart'; chartDiv.style.cssText = 'position:absolute;inset:0;'; wrapEl.insertBefore(chartDiv, wrapEl.firstChild); }
 
-    const h = wrapEl.offsetHeight || 420;
-    const opts = buildOpts(wrapEl.offsetWidth, h < 260 ? 420 : h);
+    const h = wrapEl.offsetHeight || 320;
+    const opts = buildOpts(wrapEl.offsetWidth, h < 220 ? 320 : h);
     chart = LightweightCharts.createChart(chartDiv, opts);
     createSeries();
 
     if (resizeObs) resizeObs.disconnect();
     resizeObs = new ResizeObserver(() => {
       if (!chart) return;
-      chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight || 420, 260) });
+      chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight || 320, 220) });
     });
     resizeObs.observe(wrapEl);
 
@@ -737,7 +737,7 @@ const FxPriceChart = (function () {
       });
       document.addEventListener('fullscreenchange', () => {
         fsBtn.textContent = document.fullscreenElement ? '✕ Exit' : '⛶ Fullscreen';
-        setTimeout(() => { if (chart) chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight, 260) }); }, 100);
+        setTimeout(() => { if (chart) chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight, 220) }); }, 100);
       });
     }
 
@@ -769,7 +769,14 @@ const FxPriceChart = (function () {
     window._fxCurrentPair = pair;
     currentTf = tf || currentTf;
     if (!chart) init();
-    if (!chart) return; // LightweightCharts not available
+    if (!chart) {
+      // LightweightCharts library unavailable (CDN failure)
+      const loadEl = document.getElementById('fx-chart-loading');
+      const errEl  = document.getElementById('fx-chart-error');
+      if (loadEl) loadEl.style.display = 'none';
+      if (errEl)  { errEl.textContent = '⚠ Chart library unavailable. Please refresh the page.'; errEl.style.display = 'flex'; }
+      return;
+    }
 
     const loadEl = document.getElementById('fx-chart-loading');
     const errEl  = document.getElementById('fx-chart-error');
