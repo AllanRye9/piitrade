@@ -587,6 +587,7 @@ const FxPriceChart = (function () {
   let currentTf  = '1D';
   const priceLines = [];
   let currentPriceLine = null;
+  let lastSignalData = null; // last signal; re-applied after each candle reload
 
   const TF_PARAMS = {
     '1H': { tf: '1H', bars: 168 },
@@ -642,7 +643,12 @@ const FxPriceChart = (function () {
     if (mainSeries) { try { chart.removeSeries(mainSeries); } catch (e) {} mainSeries = null; }
     clearLines();
     const c = getColors();
-    const PRICE_FMT = { type: 'price', precision: 4, minMove: 0.0001 };
+    // Use pair-appropriate precision/minMove so JPY and other non-4-decimal pairs render correctly
+    const pair = window._fxCurrentPair || 'EUR/USD';
+    let precision = 4, minMove = 0.0001;
+    if (pair && pair.includes('JPY')) { precision = 2; minMove = 0.01; }
+    else if (pair === 'BTC/USD')      { precision = 2; minMove = 0.01; }
+    const PRICE_FMT = { type: 'price', precision, minMove };
     if (chartType === 'candle') {
       mainSeries = chart.addCandlestickSeries({ upColor: c.up, downColor: c.down, borderUpColor: c.up, borderDownColor: c.down, wickUpColor: c.up, wickDownColor: c.down, priceFormat: PRICE_FMT });
     } else {
@@ -650,7 +656,15 @@ const FxPriceChart = (function () {
     }
   }
 
-  function toTs(d) { return Math.floor(new Date(d).getTime() / 1000); }
+  // Treat datetime strings without timezone as UTC (server always emits UTC bars).
+  // Date-only strings (e.g. "2026-04-12") are already interpreted as UTC by JS.
+  function toTs(d) {
+    // Timezone offset pattern: "+HH:MM" or "-HH:MM" at end of string
+    if (typeof d === 'string' && d.includes('T') && !d.endsWith('Z') && !/[+\-]\d{2}:\d{2}$/.test(d)) {
+      d = d + 'Z';
+    }
+    return Math.floor(new Date(d).getTime() / 1000);
+  }
   function dedup(arr) {
     const seen = Object.create(null);
     return arr.filter(d => { if (seen[d.time]) return false; seen[d.time] = true; return true; });
@@ -750,13 +764,17 @@ const FxPriceChart = (function () {
   }
 
   function load(pair, tf) {
+    // Clear cached signal data when switching to a different pair
+    if (window._fxCurrentPair !== pair) lastSignalData = null;
     window._fxCurrentPair = pair;
     currentTf = tf || currentTf;
     if (!chart) init();
     if (!chart) return; // LightweightCharts not available
 
     const loadEl = document.getElementById('fx-chart-loading');
+    const errEl  = document.getElementById('fx-chart-error');
     if (loadEl) loadEl.style.display = 'flex';
+    if (errEl)  errEl.style.display  = 'none';
 
     const pairLabel = document.getElementById('fx-chart-pair-label');
     if (pairLabel) pairLabel.textContent = '— ' + pair;
@@ -766,15 +784,27 @@ const FxPriceChart = (function () {
       .then(r => r.json())
       .then(d => {
         if (loadEl) loadEl.style.display = 'none';
-        if (d.error || !d.candles || !d.candles.length) return;
+        if (d.error || !d.candles || !d.candles.length) {
+          if (errEl) {
+            errEl.textContent  = d.error ? `⚠ ${d.error}` : '⚠ No chart data available for this pair.';
+            errEl.style.display = 'flex';
+          }
+          return;
+        }
         createSeries();
         renderCandles(d.candles);
         if (d.live) setLivePriceLine(parseFloat(d.live));
+        // Re-apply entry/TP/SL lines that may have been cleared by createSeries()
+        if (lastSignalData) setSignalLines(lastSignalData);
       })
-      .catch(() => { if (loadEl) loadEl.style.display = 'none'; });
+      .catch(() => {
+        if (loadEl) loadEl.style.display = 'none';
+        if (errEl)  { errEl.textContent = '⚠ Failed to load chart data.'; errEl.style.display = 'flex'; }
+      });
   }
 
   function updateSignal(sig) {
+    lastSignalData = sig; // persist so load() can re-apply after series recreation
     setSignalLines(sig);
     if (sig && sig.entry_price) setLivePriceLine(parseFloat(sig.entry_price));
   }

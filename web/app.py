@@ -726,7 +726,10 @@ def _fetch_historical_rates(pair: str, days: int = 30) -> dict[str, float]:
             )
             resp.raise_for_status()
             raw: dict[str, dict[str, float]] = resp.json().get("rates", {})
-            sorted_rates: dict[str, float] = {d: r[quote] for d, r in sorted(raw.items())}
+            # Skip dates where the quote currency is absent (e.g. ECB gaps)
+            sorted_rates: dict[str, float] = {
+                d: r[quote] for d, r in sorted(raw.items()) if quote in r
+            }
             data = dict(list(sorted_rates.items())[-days:])
         except Exception:
             data = {}
