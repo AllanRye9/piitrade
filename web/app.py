@@ -1522,8 +1522,15 @@ async def disclaimer_page(request: Request):
 
 @app.get("/smc", response_class=HTMLResponse)
 async def smc_page(request: Request):
-    """SMC Analyzer – order blocks, liquidity sweeps, supply/demand zones & trading sessions."""
-    return _serve_react_spa(request)
+    """SMC Analyzer – redirects to the Advanced Analysis page."""
+    return RedirectResponse(url="/advance", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+
+
+@app.get("/advance", response_class=HTMLResponse)
+async def advance_page(request: Request):
+    """Advanced Market Analysis – live sessions, BOS/CHoCH, FVG, order blocks & S/R."""
+    _record_visit(_get_client_ip(request))
+    return templates.TemplateResponse(request, "advance.html", _ctx(request))
 
 
 @app.get("/roadmap", response_class=HTMLResponse)

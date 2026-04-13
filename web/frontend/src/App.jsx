@@ -10,8 +10,6 @@ import Admin from './pages/Admin'
 import Methodology from './pages/Methodology'
 import Disclaimer from './pages/Disclaimer'
 import Roadmap from './pages/Roadmap'
-import SMC from './pages/SMC'
-import Advance from './pages/Advance'
 import { useAuth } from './context/AuthContext'
 
 function ProtectedRoute({ children, adminOnly = false }) {
@@ -38,8 +36,6 @@ function AppRoutes() {
         <Route path="/methodology" element={<Methodology />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/roadmap" element={<Roadmap />} />
-        <Route path="/smc" element={<SMC />} />
-        <Route path="/advance" element={<Advance />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
