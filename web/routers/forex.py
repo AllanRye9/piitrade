@@ -4,9 +4,7 @@ Hosts API endpoints used by the dashboard tabs and clients.
 """
 
 from datetime import datetime, timezone
-import hashlib as _hs
 import logging
-import math
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -628,8 +626,14 @@ async def forex_subscribe(request: Request):
 
 
 def _seeded_rand(seed_val: float):
-    """Simple LCG pseudo-random generator for deterministic OHLC noise."""
-    s = [max(1, abs(int(seed_val * 999997)) % 2147483647)]
+    """Simple LCG pseudo-random generator for deterministic OHLC noise.
+
+    Uses the classic Park-Miller LCG:
+      s_next = s * 16807 mod (2^31 - 1)
+    where 16807 is the multiplier, 2147483647 = 2^31 - 1 is a Mersenne prime
+    commonly chosen as the modulus for full-period LCGs.
+    """
+    s = [max(1, abs(int(seed_val * 999997)) % 2147483647)]  # seed must be in [1, m-1]
 
     def _next() -> float:
         s[0] = s[0] * 16807 % 2147483647
@@ -659,7 +663,8 @@ def _build_ohlc(
         i = 0
         while i < len(closes) - 4:
             wk = closes[i : i + 5]
-            atr = sum(abs(wk[j] - wk[j - 1]) for j in range(1, len(wk))) / len(wk)
+            # ATR: average of |close[j] - close[j-1]| over the 4 day-to-day differences
+            atr = sum(abs(wk[j] - wk[j - 1]) for j in range(1, len(wk))) / max(1, len(wk) - 1)
             o = round(wk[0], dec)
             c = round(wk[-1], dec)
             h = round(max(wk) + atr * (0.3 + rand() * 0.4), dec)
@@ -734,7 +739,11 @@ async def forex_candles(pair: str = "EUR/USD", tf: str = "1D", bars: int = 365):
         _pip, dec = core._pair_pip_dec(pair)
         tf_upper = tf.upper()
 
-        # Determine how many daily bars to fetch
+        # Determine how many daily bars to fetch.
+        # 1H: need bars/24 days worth of data; min 14 days for decent history, max 30 days
+        # 4H: need bars/6 days; min 14, max 90
+        # 1W: need bars * 7 calendar days + buffer for aggregation
+        # 1D: direct mapping with a small look-back buffer
         if tf_upper == "1H":
             fetch_days = min(max(bars // 24 + 3, 14), 30)
             bars = min(bars, 720)
