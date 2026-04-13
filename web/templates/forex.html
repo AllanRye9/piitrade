@@ -156,6 +156,146 @@
     <div class="gamebar-badges" id="gamebar-badges"></div>
   </div>
 
+  <!-- ═══════════════════════════════ ADVANCED FEATURE PROMO ══════════════ -->
+  <div id="adv-promo-banner" style="
+    margin: 12px 5% 0;
+    background: linear-gradient(135deg, #161b22 0%, rgba(88,166,255,.08) 50%, rgba(62,207,142,.06) 100%);
+    border: 1px solid rgba(88,166,255,.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+    animation: adv-promo-in .6s cubic-bezier(.22,1,.36,1) both;
+  ">
+    <style>
+      @keyframes adv-promo-in {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes adv-pulse-ring {
+        0%   { transform: scale(1);   opacity: .8; }
+        70%  { transform: scale(2.2); opacity: 0; }
+        100% { transform: scale(2.2); opacity: 0; }
+      }
+      @keyframes adv-pulse-core {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(62,207,142,.7); }
+        50%       { box-shadow: 0 0 0 5px rgba(62,207,142,0); }
+      }
+      @keyframes adv-shimmer-text {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+      }
+      @keyframes adv-float {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-4px); }
+      }
+      .adv-promo-live-dot {
+        position: relative;
+        width: 10px; height: 10px;
+        flex-shrink: 0;
+      }
+      .adv-promo-live-dot-core {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        background: #3ecf8e;
+        animation: adv-pulse-core 1.4s ease-in-out infinite;
+      }
+      .adv-promo-live-dot-ring {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        background: #3ecf8e;
+        animation: adv-pulse-ring 1.4s ease-out infinite;
+      }
+      .adv-promo-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 20px;
+        background: linear-gradient(135deg, rgba(88,166,255,.15), rgba(62,207,142,.12));
+        border: 1px solid rgba(88,166,255,.4);
+        border-radius: 10px;
+        color: #e6edf3;
+        font-size: .88rem;
+        font-weight: 700;
+        font-family: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+        white-space: nowrap;
+        animation: adv-float 3s ease-in-out infinite;
+      }
+      .adv-promo-btn:hover {
+        background: linear-gradient(135deg, rgba(88,166,255,.25), rgba(62,207,142,.2));
+        border-color: rgba(88,166,255,.7);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(88,166,255,.2);
+        text-decoration: none;
+        color: #e6edf3;
+      }
+      #adv-promo-dismiss {
+        position: absolute; top: 8px; right: 10px;
+        background: none; border: none;
+        color: #8b949e; font-size: .85rem; cursor: pointer;
+        padding: 2px 6px; border-radius: 4px;
+        transition: color .2s, background .2s;
+      }
+      #adv-promo-dismiss:hover { color: #e6edf3; background: rgba(255,255,255,.07); }
+    </style>
+    <!-- Decorative glow -->
+    <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(88,166,255,.1) 0%,transparent 70%);pointer-events:none"></div>
+    <!-- Live indicator -->
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div class="adv-promo-live-dot">
+        <div class="adv-promo-live-dot-ring"></div>
+        <div class="adv-promo-live-dot-core"></div>
+      </div>
+      <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3ecf8e">Live</span>
+    </div>
+    <!-- Icon -->
+    <div style="font-size:1.8rem;flex-shrink:0;line-height:1">🧠</div>
+    <!-- Text content -->
+    <div style="flex:1;min-width:180px">
+      <div style="
+        font-size:1rem;font-weight:800;
+        background:linear-gradient(135deg,#e6edf3 0%,#58a6ff 50%,#3ecf8e 100%);
+        background-size:200% auto;
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+        animation:adv-shimmer-text 3.5s linear infinite;
+        margin-bottom:3px;
+      ">Advanced Market Analysis</div>
+      <div style="font-size:.8rem;color:#8b949e;line-height:1.4">
+        SMC structure · Order blocks · FVG zones · Live sessions · Institutional liquidity
+      </div>
+    </div>
+    <!-- Feature chips -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.2);color:#58a6ff">BOS/CHoCH</span>
+      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.2);color:#3ecf8e">FVG</span>
+      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.2);color:#ffc107">S/R</span>
+    </div>
+    <!-- CTA button -->
+    <a href="/advance" class="adv-promo-btn">⚡ Open Advanced →</a>
+    <!-- Dismiss -->
+    <button id="adv-promo-dismiss" type="button" aria-label="Dismiss">✕</button>
+  </div>
+  <script>
+    (function(){
+      var el = document.getElementById('adv-promo-banner');
+      var btn = document.getElementById('adv-promo-dismiss');
+      if(btn && el) btn.addEventListener('click', function(){
+        el.style.transition = 'opacity .3s, max-height .4s';
+        el.style.opacity = '0';
+        el.style.maxHeight = el.offsetHeight + 'px';
+        setTimeout(function(){ el.style.maxHeight = '0'; el.style.margin = '0'; el.style.padding = '0'; }, 300);
+        setTimeout(function(){ el.style.display = 'none'; }, 700);
+      });
+    })();
+  </script>
+
   <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
   <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:10px auto;">
     <!-- DISCLAIMER -->
