@@ -1017,6 +1017,11 @@
       -webkit-user-select: none;
       user-select: none;
     }
+    .adv-chart-wrap:fullscreen,
+    .adv-chart-wrap:-webkit-full-screen {
+      height: 100vh !important;
+      border-radius: 0;
+    }
     .adv-chart-wrap canvas {
       display: block;
       width: 100%;
@@ -1282,6 +1287,7 @@
           <button class="adv-zoom-btn" id="adv-zoom-in" title="Zoom In">🔍+</button>
           <button class="adv-zoom-btn" id="adv-zoom-out" title="Zoom Out">🔍−</button>
           <button class="adv-zoom-btn" id="adv-zoom-reset" title="Reset zoom and pan">↺</button>
+          <button class="adv-zoom-btn" id="adv-chart-fullscreen" title="Toggle Fullscreen">⛶</button>
         </div>
         <span class="adv-chart-hint">Scroll to zoom · Drag to pan · Drag price axis = vertical zoom</span>
       </div>
@@ -2021,6 +2027,25 @@ var AdvChart = (function () {
     if (zIn)  zIn.addEventListener('click',  zoomIn);
     if (zOut) zOut.addEventListener('click', zoomOut);
     if (zRst) zRst.addEventListener('click', zoomReset);
+
+    /* Fullscreen button */
+    var fsBtn = document.getElementById('adv-chart-fullscreen');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', function () {
+        if (!document.fullscreenElement) {
+          wrapEl.requestFullscreen().catch(function () {});
+        } else {
+          document.exitFullscreen();
+        }
+      });
+      document.addEventListener('fullscreenchange', function () {
+        fsBtn.textContent = document.fullscreenElement ? '✕ Exit' : '⛶';
+        setTimeout(function () {
+          if (!chart) return;
+          chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight, 300) });
+        }, 100);
+      });
+    }
   }
 
   /* ── Public API ── */

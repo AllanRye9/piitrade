@@ -975,11 +975,124 @@ a:hover {
 
 /* ── Chart ── */
 .fx-chart-wrap {
-  background: var(--surface);
+  position: relative;
+  background: #0d1117;
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--shadow);
+  overflow: hidden;
+  height: 420px;
+  min-height: 260px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.fx-chart-wrap:fullscreen,
+.fx-chart-wrap:-webkit-full-screen {
+  height: 100vh !important;
+  border-radius: 0;
+}
+
+.fx-chart-live-badge {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(13,17,23,.82);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px 3px 8px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+.fx-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3ecf8e;
+  box-shadow: 0 0 6px #3ecf8e;
+  animation: fx-pulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes fx-pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+@keyframes fx-spin {
+  to { transform: rotate(360deg); }
+}
+
+.fx-chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  font-size: .88rem;
+  background: #0d1117;
+  z-index: 4;
+}
+
+/* ── Chart controls row ── */
+.fx-chart-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.fx-tf-nav,
+.fx-ct-nav {
+  display: flex;
+  gap: 4px;
+}
+.fx-tf-btn,
+.fx-ct-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: .78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fx-tf-btn:hover,
+.fx-ct-btn:hover,
+.fx-tf-btn-active,
+.fx-ct-btn-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.fx-zoom-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: .78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  margin-left: auto;
+}
+.fx-zoom-btn:hover {
+  background: rgba(88,166,255,.12);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.fx-chart-pair-label {
+  font-size: .82rem;
+  font-weight: 400;
+  color: var(--text2);
+  margin-left: 8px;
 }
 
 #accuracy-chart {
@@ -990,7 +1103,7 @@ a:hover {
 
 .chart-legend {
   display: flex;
-  gap: 18px;
+  gap: 14px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
@@ -998,7 +1111,7 @@ a:hover {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 0.78rem;
   color: var(--text2);
 }
