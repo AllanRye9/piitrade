@@ -15,21 +15,120 @@
   <link rel="stylesheet" href="/static/css/forex.css" />
   <link rel="icon" type="image/png" href="/img/trader.png" />
   <style>
-    /* ── Advanced page styles ── */
+    /* ═══════════════════════════════════════════════════════
+       Advanced Page — Enhanced UX/UI
+       ═══════════════════════════════════════════════════════ */
+
+    /* ── CSS variable supplement ── */
+    :root {
+      --card: #161b22;
+    }
+
+    /* ── Page layout with 5% side margins ── */
+    .adv-page-wrapper {
+      width: 100%;
+      padding: 0 5%;
+      box-sizing: border-box;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+
+    @keyframes heroPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .85; transform: scale(1.015); }
+    }
+
+    /* Live session beeping dot */
+    @keyframes beepRing {
+      0%   { transform: scale(1);   opacity: 1; }
+      70%  { transform: scale(2.4); opacity: 0; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+    @keyframes beepCore {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(62,207,142,.7); }
+      50%       { box-shadow: 0 0 0 6px rgba(62,207,142,0); }
+    }
+
+    /* Section entrance stagger */
+    @keyframes sectionIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Hero ── */
     .adv-hero {
       text-align: center;
-      padding: 32px 20px 8px;
+      padding: 44px 20px 16px;
+      animation: fadeUp .55s ease both;
+    }
+    .adv-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      padding: 4px 14px;
+      border-radius: 20px;
+      background: rgba(88,166,255,.1);
+      border: 1px solid rgba(88,166,255,.25);
+      color: var(--accent);
+      margin-bottom: 14px;
     }
     .adv-hero h1 {
-      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-size: clamp(1.6rem, 4.5vw, 2.4rem);
       font-weight: 800;
-      color: var(--text);
-      margin: 0 0 8px;
+      background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #3ecf8e 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite;
+      margin: 0 0 10px;
+      line-height: 1.2;
     }
     .adv-hero p {
       color: var(--text2);
-      font-size: .92rem;
-      margin: 0;
+      font-size: .95rem;
+      margin: 0 auto;
+      max-width: 560px;
+      line-height: 1.6;
+    }
+    .adv-hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .adv-hero-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .adv-hero-stat-val {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .adv-hero-stat-lbl {
+      font-size: .7rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
 
     /* ── Pair selector bar ── */
@@ -38,29 +137,72 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      padding: 14px 18px;
-      background: var(--card);
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--card) 0%, rgba(88,166,255,.04) 100%);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      margin: 20px 0 24px;
+      border-radius: 14px;
+      margin: 24px 0 28px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.25);
+      animation: fadeUp .55s .1s ease both;
+      position: relative;
+      overflow: hidden;
     }
-    .adv-bar label { font-size: .87rem; color: var(--text2); white-space: nowrap; }
+    .adv-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(90deg, transparent 0%, rgba(88,166,255,.07) 50%, transparent 100%);
+      pointer-events: none;
+    }
+    .adv-bar-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .adv-bar label {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
     .adv-pair-select {
       flex: 1;
       min-width: 180px;
-      max-width: 280px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
+      max-width: 300px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(88,166,255,.3);
       background: var(--bg);
       color: var(--text);
-      font-size: .88rem;
+      font-size: .9rem;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2358a6ff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
     }
+    .adv-pair-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88,166,255,.15);
+    }
+    .adv-pair-select:hover { border-color: var(--accent); }
     .adv-utc {
       margin-left: auto;
       font-size: .82rem;
       color: var(--text2);
       font-family: monospace;
+      background: rgba(255,255,255,.04);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
 
     /* ── Section titles ── */
@@ -68,50 +210,118 @@
       font-size: 1rem;
       font-weight: 700;
       color: var(--text);
-      margin: 28px 0 14px;
+      margin: 32px 0 16px;
       display: flex;
       align-items: center;
       gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
     }
+    .adv-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+      margin-left: 8px;
+    }
+
+    /* ── Section animation wrapper ── */
+    .adv-section {
+      animation: sectionIn .5s ease both;
+    }
+    .adv-section:nth-child(1) { animation-delay: .05s; }
+    .adv-section:nth-child(2) { animation-delay: .1s; }
+    .adv-section:nth-child(3) { animation-delay: .15s; }
+    .adv-section:nth-child(4) { animation-delay: .2s; }
+    .adv-section:nth-child(5) { animation-delay: .25s; }
 
     /* ── Session grid ── */
     .session-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
+      gap: 16px;
       margin-bottom: 8px;
     }
     .session-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 18px;
+      border-radius: 14px;
+      padding: 18px 20px;
       position: relative;
       overflow: hidden;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .session-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
     }
     .session-card.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), inset 0 0 18px rgba(88,166,255,.05);
+      border-color: #3ecf8e;
+      box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1);
+      background: linear-gradient(135deg, var(--card) 0%, rgba(62,207,142,.04) 100%);
     }
-    .session-flag { font-size: 1.5rem; line-height: 1; margin-bottom: 6px; }
-    .session-name { font-weight: 700; font-size: .95rem; color: var(--text); }
-    .session-time { font-size: .78rem; color: var(--text2); margin: 2px 0 8px; }
+    .session-card.active::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #3ecf8e, transparent);
+    }
+    .session-flag { font-size: 1.6rem; line-height: 1; margin-bottom: 8px; }
+    .session-name { font-weight: 700; font-size: .98rem; color: var(--text); }
+    .session-time { font-size: .78rem; color: var(--text2); margin: 3px 0 10px; }
+
+    /* Live session badge with beeping dot */
     .session-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-size: .72rem;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 20px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
-    .session-badge.live { background: rgba(62,207,142,.15); color: #3ecf8e; }
-    .session-badge.closed { background: rgba(255,255,255,.06); color: var(--text2); }
-    .session-pairs { font-size: .78rem; color: var(--text2); }
+    .session-badge.live {
+      background: rgba(62,207,142,.12);
+      color: #3ecf8e;
+      border: 1px solid rgba(62,207,142,.25);
+    }
+    .session-badge.closed {
+      background: rgba(255,255,255,.05);
+      color: var(--text2);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    /* Beeping green dot */
+    .live-dot {
+      position: relative;
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+    .live-dot-core {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #3ecf8e;
+      animation: beepCore 1.4s ease-in-out infinite;
+    }
+    .live-dot-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #3ecf8e;
+      animation: beepRing 1.4s ease-out infinite;
+    }
+
+    .session-pairs { font-size: .78rem; color: var(--text2); line-height: 1.5; }
     .session-kz {
-      font-size: .76rem;
+      font-size: .75rem;
       color: var(--accent);
-      margin-top: 6px;
+      margin-top: 8px;
       font-style: italic;
+      line-height: 1.4;
     }
     .session-pips { font-size: .78rem; color: var(--text2); margin-top: 4px; }
 
@@ -119,16 +329,17 @@
     .adv-signal-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 22px 18px;
+      border-radius: 14px;
+      padding: 24px 24px 20px;
       margin-bottom: 20px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.2);
     }
     .adv-signal-row {
       display: flex;
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
     .adv-dir-badge {
       display: inline-flex;
@@ -136,27 +347,36 @@
       gap: 6px;
       font-size: 1.15rem;
       font-weight: 800;
-      padding: 8px 20px;
-      border-radius: 8px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      letter-spacing: .03em;
     }
     .adv-dir-badge.BUY  { background: rgba(62,207,142,.15); color: #3ecf8e; border: 1px solid rgba(62,207,142,.3); }
     .adv-dir-badge.SELL { background: rgba(248,81,73,.15);  color: #f85149; border: 1px solid rgba(248,81,73,.3); }
     .adv-dir-badge.HOLD { background: rgba(255,193,7,.12);  color: #ffc107; border: 1px solid rgba(255,193,7,.3); }
     .adv-meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
     }
-    .adv-meta-item { display: flex; flex-direction: column; gap: 2px; }
-    .adv-meta-label { font-size: .73rem; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; }
-    .adv-meta-value { font-size: .9rem; font-weight: 600; color: var(--text); font-family: monospace; }
+    .adv-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .adv-meta-label { font-size: .7rem; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
+    .adv-meta-value { font-size: .92rem; font-weight: 700; color: var(--text); font-family: monospace; }
     .adv-meta-value.bull { color: #3ecf8e; }
     .adv-meta-value.bear { color: #f85149; }
     .adv-conf-bar-wrap { height: 6px; background: var(--bg); border-radius: 4px; margin-top: 4px; overflow: hidden; }
-    .adv-conf-bar-fill { height: 100%; border-radius: 4px; transition: width .6s; }
-    .adv-conf-bar-fill.BUY  { background: #3ecf8e; }
-    .adv-conf-bar-fill.SELL { background: #f85149; }
-    .adv-conf-bar-fill.HOLD { background: #ffc107; }
+    .adv-conf-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.22,1,.36,1); }
+    .adv-conf-bar-fill.BUY  { background: linear-gradient(90deg, #3ecf8e, #6ee7b7); }
+    .adv-conf-bar-fill.SELL { background: linear-gradient(90deg, #f85149, #fc8a85); }
+    .adv-conf-bar-fill.HOLD { background: linear-gradient(90deg, #ffc107, #ffd966); }
 
     /* ── Structure table ── */
     .adv-table {
@@ -166,26 +386,27 @@
     }
     .adv-table th {
       text-align: left;
-      padding: 8px 12px;
+      padding: 10px 14px;
       color: var(--text2);
-      font-size: .73rem;
+      font-size: .72rem;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .06em;
       border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
     }
     .adv-table td {
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,.04);
       color: var(--text);
     }
     .adv-table tr:last-child td { border-bottom: none; }
-    .adv-table tr:hover td { background: rgba(255,255,255,.025); }
+    .adv-table tr:hover td { background: rgba(255,255,255,.03); }
     .tag {
       display: inline-block;
       font-size: .68rem;
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 5px;
     }
     .tag.bull { background: rgba(62,207,142,.15); color: #3ecf8e; }
     .tag.bear { background: rgba(248,81,73,.15); color: #f85149; }
@@ -196,53 +417,60 @@
     .hvz-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
     .hvz-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .hvz-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,.25);
     }
     .hvz-card .hvz-strength {
       font-size: .7rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .06em;
       margin-bottom: 4px;
     }
     .hvz-card .hvz-strength.high { color: #f85149; }
     .hvz-card .hvz-strength.medium { color: #ffc107; }
-    .hvz-card .hvz-range { font-family: monospace; font-size: .85rem; color: var(--text); font-weight: 600; }
-    .hvz-card .hvz-desc { font-size: .78rem; color: var(--text2); margin-top: 4px; }
+    .hvz-card .hvz-range { font-family: monospace; font-size: .88rem; color: var(--text); font-weight: 600; }
+    .hvz-card .hvz-desc { font-size: .78rem; color: var(--text2); margin-top: 6px; }
 
     /* ── S/R levels ── */
     .sr-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
     }
-    .sr-col-title { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .sr-col-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
     .sr-col-title.support { color: #3ecf8e; }
     .sr-col-title.resistance { color: #f85149; }
     .sr-level {
       font-family: monospace;
       font-size: .87rem;
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
       margin-bottom: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      transition: background .15s;
     }
-    .sr-level.support { background: rgba(62,207,142,.08); border-left: 2px solid #3ecf8e; color: var(--text); }
-    .sr-level.resistance { background: rgba(248,81,73,.08); border-left: 2px solid #f85149; color: var(--text); }
+    .sr-level:hover { filter: brightness(1.1); }
+    .sr-level.support { background: rgba(62,207,142,.08); border-left: 3px solid #3ecf8e; color: var(--text); }
+    .sr-level.resistance { background: rgba(248,81,73,.08); border-left: 3px solid #f85149; color: var(--text); }
     .sr-distance { font-size: .72rem; color: var(--text2); }
 
     /* ── Loading / error ── */
     .adv-loading {
       text-align: center;
-      padding: 32px 0;
+      padding: 40px 0;
       color: var(--text2);
       font-size: .9rem;
     }
@@ -256,12 +484,11 @@
       margin-right: 8px;
       vertical-align: middle;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     .adv-error {
       background: rgba(248,81,73,.08);
       border: 1px solid rgba(248,81,73,.3);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 14px 18px;
       color: #f85149;
       font-size: .88rem;
@@ -272,17 +499,128 @@
     .adv-disclaimer {
       background: rgba(255,193,7,.06);
       border: 1px solid rgba(255,193,7,.2);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: .78rem;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: .8rem;
       color: var(--text2);
-      margin: 24px 0 8px;
+      margin: 28px 0 10px;
+      line-height: 1.6;
     }
 
+    /* ── Professional Footer ── */
+    .adv-footer {
+      margin-top: 48px;
+      border-top: 1px solid var(--border);
+      padding: 36px 0 24px;
+    }
+    .adv-footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 28px;
+    }
+    .adv-footer-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .adv-footer-brand-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .adv-footer-brand-desc {
+      font-size: .82rem;
+      color: var(--text2);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+    .adv-footer-col-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+    .adv-footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .adv-footer-links a {
+      font-size: .83rem;
+      color: var(--text2);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .adv-footer-links a:hover { color: var(--accent); text-decoration: none; }
+    .adv-footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .adv-footer-copy {
+      font-size: .76rem;
+      color: var(--text2);
+    }
+    .adv-footer-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .adv-footer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    /* ── Refresh button ── */
+    .fx-refresh-btn {
+      padding: 8px 16px;
+      background: rgba(88,166,255,.1);
+      border: 1px solid rgba(88,166,255,.3);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: .85rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, transform .15s;
+    }
+    .fx-refresh-btn:hover {
+      background: rgba(88,166,255,.18);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .fx-refresh-btn:active { transform: translateY(0); }
+
     /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .adv-page-wrapper { padding: 0 4%; }
+      .adv-footer-grid { grid-template-columns: 1fr 1fr; }
+      .adv-footer-brand { grid-column: 1 / -1; }
+    }
     @media (max-width: 600px) {
       .sr-grid { grid-template-columns: 1fr; }
       .adv-meta-grid { grid-template-columns: repeat(2, 1fr); }
+      .adv-footer-grid { grid-template-columns: 1fr; }
+      .adv-page-wrapper { padding: 0 3%; }
     }
   </style>
 </head>
@@ -327,16 +665,37 @@
 <!-- ═══ PAGE WRAPPER ═══ -->
 <div class="page-wrapper">
   <div class="main-content">
+    <div class="adv-page-wrapper">
 
     <!-- Hero -->
     <div class="adv-hero">
-      <h1>🧠 Advanced Market Analysis</h1>
+      <div class="adv-hero-badge">⚡ Advanced Intelligence</div>
+      <h1>Advanced Market Analysis</h1>
       <p>Live SMC market structure · Order blocks · FVG zones · Trading sessions · Liquidity levels</p>
+      <div class="adv-hero-stats">
+        <div class="adv-hero-stat">
+          <span class="adv-hero-stat-val">4</span>
+          <span class="adv-hero-stat-lbl">Sessions</span>
+        </div>
+        <div class="adv-hero-stat">
+          <span class="adv-hero-stat-val">35+</span>
+          <span class="adv-hero-stat-lbl">Pairs</span>
+        </div>
+        <div class="adv-hero-stat">
+          <span class="adv-hero-stat-val">Live</span>
+          <span class="adv-hero-stat-lbl">SMC Signals</span>
+        </div>
+        <div class="adv-hero-stat">
+          <span class="adv-hero-stat-val">AI</span>
+          <span class="adv-hero-stat-lbl">Powered</span>
+        </div>
+      </div>
     </div>
 
     <!-- Pair selector + UTC clock -->
     <div class="adv-bar">
-      <label for="adv-pair-select">Pair:</label>
+      <span class="adv-bar-icon">📈</span>
+      <label for="adv-pair-select">Trading Pair</label>
       <select id="adv-pair-select" class="adv-pair-select">
         <optgroup label="── Major Pairs">
           <option value="EUR/USD" selected>EUR/USD</option>
@@ -386,41 +745,53 @@
     </div>
 
     <!-- ═══ TRADING SESSIONS ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">🌐 Trading Sessions</div>
     <div class="session-grid" id="session-grid">
       <!-- Populated by JS -->
     </div>
+    </div>
 
     <!-- ═══ LIVE SIGNAL ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">📊 Live AI Signal
       <span id="adv-pair-label" style="font-size:.82rem;font-weight:400;color:var(--text2)"></span>
     </div>
     <div id="adv-signal-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading signal data…</div>
     </div>
+    </div>
 
     <!-- ═══ MARKET STRUCTURE ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">🔀 Market Structure (BOS / CHoCH)</div>
     <div id="adv-structure-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading structure…</div>
     </div>
+    </div>
 
     <!-- ═══ FVG ZONES ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">🌀 Fair Value Gaps (FVG)</div>
     <div id="adv-fvg-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading FVG data…</div>
     </div>
+    </div>
 
     <!-- ═══ HIGH VOLUME / ORDER BLOCK ZONES ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">🏦 High-Volume / Order Block Zones</div>
     <div id="adv-hvz-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading zone data…</div>
     </div>
+    </div>
 
     <!-- ═══ SUPPORT / RESISTANCE ═══ -->
+    <div class="adv-section">
     <div class="adv-section-title">📏 Support &amp; Resistance Levels</div>
     <div id="adv-sr-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading S/R levels…</div>
+    </div>
     </div>
 
     <!-- Disclaimer -->
@@ -430,9 +801,60 @@
       Past patterns do not guarantee future performance. Trading involves risk.
     </div>
 
-    <!-- Footer spacer -->
-    <div style="height:40px"></div>
+    <!-- ═══ PROFESSIONAL FOOTER ═══ -->
+    <footer class="adv-footer">
+      <div class="adv-footer-grid">
+        <div class="adv-footer-brand">
+          <div class="adv-footer-brand-name">
+            <img src="/img/trader.png" alt="PiiTrade" style="height:24px;width:24px;object-fit:contain;border-radius:5px;" />
+            PiiTrade
+          </div>
+          <p class="adv-footer-brand-desc">
+            Advanced AI-powered forex market analysis platform. Real-time SMC structure, order blocks,
+            fair value gaps, and institutional liquidity levels — all in one place.
+          </p>
+          <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+            <span class="adv-footer-badge">🤖 AI-Powered</span>
+            <span class="adv-footer-badge">📡 Real-Time</span>
+            <span class="adv-footer-badge">🔒 Free Access</span>
+          </div>
+        </div>
+        <div>
+          <div class="adv-footer-col-title">Navigation</div>
+          <ul class="adv-footer-links">
+            <li><a href="/">🏠 Home</a></li>
+            <li><a href="/forex">📊 Dashboard</a></li>
+            <li><a href="/advance">⚡ Advanced</a></li>
+            <li><a href="/disclaimer">⚖️ Risk Disclaimer</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="adv-footer-col-title">Features</div>
+          <ul class="adv-footer-links">
+            <li><a href="/advance#sessions">🌐 Trading Sessions</a></li>
+            <li><a href="/advance#signal">📈 AI Signals</a></li>
+            <li><a href="/advance#structure">🔀 Market Structure</a></li>
+            <li><a href="/advance#fvg">🌀 FVG Zones</a></li>
+            <li><a href="/advance#hvz">🏦 Order Blocks</a></li>
+            <li><a href="/advance#sr">📏 S/R Levels</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="adv-footer-bottom">
+        <div class="adv-footer-copy">
+          © 2026 PiiTrade · Advanced Market Analysis · All signals are for informational purposes only and do not constitute financial advice.
+        </div>
+        <div class="adv-footer-badges">
+          <span class="adv-footer-badge">SMC</span>
+          <span class="adv-footer-badge">ICT</span>
+          <span class="adv-footer-badge">FVG</span>
+          <span class="adv-footer-badge">BOS</span>
+          <span class="adv-footer-badge">CHoCH</span>
+        </div>
+      </div>
+    </footer>
 
+    </div><!-- .adv-page-wrapper -->
   </div><!-- .main-content -->
 </div><!-- .page-wrapper -->
 
@@ -503,12 +925,14 @@
     const grid = document.getElementById('session-grid');
     grid.innerHTML = SESSIONS.map(function (s) {
       const active = isSessionActive(s.open, s.close);
+      const liveBadge = active
+        ? '<span class="session-badge live"><span class="live-dot"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>LIVE</span>'
+        : '<span class="session-badge closed">⚫ CLOSED</span>';
       return '<div class="session-card' + (active ? ' active' : '') + '">' +
         '<div class="session-flag">' + s.flag + '</div>' +
         '<div class="session-name">' + s.name + '</div>' +
         '<div class="session-time">' + pad(s.open) + ':00 – ' + pad(s.close) + ':00 UTC</div>' +
-        '<span class="session-badge ' + (active ? 'live' : 'closed') + '">' +
-          (active ? '🟢 LIVE' : '⚫ CLOSED') + '</span>' +
+        liveBadge +
         '<div class="session-pairs">' + s.pairs + '</div>' +
         '<div class="session-pips">📊 ' + s.pipRange + '</div>' +
         '<div class="session-kz">⚡ ' + s.kzTip + '</div>' +
