@@ -1318,18 +1318,6 @@ _IMG_DIR = _DIR.parent / "img"
 if _IMG_DIR.exists():
     app.mount("/img", _CachedStaticFiles(directory=_IMG_DIR), name="img")
 
-# React SPA disabled – the Jinja2 HTML templates are served directly.
-# Setting _REACT_INDEX to a non-existent path ensures all _REACT_INDEX.exists()
-# checks return False without touching each route handler individually.
-_REACT_DIST_DIR = _STATIC_DIR / "dist"
-_REACT_INDEX = _REACT_DIST_DIR / "__disabled__"  # intentionally non-existent
-
-# Vite generates hashed asset filenames and references them as /assets/...
-# Mount that path so the browser can load the JS bundle and CSS.
-_REACT_ASSETS_DIR = _REACT_DIST_DIR / "assets"
-if _REACT_ASSETS_DIR.exists():
-    app.mount("/assets", _CachedStaticFiles(directory=_REACT_ASSETS_DIR), name="react-assets")
-
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
 
 
@@ -1346,15 +1334,12 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
     }
 
 
-# ─── Page routes – React SPA ──────────────────────────────────────────────────
-# The React SPA (built to static/dist/) handles all client-side routing.
-# Track visits for analytics and fall back to the legacy Jinja2 templates when
-# the React build is not present (e.g. development without a prior build step).
+# ─── Page routes ──────────────────────────────────────────────────────────────
 
 
 @app.get("/img/trader.png")
 async def favicon_png():
-    """Serve the site favicon referenced by the React index.html."""
+    """Serve the site favicon."""
     _favicon = _DIR.parent / "img" / "trader.png"
     if not _favicon.exists():
         return JSONResponse({"error": "Not found"}, status_code=404)
@@ -1391,48 +1376,19 @@ async def exness_banner_image_3():
 @app.get("/sitemap.xml")
 async def sitemap_xml():
     """Serve sitemap.xml for search engine indexing."""
-    candidates = [
-        _REACT_DIST_DIR / "sitemap.xml",
-        _DIR / "frontend" / "public" / "sitemap.xml",
-    ]
-    for path in candidates:
-        if path.exists():
-            return FileResponse(str(path), media_type="application/xml")
+    _sitemap = _TEMPLATES_DIR / "sitemap.xml"
+    if _sitemap.exists():
+        return FileResponse(str(_sitemap), media_type="application/xml")
     return JSONResponse({"error": "Not found"}, status_code=404)
 
 
 @app.get("/googlea792e3e93ca1f64f.html")
 async def google_site_verification():
     """Serve the Google Search Console site verification file."""
-    candidates = [
-        _REACT_DIST_DIR / "googlea792e3e93ca1f64f.html",
-        _DIR / "frontend" / "public" / "googlea792e3e93ca1f64f.html",
-        _TEMPLATES_DIR / "googlea792e3e93ca1f64f.html",
-    ]
-    for path in candidates:
-        if path.exists():
-            return FileResponse(str(path), media_type="text/html")
+    _verif = _TEMPLATES_DIR / "googlea792e3e93ca1f64f.html"
+    if _verif.exists():
+        return FileResponse(str(_verif), media_type="text/html")
     return JSONResponse({"error": "Not found"}, status_code=404)
-
-
-def _serve_react_or_template(request: Request, template: str, **kwargs):
-    """Serve the React SPA index.html if the build exists, else a legacy template."""
-    _record_visit(_get_client_ip(request))
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
-    return templates.TemplateResponse(request, template, _ctx(request, **kwargs))
-
-
-def _serve_react_spa(request: Request):
-    """Serve the React SPA index.html for React-only pages (no Jinja2 fallback template).
-
-    Falls back to the landing page redirect when the React build is unavailable.
-    """
-    _record_visit(_get_client_ip(request))
-    _react_index = _REACT_DIST_DIR / "index.html"
-    if _react_index.exists():
-        return FileResponse(str(_react_index), media_type="text/html")
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
 def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
@@ -1452,10 +1408,6 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Landing page."""
-    if _REACT_INDEX.exists():
-        _record_visit(_get_client_ip(request))
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
-    # Legacy fallback
     _record_visit(_get_client_ip(request))
     try:
         pair = "EUR/USD"
@@ -1498,8 +1450,6 @@ async def index(request: Request):
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
     _record_visit(_get_client_ip(request))
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     try:
         return templates.TemplateResponse(request, "forex.html", _ctx(request))
     except Exception:
@@ -1515,8 +1465,6 @@ async def methodology_page(request: Request):
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page(request: Request):
     _record_visit(_get_client_ip(request))
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
 
 
@@ -1535,16 +1483,14 @@ async def advance_page(request: Request):
 
 @app.get("/roadmap", response_class=HTMLResponse)
 async def roadmap_page(request: Request):
-    """Product roadmap page (React SPA)."""
-    return _serve_react_spa(request)
+    """Product roadmap – redirects to landing page."""
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
 # ─── Auth routes ──────────────────────────────────────────────────────────────
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     if _get_current_user(request):
         return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse(request, "login.html", _ctx(request, error=None))
@@ -2256,20 +2202,6 @@ async def profile_page(request: Request):
     plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
     sub_active = _is_subscription_active(username)
 
-@app.get("/profile", response_class=HTMLResponse)
-async def profile_page(request: Request):
-    if _REACT_INDEX.exists():
-        _record_visit(_get_client_ip(request))
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
-    username = _get_current_user(request)
-    if not username:
-        return RedirectResponse(url="/login?next=/profile", status_code=status.HTTP_302_FOUND)
-    with _USERS_LOCK:
-        user = dict(_USERS.get(username, {}))
-
-    plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
-    sub_active = _is_subscription_active(username)
-
     return templates.TemplateResponse(
         request, "profile.html",
         _ctx(
@@ -2287,29 +2219,21 @@ async def profile_page(request: Request):
 
 
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_react_page(request: Request):
-    """React admin dashboard route."""
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
+async def admin_page(request: Request):
+    """Admin dashboard – redirects to /const for server-rendered admin panel."""
     return RedirectResponse(url="/const", status_code=status.HTTP_302_FOUND)
 
 
-# ─── React SPA catch-all ─────────────────────────────────────────────────────
-# Must be the LAST route. Any path not matched by an API endpoint above
-# is handled by the React SPA (client-side routing).
+# ─── Catch-all ────────────────────────────────────────────────────────────────
+# Must be the LAST route. Redirects any unmatched path to the landing page.
 
 @app.get("/{full_path:path}", response_class=HTMLResponse)
-async def spa_catch_all(request: Request, full_path: str):
-    """Serve the React SPA index.html for all unmatched GET routes.
-
-    Falls back gracefully when the React build is not present.
-    """
+async def catch_all(request: Request, full_path: str):
+    """Redirect any unmatched GET routes to the landing page."""
     # Skip paths that look like static asset requests to avoid hiding 404s
     if full_path.startswith(("static/", "api/", "_next/")):
         from fastapi import HTTPException
         raise HTTPException(status_code=404)
-    if _REACT_INDEX.exists():
-        return FileResponse(str(_REACT_INDEX), media_type="text/html")
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
