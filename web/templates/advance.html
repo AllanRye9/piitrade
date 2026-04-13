@@ -51,40 +51,37 @@
       --card: #f6f8fa;
     }
 
-    /* ── Theme switcher ── */
+    /* ── Theme switcher (dropdown) ── */
     .adv-theme-switcher {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      padding: 4px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      gap: 6px;
     }
-    .adv-theme-btn {
-      padding: 4px 9px;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
+    .adv-theme-switcher label {
       font-size: .82rem;
-      line-height: 1;
-      transition: background .15s;
       color: var(--text2);
-      font-family: inherit;
+      cursor: default;
     }
-    .adv-theme-btn.active {
-      background: rgba(88,166,255,.2);
+    .adv-theme-select {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
       color: var(--text);
+      font-size: .82rem;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
     }
-    .adv-theme-btn:hover:not(.active) {
-      background: rgba(255,255,255,.08);
+    .adv-theme-select:hover, .adv-theme-select:focus {
+      border-color: var(--accent);
     }
 
-    /* ── Page layout — 7.5% side margins, capped for large screens ── */
+    /* ── Page layout — 8.5% side margins, capped for large screens ── */
     .adv-page-wrapper {
       width: 100%;
-      padding: 0 7.5%;
+      padding: 0 8.5%;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -296,6 +293,12 @@
     .adv-section:nth-child(3) { animation-delay: .15s; }
     .adv-section:nth-child(4) { animation-delay: .2s; }
     .adv-section:nth-child(5) { animation-delay: .25s; }
+    .adv-section-desc {
+      font-size: .82rem;
+      color: var(--text2);
+      margin: -2px 0 14px;
+      line-height: 1.55;
+    }
 
     /* ── Session grid ── */
     .session-grid {
@@ -434,11 +437,95 @@
     .adv-meta-value { font-size: .92rem; font-weight: 700; color: var(--text); font-family: monospace; }
     .adv-meta-value.bull { color: #3ecf8e; }
     .adv-meta-value.bear { color: #f85149; }
+
+    /* ── Key-level cards: ENTRY / TP / SL ── */
+    .adv-meta-item.key-entry { border-left: 3px solid var(--accent); background: rgba(88,166,255,.07); }
+    .adv-meta-item.key-tp    { border-left: 3px solid #3ecf8e; background: rgba(62,207,142,.07); }
+    .adv-meta-item.key-sl    { border-left: 3px solid #f85149; background: rgba(248,81,73,.07); }
+    .adv-meta-item.key-entry .adv-meta-label { color: var(--accent); font-weight: 700; font-size: .72rem; }
+    .adv-meta-item.key-tp    .adv-meta-label { color: #3ecf8e;       font-weight: 700; font-size: .72rem; }
+    .adv-meta-item.key-sl    .adv-meta-label { color: #f85149;       font-weight: 700; font-size: .72rem; }
+    .adv-meta-item.key-entry .adv-meta-value,
+    .adv-meta-item.key-tp    .adv-meta-value,
+    .adv-meta-item.key-sl    .adv-meta-value { font-size: 1.05rem; font-weight: 800; letter-spacing: .01em; }
+    .adv-key-icon { font-size: .85rem; margin-right: 3px; }
+
+    /* ── Chart live price overlay ── */
+    .adv-chart-live-price {
+      position: absolute;
+      top: 10px; right: 14px;
+      background: rgba(13,17,23,.85);
+      border: 1px solid rgba(88,166,255,.4);
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: .78rem;
+      font-family: monospace;
+      color: var(--accent);
+      font-weight: 700;
+      pointer-events: none;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .adv-live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #3ecf8e;
+      animation: livePulse 1.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(1.5); }
+    }
     .adv-conf-bar-wrap { height: 6px; background: var(--bg); border-radius: 4px; margin-top: 4px; overflow: hidden; }
     .adv-conf-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.22,1,.36,1); }
     .adv-conf-bar-fill.BUY  { background: linear-gradient(90deg, #3ecf8e, #6ee7b7); }
     .adv-conf-bar-fill.SELL { background: linear-gradient(90deg, #f85149, #fc8a85); }
     .adv-conf-bar-fill.HOLD { background: linear-gradient(90deg, #ffc107, #ffd966); }
+
+    /* ── Beginner guide ── */
+    .adv-guide {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .adv-guide-summary {
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .adv-guide-summary::-webkit-details-marker { display: none; }
+    .adv-guide-summary::before { content: '▶'; font-size: .7rem; color: var(--accent); transition: transform .2s; }
+    details[open] .adv-guide-summary::before { transform: rotate(90deg); }
+    .adv-guide-hint { font-size: .78rem; font-weight: 400; color: var(--text2); margin-left: 4px; }
+    .adv-guide-body { padding: 4px 20px 20px; }
+    .adv-guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .adv-guide-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .adv-guide-icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .adv-guide-title { font-size: .84rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .adv-guide-desc { font-size: .78rem; color: var(--text2); line-height: 1.5; }
+    .adv-guide-footer { font-size: .8rem; color: var(--text2); border-top: 1px solid var(--border); padding-top: 12px; margin: 0; }
 
     /* ── Structure table ── */
     .adv-table {
@@ -821,9 +908,12 @@
     <a href="/forex">Dashboard</a>
     <a href="/advance" style="color:var(--accent);font-weight:600">Advanced</a>
     <div class="adv-theme-switcher">
-      <button class="adv-theme-btn" data-t="dark" title="Dark theme">🌑 Dark</button>
-      <button class="adv-theme-btn" data-t="ocean" title="Ocean theme">🌊 Ocean</button>
-      <button class="adv-theme-btn" data-t="white" title="Light theme">☀️ White</button>
+      <label for="adv-theme-select">🎨</label>
+      <select id="adv-theme-select" class="adv-theme-select" title="Choose theme">
+        <option value="dark">🌑 Dark</option>
+        <option value="ocean">🌊 Ocean</option>
+        <option value="white">☀️ Light</option>
+      </select>
     </div>
     {% if current_user and is_admin %}
     <a href="/const" class="nav-admin">⚙️ Admin</a>
@@ -917,29 +1007,83 @@
       <span id="adv-utc-clock" class="adv-utc"></span>
     </div>
 
+    <!-- ═══ QUICK GUIDE (beginner-friendly) ═══ -->
+    <details class="adv-guide">
+      <summary class="adv-guide-summary">📖 How to Read This Page <span class="adv-guide-hint">(click to expand — great for beginners!)</span></summary>
+      <div class="adv-guide-body">
+        <div class="adv-guide-grid">
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">📍</div>
+            <div class="adv-guide-title">Current Price</div>
+            <div class="adv-guide-desc">The glowing horizontal line on the chart. It shows exactly where the market is <em>right now</em> for the selected pair. The price badge updates automatically.</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">⚡</div>
+            <div class="adv-guide-title">ENTRY</div>
+            <div class="adv-guide-desc">The price level where the AI recommends opening a trade. Look for this dashed line on the chart and the bold value in the signal card below.</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">✅</div>
+            <div class="adv-guide-title">Take Profit (TP)</div>
+            <div class="adv-guide-desc">The target price where you close the trade to lock in profit. Shown in <strong style="color:#3ecf8e">green</strong>. Always further from Entry than the Stop Loss for a positive risk:reward.</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">🛑</div>
+            <div class="adv-guide-title">Stop Loss (SL)</div>
+            <div class="adv-guide-desc">The price level at which you exit if the trade moves against you — to limit losses. Shown in <strong style="color:#f85149">red</strong>. Never trade without a Stop Loss!</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">📦</div>
+            <div class="adv-guide-title">Order Blocks (OB)</div>
+            <div class="adv-guide-desc">Price zones where large institutions (banks, hedge funds) placed big orders. Price often returns to these zones. Green = bullish OB (buy zone); Red = bearish OB (sell zone).</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">🌀</div>
+            <div class="adv-guide-title">Fair Value Gap (FVG)</div>
+            <div class="adv-guide-desc">A gap in the market where price moved so fast no trades happened. Price tends to revisit these gaps. Blue = bullish FVG; Orange = bearish FVG.</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">💧</div>
+            <div class="adv-guide-title">Liquidity Zones</div>
+            <div class="adv-guide-desc">Areas where many stop-loss orders are clustered (usually above recent highs or below recent lows). Institutions target these areas. Watch the S/R Levels section for these zones.</div>
+          </div>
+          <div class="adv-guide-card">
+            <div class="adv-guide-icon">🔀</div>
+            <div class="adv-guide-title">BOS / CHoCH</div>
+            <div class="adv-guide-desc"><strong>Break of Structure (BOS)</strong>: price confirms the current trend by breaking past a key level. <strong>Change of Character (CHoCH)</strong>: signals a potential trend reversal — pay attention!</div>
+          </div>
+        </div>
+        <p class="adv-guide-footer">💡 <strong>Tip:</strong> Use the pair selector above to switch between currency pairs. Use the timeframe buttons (1H, 4H, 1D, 30D) to zoom in/out. The chart updates every 90 seconds.</p>
+      </div>
+    </details>
+
     <!-- ═══ MARKET STRUCTURE CHART ═══ -->
     <div class="adv-section adv-chart-section">
       <div class="adv-section-title">📈 Market Structure Chart
         <div class="adv-tf-nav">
-          <button class="adv-tf-btn" data-tf="1H">1H</button>
-          <button class="adv-tf-btn" data-tf="4H">4H</button>
-          <button class="adv-tf-btn" data-tf="30D">30D</button>
-          <button class="adv-tf-btn active" data-tf="1D">1D</button>
+          <button class="adv-tf-btn active" data-tf="1H" title="Last 7 days – 1-hour bars">1H</button>
+          <button class="adv-tf-btn" data-tf="4H" title="Last 15 days – 4-hour bars">4H</button>
+          <button class="adv-tf-btn" data-tf="1D" title="30-day daily bars">1D</button>
+          <button class="adv-tf-btn" data-tf="30D" title="30 days – 4-hour bars (full view)">30D</button>
         </div>
       </div>
       <div class="adv-chart-legend">
-        <span class="adv-legend-item ob-bull">Bullish Order Block</span>
-        <span class="adv-legend-item ob-bear">Bearish Order Block</span>
-        <span class="adv-legend-item fvg-bull">FVG (Bullish)</span>
-        <span class="adv-legend-item fvg-bear">FVG (Bearish)</span>
-        <span class="adv-legend-item choch-line">CHoCH Level</span>
-        <span class="adv-legend-item price-line">Current Price</span>
-        <span class="adv-legend-item ai-entry">AI Entry</span>
-        <span class="adv-legend-item ai-tp">Take Profit ▲</span>
-        <span class="adv-legend-item ai-sl">Stop Loss ▼</span>
+        <span class="adv-legend-item ob-bull">📦 Bullish Order Block</span>
+        <span class="adv-legend-item ob-bear">📦 Bearish Order Block</span>
+        <span class="adv-legend-item fvg-bull">🌀 FVG (Bullish)</span>
+        <span class="adv-legend-item fvg-bear">🌀 FVG (Bearish)</span>
+        <span class="adv-legend-item choch-line">🔀 CHoCH Level</span>
+        <span class="adv-legend-item price-line">📍 Current Price</span>
+        <span class="adv-legend-item ai-entry">⚡ AI Entry</span>
+        <span class="adv-legend-item ai-tp">✅ Take Profit (TP)</span>
+        <span class="adv-legend-item ai-sl">🛑 Stop Loss (SL)</span>
       </div>
       <div class="adv-chart-wrap" id="adv-chart-wrap">
         <canvas id="adv-chart-canvas"></canvas>
+        <div class="adv-chart-live-price" id="adv-chart-live-badge">
+          <span class="adv-live-dot"></span>
+          <span id="adv-chart-live-price-val">Loading…</span>
+        </div>
         <div class="adv-chart-loading" id="adv-chart-loading">
           <span class="spin"></span>&nbsp;Loading chart…
         </div>
@@ -950,6 +1094,7 @@
     <!-- ═══ TRADING SESSIONS ═══ -->
     <div class="adv-section">
     <div class="adv-section-title">🌐 Trading Sessions</div>
+    <p class="adv-section-desc">See which markets are open right now. Trade during the highlighted LIVE sessions for the best price action and liquidity.</p>
     <div class="session-grid" id="session-grid">
       <!-- Populated by JS -->
     </div>
@@ -960,6 +1105,7 @@
     <div class="adv-section-title">📊 Live AI Signal
       <span id="adv-pair-label" style="font-size:.82rem;font-weight:400;color:var(--text2)"></span>
     </div>
+    <p class="adv-section-desc">The AI-generated trade idea for the selected pair. <strong>ENTRY</strong> = where to open the trade · <strong style="color:#3ecf8e">TAKE PROFIT</strong> = your target · <strong style="color:#f85149">STOP LOSS</strong> = your exit if wrong.</p>
     <div id="adv-signal-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading signal data…</div>
     </div>
@@ -968,6 +1114,7 @@
     <!-- ═══ MARKET STRUCTURE ═══ -->
     <div class="adv-section">
     <div class="adv-section-title">🔀 Market Structure (BOS / CHoCH)</div>
+    <p class="adv-section-desc">Break of Structure (BOS) confirms the current trend. Change of Character (CHoCH) warns of a potential reversal — a key signal to watch.</p>
     <div id="adv-structure-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading structure…</div>
     </div>
@@ -976,6 +1123,7 @@
     <!-- ═══ FVG ZONES ═══ -->
     <div class="adv-section">
     <div class="adv-section-title">🌀 Fair Value Gaps (FVG)</div>
+    <p class="adv-section-desc">Gaps where price moved too fast for the market to fully price in. Price often returns to fill these gaps — they are high-probability reaction zones.</p>
     <div id="adv-fvg-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading FVG data…</div>
     </div>
@@ -984,6 +1132,7 @@
     <!-- ═══ HIGH VOLUME / ORDER BLOCK ZONES ═══ -->
     <div class="adv-section">
     <div class="adv-section-title">🏦 High-Volume / Order Block Zones</div>
+    <p class="adv-section-desc">Price zones where institutional traders placed large orders. These zones act as strong support or resistance and often produce powerful price reactions.</p>
     <div id="adv-hvz-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading zone data…</div>
     </div>
@@ -991,7 +1140,10 @@
 
     <!-- ═══ SUPPORT / RESISTANCE ═══ -->
     <div class="adv-section">
-    <div class="adv-section-title">📏 Support &amp; Resistance Levels</div>
+    <div class="adv-section-title">📏 Support &amp; Resistance Levels
+      <span style="font-size:.78rem;font-weight:400;color:var(--text2);margin-left:8px">(Liquidity Zones)</span>
+    </div>
+    <p class="adv-section-desc">Key price levels where the market has historically reversed or stalled. These are also liquidity pools — areas where stop-loss orders cluster.</p>
     <div id="adv-sr-wrap">
       <div class="adv-loading"><span class="spin"></span>Loading S/R levels…</div>
     </div>
@@ -1076,7 +1228,7 @@ var AdvChart = (function () {
 
   var canvas, ctx, wrap, tooltip;
   var rawHistory = null, techData = null;
-  var timeframe = '1D';
+  var timeframe = '1H';
   var animFrame = null, animProgress = 0;
   var hoverIdx = -1, preparedData = null;
   var aiSignalData = null;
@@ -1204,12 +1356,19 @@ var AdvChart = (function () {
       };
     });
 
+    /* Build liquidity zone lines from support/resistance levels */
+    var sr = (techData.support_resistance || {});
+    var liqZones = [];
+    (sr.support || []).forEach(function (l) { liqZones.push({ level: l, side: 'support' }); });
+    (sr.resistance || []).forEach(function (l) { liqZones.push({ level: l, side: 'resistance' }); });
+
     preparedData = {
       prices:       prices,
       dates:        dates,
       obZones:      obZones,
       fvgZones:     techData.fvg    || [],
       chochLevels:  techData.choch  || [],
+      liqZones:     liqZones,
       currentPrice: cp,
       aiSignal:     aiSignalData
     };
@@ -1282,6 +1441,7 @@ var AdvChart = (function () {
     preparedData.obZones.forEach(function (z) { allY.push(z.top, z.bottom); });
     preparedData.fvgZones.forEach(function (f) { allY.push(f.top, f.bottom); });
     preparedData.chochLevels.forEach(function (c) { allY.push(c.level); });
+    (preparedData.liqZones || []).forEach(function (z) { allY.push(z.level); });
     allY.push(preparedData.currentPrice);
     /* Include AI prediction levels in range so they stay visible */
     if (preparedData.aiSignal) {
@@ -1412,6 +1572,24 @@ var AdvChart = (function () {
       ctx.fillText('CHoCH ' + (c.type === 'bullish' ? '▲' : '▼'), PL + cw - 4, y - 2);
     });
 
+    /* ── Liquidity zones (Support / Resistance) ── */
+    (preparedData.liqZones || []).forEach(function (z) {
+      var y = py(z.level);
+      var isSupport = (z.side === 'support');
+      var col = isSupport ? '62,207,142' : '248,81,73';
+      ctx.strokeStyle  = 'rgba(' + col + ',0.28)';
+      ctx.lineWidth    = 1;
+      ctx.setLineDash([2, 5]);
+      ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + cw, y); ctx.stroke();
+      ctx.setLineDash([]);
+      /* Small side label */
+      ctx.fillStyle    = 'rgba(' + col + ',0.7)';
+      ctx.font         = '9px monospace';
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText((isSupport ? '💧S' : '💧R'), PL + 3, y);
+    });
+
     /* ── AI Prediction lines (drawn before price line so line draws over them) ── */
     if (preparedData.aiSignal) {
       var ais = preparedData.aiSignal;
@@ -1422,50 +1600,69 @@ var AdvChart = (function () {
       var conf = parseFloat(ais.confidence) || 0;
       var dirClr = dir === 'BUY' ? '62,207,142' : dir === 'SELL' ? '248,81,73' : '255,193,7';
 
+      /* ── Helper: draw a labelled level pill ── */
+      function drawLevelPill(yPos, txt, r, g, b, alignRight, baseline) {
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign    = alignRight ? 'right' : 'left';
+        ctx.textBaseline = baseline || 'middle';
+        var tw = ctx.measureText(txt).width;
+        var pw = tw + 16, ph = 18, pbr = 4;
+        var px0 = alignRight ? (PL + cw - pw - 2) : (PL + 3);
+        var py0 = yPos - ph / 2;
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.22)';
+        ctx.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px0 + pbr, py0);
+        ctx.lineTo(px0 + pw - pbr, py0);
+        ctx.arcTo(px0 + pw, py0, px0 + pw, py0 + pbr, pbr);
+        ctx.lineTo(px0 + pw, py0 + ph - pbr);
+        ctx.arcTo(px0 + pw, py0 + ph, px0 + pw - pbr, py0 + ph, pbr);
+        ctx.lineTo(px0 + pbr, py0 + ph);
+        ctx.arcTo(px0, py0 + ph, px0, py0 + ph - pbr, pbr);
+        ctx.lineTo(px0, py0 + pbr);
+        ctx.arcTo(px0, py0, px0 + pbr, py0, pbr);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',1)';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(txt, alignRight ? (PL + cw - 10) : (px0 + 8), yPos);
+      }
+
       /* Entry line */
       if (ePx && !isNaN(ePx)) {
         var ey = py(ePx);
-        ctx.strokeStyle = 'rgba(' + dirClr + ',0.85)';
-        ctx.lineWidth   = 1.5;
-        ctx.setLineDash([8, 4]);
+        ctx.strokeStyle = 'rgba(' + dirClr + ',0.9)';
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([10, 4]);
         ctx.beginPath(); ctx.moveTo(PL, ey); ctx.lineTo(PL + cw, ey); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle    = 'rgba(' + dirClr + ',1)';
-        ctx.font         = 'bold 10px monospace';
-        ctx.textAlign    = 'left';
-        ctx.textBaseline = 'bottom';
         var eArr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
-        ctx.fillText(eArr + ' ENTRY ' + ePx.toFixed(pDec(ePx)), PL + 5, ey - 2);
+        var eClrParts = dir === 'BUY' ? [62,207,142] : dir === 'SELL' ? [248,81,73] : [255,193,7];
+        drawLevelPill(ey, eArr + ' ENTRY  ' + ePx.toFixed(pDec(ePx)), eClrParts[0], eClrParts[1], eClrParts[2], false);
       }
 
       /* Take Profit line */
       if (tpPx && !isNaN(tpPx)) {
         var tpy2 = py(tpPx);
-        ctx.strokeStyle = 'rgba(62,207,142,0.75)';
-        ctx.lineWidth   = 1.2;
-        ctx.setLineDash([5, 3]);
+        ctx.strokeStyle = 'rgba(62,207,142,0.9)';
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([8, 4]);
         ctx.beginPath(); ctx.moveTo(PL, tpy2); ctx.lineTo(PL + cw, tpy2); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle    = '#3ecf8e';
-        ctx.font         = 'bold 10px monospace';
-        ctx.textAlign    = 'right';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('▲ TP ' + tpPx.toFixed(pDec(tpPx)), PL + cw - 5, tpy2 - 2);
+        drawLevelPill(tpy2, '✅ TP  ' + tpPx.toFixed(pDec(tpPx)), 62, 207, 142, true);
       }
 
       /* Stop Loss line */
       if (slPx && !isNaN(slPx)) {
         var sly2 = py(slPx);
-        ctx.strokeStyle = 'rgba(248,81,73,0.75)';
-        ctx.lineWidth   = 1.2;
-        ctx.setLineDash([5, 3]);
+        ctx.strokeStyle = 'rgba(248,81,73,0.9)';
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([8, 4]);
         ctx.beginPath(); ctx.moveTo(PL, sly2); ctx.lineTo(PL + cw, sly2); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle    = '#f85149';
-        ctx.font         = 'bold 10px monospace';
-        ctx.textAlign    = 'right';
-        ctx.textBaseline = 'top';
-        ctx.fillText('▼ SL ' + slPx.toFixed(pDec(slPx)), PL + cw - 5, sly2 + 2);
+        drawLevelPill(sly2, '🛑 SL  ' + slPx.toFixed(pDec(slPx)), 248, 81, 73, true);
       }
     }
 
@@ -1692,7 +1889,23 @@ var AdvChart = (function () {
     }
   }
 
-  return { init: init, updateData: updateData, updateSignal: updateSignal };
+  /* Update the live current price (called by live-price polling) */
+  function updateCurrentPrice(price) {
+    if (!price || isNaN(price)) return;
+    if (preparedData) {
+      preparedData.currentPrice = price;
+      /* Also update the trailing price in the series so the blinking dot
+         sits right at the real market price */
+      if (preparedData.prices && preparedData.prices.length > 0) {
+        preparedData.prices[preparedData.prices.length - 1] = price;
+      }
+    }
+    /* Update the overlay badge */
+    var badge = document.getElementById('adv-chart-live-price-val');
+    if (badge) badge.textContent = Number(price).toFixed(pDec(price));
+  }
+
+  return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice };
 }());
 
 (function () {
@@ -1826,6 +2039,7 @@ var AdvChart = (function () {
       src = 'Market Feed Unavailable';
     }
     var live = sig.is_live ? '🟢 Live' : '🟡 Static';
+    var eArr = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
     var html =
       '<div class="adv-signal-card">' +
         '<div class="adv-signal-row">' +
@@ -1835,22 +2049,32 @@ var AdvChart = (function () {
             '<div style="font-size:.75rem;color:var(--text2);margin-top:2px">' + escHtml(live) + ' · ' + escHtml(src) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div style="margin-bottom:10px">' +
+        '<div style="margin-bottom:14px">' +
           '<div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text2);margin-bottom:4px">' +
             '<span>Confidence</span><span>' + confPct + '%</span>' +
           '</div>' +
           '<div class="adv-conf-bar-wrap"><div class="adv-conf-bar-fill ' + dir + '" style="width:' + confPct + '%"></div></div>' +
         '</div>' +
+        '<!-- Key Levels: ENTRY / TP / SL prominently displayed -->' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">' +
+          _keyLevelItem('⚡ ENTRY', fmtNum(sig.entry_price), 'key-entry', eArr) +
+          _keyLevelItem('✅ TAKE PROFIT', fmtNum(sig.take_profit), 'key-tp', '▲') +
+          _keyLevelItem('🛑 STOP LOSS', fmtNum(sig.stop_loss), 'key-sl', '▼') +
+        '</div>' +
         '<div class="adv-meta-grid">' +
-          _metaItem('Entry', fmtNum(sig.entry_price), dirClass(dir)) +
-          _metaItem('Take Profit', fmtNum(sig.take_profit), 'bull') +
-          _metaItem('Stop Loss', fmtNum(sig.stop_loss), 'bear') +
           _metaItem('30-day Accuracy', escHtml((sig.accuracy_30d || '–') + '%'), '') +
           _metaItem('AI Label', escHtml(sig.ai_label || '–'), '') +
         '</div>' +
       '</div>';
     document.getElementById('adv-signal-wrap').innerHTML = html;
     document.getElementById('adv-pair-label').textContent = '— ' + currentPair;
+  }
+
+  function _keyLevelItem(label, value, cls, icon) {
+    return '<div class="adv-meta-item ' + cls + '">' +
+      '<span class="adv-meta-label">' + label + '</span>' +
+      '<span class="adv-meta-value">' + escHtml(icon) + ' ' + value + '</span>' +
+    '</div>';
   }
 
   function _metaItem(label, value, cls) {
@@ -2058,6 +2282,26 @@ var AdvChart = (function () {
   // ── Initial load ─────────────────────────────────────────────────────────
   loadPairData(currentPair);
 
+  // ── Live price polling (every 20 seconds) ────────────────────────────────
+  function pollLivePrice() {
+    fetch('/api/forex/live-prices')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var prices = d.prices || [];
+        for (var i = 0; i < prices.length; i++) {
+          if (prices[i].pair === currentPair) {
+            var p = parseFloat(prices[i].price);
+            if (!isNaN(p) && p > 0) {
+              AdvChart.updateCurrentPrice(p);
+            }
+            break;
+          }
+        }
+      })
+      .catch(function () { /* silently ignore */ });
+  }
+  setInterval(pollLivePrice, 20000);
+
   // ── Hide loading overlay ─────────────────────────────────────────────────
   window.addEventListener('load', function () {
     var overlay = document.getElementById('adv-loading-overlay');
@@ -2065,19 +2309,17 @@ var AdvChart = (function () {
     setTimeout(function () { overlay.style.display = 'none'; }, 420);
   });
 
-  // ── Theme switcher ──────────────────────────────────────────────────────
+  // ── Theme switcher (dropdown) ─────────────────────────────────────────────
   (function () {
     var saved = localStorage.getItem('pii-theme') || 'dark';
-    /* data-theme is already set by the head script; only sync button states here */
-    document.querySelectorAll('.adv-theme-btn').forEach(function (btn) {
-      if (btn.dataset.t === saved) btn.classList.add('active');
-      btn.addEventListener('click', function () {
-        document.documentElement.setAttribute('data-theme', btn.dataset.t);
-        localStorage.setItem('pii-theme', btn.dataset.t);
-        document.querySelectorAll('.adv-theme-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+    var sel = document.getElementById('adv-theme-select');
+    if (sel) {
+      sel.value = saved;
+      sel.addEventListener('change', function () {
+        document.documentElement.setAttribute('data-theme', sel.value);
+        localStorage.setItem('pii-theme', sel.value);
       });
-    });
+    }
   })();
 
 })();
