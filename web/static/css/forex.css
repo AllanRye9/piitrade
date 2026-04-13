@@ -510,6 +510,10 @@ a:hover {
   border-left: 4px solid var(--accent);
 }
 
+.toast.toast-warn {
+  border-left: 4px solid #ffc107;
+}
+
 .toast.toast-achievement {
   border-left: 4px solid #a371f7;
 }
