@@ -4575,6 +4575,8 @@ canvas {
   border-radius: 20px;
   padding: 3px 10px;
   pointer-events: none;
+  /* Bounce for 6 s, then fade out over 0.5 s. Keep values in sync with
+     the JS cleanup listener that checks for the 'pairHintFadeOut' animationend. */
   animation: pairHintBounce 0.8s ease-in-out infinite alternate,
              pairHintFadeOut 0.5s ease 6s forwards;
   white-space: nowrap;

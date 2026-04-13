@@ -1924,12 +1924,14 @@ async function loadSrBreakouts() {
     renderSrBreakouts(data.sr_groups || {});
 
     // Alert only for breakout pairs not already alerted this session
-    const newBroke = (data.sr_groups?.broke || []).filter(item => {
+    const newBroke = [];
+    for (const item of (data.sr_groups?.broke || [])) {
       const key = `${item.pair}::${item.level}`;
-      if (_alertedSrBroke.has(key)) return false;
-      _alertedSrBroke.add(key);
-      return true;
-    });
+      if (!_alertedSrBroke.has(key)) {
+        _alertedSrBroke.add(key);
+        newBroke.push(item);
+      }
+    }
     if (newBroke.length > 0) {
       playSignalSound('breakout');
       const pairNames = [...new Set(newBroke.map(i => i.pair))].slice(0, 3).join(', ');
