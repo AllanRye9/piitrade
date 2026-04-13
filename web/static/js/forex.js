@@ -648,10 +648,6 @@ const FxPriceChart = (function () {
     let precision = 4, minMove = 0.0001;
     if (pair && pair.includes('JPY')) { precision = 2; minMove = 0.01; }
     else if (pair === 'BTC/USD')      { precision = 2; minMove = 0.01; }
-    else if (pair && (pair.includes('USD/TRY') || pair.includes('USD/ZAR') || pair.includes('USD/MXN')
-          || pair.includes('USD/NOK') || pair.includes('USD/SEK') || pair.includes('USD/CNY'))) {
-      precision = 4; minMove = 0.0001;  // already correct, but explicit
-    }
     const PRICE_FMT = { type: 'price', precision, minMove };
     if (chartType === 'candle') {
       mainSeries = chart.addCandlestickSeries({ upColor: c.up, downColor: c.down, borderUpColor: c.up, borderDownColor: c.down, wickUpColor: c.up, wickDownColor: c.down, priceFormat: PRICE_FMT });
@@ -663,7 +659,8 @@ const FxPriceChart = (function () {
   // Treat datetime strings without timezone as UTC (server always emits UTC bars).
   // Date-only strings (e.g. "2026-04-12") are already interpreted as UTC by JS.
   function toTs(d) {
-    if (typeof d === 'string' && d.includes('T') && !d.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(d)) {
+    // Timezone offset pattern: "+HH:MM" or "-HH:MM" at end of string
+    if (typeof d === 'string' && d.includes('T') && !d.endsWith('Z') && !/[+\-]\d{2}:\d{2}$/.test(d)) {
       d = d + 'Z';
     }
     return Math.floor(new Date(d).getTime() / 1000);
