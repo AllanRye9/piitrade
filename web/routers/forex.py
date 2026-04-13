@@ -3,7 +3,7 @@ PiiTrade – Forex resources router
 Hosts API endpoints used by the dashboard tabs and clients.
 """
 
-from datetime import datetime, timezone, date as _date
+from datetime import datetime, timezone, date as _date, timedelta as _td
 import logging
 from typing import Any
 
@@ -765,8 +765,6 @@ async def forex_candles(pair: str = "EUR/USD", tf: str = "1D", bars: int = 365):
             # Fallback to static sequences
             base_price, pip, seq = core._FOREX_HIST_SEQUENCES[pair]
             price = base_price
-            from datetime import date as _date, timedelta as _td
-
             start = _date.today() - _td(days=len(seq))
             daily_closes = []
             for idx, (_, _, delta) in enumerate(seq):
