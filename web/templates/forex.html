@@ -246,7 +246,8 @@
         <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
         <section id="section-signal">
           <div class="fx-pair-bar">
-            <label for="pair-select" style="font-size:.9rem;color:let(--text2)">Trading Pair:</label>
+            <label for="pair-select" class="fx-pair-label" style="font-size:.9rem;color:let(--text2)">Trading Pair:</label>
+            <span id="pair-select-hint" class="pair-select-hint" aria-hidden="true" title="Select a trading pair here">👇 Select here</span>
             <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
               <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
                 <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
@@ -524,11 +525,15 @@
 
         <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
         <section id="section-fvg">
-          <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
+          <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner
+            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
+            <span class="scanner-last-update"></span>
+          </div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to Fair Value Gaps.
             Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
             Click any row to expand and view all FVGs for that pair.
+            Data refreshes automatically every 60 seconds.
           </p>
 
           <!-- FVG Filter Bar -->
@@ -592,10 +597,14 @@
 
         <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
         <section id="section-sr-breaks">
-          <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
+          <div class="fx-section-title">💥 Support &amp; Resistance Levels
+            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
+            <span class="scanner-last-update"></span>
+          </div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to major support and
             resistance levels — from those approaching, to those touching, to confirmed breaks.
+            Data refreshes automatically every 60 seconds.
           </p>
 
           <!-- S/R Group Filter Bar -->
@@ -708,10 +717,14 @@
 
         <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
         <section id="section-patterns">
-          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
+          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner
+            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
+            <span class="scanner-last-update"></span>
+          </div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
             across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
+            Data refreshes automatically every 60 seconds.
           </p>
 
           <div class="fvg-disclaimer">

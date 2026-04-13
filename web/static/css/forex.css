@@ -4561,3 +4561,94 @@ canvas {
     animation: none;
   }
 }
+
+/* ── Trading Pair hint indicator ── */
+.pair-select-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.12);
+  border: 1px solid rgba(88, 166, 255, 0.35);
+  border-radius: 20px;
+  padding: 3px 10px;
+  pointer-events: none;
+  animation: pairHintBounce 0.8s ease-in-out infinite alternate,
+             pairHintFadeOut 0.5s ease 6s forwards;
+  white-space: nowrap;
+}
+
+.pair-select-hint.hint-hidden {
+  display: none;
+}
+
+@keyframes pairHintBounce {
+  from {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(88, 166, 255, 0);
+  }
+  to {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 4px 14px rgba(88, 166, 255, 0.35);
+  }
+}
+
+@keyframes pairHintFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
+}
+
+/* Pulse glow on pair-select while hint is visible */
+.fx-pair-select.pair-select--highlight {
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.35);
+  border-color: var(--accent);
+  animation: pairSelectGlow 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pairSelectGlow {
+  from { box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2); }
+  to   { box-shadow: 0 0 0 5px rgba(88, 166, 255, 0.4); }
+}
+
+/* ── Scanner auto-refresh indicator ── */
+.scanner-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.scanner-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: scannerDotPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes scannerDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.75); }
+}
+
+.scanner-last-update {
+  font-size: 0.73rem;
+  color: var(--text2);
+  margin-left: 6px;
+}
+
+/* New-data flash on scanner list items */
+@keyframes scannerNewItem {
+  0%   { background: rgba(88, 166, 255, 0.22); }
+  100% { background: transparent; }
+}
+
+.scanner-item-new {
+  animation: scannerNewItem 1.2s ease forwards;
+}

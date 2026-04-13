@@ -12,10 +12,15 @@
 let currentPair       = 'EUR/USD';
 let signalData        = null;
 let refreshTimer      = null;
+let scannerRefreshTimer = null;
 let previousDirection = null;
 let soundEnabled      = true;
-const REFRESH_INTERVAL_MS   = 30_000; // 30 seconds
-const PAIR_FETCH_DELAY_MS   = 120;    // delay between sequential pair API calls (rate-limit friendly)
+const REFRESH_INTERVAL_MS         = 30_000; // 30 seconds (signal / news / alerts)
+const SCANNER_REFRESH_INTERVAL_MS = 60_000; // 60 seconds (scanner tabs)
+const PAIR_FETCH_DELAY_MS         = 120;    // delay between sequential pair API calls (rate-limit friendly)
+
+// Track S/R breakout pairs that have already triggered an alert this session
+const _alertedSrBroke = new Set();
 
 // ─── Gamification state (persisted in localStorage) ──────────────────────────
 const GAME_KEY = 'fxHubGame';
@@ -1918,11 +1923,19 @@ async function loadSrBreakouts() {
     srBreakoutsLoaded = true;
     renderSrBreakouts(data.sr_groups || {});
 
-    const brokeCount = (data.sr_groups?.broke || []).length;
-    if (brokeCount > 0) {
+    // Alert only for breakout pairs not already alerted this session
+    const newBroke = (data.sr_groups?.broke || []).filter(item => {
+      const key = `${item.pair}::${item.level}`;
+      if (_alertedSrBroke.has(key)) return false;
+      _alertedSrBroke.add(key);
+      return true;
+    });
+    if (newBroke.length > 0) {
       playSignalSound('breakout');
+      const pairNames = [...new Set(newBroke.map(i => i.pair))].slice(0, 3).join(', ');
+      const extra = newBroke.length > 3 ? ` +${newBroke.length - 3} more` : '';
       showToast('toast-info', '💥', 'S/R Breakout Detected',
-        `${brokeCount} breakout${brokeCount > 1 ? 's' : ''} confirmed`, 5000);
+        `${pairNames}${extra}: ${newBroke.length} new breakout${newBroke.length > 1 ? 's' : ''} confirmed`, 5000);
     }
   } catch (err) {
     if (loadingEl) loadingEl.textContent = 'Could not load S/R data.';
@@ -1988,6 +2001,7 @@ const refreshSrBtn = document.getElementById('btn-refresh-sr');
 if (refreshSrBtn) {
   refreshSrBtn.addEventListener('click', () => {
     srBreakoutsLoaded = false;
+    _alertedSrBroke.clear(); // allow re-alerting after manual refresh
     loadSrBreakouts();
   });
 }
@@ -2040,6 +2054,28 @@ function resetAutoRefresh() {
     loadNews();
     loadAlerts({ preferCache: false });
   }, REFRESH_INTERVAL_MS);
+}
+
+/** Refresh all scanner tabs with live data and notify on new findings. */
+function refreshScanners() {
+  loadFvgScanner();
+  loadSrBreakouts();
+  loadPatternScanner();
+  loadVolatilePairs(currentVolatileTf);
+  loadReversalPairs();
+  updateScannerTimestamps();
+}
+
+function updateScannerTimestamps() {
+  const timeStr = new Date().toLocaleTimeString();
+  document.querySelectorAll('.scanner-last-update').forEach(el => {
+    el.textContent = `Updated: ${timeStr}`;
+  });
+}
+
+function startScannerAutoRefresh() {
+  if (scannerRefreshTimer) clearInterval(scannerRefreshTimer);
+  scannerRefreshTimer = setInterval(refreshScanners, SCANNER_REFRESH_INTERVAL_MS);
 }
 
 // ─── Resize chart on window resize ───────────────────────────────────────────
@@ -2148,6 +2184,31 @@ renderBadges();
 // Default tab: Signal
 activateTab('section-signal');
 
+// ── Trading Pair hint: point users to the pair selector on first page load ──
+(function initPairHint() {
+  const hint    = document.getElementById('pair-select-hint');
+  const sel     = document.getElementById('pair-select');
+  if (!hint || !sel) return;
+
+  // Add highlight glow to the select
+  sel.classList.add('pair-select--highlight');
+
+  // After the CSS fade-out animation ends (6s trigger + 0.5s duration = 6.5s) hide the hint
+  // and remove the glow so the page looks clean.
+  const cleanup = () => {
+    hint.classList.add('hint-hidden');
+    sel.classList.remove('pair-select--highlight');
+  };
+
+  hint.addEventListener('animationend', (e) => {
+    if (e.animationName === 'pairHintFadeOut') cleanup();
+  });
+
+  // Also remove on first interaction (user already found it)
+  sel.addEventListener('change', cleanup, { once: true });
+  sel.addEventListener('focus',  cleanup, { once: true });
+})();
+
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
 Promise.all([loadSignal(currentPair), loadNews(), loadAlerts()])
@@ -2161,6 +2222,8 @@ Promise.all([loadSignal(currentPair), loadNews(), loadAlerts()])
     loadReversalPairs();
     loadPatternScanner();
     bindSmcAnalyzer();
+    updateScannerTimestamps();
+    startScannerAutoRefresh();
   });
 resetAutoRefresh();
 
