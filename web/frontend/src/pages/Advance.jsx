@@ -346,7 +346,7 @@ function VolatileList() {
               />
             </div>
             <span className={`text-xs font-mono font-bold w-12 text-right ${isHigh ? 'text-accent-red' : 'text-accent-yellow'}`}>
-              {typeof vol === 'number' ? vol.toFixed(2) : vol}%
+              {typeof vol === 'number' ? `${vol.toFixed(2)}%` : '—'}
             </span>
           </motion.div>
         )
@@ -438,7 +438,7 @@ function FvgList() {
               <span className="text-text-primary text-xs font-semibold">{g.pair || g.symbol || '—'}</span>
             </div>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isBull ? 'bg-accent-green/10 text-accent-green border border-accent-green/25' : 'bg-accent-red/10 text-accent-red border border-accent-red/25'}`}>
-              {isNull(g.size) ? (g.type || g.gap_type || '—') : `${g.type || '—'} ${Number(g.size || 0).toFixed(5)}`}
+              {fvgLabel(g)}
             </span>
           </motion.div>
         )
@@ -447,6 +447,10 @@ function FvgList() {
   )
 }
 function isNull(v) { return v == null }
+function fvgLabel(g) {
+  if (isNull(g.size)) return g.type || g.gap_type || '—'
+  return `${g.type || '—'} ${Number(g.size || 0).toFixed(5)}`
+}
 
 // ─── SR Breakouts Mini List ───────────────────────────────────────────────────
 function SRList() {
