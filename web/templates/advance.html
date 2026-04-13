@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    /* Apply saved theme before any render to avoid flash of unstyled content */
+    (function () {
+      var t = localStorage.getItem('pii-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    }());
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Advanced Market Analysis – PiiTrade | SMC, Sessions &amp; Structure</title>
@@ -19,17 +26,71 @@
        Advanced Page — Enhanced UX/UI
        ═══════════════════════════════════════════════════════ */
 
-    /* ── CSS variable supplement ── */
-    /* --card is not defined in forex.css; defined here for advance page card backgrounds */
-    :root {
+    /* ── Theme variables ── */
+    :root, [data-theme="dark"] {
       --card: #161b22;
     }
+    [data-theme="ocean"] {
+      --bg: #071520;
+      --surface: #0b2035;
+      --surface2: #0f2d47;
+      --border: #1a4060;
+      --accent: #00c2ff;
+      --text: #d4eeff;
+      --text2: #6faecf;
+      --card: #0b2035;
+    }
+    [data-theme="white"] {
+      --bg: #ffffff;
+      --surface: #f6f8fa;
+      --surface2: #eaecef;
+      --border: #d0d7de;
+      --accent: #0969da;
+      --text: #1f2328;
+      --text2: #636c76;
+      --card: #f6f8fa;
+    }
 
-    /* ── Page layout — full-width with minimal edge padding ── */
+    /* ── Theme switcher ── */
+    .adv-theme-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .adv-theme-btn {
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: .82rem;
+      line-height: 1;
+      transition: background .15s;
+      color: var(--text2);
+      font-family: inherit;
+    }
+    .adv-theme-btn.active {
+      background: rgba(88,166,255,.2);
+      color: var(--text);
+    }
+    .adv-theme-btn:hover:not(.active) {
+      background: rgba(255,255,255,.08);
+    }
+
+    /* ── Page layout — 7.5% side margins, capped for large screens ── */
     .adv-page-wrapper {
       width: 100%;
-      padding: 0 12px;
+      padding: 0 7.5%;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      max-width: 1600px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     /* ── Keyframes ── */
@@ -613,7 +674,6 @@
 
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .adv-page-wrapper { padding: 0 8px; }
       .adv-footer-grid { grid-template-columns: 1fr 1fr; }
       .adv-footer-brand { grid-column: 1 / -1; }
     }
@@ -621,7 +681,6 @@
       .sr-grid { grid-template-columns: 1fr; }
       .adv-meta-grid { grid-template-columns: repeat(2, 1fr); }
       .adv-footer-grid { grid-template-columns: 1fr; }
-      .adv-page-wrapper { padding: 0 6px; }
     }
 
     /* ── Market Structure Chart ── */
@@ -761,6 +820,11 @@
     <a href="/">Home</a>
     <a href="/forex">Dashboard</a>
     <a href="/advance" style="color:var(--accent);font-weight:600">Advanced</a>
+    <div class="adv-theme-switcher">
+      <button class="adv-theme-btn" data-t="dark" title="Dark theme">🌑 Dark</button>
+      <button class="adv-theme-btn" data-t="ocean" title="Ocean theme">🌊 Ocean</button>
+      <button class="adv-theme-btn" data-t="white" title="Light theme">☀️ White</button>
+    </div>
     {% if current_user and is_admin %}
     <a href="/const" class="nav-admin">⚙️ Admin</a>
     <a href="/logout" class="btn-outline">Logout</a>
@@ -1516,7 +1580,7 @@ var AdvChart = (function () {
       var abConf = parseFloat(preparedData.aiSignal.confidence) || 0;
       var abArr  = abDir === 'BUY' ? '▲' : abDir === 'SELL' ? '▼' : '→';
       var abClr  = abDir === 'BUY' ? '62,207,142' : abDir === 'SELL' ? '248,81,73' : '255,193,7';
-      var abTxt  = abArr + ' AI ' + abDir + ' · ' + (abConf * 100).toFixed(0) + '%';
+      var abTxt  = abArr + ' AI ' + abDir + ' · ' + abConf.toFixed(0) + '%';
       ctx.font   = 'bold 11px Inter,sans-serif';
       ctx.textAlign    = 'right';
       ctx.textBaseline = 'top';
@@ -1603,7 +1667,7 @@ var AdvChart = (function () {
       html += '<div style="font-size:.72rem;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)">' +
         '<span style="color:' + tc + ';font-weight:700">' + arr + ' ' + dir + '</span>' +
         ' <span style="color:#8b949e">AI Signal</span>' +
-        (ais.confidence ? ' · <span style="color:#8b949e">' + (parseFloat(ais.confidence) * 100).toFixed(0) + '% conf</span>' : '') +
+        (ais.confidence ? ' · <span style="color:#8b949e">' + parseFloat(ais.confidence).toFixed(0) + '% conf</span>' : '') +
         '</div>';
     }
     tooltip.innerHTML = html;
@@ -1747,7 +1811,7 @@ var AdvChart = (function () {
   function renderSignal(sig) {
     var dir = sig.direction || 'HOLD';
     var conf = parseFloat(sig.confidence) || 0;
-    var confPct = (conf * 100).toFixed(1);
+    var confPct = conf.toFixed(1);
     var src = sig.data_source || '';
     // Mask internal API/backend source names — show only user-friendly labels
     if (src.indexOf('Frankfurter') !== -1 || src.indexOf('ECB') !== -1) {
@@ -2000,6 +2064,21 @@ var AdvChart = (function () {
     overlay.style.opacity = '0';
     setTimeout(function () { overlay.style.display = 'none'; }, 420);
   });
+
+  // ── Theme switcher ──────────────────────────────────────────────────────
+  (function () {
+    var saved = localStorage.getItem('pii-theme') || 'dark';
+    /* data-theme is already set by the head script; only sync button states here */
+    document.querySelectorAll('.adv-theme-btn').forEach(function (btn) {
+      if (btn.dataset.t === saved) btn.classList.add('active');
+      btn.addEventListener('click', function () {
+        document.documentElement.setAttribute('data-theme', btn.dataset.t);
+        localStorage.setItem('pii-theme', btn.dataset.t);
+        document.querySelectorAll('.adv-theme-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      });
+    });
+  })();
 
 })();
 </script>
