@@ -224,7 +224,7 @@ export default function SMC() {
           </div>
           <p className="text-text-secondary text-lg leading-relaxed max-w-2xl mx-auto">
             Smart Money Concepts — the institutional trading framework used by professional traders worldwide.
-            Understand order blocks, liquidity sweeps, supply &amp; demand zones, and trading sessions.
+            Understand order blocks, liquidity sweeps, supply & demand zones, and trading sessions.
           </p>
         </motion.div>
       </section>
@@ -243,7 +243,7 @@ export default function SMC() {
               Higher Timeframes
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              📦 Order Blocks &amp; Key S/R Levels
+              📦 Order Blocks & Key S/R Levels
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">
               Order blocks are the footprints of institutional orders. Higher-timeframe S/R levels mark price areas where smart money has previously intervened at scale.
@@ -393,7 +393,7 @@ export default function SMC() {
               Price Zones
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              📊 Supply &amp; Demand Zones
+              📊 Supply & Demand Zones
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">
               Supply and demand zones represent price areas where significant institutional orders remain unfilled.
