@@ -483,6 +483,17 @@
       0%,100% { opacity: 1; transform: scale(1); }
       50%      { opacity: .4; transform: scale(1.5); }
     }
+    .adv-live-label {
+      font-size: .65rem;
+      font-weight: 600;
+      color: #3ecf8e;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+    .adv-live-price-val {
+      font-size: .95rem;
+    }
     .adv-conf-bar-wrap { height: 6px; background: var(--bg); border-radius: 4px; margin-top: 4px; overflow: hidden; }
     .adv-conf-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.22,1,.36,1); }
     .adv-conf-bar-fill.BUY  { background: linear-gradient(90deg, #3ecf8e, #6ee7b7); }
@@ -1388,8 +1399,8 @@
             <canvas id="adv-chart-canvas" style="display:none;"></canvas>
             <div class="adv-chart-live-price" id="adv-chart-live-badge">
               <span class="adv-live-dot"></span>
-              <span style="font-size:.65rem;font-weight:600;color:#3ecf8e;letter-spacing:.08em;text-transform:uppercase;opacity:.8">Live</span>
-              <span id="adv-chart-live-price-val" style="font-size:.95rem;">Loading…</span>
+              <span class="adv-live-label">Live</span>
+              <span id="adv-chart-live-price-val" class="adv-live-price-val">Loading…</span>
             </div>
             <div class="adv-chart-loading" id="adv-chart-loading">
               <span class="spin"></span>&nbsp;Loading chart…
@@ -1590,6 +1601,9 @@
 var SessionAlerts = (function () {
   'use strict';
 
+  var ALERT_THRESHOLD_MIN = 15;   /* minutes before open/close to fire the alert */
+  var ALERT_RESET_MIN     = 60;   /* minutes after event before re-arming the alert */
+
   var _soundOn = true;
   var _ctx = null;
   var _fired = {};   // tracks which alerts have fired: key = "SessionName:open|close"
@@ -1678,26 +1692,26 @@ var SessionAlerts = (function () {
       var toOpen  = minsUntil(openMin);
       var toClose = minsUntil(closeMin);
 
-      /* Fire open alert exactly once when 15 minutes remain */
-      if (toOpen === 15) {
+      /* Fire open alert exactly once when ALERT_THRESHOLD_MIN minutes remain */
+      if (toOpen === ALERT_THRESHOLD_MIN) {
         if (!_fired[openKey]) {
           _fired[openKey] = true;
           playMarketAlert(s.name, true);
-          _showToast(s.flag + ' ' + s.name + ' opens in 15 min', 'warn');
+          _showToast(s.flag + ' ' + s.name + ' opens in ' + ALERT_THRESHOLD_MIN + ' min', 'warn');
         }
-      } else if (toOpen >= 60) {
+      } else if (toOpen >= ALERT_RESET_MIN) {
         /* Reset after cooldown so next day's alert fires again */
         delete _fired[openKey];
       }
 
-      /* Fire close alert exactly once when 15 minutes remain */
-      if (toClose === 15) {
+      /* Fire close alert exactly once when ALERT_THRESHOLD_MIN minutes remain */
+      if (toClose === ALERT_THRESHOLD_MIN) {
         if (!_fired[closeKey]) {
           _fired[closeKey] = true;
           playMarketAlert(s.name, false);
-          _showToast(s.flag + ' ' + s.name + ' closes in 15 min', 'info');
+          _showToast(s.flag + ' ' + s.name + ' closes in ' + ALERT_THRESHOLD_MIN + ' min', 'info');
         }
-      } else if (toClose >= 60) {
+      } else if (toClose >= ALERT_RESET_MIN) {
         delete _fired[closeKey];
       }
     });
@@ -2303,7 +2317,9 @@ var AdvChart = (function () {
 
   function updateCurrentPrice(price) {
     if (!price || isNaN(price)) return;
-    var prevPrice = (techData && techData.current_price) || 0;
+    /* Use null (not 0) as the sentinel for "no previous price" so the initial
+       price load never incorrectly triggers a flash-down animation. */
+    var prevPrice = (techData && techData.current_price != null) ? techData.current_price : null;
     if (techData) techData.current_price = price;
 
     /* Refresh live-price line */
@@ -2314,11 +2330,11 @@ var AdvChart = (function () {
     }
     currentPriceLine = addPriceLine(price, '#58a6ff', 'Live ●', 0, 2);
 
-    /* Update badge with flash animation on price change */
+    /* Update badge with flash animation on price change (only when prev is known) */
     var badge = document.getElementById('adv-chart-live-price-val');
     var badgeWrap = document.getElementById('adv-chart-live-badge');
     if (badge) badge.textContent = Number(price).toFixed(pDec(price));
-    if (badgeWrap && prevPrice > 0 && price !== prevPrice) {
+    if (badgeWrap && prevPrice !== null && price !== prevPrice) {
       badgeWrap.classList.remove('flash-up', 'flash-down');
       /* Force reflow to restart animation */
       void badgeWrap.offsetWidth;
