@@ -1184,7 +1184,7 @@
     .session-card.adv-session-yellow::before { background: linear-gradient(90deg, transparent, #f0c040, transparent) !important; }
   </style>
   <!-- Lightweight Charts (used for the market structure chart) -->
-  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="/static/js/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -2082,14 +2082,14 @@ var AdvChart = (function () {
         if (typeof t === 'string') t = toTimestamp(t);
         return { time: t, value: b.close };
       });
-      mainSeries.setData(dedup(lineData));
+      try { mainSeries.setData(dedup(lineData)); } catch (e) { console.warn('AdvChart: failed to set line data', e); return; }
     } else {
       var ohlcData = bars.map(function (b) {
         var t = b.time;
         if (typeof t === 'string') t = toTimestamp(t);
         return { time: t, open: b.open, high: b.high, low: b.low, close: b.close };
       });
-      mainSeries.setData(dedup(ohlcData));
+      try { mainSeries.setData(dedup(ohlcData)); } catch (e) { console.warn('AdvChart: failed to set OHLC data', e); return; }
     }
 
     /* Apply SMC markers (BOS, CHoCH, Entry) */
@@ -2212,6 +2212,16 @@ var AdvChart = (function () {
   function init() {
     wrapEl = document.getElementById('adv-chart-wrap');
     if (!wrapEl) return;
+    if (typeof LightweightCharts === 'undefined') {
+      /* CDN / local script failed to load — show an error in the chart area */
+      var loadEl = document.getElementById('adv-chart-loading');
+      if (loadEl) {
+        loadEl.innerHTML = '⚠ Chart library unavailable. Please refresh the page.';
+        loadEl.style.fontSize = '.9rem';
+        loadEl.style.color = 'var(--text2,#888)';
+      }
+      return;
+    }
 
     /* Chart container div */
     var chartDiv = document.getElementById('adv-lw-chart');
@@ -2226,7 +2236,7 @@ var AdvChart = (function () {
     if (h < 300) h = 460;
 
     var opts = buildChartOptions();
-    opts.width  = wrapEl.offsetWidth;
+    opts.width  = wrapEl.offsetWidth || 800;
     opts.height = h;
 
     chart = LightweightCharts.createChart(chartDiv, opts);
@@ -2397,7 +2407,7 @@ var AdvChart = (function () {
     updateSMCSidebar();
   }
 
-  return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice };
+  return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice, hasData: function () { return !!(candleData && candleData.length) || !!(rawHistory && rawHistory.length); } };
 }());
 
 (function () {
@@ -2853,10 +2863,37 @@ var AdvChart = (function () {
         if (!d.error && d.candles && d.candles.length) {
           AdvChart.updateData(d.candles, lastTech, lastSig);
           if (d.live) AdvChart.updateCurrentPrice(parseFloat(d.live));
+        } else {
+          /* No candle data — hide the loading overlay so the chart area isn't
+             blocked by the spinner forever. Show a brief status message. */
+          var loadEl = document.getElementById('adv-chart-loading');
+          if (loadEl) {
+            loadEl.style.display = 'none';
+            /* Only show the "no data" message on the very first load (before
+               any chart has been rendered). If a chart is already visible,
+               simply leave the previous pair's candles in place. */
+            if (!AdvChart.hasData()) {
+              loadEl.textContent = d.error ? ('⚠ ' + d.error) : '⚠ No chart data available for this pair.';
+              loadEl.style.display = 'flex';
+              loadEl.style.fontSize = '.9rem';
+              loadEl.style.color = 'var(--text2,#888)';
+            }
+          }
         }
         candlesDone = true; tryFinish();
       })
-      .catch(function () { candlesDone = true; tryFinish(); });
+      .catch(function () {
+        var loadEl = document.getElementById('adv-chart-loading');
+        if (loadEl && !AdvChart.hasData()) {
+          loadEl.textContent = '⚠ Failed to load chart data.';
+          loadEl.style.display = 'flex';
+          loadEl.style.fontSize = '.9rem';
+          loadEl.style.color = 'var(--text2,#888)';
+        } else if (loadEl) {
+          loadEl.style.display = 'none';
+        }
+        candlesDone = true; tryFinish();
+      });
 
     // Signal data
     fetch('/api/forex/signals?pair=' + encodeURIComponent(pair))
