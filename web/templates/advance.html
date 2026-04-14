@@ -1056,6 +1056,7 @@
       color: var(--text2);
       font-size: .9rem;
       background: #0d1117;
+      z-index: 4;
     }
     .adv-chart-tooltip {
       position: absolute;
@@ -1440,14 +1441,18 @@
           </div>
           <div class="adv-smc-row">
             <span class="adv-smc-line" style="border-top:2px solid #3ecf8e;"></span>
-            📊 BOS ▲
+            📈 BOS ▲
           </div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
+            <span class="adv-smc-line" style="border-top:2px solid #f85149;"></span>
+            📉 BOS ▼
+          </div>
+          <div class="adv-smc-row">
+            <span class="adv-smc-line" style="border-top:2px dotted #3ecf8e;"></span>
             🟢 Support
           </div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
+            <span class="adv-smc-line" style="border-top:2px dotted #f85149;"></span>
             🔴 Resistance
           </div>
           <div class="adv-smc-divider"></div>
@@ -1456,16 +1461,26 @@
             📍 Live Price
           </div>
           <div class="adv-smc-row anim-entry">
-            <span class="adv-smc-line" style="border-top:2px solid #f0c040;"></span>
+            <span class="adv-smc-line" style="border-top:2px dashed #f0c040;"></span>
             ⚡ Entry
           </div>
           <div class="adv-smc-row anim-tp">
-            <span class="adv-smc-line" style="border-top:2px dashed #3ecf8e;"></span>
+            <span class="adv-smc-line" style="border-top:2px solid #3ecf8e;"></span>
             ✅ TP
           </div>
           <div class="adv-smc-row anim-sl">
-            <span class="adv-smc-line" style="border-top:2px dashed #f85149;"></span>
+            <span class="adv-smc-line" style="border-top:2px solid #f85149;"></span>
             🛑 SL
+          </div>
+          <div class="adv-smc-divider"></div>
+          <!-- Animated AI prediction zone legend -->
+          <div class="adv-smc-row" style="gap:6px;">
+            <span style="display:inline-block;width:28px;height:12px;background:rgba(62,207,142,.3);border:1px dashed rgba(62,207,142,.7);border-radius:2px;flex-shrink:0;"></span>
+            BUY Zone
+          </div>
+          <div class="adv-smc-row" style="gap:6px;">
+            <span style="display:inline-block;width:28px;height:12px;background:rgba(248,81,73,.3);border:1px dashed rgba(248,81,73,.7);border-radius:2px;flex-shrink:0;"></span>
+            SL Zone
           </div>
           <div class="adv-smc-divider"></div>
           <div id="adv-smc-live-vals" style="font-size:.7rem;color:var(--text2);line-height:1.8;"></div>
@@ -1776,6 +1791,108 @@ var AdvChart = (function () {
   var resizeObs  = null;
   var themeObs   = null;
   var wrapEl     = null;
+
+  /* ── Trade Zone Overlay ── */
+  var zoneCanvas    = null;
+  var zoneAnimFrame = null;
+  var zoneSignal    = null;
+
+  function initZoneCanvas() {
+    if (zoneCanvas || !wrapEl) return;
+    zoneCanvas = document.createElement('canvas');
+    zoneCanvas.id = 'adv-zone-canvas';
+    zoneCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:3;';
+    /* Insert before the loading overlay so the zone canvas stays behind it */
+    var loadEl = document.getElementById('adv-chart-loading');
+    if (loadEl) wrapEl.insertBefore(zoneCanvas, loadEl);
+    else wrapEl.appendChild(zoneCanvas);
+  }
+
+  function drawAdvZoneFrame(ts) {
+    if (!zoneCanvas || !zoneSignal || !mainSeries) return;
+    var ep  = parseFloat(zoneSignal.entry_price);
+    var tp  = parseFloat(zoneSignal.take_profit);
+    var sl  = parseFloat(zoneSignal.stop_loss);
+    var dir = zoneSignal.direction || 'HOLD';
+    if (!ep || !tp || !sl || dir === 'HOLD') { stopAdvZoneAnimation(); return; }
+
+    var epY = mainSeries.priceToCoordinate(ep);
+    var tpY = mainSeries.priceToCoordinate(tp);
+    var slY = mainSeries.priceToCoordinate(sl);
+
+    var w = zoneCanvas.offsetWidth  || (wrapEl && wrapEl.offsetWidth)  || 600;
+    var h = zoneCanvas.offsetHeight || (wrapEl && wrapEl.offsetHeight) || 460;
+    if (zoneCanvas.width !== w || zoneCanvas.height !== h) {
+      zoneCanvas.width  = w;
+      zoneCanvas.height = h;
+    }
+
+    var ctx = zoneCanvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+
+    if (epY === null || tpY === null || slY === null) {
+      zoneAnimFrame = requestAnimationFrame(drawAdvZoneFrame);
+      return;
+    }
+
+    var t2    = (ts || Date.now()) / 1000;
+    var pulse = 0.12 + 0.08 * Math.sin(t2 / 0.7 * Math.PI);
+    var edge  = 0.45 + 0.35 * Math.abs(Math.sin(t2 / 0.9 * Math.PI));
+
+    /* TP zone — profit (green) */
+    var tpTop = Math.min(epY, tpY);
+    var tpH   = Math.max(2, Math.abs(tpY - epY));
+    ctx.fillStyle = 'rgba(62,207,142,' + pulse + ')';
+    ctx.fillRect(0, tpTop, w, tpH);
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(62,207,142,' + edge + ')';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, tpTop);       ctx.lineTo(w, tpTop);       ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, tpTop + tpH); ctx.lineTo(w, tpTop + tpH); ctx.stroke();
+    ctx.restore();
+
+    /* SL zone — loss (red) */
+    var slTop = Math.min(epY, slY);
+    var slH   = Math.max(2, Math.abs(slY - epY));
+    ctx.fillStyle = 'rgba(248,81,73,' + pulse + ')';
+    ctx.fillRect(0, slTop, w, slH);
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(248,81,73,' + edge + ')';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, slTop);       ctx.lineTo(w, slTop);       ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, slTop + slH); ctx.lineTo(w, slTop + slH); ctx.stroke();
+    ctx.restore();
+
+    /* Direction labels */
+    ctx.setLineDash([]);
+    ctx.font = 'bold 10px Inter,sans-serif';
+    if (tpH > 16) {
+      ctx.fillStyle = dir === 'BUY'
+        ? 'rgba(62,207,142,' + edge + ')'
+        : 'rgba(248,81,73,' + edge + ')';
+      ctx.fillText(dir === 'BUY' ? '▲ BUY ZONE (TP)' : '▼ SELL ZONE (TP)', 10, tpTop + tpH / 2 + 4);
+    }
+    if (slH > 16) {
+      ctx.fillStyle = 'rgba(248,81,73,' + edge + ')';
+      ctx.fillText('SL ZONE', 10, slTop + slH / 2 + 4);
+    }
+
+    zoneAnimFrame = requestAnimationFrame(drawAdvZoneFrame);
+  }
+
+  function startAdvZoneAnimation(sig) {
+    zoneSignal = sig;
+    if (!zoneCanvas) initZoneCanvas();
+    if (!zoneAnimFrame) zoneAnimFrame = requestAnimationFrame(drawAdvZoneFrame);
+  }
+
+  function stopAdvZoneAnimation() {
+    if (zoneAnimFrame) { cancelAnimationFrame(zoneAnimFrame); zoneAnimFrame = null; }
+    if (zoneCanvas) { var ctx = zoneCanvas.getContext('2d'); if (ctx) ctx.clearRect(0, 0, zoneCanvas.width, zoneCanvas.height); }
+    zoneSignal = null;
+  }
 
   /* ── Helpers ── */
   function seededRand(seed) {
@@ -2121,42 +2238,60 @@ var AdvChart = (function () {
       var ep = parseFloat(aiSignalData.entry_price);
       var tp = parseFloat(aiSignalData.take_profit);
       var sl = parseFloat(aiSignalData.stop_loss);
-      if (ep > 0) addPriceLine(ep, '#f0c040', '⚡ Entry', 2, 2);
-      if (tp > 0) addPriceLine(tp, '#3ecf8e', '✅ TP',    2, 2);
-      if (sl > 0) addPriceLine(sl, '#f85149', '🛑 SL',    2, 2);
+      if (ep > 0) addPriceLine(ep, '#f0c040', '⚡ Entry',  2, 2); /* dashed gold    */
+      if (tp > 0) addPriceLine(tp, '#3ecf8e', '✅ TP',      0, 2); /* solid green    */
+      if (sl > 0) addPriceLine(sl, '#f85149', '🛑 SL',      0, 2); /* solid red      */
     }
 
     if (!techData) return;
 
-    /* CHoCH levels — from .choch array in technical data */
+    /* CHoCH levels — purple long-dashed, thicker (2 px) */
     (techData.choch || []).slice(0, 3).forEach(function (c) {
       var price = parseFloat(c.level !== undefined ? c.level : c);
-      if (price > 0) addPriceLine(price, '#b392f0', '🔀 CHoCH', 2, 1);
+      if (price > 0) addPriceLine(price, '#b392f0', '🔀 CHoCH', 2, 2);
     });
 
-    /* Support / Resistance */
+    /* BOS levels — solid thick lines, green for bullish / red for bearish */
+    (techData.bos || []).slice(0, 4).forEach(function (b) {
+      var price = parseFloat(b.level);
+      if (!price || price <= 0) return;
+      var isBull = b.type === 'bullish';
+      addPriceLine(price, isBull ? '#3ecf8e' : '#f85149',
+                   isBull ? '📈 BOS ▲' : '📉 BOS ▼', 0, 2);
+    });
+
+    /* Support — green dotted thin (style 3) */
     var sr = techData.support_resistance || {};
     (sr.support    || []).slice(0, 3).forEach(function (s) {
-      addPriceLine(parseFloat(s), '#3ecf8e', 'S', 3, 1);
+      addPriceLine(parseFloat(s), '#3ecf8e', '🟢 Sup', 3, 1);
     });
+    /* Resistance — red dotted thin (style 3) */
     (sr.resistance || []).slice(0, 3).forEach(function (r) {
-      addPriceLine(parseFloat(r), '#f85149', 'R', 3, 1);
+      addPriceLine(parseFloat(r), '#f85149', '🔴 Res', 3, 1);
     });
 
-    /* Order-block zone boundaries (top + bottom per zone) */
+    /* Order-block zone boundaries — solid lines, thicker top edge */
     (techData.high_volume_zones || []).slice(0, 4).forEach(function (z) {
       var isBull = z.bottom < cp;
-      var col = isBull ? 'rgba(62,207,142,0.7)' : 'rgba(248,81,73,0.7)';
-      if (z.top    > 0) addPriceLine(z.top,    col, isBull ? 'OB▲' : 'OB▼', 1, 1);
-      if (z.bottom > 0) addPriceLine(z.bottom, col, '',                        1, 1);
+      if (isBull) {
+        if (z.top    > 0) addPriceLine(z.top,    'rgba(62,207,142,0.9)',  '🏦 OB▲Hi', 1, 2);
+        if (z.bottom > 0) addPriceLine(z.bottom, 'rgba(62,207,142,0.55)', '🏦 OB▲Lo', 1, 1);
+      } else {
+        if (z.top    > 0) addPriceLine(z.top,    'rgba(248,81,73,0.9)',   '🏦 OB▼Hi', 1, 2);
+        if (z.bottom > 0) addPriceLine(z.bottom, 'rgba(248,81,73,0.55)',  '🏦 OB▼Lo', 1, 1);
+      }
     });
 
-    /* FVG zone boundaries */
+    /* FVG zone boundaries — dashed (style 2), thin */
     (techData.fvg || []).slice(0, 4).forEach(function (z) {
       var isBull = (z.type || '').toLowerCase() === 'bullish';
-      var col = isBull ? 'rgba(88,166,255,0.55)' : 'rgba(255,150,50,0.55)';
-      if (z.top    > 0) addPriceLine(z.top,    col, isBull ? 'FVG▲' : 'FVG▼', 1, 1);
-      if (z.bottom > 0) addPriceLine(z.bottom, col, '',                          1, 1);
+      if (isBull) {
+        if (z.top    > 0) addPriceLine(z.top,    'rgba(88,166,255,0.9)',  '🌀 FVG▲Hi', 2, 1);
+        if (z.bottom > 0) addPriceLine(z.bottom, 'rgba(88,166,255,0.45)', '🌀 FVG▲Lo', 2, 1);
+      } else {
+        if (z.top    > 0) addPriceLine(z.top,    'rgba(255,150,50,0.9)',  '🌀 FVG▼Hi', 2, 1);
+        if (z.bottom > 0) addPriceLine(z.bottom, 'rgba(255,150,50,0.45)', '🌀 FVG▼Lo', 2, 1);
+      }
     });
   }
 
@@ -2241,6 +2376,9 @@ var AdvChart = (function () {
 
     chart = LightweightCharts.createChart(chartDiv, opts);
     createMainSeries();
+
+    /* Initialise the trade-zone canvas overlay */
+    initZoneCanvas();
 
     /* Resize observer */
     if (resizeObs) resizeObs.disconnect();
@@ -2356,6 +2494,12 @@ var AdvChart = (function () {
     aiSignalData = sig;
     addIndicators();
     updateSMCSidebar();
+    /* Start animated zone shading for BUY/SELL signals */
+    if (sig && (sig.direction === 'BUY' || sig.direction === 'SELL')) {
+      startAdvZoneAnimation(sig);
+    } else {
+      stopAdvZoneAnimation();
+    }
   }
 
   function updateCurrentPrice(price) {
@@ -2424,6 +2568,7 @@ var AdvChart = (function () {
       rawHistory  = null;
       techData    = null;
       aiSignalData = null;
+      stopAdvZoneAnimation();
       if (mainSeries) { try { mainSeries.setData([]); } catch (e) {} }
       clearPriceLines();
       /* Re-show the loading spinner so the user knows a fetch is in progress. */
@@ -2973,6 +3118,12 @@ var AdvChart = (function () {
   document.getElementById('adv-pair-select').addEventListener('change', function () {
     currentPair = this.value;
     loadPairData(currentPair);
+    // Auto re-click the active candles button after 4 s to ensure chart loads
+    setTimeout(function () {
+      var candleBtn = document.querySelector('.adv-ct-btn.active') ||
+                     document.querySelector('.adv-ct-btn[data-ct="candle"]');
+      if (candleBtn) candleBtn.click();
+    }, 4000);
   });
   document.getElementById('adv-refresh').addEventListener('click', function () {
     loadPairData(currentPair);

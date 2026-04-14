@@ -589,6 +589,112 @@ const FxPriceChart = (function () {
   let currentPriceLine = null;
   let lastSignalData = null; // last signal; re-applied after each candle reload
 
+  // ── Trade Zone Overlay ──────────────────────────────────────────────────────
+  let zoneCanvas    = null;
+  let zoneAnimFrame = null;
+  let zoneSignal    = null;
+
+  function initZoneCanvas() {
+    if (zoneCanvas) return;
+    zoneCanvas = document.createElement('canvas');
+    zoneCanvas.id = 'fx-zone-canvas';
+    zoneCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:3;';
+    if (wrapEl) {
+      /* Insert before the loading overlay so the canvas stays behind it */
+      const loadEl = document.getElementById('fx-chart-loading');
+      if (loadEl) wrapEl.insertBefore(zoneCanvas, loadEl);
+      else wrapEl.appendChild(zoneCanvas);
+    }
+  }
+
+  function drawZoneFrame(ts) {
+    if (!zoneCanvas || !zoneSignal || !mainSeries) return;
+    const ep  = parseFloat(zoneSignal.entry_price);
+    const tp  = parseFloat(zoneSignal.take_profit);
+    const sl  = parseFloat(zoneSignal.stop_loss);
+    const dir = zoneSignal.direction || 'HOLD';
+    if (!ep || !tp || !sl || dir === 'HOLD') { stopZoneAnimation(); return; }
+
+    const epY = mainSeries.priceToCoordinate(ep);
+    const tpY = mainSeries.priceToCoordinate(tp);
+    const slY = mainSeries.priceToCoordinate(sl);
+
+    const w = zoneCanvas.offsetWidth  || (wrapEl && wrapEl.offsetWidth)  || 400;
+    const h = zoneCanvas.offsetHeight || (wrapEl && wrapEl.offsetHeight) || 320;
+    if (zoneCanvas.width !== w || zoneCanvas.height !== h) {
+      zoneCanvas.width  = w;
+      zoneCanvas.height = h;
+    }
+
+    const ctx = zoneCanvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+
+    if (epY === null || tpY === null || slY === null) {
+      zoneAnimFrame = requestAnimationFrame(drawZoneFrame);
+      return;
+    }
+
+    const pulse  = 0.12 + 0.08 * Math.sin((ts || Date.now()) / 700 * Math.PI);
+    const edge   = 0.45 + 0.35 * Math.abs(Math.sin((ts || Date.now()) / 900 * Math.PI));
+
+    // TP zone (profit — green)
+    const tpTop = Math.min(epY, tpY);
+    const tpH   = Math.max(2, Math.abs(tpY - epY));
+    ctx.fillStyle = `rgba(62,207,142,${pulse})`;
+    ctx.fillRect(0, tpTop, w, tpH);
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = `rgba(62,207,142,${edge})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, tpTop);         ctx.lineTo(w, tpTop);         ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, tpTop + tpH);   ctx.lineTo(w, tpTop + tpH);   ctx.stroke();
+    ctx.restore();
+
+    // SL zone (loss — red)
+    const slTop = Math.min(epY, slY);
+    const slH   = Math.max(2, Math.abs(slY - epY));
+    ctx.fillStyle = `rgba(248,81,73,${pulse})`;
+    ctx.fillRect(0, slTop, w, slH);
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = `rgba(248,81,73,${edge})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, slTop);         ctx.lineTo(w, slTop);         ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, slTop + slH);   ctx.lineTo(w, slTop + slH);   ctx.stroke();
+    ctx.restore();
+
+    // Direction label inside the TP zone
+    if (tpH > 16) {
+      ctx.font = 'bold 10px Inter,sans-serif';
+      ctx.setLineDash([]);
+      const labelY = tpTop + tpH / 2 + 4;
+      const label  = dir === 'BUY' ? '▲ BUY ZONE (TP)' : '▼ SELL ZONE (TP)';
+      ctx.fillStyle = dir === 'BUY' ? `rgba(62,207,142,${edge})` : `rgba(248,81,73,${edge})`;
+      ctx.fillText(label, 10, labelY);
+    }
+    if (slH > 16) {
+      ctx.font = 'bold 10px Inter,sans-serif';
+      ctx.setLineDash([]);
+      const labelY = slTop + slH / 2 + 4;
+      ctx.fillStyle = `rgba(248,81,73,${edge})`;
+      ctx.fillText('SL ZONE', 10, labelY);
+    }
+
+    zoneAnimFrame = requestAnimationFrame(drawZoneFrame);
+  }
+
+  function startZoneAnimation(sig) {
+    zoneSignal = sig;
+    if (!zoneCanvas) initZoneCanvas();
+    if (!zoneAnimFrame) zoneAnimFrame = requestAnimationFrame(drawZoneFrame);
+  }
+
+  function stopZoneAnimation() {
+    if (zoneAnimFrame) { cancelAnimationFrame(zoneAnimFrame); zoneAnimFrame = null; }
+    if (zoneCanvas) { const ctx = zoneCanvas.getContext('2d'); if (ctx) ctx.clearRect(0, 0, zoneCanvas.width, zoneCanvas.height); }
+    zoneSignal = null;
+  }
+
   const TF_PARAMS = {
     '1H': { tf: '1H', bars: 168 },
     '4H': { tf: '4H', bars: 180 },
@@ -714,6 +820,9 @@ const FxPriceChart = (function () {
     chart = LightweightCharts.createChart(chartDiv, opts);
     createSeries();
 
+    // Initialise the zone-canvas overlay
+    initZoneCanvas();
+
     if (resizeObs) resizeObs.disconnect();
     resizeObs = new ResizeObserver(() => {
       if (!chart) return;
@@ -765,7 +874,7 @@ const FxPriceChart = (function () {
 
   function load(pair, tf) {
     // Clear cached signal data when switching to a different pair
-    if (window._fxCurrentPair !== pair) lastSignalData = null;
+    if (window._fxCurrentPair !== pair) { lastSignalData = null; stopZoneAnimation(); }
     window._fxCurrentPair = pair;
     currentTf = tf || currentTf;
     if (!chart) init();
@@ -802,7 +911,17 @@ const FxPriceChart = (function () {
         renderCandles(d.candles);
         if (d.live) setLivePriceLine(parseFloat(d.live));
         // Re-apply entry/TP/SL lines that may have been cleared by createSeries()
-        if (lastSignalData) setSignalLines(lastSignalData);
+        if (lastSignalData) {
+          setSignalLines(lastSignalData);
+          // Re-start zone animation after series recreation
+          if (lastSignalData.direction === 'BUY' || lastSignalData.direction === 'SELL') {
+            startZoneAnimation(lastSignalData);
+          }
+        }
+        // Force chart resize to handle cases where width was 0 at init
+        if (chart && wrapEl && wrapEl.offsetWidth > 0) {
+          chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight || 320, 220) });
+        }
       })
       .catch(() => {
         if (loadEl) loadEl.style.display = 'none';
@@ -814,9 +933,15 @@ const FxPriceChart = (function () {
     lastSignalData = sig; // persist so load() can re-apply after series recreation
     setSignalLines(sig);
     if (sig && sig.entry_price) setLivePriceLine(parseFloat(sig.entry_price));
+    // Restart zone animation with fresh signal
+    if (sig && (sig.direction === 'BUY' || sig.direction === 'SELL')) {
+      startZoneAnimation(sig);
+    } else {
+      stopZoneAnimation();
+    }
   }
 
-  return { init, load, updateSignal, setLivePriceLine };
+  return { init, load, updateSignal, setLivePriceLine, stopZoneAnimation };
 }());
 
 window._fxLoadCandles = FxPriceChart.load;
@@ -2073,7 +2198,20 @@ pairSelect.addEventListener('change', () => {
   void pairSelect.offsetWidth; // reflow to restart animation
   pairSelect.classList.add('pair-changed');
   pairSelect.addEventListener('animationend', () => pairSelect.classList.remove('pair-changed'), { once: true });
+  // Auto re-click the active chart-type button after 4 s to ensure the
+  // chart content has fully loaded (catches timing and initialization edge-cases)
+  triggerChartReload(4000);
 });
+
+// ── Chart reload helper: clicks the active chart-type button to force a chart refresh.
+// Used on initial load and on pair change to handle timing / initialization edge-cases.
+function triggerChartReload(delayMs) {
+  setTimeout(() => {
+    const activeCtBtn = document.querySelector('.fx-ct-btn.fx-ct-btn-active') ||
+                        document.querySelector('.fx-ct-btn[data-ct="candle"]');
+    if (activeCtBtn) activeCtBtn.click();
+  }, delayMs || 0);
+}
 
 refreshBtn.addEventListener('click', () => {
   loadSignal(currentPair);
@@ -2243,6 +2381,9 @@ activateTab('section-signal');
 // Initialise the price chart and load initial candle data
 FxPriceChart.init();
 FxPriceChart.load(currentPair);
+// After a short delay, force a chart refresh in case the element had
+// zero width at init time (e.g. due to page layout settling)
+triggerChartReload(600);
 
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
