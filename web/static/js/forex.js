@@ -576,7 +576,9 @@ function renderSignal(data) {
           '<span class="confidence-pct">' + conf.toFixed(1) + '%</span>' +
         '</div>' +
         '<div class="signal-accuracy-row">30-day model accuracy: <strong>' +
-          escapeHtml(String(data.accuracy_30d !== undefined ? data.accuracy_30d : '–')) + '%</strong></div>' +
+          (data.accuracy_30d !== undefined && data.accuracy_30d !== null
+            ? escapeHtml(String(data.accuracy_30d)) + '%'
+            : '–') + '</strong></div>' +
         '<div class="signal-levels">' +
           '<div class="signal-level entry"><span class="level-label">Entry Price</span>' +
             '<span class="level-value">' + formatPrice(data.entry_price, pair) + '</span></div>' +
