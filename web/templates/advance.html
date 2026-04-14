@@ -2327,19 +2327,27 @@ var AdvChart = (function () {
   function updateData(ohlcBars, tech, sig) {
     /* ohlcBars: array of {time, open, high, low, close} from /api/forex/candles
        Pass null to update only tech/sig without touching candle data */
+    var hadCandleUpdate = false;
     if (ohlcBars !== null && ohlcBars !== undefined) {
       if (ohlcBars.length && ohlcBars[0] && ohlcBars[0].open !== undefined) {
         candleData = ohlcBars;
         rawHistory = null;
+        hadCandleUpdate = true;
       } else if (ohlcBars.length) {
         rawHistory = ohlcBars;
         candleData = null;
+        hadCandleUpdate = true;
       }
     }
     if (tech !== null && tech !== undefined) techData = tech;
     if (sig !== undefined && sig !== null) aiSignalData = sig;
-    var loadEl = document.getElementById('adv-chart-loading');
-    if (loadEl) loadEl.style.display = 'none';
+    /* Only dismiss the loading overlay once candle data has actually arrived.
+       Tech/signal-only calls (ohlcBars === null) must not hide the spinner
+       while candles are still in-flight — doing so leaves the chart empty. */
+    if (hadCandleUpdate) {
+      var loadEl = document.getElementById('adv-chart-loading');
+      if (loadEl) loadEl.style.display = 'none';
+    }
     if (!chart) init();
     renderData();
   }
@@ -2980,19 +2988,15 @@ var AdvChart = (function () {
   loadPairData(currentPair);
 
   // ── Live price polling (every 20 seconds) ────────────────────────────────
+  // Uses the lightweight /api/forex/price endpoint which supports ALL pairs
+  // (the old /api/forex/live-prices endpoint only covered 10 major pairs).
   function pollLivePrice() {
-    fetch('/api/forex/live-prices')
+    fetch('/api/forex/price?pair=' + encodeURIComponent(currentPair))
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        var prices = d.prices || [];
-        for (var i = 0; i < prices.length; i++) {
-          if (prices[i].pair === currentPair) {
-            var p = parseFloat(prices[i].price);
-            if (!isNaN(p) && p > 0) {
-              AdvChart.updateCurrentPrice(p);
-            }
-            break;
-          }
+        var p = parseFloat(d.price);
+        if (!isNaN(p) && p > 0) {
+          AdvChart.updateCurrentPrice(p);
         }
       })
       .catch(function () { /* silently ignore */ });
