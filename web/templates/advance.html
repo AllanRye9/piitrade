@@ -14,6 +14,45 @@
   <meta name="description" content="Advanced market analysis for forex: live trading sessions, BOS/CHoCH market structure, FVG zones, order blocks, supply &amp; demand, and liquidity levels — powered by real price data." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://piitrade.com/advance" />
+  <!-- JSON-LD Structured Data for AI/MCP resource discovery -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Advanced Market Analysis – PiiTrade",
+    "url": "https://piitrade.com/advance",
+    "description": "Advanced forex market analysis with live SMC structure, order blocks, FVG zones, trading sessions, and AI-powered signals for 35+ currency pairs.",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "PiiTrade",
+      "url": "https://piitrade.com/",
+      "description": "Free AI-powered forex signal hub with advanced market analysis tools."
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://piitrade.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Dashboard", "item": "https://piitrade.com/forex" },
+        { "@type": "ListItem", "position": 3, "name": "Advanced Analysis", "item": "https://piitrade.com/advance" }
+      ]
+    },
+    "mainEntity": {
+      "@type": "SoftwareApplication",
+      "name": "PiiTrade Advanced Market Analysis",
+      "applicationCategory": "FinanceApplication",
+      "featureList": [
+        "Live SMC market structure (BOS/CHoCH)",
+        "Order block detection for 35+ forex pairs",
+        "Fair Value Gap (FVG) zones",
+        "Live trading session tracker (London, New York, Tokyo, Sydney)",
+        "AI-powered entry, take-profit, and stop-loss signals",
+        "Liquidity level mapping",
+        "Interactive candlestick/bar/line chart with 5-year history",
+        "Mobile-responsive real-time chart"
+      ]
+    }
+  }
+  </script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9756287260068717" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -128,26 +167,26 @@
     /* ── Hero ── */
     .adv-hero {
       text-align: center;
-      padding: 44px 20px 16px;
+      padding: 22px 20px 10px;
       animation: fadeUp .55s ease both;
     }
     .adv-hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: .72rem;
+      gap: 5px;
+      font-size: .65rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .1em;
-      padding: 4px 14px;
+      padding: 3px 10px;
       border-radius: 20px;
       background: rgba(88,166,255,.1);
       border: 1px solid rgba(88,166,255,.25);
       color: var(--accent);
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
     .adv-hero h1 {
-      font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+      font-size: clamp(1.1rem, 3vw, 1.6rem);
       font-weight: 800;
       background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #3ecf8e 100%);
       background-size: 200% auto;
@@ -155,36 +194,36 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       animation: shimmer 4s linear infinite;
-      margin: 0 0 10px;
+      margin: 0 0 6px;
       line-height: 1.2;
     }
     .adv-hero p {
       color: var(--text2);
-      font-size: .95rem;
+      font-size: .78rem;
       margin: 0 auto;
-      max-width: 560px;
-      line-height: 1.6;
+      max-width: 480px;
+      line-height: 1.5;
     }
     .adv-hero-stats {
       display: flex;
       justify-content: center;
-      gap: 24px;
-      margin-top: 20px;
+      gap: 16px;
+      margin-top: 12px;
       flex-wrap: wrap;
     }
     .adv-hero-stat {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 1px;
     }
     .adv-hero-stat-val {
-      font-size: 1.2rem;
+      font-size: .95rem;
       font-weight: 800;
       color: var(--accent);
     }
     .adv-hero-stat-lbl {
-      font-size: .7rem;
+      font-size: .62rem;
       color: var(--text2);
       text-transform: uppercase;
       letter-spacing: .06em;
@@ -818,40 +857,31 @@
     }
     @media (max-width: 768px) {
       .adv-chart-layout { flex-direction: column; }
-      .adv-smc-sidebar  { width: 100% !important; position: static !important; }
+      .adv-smc-sidebar  { width: 100% !important; position: static !important; flex-direction: row; flex-wrap: wrap; justify-content: center; }
     }
 
     /* ── SMC Sidebar (outside chart) ── */
     .adv-smc-sidebar {
-      width: 172px;
+      width: 46px;
       flex-shrink: 0;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px 14px 18px;
+      padding: 10px 8px 14px;
       position: sticky;
       top: 72px;
     }
     .adv-smc-sidebar-title {
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      color: var(--text2);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      display: none;
     }
     .adv-smc-row {
       display: flex;
       align-items: center;
-      gap: 7px;
+      justify-content: center;
+      gap: 0;
       margin-bottom: 6px;
-      font-size: .72rem;
-      color: var(--text);
+      font-size: 0;
+      color: transparent;
       white-space: nowrap;
       padding: 3px 0;
     }
@@ -865,7 +895,7 @@
     }
     .adv-smc-line {
       display: inline-block;
-      width: 16px;
+      width: 28px;
       height: 0;
       flex-shrink: 0;
     }
@@ -1188,6 +1218,7 @@
   <script src="/static/js/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
+<a href="#main-content" class="sr-only" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
 <!-- ═══ LOADING OVERLAY ═══ -->
 <div id="adv-loading-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:opacity .4s">
@@ -1214,8 +1245,11 @@
       })();
     </script>
   </div>
-  <nav class="fx-nav">
-    <a href="/">Home</a>
+  <nav class="fx-nav" role="navigation" aria-label="Main navigation">
+    <a href="/" aria-label="Home page">Home</a>
+    <a href="/forex" aria-label="AI Forex Dashboard">Dashboard</a>
+    <a href="/methodology" aria-label="Trading Methodology">Method</a>
+    <a href="/disclaimer" aria-label="Risk Disclaimer">Disclaimer</a>
     <div class="adv-theme-switcher">
       <label for="adv-theme-select">🎨</label>
       <select id="adv-theme-select" class="adv-theme-select" title="Choose theme">
@@ -1239,7 +1273,7 @@
 
 <!-- ═══ PAGE WRAPPER ═══ -->
 <div class="page-wrapper">
-  <div class="main-content">
+  <div class="main-content" id="main-content" role="main">
     <div class="adv-page-wrapper">
 
     <!-- Hero -->
@@ -1483,7 +1517,7 @@
             SL Zone
           </div>
           <div class="adv-smc-divider"></div>
-          <div id="adv-smc-live-vals" style="font-size:.7rem;color:var(--text2);line-height:1.8;"></div>
+          <div id="adv-smc-live-vals" style="display:none;"></div>
         </div>
       </div>
     </div>
@@ -2034,7 +2068,7 @@ var AdvChart = (function () {
       lineStyle:        lineStyle !== undefined ? lineStyle : 2,
       lineWidth:        lineWidth  !== undefined ? lineWidth  : 1,
       axisLabelVisible: true,
-      title:            title || '',
+      title:            '',
     });
     priceLineHandles.push(pl);
     return pl;
@@ -2377,17 +2411,41 @@ var AdvChart = (function () {
     /* Initialise the trade-zone canvas overlay */
     initZoneCanvas();
 
-    /* Resize observer — only needed to sync zone-canvas size; chart auto-sizes */
+    /* Resize observer — syncs zone-canvas size and forces chart resize on mobile */
     if (resizeObs) resizeObs.disconnect();
     resizeObs = new ResizeObserver(function () {
       if (!chart) return;
+      var w = wrapEl.offsetWidth;
+      var h = wrapEl.offsetHeight || 300;
       /* Resize zone canvas to match chart wrap */
       if (zoneCanvas) {
-        zoneCanvas.width  = wrapEl.offsetWidth;
-        zoneCanvas.height = wrapEl.offsetHeight || 300;
+        zoneCanvas.width  = w;
+        zoneCanvas.height = h;
       }
+      /* Explicitly resize chart in case autoSize misses layout changes on mobile */
+      try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
     });
     resizeObs.observe(wrapEl);
+
+    /* Ensure chart renders correctly after full page load on mobile */
+    window.addEventListener('load', function () {
+      if (chart && wrapEl) {
+        var w = wrapEl.offsetWidth;
+        var h = wrapEl.offsetHeight || 300;
+        try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
+      }
+    }, { once: true });
+
+    /* On mobile, CSS layout may not be fully settled when init() runs.
+       A brief delay lets the browser finish its layout pass before sizing the chart. */
+    var MOBILE_LAYOUT_SETTLE_DELAY = 300;
+    setTimeout(function () {
+      if (chart && wrapEl) {
+        var w = wrapEl.offsetWidth;
+        var h = wrapEl.offsetHeight || 300;
+        try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
+      }
+    }, MOBILE_LAYOUT_SETTLE_DELAY);
 
     /* Theme-change observer */
     if (themeObs) themeObs.disconnect();

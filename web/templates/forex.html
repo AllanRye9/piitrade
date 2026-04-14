@@ -90,10 +90,13 @@
       </script>
 
     </div>
-    <nav class="fx-nav">
+    <nav class="fx-nav" role="navigation" aria-label="Main navigation">
       <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
         aria-pressed="true">🔔</button>
-      <a href="/">Home</a>
+      <a href="/" aria-label="Home page">Home</a>
+      <a href="/advance" aria-label="Advanced Market Analysis">Advanced</a>
+      <a href="/methodology" aria-label="Trading Methodology">Method</a>
+      <a href="/disclaimer" aria-label="Risk Disclaimer">Disclaimer</a>
       {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
