@@ -317,7 +317,16 @@ const pairSelect      = document.getElementById('pair-select');
 const lastUpdatedEl   = document.getElementById('last-updated');
 const dataSourceBadge = document.getElementById('data-source-badge');
 const refreshBtn      = document.getElementById('btn-refresh');
-
+const directionBadge  = document.getElementById('signal-direction');
+const directionArrow  = document.getElementById('direction-arrow');
+const confidenceFill  = document.getElementById('confidence-fill');
+const confidencePct   = document.getElementById('confidence-pct');
+const accuracy30d     = document.getElementById('accuracy-30d');
+const entryPrice      = document.getElementById('entry-price');
+const takeProfitEl    = document.getElementById('take-profit');
+const stopLossEl      = document.getElementById('stop-loss');
+const featuresEl      = document.getElementById('features-list');
+const modelVersionEl  = document.getElementById('model-version');
 const newsListEl      = document.getElementById('news-list');
 const newsLoadingEl   = document.getElementById('news-loading');
 const subscribeForm   = document.getElementById('subscribe-form');
@@ -508,88 +517,59 @@ async function loadSignal(pair) {
 }
 
 function renderSignal(data) {
-  const wrap = document.getElementById('fx-signal-wrap');
-  if (!wrap) return;
-
-  const dir    = data.direction || 'HOLD';
+  const dir = data.direction || 'HOLD';
   const isLive = data.is_live === true;
 
-  // Mask internal API/backend source names → user-friendly labels
-  let src = data.data_source || '';
-  if (src.indexOf('Frankfurter') !== -1 || src.indexOf('ECB') !== -1) {
-    src = 'Live Market Feed';
-  } else if (src.indexOf('Futures') !== -1) {
-    src = 'Live Futures Data';
-  } else if (src.indexOf('Yahoo') !== -1) {
-    src = 'Live Market Data';
-  } else if (src.indexOf('CoinGecko') !== -1) {
-    src = 'Live Crypto Feed';
-  } else if (src === 'static (live feed unavailable)') {
-    src = 'Market Feed Unavailable';
-  }
+  // Show/hide offline overlay – hide all signal content when data is not live
+  const offlineOverlay = document.getElementById('signal-offline-overlay');
+  const signalCard = document.getElementById('fx-signal-card');
+  if (offlineOverlay) offlineOverlay.hidden = isLive;
+  if (signalCard) signalCard.classList.toggle('signal-offline', !isLive);
 
-  // Update pair-bar elements (outside card)
-  if (lastUpdatedEl) {
-    lastUpdatedEl.textContent = isLive ? `Updated: ${formatDate(data.generated_at)}` : '';
-  }
-  if (dataSourceBadge) {
-    dataSourceBadge.textContent = isLive ? '🟢 Live' : '🔴 Offline';
-    dataSourceBadge.className   = `fx-data-source ${isLive ? 'live' : 'static'}`;
-    dataSourceBadge.title       = src || (isLive ? '' : 'Live feed unavailable');
-  }
-
-  // Offline state
+  // Don't populate fields with stale/static data when the feed is offline
   if (!isLive) {
-    wrap.innerHTML =
-      '<div class="signal-offline-overlay">' +
-        '<span class="signal-offline-icon">📡</span>' +
-        '<div class="signal-offline-title">Live Data Unavailable</div>' +
-        '<div class="signal-offline-msg">This pair\'s feed is currently offline. Data will appear once the live connection is restored.</div>' +
-      '</div>';
+    if (dataSourceBadge) {
+      dataSourceBadge.textContent = '🔴 Offline';
+      dataSourceBadge.className = 'fx-data-source static';
+      dataSourceBadge.title = data.data_source || 'Live feed unavailable';
+    }
     return;
   }
 
-  const conf  = parseFloat(data.confidence) || 0;
-  const arrow = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
-  const pair  = data.pair || currentPair;
+  // Direction badge
+  directionBadge.textContent = dir;
+  directionBadge.className = `signal-direction-badge ${dir}`;
+  directionArrow.textContent = dir === 'BUY' ? '▲' : dir === 'SELL' ? '▼' : '→';
 
-  const features = (data.features_used || [])
-    .map(f => `<span class="feature-tag">${escapeHtml(f)}</span>`)
-    .join('');
+  // Confidence bar
+  const conf = parseFloat(data.confidence) || 0;
+  confidenceFill.style.width = `${conf}%`;
+  confidenceFill.className = `confidence-fill ${dir}`;
+  confidencePct.textContent = `${conf.toFixed(1)}%`;
 
-  const modelRow =
-    (data.model_version ? `<span style="color:var(--text2)">Model:</span> <span>${escapeHtml(data.model_version)}</span>&nbsp;·&nbsp;` : '') +
-    (data.ai_label      ? `<span style="color:var(--text2)">Label:</span> <span>${escapeHtml(data.ai_label)}</span>&nbsp;·&nbsp;`      : '') +
-    (features           ? `<span style="color:var(--text2)">Features:</span> ${features}&nbsp;·&nbsp;`                                 : '') +
-    `<span style="color:var(--text2)">Source:</span> <span>${escapeHtml(src)}</span>`;
+  // 30-day accuracy
+  accuracy30d.innerHTML = `30-day model accuracy: <strong>${data.accuracy_30d}%</strong>`;
 
-  wrap.innerHTML =
-    '<div class="fx-signal-card" id="fx-signal-card">' +
-      '<div class="signal-direction-badge ' + dir + '">' +
-        '<span class="badge-arrow">' + arrow + '</span>' +
-        dir +
-      '</div>' +
-      '<div class="signal-meta">' +
-        '<div class="signal-confidence-row">' +
-          '<span class="label">Confidence</span>' +
-          '<div class="confidence-bar"><div class="confidence-fill ' + dir + '" style="width:' + conf + '%"></div></div>' +
-          '<span class="confidence-pct">' + conf.toFixed(1) + '%</span>' +
-        '</div>' +
-        '<div class="signal-accuracy-row">30-day model accuracy: <strong>' +
-          (data.accuracy_30d !== undefined && data.accuracy_30d !== null
-            ? escapeHtml(String(data.accuracy_30d)) + '%'
-            : '–') + '</strong></div>' +
-        '<div class="signal-levels">' +
-          '<div class="signal-level entry"><span class="level-label">Entry Price</span>' +
-            '<span class="level-value">' + formatPrice(data.entry_price, pair) + '</span></div>' +
-          '<div class="signal-level tp"><span class="level-label">Take Profit</span>' +
-            '<span class="level-value">' + formatPrice(data.take_profit, pair) + '</span></div>' +
-          '<div class="signal-level sl"><span class="level-label">Stop Loss</span>' +
-            '<span class="level-value">' + formatPrice(data.stop_loss, pair) + '</span></div>' +
-        '</div>' +
-        '<div class="signal-model-row">' + modelRow + '</div>' +
-      '</div>' +
-    '</div>';
+  // Price levels
+  entryPrice.textContent   = formatPrice(data.entry_price, data.pair);
+  takeProfitEl.textContent = formatPrice(data.take_profit, data.pair);
+  stopLossEl.textContent   = formatPrice(data.stop_loss, data.pair);
+
+  // Model info
+  if (modelVersionEl) modelVersionEl.textContent = data.model_version || '';
+  if (featuresEl) {
+    featuresEl.innerHTML = (data.features_used || [])
+      .map(f => `<span class="feature-tag">${escapeHtml(f)}</span>`)
+      .join('');
+  }
+
+  // Last updated + data source badge
+  lastUpdatedEl.textContent = `Updated: ${formatDate(data.generated_at)}`;
+  if (dataSourceBadge) {
+    dataSourceBadge.textContent = '🟢 Live';
+    dataSourceBadge.className = 'fx-data-source live';
+    dataSourceBadge.title = data.data_source || '';
+  }
 }
 
 function formatPrice(price, pair) {

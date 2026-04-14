@@ -1777,13 +1777,6 @@ a:hover {
 }
 
 /* ── Technical Analysis ── */
-.fx-loading {
-  text-align: center;
-  color: var(--text2);
-  padding: 24px;
-  font-size: 0.9rem;
-}
-
 .ta-loading {
   text-align: center;
   color: var(--text2);

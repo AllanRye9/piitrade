@@ -442,8 +442,59 @@
 
           <!-- 2. Live Signal Dashboard ─────────────────────────────────────────── -->
           <div class="fx-section-title" style="margin-top:16px">📊 Live Signal</div>
-          <div id="fx-signal-wrap">
-            <div class="fx-loading"><span class="refresh-icon" style="animation:fx-spin 1s linear infinite;display:inline-block">↻</span>&nbsp;Loading signal…</div>
+          <div class="fx-signal-card" id="fx-signal-card">
+            <!-- Live data unavailable overlay (shown when pair feed is offline) -->
+            <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
+              <span class="signal-offline-icon">📡</span>
+              <div class="signal-offline-title">Live Data Unavailable</div>
+              <div class="signal-offline-msg">This pair's feed is currently offline. Data will appear once the live
+                connection is restored.</div>
+            </div>
+            <!-- Direction badge -->
+            <div id="signal-direction" class="signal-direction-badge HOLD">
+              <span id="direction-arrow">→</span>
+              HOLD
+            </div>
+
+            <!-- Signal metadata -->
+            <div class="signal-meta">
+              <!-- Confidence row -->
+              <div class="signal-confidence-row">
+                <span class="label">Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill HOLD" id="confidence-fill" style="width:52.1%"></div>
+                </div>
+                <span class="confidence-pct" id="confidence-pct">52.1%</span>
+              </div>
+
+              <!-- 30-day accuracy -->
+              <div class="signal-accuracy-row" id="accuracy-30d">30-day model accuracy: <strong>–</strong></div>
+
+              <!-- Price levels -->
+              <div class="signal-levels">
+                <div class="signal-level entry">
+                  <span class="level-label">Entry Price</span>
+                  <span class="level-value" id="entry-price">–</span>
+                </div>
+                <div class="signal-level tp">
+                  <span class="level-label">Take Profit</span>
+                  <span class="level-value" id="take-profit">–</span>
+                </div>
+                <div class="signal-level sl">
+                  <span class="level-label">Stop Loss</span>
+                  <span class="level-value" id="stop-loss">–</span>
+                </div>
+              </div>
+
+              <!-- Model info -->
+              <div class="signal-model-row">
+                <span style="color:var(--text2)">Model:</span>
+                <span id="model-version" style="color:var(--text)"></span>
+                &nbsp;·&nbsp;
+                <span style="color:var(--text2)">Features:</span>
+                <span id="features-list"></span>
+              </div>
+            </div>
           </div>
         </section>
 
