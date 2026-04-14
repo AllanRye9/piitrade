@@ -160,6 +160,13 @@ async def forex_technical(pair: str = "EUR/USD"):
                 status_code=400,
             )
         live_rate = core._fetch_live_rate(pair)
+        if live_rate is None:
+            # Fall back to the most recent historical rate rather than the
+            # static hardcoded entry price, so the "current price" shown on
+            # the chart is as up-to-date as possible.
+            hist = core._fetch_historical_rates(pair, 2)
+            if hist:
+                live_rate = hist[max(hist.keys())]
         return JSONResponse(core._build_technical_analysis(pair, live_rate))
     except Exception as exc:
         logger.error("forex_technical error: %s", exc)
