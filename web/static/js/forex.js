@@ -2200,12 +2200,18 @@ pairSelect.addEventListener('change', () => {
   pairSelect.addEventListener('animationend', () => pairSelect.classList.remove('pair-changed'), { once: true });
   // Auto re-click the active chart-type button after 4 s to ensure the
   // chart content has fully loaded (catches timing and initialization edge-cases)
+  triggerChartReload(4000);
+});
+
+// ── Chart reload helper: clicks the active chart-type button to force a chart refresh.
+// Used on initial load and on pair change to handle timing / initialization edge-cases.
+function triggerChartReload(delayMs) {
   setTimeout(() => {
     const activeCtBtn = document.querySelector('.fx-ct-btn.fx-ct-btn-active') ||
                         document.querySelector('.fx-ct-btn[data-ct="candle"]');
     if (activeCtBtn) activeCtBtn.click();
-  }, 4000);
-});
+  }, delayMs || 0);
+}
 
 refreshBtn.addEventListener('click', () => {
   loadSignal(currentPair);
@@ -2375,16 +2381,9 @@ activateTab('section-signal');
 // Initialise the price chart and load initial candle data
 FxPriceChart.init();
 FxPriceChart.load(currentPair);
-// After a short delay, force a chart resize in case the element had
+// After a short delay, force a chart refresh in case the element had
 // zero width at init time (e.g. due to page layout settling)
-setTimeout(() => {
-  const wrapEl = document.getElementById('fx-chart-wrap');
-  if (wrapEl && wrapEl.offsetWidth > 0) {
-    const activeCtBtn = document.querySelector('.fx-ct-btn.fx-ct-btn-active') ||
-                        document.querySelector('.fx-ct-btn[data-ct="candle"]');
-    if (activeCtBtn) activeCtBtn.click();
-  }
-}, 600);
+triggerChartReload(600);
 
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();

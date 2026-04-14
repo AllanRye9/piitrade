@@ -1440,11 +1440,11 @@
             🔀 CHoCH
           </div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px solid #56d364;"></span>
+            <span class="adv-smc-line" style="border-top:2px solid #3ecf8e;"></span>
             📈 BOS ▲
           </div>
           <div class="adv-smc-row">
-            <span class="adv-smc-line" style="border-top:2px solid #ff6b6b;"></span>
+            <span class="adv-smc-line" style="border-top:2px solid #f85149;"></span>
             📉 BOS ▼
           </div>
           <div class="adv-smc-row">
@@ -2256,7 +2256,7 @@ var AdvChart = (function () {
       var price = parseFloat(b.level);
       if (!price || price <= 0) return;
       var isBull = b.type === 'bullish';
-      addPriceLine(price, isBull ? '#56d364' : '#ff6b6b',
+      addPriceLine(price, isBull ? '#3ecf8e' : '#f85149',
                    isBull ? '📈 BOS ▲' : '📉 BOS ▼', 0, 2);
     });
 
