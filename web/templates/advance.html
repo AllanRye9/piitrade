@@ -1402,7 +1402,7 @@
         <!-- Chart area -->
         <div class="adv-chart-main">
           <div class="adv-chart-wrap" id="adv-chart-wrap">
-            <div id="adv-lw-chart" style="position:absolute;inset:0;"></div>
+            <div id="adv-lw-chart" style="position:absolute;inset:0;width:100%;height:100%;"></div>
             <canvas id="adv-chart-canvas" style="display:none;"></canvas>
             <div class="adv-chart-live-price" id="adv-chart-live-badge">
               <span class="adv-live-dot"></span>
@@ -1930,6 +1930,7 @@ var AdvChart = (function () {
   function buildChartOptions() {
     var c = getThemeColors();
     return {
+      autoSize: true,
       layout: {
         background: { type: 'solid', color: c.bg },
         textColor: c.text,
@@ -2363,16 +2364,12 @@ var AdvChart = (function () {
     if (!chartDiv) {
       chartDiv = document.createElement('div');
       chartDiv.id = 'adv-lw-chart';
-      chartDiv.style.cssText = 'position:absolute;inset:0;';
+      chartDiv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
       wrapEl.insertBefore(chartDiv, wrapEl.firstChild);
     }
 
-    var h = wrapEl.offsetHeight || 460;
-    if (h < 300) h = 460;
-
     var opts = buildChartOptions();
-    opts.width  = wrapEl.offsetWidth || 800;
-    opts.height = h;
+    /* autoSize:true is set in buildChartOptions — no manual width/height needed */
 
     chart = LightweightCharts.createChart(chartDiv, opts);
     createMainSeries();
@@ -2380,14 +2377,15 @@ var AdvChart = (function () {
     /* Initialise the trade-zone canvas overlay */
     initZoneCanvas();
 
-    /* Resize observer */
+    /* Resize observer — only needed to sync zone-canvas size; chart auto-sizes */
     if (resizeObs) resizeObs.disconnect();
     resizeObs = new ResizeObserver(function () {
       if (!chart) return;
-      var w  = wrapEl.offsetWidth;
-      var hh = wrapEl.offsetHeight || 420;
-      if (hh < 300) hh = 420;
-      chart.applyOptions({ width: w, height: hh });
+      /* Resize zone canvas to match chart wrap */
+      if (zoneCanvas) {
+        zoneCanvas.width  = wrapEl.offsetWidth;
+        zoneCanvas.height = wrapEl.offsetHeight || 300;
+      }
     });
     resizeObs.observe(wrapEl);
 
@@ -2453,9 +2451,13 @@ var AdvChart = (function () {
       });
       document.addEventListener('fullscreenchange', function () {
         fsBtn.textContent = document.fullscreenElement ? '✕ Exit' : '⛶';
+        /* autoSize:true handles the chart resize; just update zone canvas */
         setTimeout(function () {
           if (!chart) return;
-          chart.applyOptions({ width: wrapEl.offsetWidth, height: Math.max(wrapEl.offsetHeight, 300) });
+          if (zoneCanvas) {
+            zoneCanvas.width  = wrapEl.offsetWidth;
+            zoneCanvas.height = wrapEl.offsetHeight || 300;
+          }
         }, 100);
       });
     }
