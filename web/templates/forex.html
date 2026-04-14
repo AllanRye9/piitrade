@@ -245,7 +245,7 @@
         <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
         <section id="section-signal">
           <div class="fx-pair-bar">
-            <label for="pair-select" style="font-size:.9rem;color:let(--text2)">Trading Pair:</label>
+            <label for="pair-select" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
             <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
               <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
                 <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
@@ -344,10 +344,10 @@
 
               <!-- Model info -->
               <div class="signal-model-row">
-                <span style="color:let(--text2)">Model:</span>
-                <span id="model-version" style="color:let(--text)"></span>
+                <span style="color:var(--text2)">Model:</span>
+                <span id="model-version" style="color:var(--text)"></span>
                 &nbsp;·&nbsp;
-                <span style="color:let(--text2)">Features:</span>
+                <span style="color:var(--text2)">Features:</span>
                 <span id="features-list"></span>
               </div>
             </div>
@@ -524,7 +524,7 @@
         <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
         <section id="section-fvg">
           <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to Fair Value Gaps.
             Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
             Click any row to expand and view all FVGs for that pair.
@@ -532,7 +532,7 @@
 
           <!-- FVG Filter Bar -->
           <div class="fvg-filter-bar">
-            <span style="color:let(--text2);font-size:.85rem;white-space:nowrap">Show:</span>
+            <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Show:</span>
             <button class="fvg-filter-btn active" data-filter="approaching">📍 Approaching</button>
             <button class="fvg-filter-btn" data-filter="reached">🎯 Inside Zone</button>
             <button class="fvg-filter-btn" data-filter="rejected">🚫 Rejected</button>
@@ -592,14 +592,14 @@
         <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
         <section id="section-sr-breaks">
           <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to major support and
             resistance levels — from those approaching, to those touching, to confirmed breaks.
           </p>
 
           <!-- S/R Group Filter Bar -->
           <div class="fvg-filter-bar">
-            <span style="color:let(--text2);font-size:.85rem;white-space:nowrap">Group:</span>
+            <span style="color:var(--text2);font-size:.85rem;white-space:nowrap">Group:</span>
             <button class="fvg-filter-btn sr-filter-btn active" data-sr-filter="soon_touching">📍 Soon Touching</button>
             <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="touched">🎯 Touched</button>
             <button class="fvg-filter-btn sr-filter-btn" data-sr-filter="broke">💥 Broke</button>
@@ -633,19 +633,19 @@
               <div id="sr-broke" class="fvg-list"></div>
             </div>
           </div>
-          <div id="sr-empty" style="display:none;color:let(--text2);font-size:.9rem;padding:24px 0">
+          <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
             No S/R activity detected at this time. Markets may be ranging.
           </div>
         </section>
 
         <section id="section-volatile">
           <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Pairs ranked by price range movement over the selected timeframe. Higher volatility can signal trading
             opportunities but also greater risk.
           </p>
           <div class="volatile-filter-bar">
-            <span style="color:let(--text2);font-size:.85rem">Timeframe:</span>
+            <span style="color:var(--text2);font-size:.85rem">Timeframe:</span>
             <button class="volatile-tf-btn active" data-tf="1h">1 Hour</button>
             <button class="volatile-tf-btn" data-tf="4h">4 Hours</button>
             <button class="volatile-tf-btn" data-tf="24h">24 Hours</button>
@@ -659,7 +659,7 @@
         <!-- 6. Trend Reversal Pairs ─────────────────────────────────────────────── -->
         <section id="section-reversal">
           <div class="fx-section-title">🔄 Potential Trend Reversal Pairs</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Pairs where the AI model has detected a recent momentum shift, suggesting a potential change in trend
             direction.
           </p>
@@ -708,7 +708,7 @@
         <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
         <section id="section-patterns">
           <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
             across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
           </p>
@@ -722,12 +722,12 @@
 
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
             <button id="btn-refresh-patterns" class="fx-refresh-btn" type="button">↻ Refresh Patterns</button>
-            <span style="color:let(--text2);font-size:.82rem">🔔 Sound alerts fire automatically for High Impact
+            <span style="color:var(--text2);font-size:.82rem">🔔 Sound alerts fire automatically for High Impact
               formations</span>
           </div>
 
           <div id="pattern-loading" class="ta-loading">Loading pattern scanner…</div>
-          <div id="pattern-empty" style="display:none;color:let(--text2);font-size:.9rem;padding:24px 0">
+          <div id="pattern-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
             No significant market structure formations detected at this time.
           </div>
           <div id="pattern-content" style="display:none">
@@ -766,7 +766,7 @@
         <!-- 8. Alerts & Events ─────────────────────────────────────────────────── -->
         <section id="section-alerts">
           <div class="fx-section-title">🔔 Market Alerts &amp; Events</div>
-          <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Tracks impactful market events, institutional activity, and significant price surges in real time.
             Use this section to stay ahead of major catalysts that move markets.
           </p>
@@ -781,7 +781,7 @@
 
           <!-- Live alert feed -->
           <div id="alerts-feed" class="alerts-feed">
-            <div style="color:let(--text2);padding:32px 0;text-align:center;font-size:.95rem">
+            <div style="color:var(--text2);padding:32px 0;text-align:center;font-size:.95rem">
               No market alerts at this time. Check back later.
             </div>
           </div>
@@ -789,7 +789,7 @@
           <!-- Email subscription (moved below alerts feed) -->
           <div class="alerts-subscribe-section">
             <div class="fx-section-title" style="font-size:1rem;margin-bottom:12px">📧 Get Signal Alerts by Email</div>
-            <p style="color:let(--text2);font-size:.85rem;margin:0 0 14px">
+            <p style="color:var(--text2);font-size:.85rem;margin:0 0 14px">
               Receive an email the moment a new AI signal is generated for your chosen pairs.
             </p>
             <form class="subscribe-form" id="subscribe-form" novalidate>
@@ -848,10 +848,10 @@
 
   <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
   <footer
-    style="text-align:center;padding:12px 20px;border-top:1px solid let(--border);color:let(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
+    style="text-align:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
     <div style="display:flex;gap:14px;justify-content:center;margin-bottom:5px;flex-wrap:wrap">
-      <a href="/" style="color:let(--text2);text-decoration:none">Home</a>
-      <a href="/disclaimer" style="color:let(--text2);text-decoration:none">Risk Disclaimer</a>
+      <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+      <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
     </div>
     <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute
       financial advice.</div>
