@@ -2423,7 +2423,7 @@ var AdvChart = (function () {
         zoneCanvas.height = h;
       }
       /* Explicitly resize chart in case autoSize misses layout changes on mobile */
-      try { chart.resize(w, h); } catch (e) {}
+      try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
     });
     resizeObs.observe(wrapEl);
 
@@ -2432,18 +2432,20 @@ var AdvChart = (function () {
       if (chart && wrapEl) {
         var w = wrapEl.offsetWidth;
         var h = wrapEl.offsetHeight || 300;
-        try { chart.resize(w, h); } catch (e) {}
+        try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
       }
     }, { once: true });
 
-    /* Additional mobile fix: trigger resize after a short delay for layout settle */
+    /* On mobile, CSS layout may not be fully settled when init() runs.
+       A brief delay lets the browser finish its layout pass before sizing the chart. */
+    var MOBILE_LAYOUT_SETTLE_DELAY = 300;
     setTimeout(function () {
       if (chart && wrapEl) {
         var w = wrapEl.offsetWidth;
         var h = wrapEl.offsetHeight || 300;
-        try { chart.resize(w, h); } catch (e) {}
+        try { chart.resize(w, h); } catch (e) { console.warn('Chart resize failed:', e); }
       }
-    }, 300);
+    }, MOBILE_LAYOUT_SETTLE_DELAY);
 
     /* Theme-change observer */
     if (themeObs) themeObs.disconnect();
