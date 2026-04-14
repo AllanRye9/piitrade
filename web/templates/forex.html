@@ -16,28 +16,28 @@
     content="forex signals free, free AI forex signals, EUR/USD signal, GBP/USD signal, USD/JPY signal, risk calculator, technical analysis, FVG fair value gap, volatility scanner, market structure BOS CHoCH, trend reversal, forex alerts 2026" />
   <meta name="robots" content="index, follow" />
   <meta name="author" content="PiiTrade" />
-  <link rel="canonical" href="https://piitrade.com/forex" />
+  <link rel="canonical" href="https://piitrade.onrender.com/forex" />
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="PiiTrade – Free AI Forex Signal Dashboard" />
   <meta property="og:description"
     content="Free real-time AI trading signals for 35 forex pairs — majors, minors, and exotics. Risk calculator, FVG scanner, S/R breakout scanner – all free, no account needed." />
-  <meta property="og:url" content="https://piitrade.com/forex" />
+  <meta property="og:url" content="https://piitrade.onrender.com/forex" />
   <meta property="og:site_name" content="PiiTrade" />
-  <meta property="og:image" content="https://piitrade.com/img/trader.png" />
+  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="PiiTrade – Free AI Forex Signal Dashboard" />
   <meta name="twitter:description"
     content="Free AI-powered signals for 35 forex pairs. Risk calc, FVG scanner, volatility scanner. No sign-up required." />
-  <meta name="twitter:image" content="https://piitrade.com/img/trader.png" />
+  <meta name="twitter:image" content="https://piitrade.onrender.com/img/trader.png" />
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "PiiTrade AI Forex Signal Dashboard",
-    "url": "https://piitrade.com/forex",
+    "url": "https://piitrade.onrender.com/forex",
     "description": "Free real-time AI forex signal dashboard for 35 pairs. Features include risk calculator, FVG scanner, support/resistance breakout scanner, volatility scanner, and 30-day accuracy history.",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Any",
@@ -50,7 +50,7 @@
     "provider": {
       "@type": "Organization",
       "name": "PiiTrade",
-      "url": "https://piitrade.com/"
+      "url": "https://piitrade.onrender.com/"
     }
   }
   </script>
@@ -61,8 +61,6 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
   <link rel="stylesheet" href="/static/css/forex.css" />
   <link rel="icon" type="image/png" href="/img/trader.png" />
-  <!-- Lightweight Charts — TradingView-style interactive price chart -->
-  <script src="/static/js/lightweight-charts.standalone.production.js"></script>
 </head>
 
 <body>
@@ -96,7 +94,6 @@
       <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
         aria-pressed="true">🔔</button>
       <a href="/">Home</a>
-      <a href="/advance">Advanced</a>
       {% if current_user and is_admin %}
       <a href="/const" class="nav-admin">⚙️ Admin</a>
       <a href="/logout" class="btn-outline">Logout</a>
@@ -158,148 +155,8 @@
     <div class="gamebar-badges" id="gamebar-badges"></div>
   </div>
 
-  <!-- ═══════════════════════════════ ADVANCED FEATURE PROMO ══════════════ -->
-  <div id="adv-promo-banner" style="
-    margin: 8px 5% 0;
-    background: linear-gradient(135deg, #161b22 0%, rgba(88,166,255,.08) 50%, rgba(62,207,142,.06) 100%);
-    border: 1px solid rgba(88,166,255,.3);
-    border-radius: 10px;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    position: relative;
-    overflow: hidden;
-    animation: adv-promo-in .6s cubic-bezier(.22,1,.36,1) both;
-  ">
-    <style>
-      @keyframes adv-promo-in {
-        from { opacity: 0; transform: translateY(-10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes adv-pulse-ring {
-        0%   { transform: scale(1);   opacity: .8; }
-        70%  { transform: scale(2.2); opacity: 0; }
-        100% { transform: scale(2.2); opacity: 0; }
-      }
-      @keyframes adv-pulse-core {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(62,207,142,.7); }
-        50%       { box-shadow: 0 0 0 5px rgba(62,207,142,0); }
-      }
-      @keyframes adv-shimmer-text {
-        0%   { background-position: -200% center; }
-        100% { background-position:  200% center; }
-      }
-      @keyframes adv-float {
-        0%, 100% { transform: translateY(0); }
-        50%       { transform: translateY(-4px); }
-      }
-      .adv-promo-live-dot {
-        position: relative;
-        width: 10px; height: 10px;
-        flex-shrink: 0;
-      }
-      .adv-promo-live-dot-core {
-        position: absolute; inset: 0;
-        border-radius: 50%;
-        background: #3ecf8e;
-        animation: adv-pulse-core 1.4s ease-in-out infinite;
-      }
-      .adv-promo-live-dot-ring {
-        position: absolute; inset: 0;
-        border-radius: 50%;
-        background: #3ecf8e;
-        animation: adv-pulse-ring 1.4s ease-out infinite;
-      }
-      .adv-promo-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 9px 20px;
-        background: linear-gradient(135deg, rgba(88,166,255,.15), rgba(62,207,142,.12));
-        border: 1px solid rgba(88,166,255,.4);
-        border-radius: 10px;
-        color: #e6edf3;
-        font-size: .88rem;
-        font-weight: 700;
-        font-family: inherit;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
-        white-space: nowrap;
-        animation: adv-float 3s ease-in-out infinite;
-      }
-      .adv-promo-btn:hover {
-        background: linear-gradient(135deg, rgba(88,166,255,.25), rgba(62,207,142,.2));
-        border-color: rgba(88,166,255,.7);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(88,166,255,.2);
-        text-decoration: none;
-        color: #e6edf3;
-      }
-      #adv-promo-dismiss {
-        position: absolute; top: 8px; right: 10px;
-        background: none; border: none;
-        color: #8b949e; font-size: .85rem; cursor: pointer;
-        padding: 2px 6px; border-radius: 4px;
-        transition: color .2s, background .2s;
-      }
-      #adv-promo-dismiss:hover { color: #e6edf3; background: rgba(255,255,255,.07); }
-    </style>
-    <!-- Decorative glow -->
-    <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(88,166,255,.1) 0%,transparent 70%);pointer-events:none"></div>
-    <!-- Live indicator -->
-    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-      <div class="adv-promo-live-dot">
-        <div class="adv-promo-live-dot-ring"></div>
-        <div class="adv-promo-live-dot-core"></div>
-      </div>
-      <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3ecf8e">Live</span>
-    </div>
-    <!-- Icon -->
-    <div style="font-size:1.8rem;flex-shrink:0;line-height:1">🧠</div>
-    <!-- Text content -->
-    <div style="flex:1;min-width:180px">
-      <div style="
-        font-size:1rem;font-weight:800;
-        background:linear-gradient(135deg,#e6edf3 0%,#58a6ff 50%,#3ecf8e 100%);
-        background-size:200% auto;
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-        animation:adv-shimmer-text 3.5s linear infinite;
-        margin-bottom:3px;
-      ">Advanced Market Analysis</div>
-      <div style="font-size:.8rem;color:#8b949e;line-height:1.4">
-        SMC structure · Order blocks · FVG zones · Live sessions · Institutional liquidity
-      </div>
-    </div>
-    <!-- Feature chips -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.2);color:#58a6ff">BOS/CHoCH</span>
-      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.2);color:#3ecf8e">FVG</span>
-      <span style="font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:20px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.2);color:#ffc107">S/R</span>
-    </div>
-    <!-- CTA button -->
-    <a href="/advance" class="adv-promo-btn">⚡ Open Advanced →</a>
-    <!-- Dismiss -->
-    <button id="adv-promo-dismiss" type="button" aria-label="Dismiss">✕</button>
-  </div>
-  <script>
-    (function(){
-      var el = document.getElementById('adv-promo-banner');
-      var btn = document.getElementById('adv-promo-dismiss');
-      if(btn && el) btn.addEventListener('click', function(){
-        el.style.transition = 'opacity .3s, max-height .4s';
-        el.style.opacity = '0';
-        el.style.maxHeight = el.offsetHeight + 'px';
-        setTimeout(function(){ el.style.maxHeight = '0'; el.style.margin = '0'; el.style.padding = '0'; }, 300);
-        setTimeout(function(){ el.style.display = 'none'; }, 700);
-      });
-    })();
-  </script>
-
   <!-- ═══════════════════════════════ GLOBAL DISCLAIMER ══════════════════════ -->
-  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:6px auto;">
+  <div id="disclaimerContainer" style="position:relative;width:100%;max-width:500px;margin:10px auto;">
     <!-- DISCLAIMER -->
     <div class="global-disclaimer" id="disclaimerBox" role="alert" style="width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;
               background:#111;color:#fff;padding:8px;gap:8px;border-radius:6px;box-sizing:border-box;font-size:14px;">
@@ -388,8 +245,7 @@
         <!-- 1. Pair Selector ─────────────────────────────────────────────────────── -->
         <section id="section-signal">
           <div class="fx-pair-bar">
-            <label for="pair-select" class="fx-pair-label" style="font-size:.9rem;color:var(--text2)">Trading Pair:</label>
-            <span id="pair-select-hint" class="pair-select-hint" aria-hidden="true">👇 Select here</span>
+            <label for="pair-select" style="font-size:.9rem;color:let(--text2)">Trading Pair:</label>
             <select id="pair-select" class="fx-pair-select" aria-label="Select trading pair">
               <optgroup id="optgroup-major" label="── Major Pairs (USD)" data-group="major" data-requires-ecb="true">
                 <option value="EUR/USD">EUR/USD – Euro / US Dollar</option>
@@ -440,8 +296,8 @@
             <span id="data-source-badge" class="fx-data-source"></span>
           </div>
 
-          <!-- 2. Live Signal Dashboard ─────────────────────────────────────────── -->
-          <div class="fx-section-title" style="margin-top:16px">📊 Live Signal</div>
+          <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
+          <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
           <div class="fx-signal-card" id="fx-signal-card">
             <!-- Live data unavailable overlay (shown when pair feed is offline) -->
             <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
@@ -488,55 +344,33 @@
 
               <!-- Model info -->
               <div class="signal-model-row">
-                <span style="color:var(--text2)">Model:</span>
-                <span id="model-version" style="color:var(--text)"></span>
+                <span style="color:let(--text2)">Model:</span>
+                <span id="model-version" style="color:let(--text)"></span>
                 &nbsp;·&nbsp;
-                <span style="color:var(--text2)">Features:</span>
+                <span style="color:let(--text2)">Features:</span>
                 <span id="features-list"></span>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- ─── Interactive Price Chart ──────────────────────────────────────── -->
+        <!-- ─── Historical Accuracy Chart (inside Signal section) ──────────────── -->
         <section id="section-history">
-          <div class="fx-section-title">📈 Market Price Chart
-            <span id="fx-chart-pair-label" class="fx-chart-pair-label"></span>
-          </div>
-          <!-- Chart controls: timeframe + type + fullscreen -->
-          <div class="fx-chart-controls">
-            <div class="fx-tf-nav">
-              <button class="fx-tf-btn" data-tf="1H" title="7-day 1-hour bars">1H</button>
-              <button class="fx-tf-btn" data-tf="4H" title="30-day 4-hour bars">4H</button>
-              <button class="fx-tf-btn fx-tf-btn-active" data-tf="1D" title="90 daily bars">1D</button>
-              <button class="fx-tf-btn" data-tf="1W" title="1-year weekly bars">1W</button>
+          <div class="fx-section-title">📉 Historical Accuracy – Last 30 Days</div>
+          <div class="fx-chart-wrap">
+            <canvas id="accuracy-chart" height="400"
+              aria-label="Historical price and prediction accuracy chart"></canvas>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-line"></div> Actual exit price
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot correct"></div> Correct prediction
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot incorrect"></div> Incorrect prediction
+              </div>
             </div>
-            <div class="fx-ct-nav">
-              <button class="fx-ct-btn fx-ct-btn-active" data-ct="candle" title="Candlestick">🕯 Candles</button>
-              <button class="fx-ct-btn" data-ct="line" title="Line chart">📈 Line</button>
-            </div>
-            <button id="fx-chart-fullscreen" class="fx-zoom-btn" title="Toggle fullscreen">⛶ Fullscreen</button>
-          </div>
-          <div class="fx-chart-wrap" id="fx-chart-wrap">
-            <div id="fx-lw-chart" style="position:absolute;inset:0;"></div>
-            <div class="fx-chart-live-badge" id="fx-chart-live-badge">
-              <span class="fx-live-dot"></span>
-              <span id="fx-chart-live-val">–</span>
-            </div>
-            <div class="fx-chart-loading" id="fx-chart-loading">
-              <span class="refresh-icon" style="animation:fx-spin 1s linear infinite;display:inline-block">↻</span>&nbsp;Loading chart…
-            </div>
-            <div class="fx-chart-error" id="fx-chart-error" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:var(--text2,#888);font-size:.9rem;text-align:center;padding:1rem;"></div>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-line"></div> Price</div>
-            <div class="legend-item"><span style="color:#f0c040;font-size:1em">⚡</span> AI Entry</div>
-            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">✅</span> Take Profit</div>
-            <div class="legend-item"><span style="color:#f85149;font-size:1em">🛑</span> Stop Loss</div>
-            <div class="legend-item"><span style="color:#3ecf8e;font-size:1em">▲</span> BUY signal</div>
-            <div class="legend-item"><span style="color:#f85149;font-size:1em">▼</span> SELL signal</div>
-            <div class="legend-item"><span style="display:inline-block;width:18px;height:10px;background:rgba(62,207,142,.3);border:1px dashed rgba(62,207,142,.7);border-radius:2px;vertical-align:middle;"></span> BUY Zone</div>
-            <div class="legend-item"><span style="display:inline-block;width:18px;height:10px;background:rgba(248,81,73,.3);border:1px dashed rgba(248,81,73,.7);border-radius:2px;vertical-align:middle;"></span> SL Zone</div>
           </div>
         </section>
 
@@ -689,15 +523,11 @@
 
         <!-- 4b. FVG Status Scanner ──────────────────────────────────────────────── -->
         <section id="section-fvg">
-          <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner
-            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
-            <span class="scanner-last-update"></span>
-          </div>
+          <div class="fx-section-title">🌀 Fair Value Gap (FVG) Status Scanner</div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to Fair Value Gaps.
             Pairs are grouped by FVG status: approaching, reached, passed, or rejected.
             Click any row to expand and view all FVGs for that pair.
-            Data refreshes automatically every 60 seconds.
           </p>
 
           <!-- FVG Filter Bar -->
@@ -761,14 +591,10 @@
 
         <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
         <section id="section-sr-breaks">
-          <div class="fx-section-title">💥 Support &amp; Resistance Levels
-            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
-            <span class="scanner-last-update"></span>
-          </div>
+          <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to major support and
             resistance levels — from those approaching, to those touching, to confirmed breaks.
-            Data refreshes automatically every 60 seconds.
           </p>
 
           <!-- S/R Group Filter Bar -->
@@ -881,14 +707,10 @@
 
         <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
         <section id="section-patterns">
-          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner
-            <span class="scanner-live-badge"><span class="scanner-live-dot"></span>Live</span>
-            <span class="scanner-last-update"></span>
-          </div>
+          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
           <p style="color:let(--text2);font-size:.9rem;margin:0 0 18px">
             Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
             across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
-            Data refreshes automatically every 60 seconds.
           </p>
 
           <div class="fvg-disclaimer">
