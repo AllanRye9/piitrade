@@ -2082,14 +2082,14 @@ var AdvChart = (function () {
         if (typeof t === 'string') t = toTimestamp(t);
         return { time: t, value: b.close };
       });
-      try { mainSeries.setData(dedup(lineData)); } catch (e) { return; }
+      try { mainSeries.setData(dedup(lineData)); } catch (e) { console.warn('AdvChart: failed to set line data', e); return; }
     } else {
       var ohlcData = bars.map(function (b) {
         var t = b.time;
         if (typeof t === 'string') t = toTimestamp(t);
         return { time: t, open: b.open, high: b.high, low: b.low, close: b.close };
       });
-      try { mainSeries.setData(dedup(ohlcData)); } catch (e) { return; }
+      try { mainSeries.setData(dedup(ohlcData)); } catch (e) { console.warn('AdvChart: failed to set OHLC data', e); return; }
     }
 
     /* Apply SMC markers (BOS, CHoCH, Entry) */
