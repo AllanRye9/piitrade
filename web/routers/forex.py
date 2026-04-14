@@ -246,6 +246,33 @@ async def forex_live_prices():
         return JSONResponse({"error": "Internal server error."}, status_code=500)
 
 
+@router.get("/api/forex/price")
+async def forex_price(pair: str = "EUR/USD"):
+    """Return the current live price for a single pair (lightweight poll endpoint)."""
+    try:
+        core = _core()
+        if pair not in core._SUPPORTED_PAIRS:
+            return JSONResponse(
+                {"error": f"Unsupported pair. Choose from: {', '.join(core._SUPPORTED_PAIRS)}"},
+                status_code=400,
+            )
+        rate = core._fetch_live_rate(pair)
+        is_live = rate is not None
+        if not is_live:
+            # Fall back to the static signal entry price so the response is
+            # always usable even when external feeds are unavailable.
+            rate = core._FOREX_SIGNALS.get(pair, {}).get("entry_price")
+        _pip, dec = core._pair_pip_dec(pair)
+        return JSONResponse({
+            "pair": pair,
+            "price": round(rate, dec) if rate is not None else None,
+            "is_live": is_live,
+        })
+    except Exception as exc:
+        logger.error("forex_price error: %s", exc)
+        return JSONResponse({"error": "Internal server error."}, status_code=500)
+
+
 @router.get("/api/forex/volatile")
 async def forex_volatile(timeframe: str = "24h"):
     """Return pairs ranked by volatility for timeframe (1h, 4h, 24h)."""
