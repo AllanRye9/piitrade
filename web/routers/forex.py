@@ -775,6 +775,19 @@ async def forex_candles(pair: str = "EUR/USD", tf: str = "1D", bars: int = 365):
 
         candles = _build_ohlc(daily_closes, tf_upper, dec, bars)
 
+        # If the live data had too few data points for the requested timeframe
+        # (e.g. Frankfurter returned only 1–4 days when 1W needs 5+), fall back
+        # to the static seed sequences so the chart always has something to show.
+        if not candles and hist_rates:
+            fb_price, fb_pip, fb_seq = core._FOREX_HIST_SEQUENCES[pair]
+            fb_val = fb_price
+            fb_start = _date.today() - _td(days=len(fb_seq))
+            fb_closes: list[tuple[str, float]] = []
+            for fb_idx, (_, _, fb_delta) in enumerate(fb_seq):
+                fb_val = round(fb_val + fb_delta * fb_pip, dec)
+                fb_closes.append(((fb_start + _td(days=fb_idx)).isoformat(), fb_val))
+            candles = _build_ohlc(fb_closes, tf_upper, dec, bars)
+
         live_rate = core._fetch_live_rate(pair)
         # Update or extend the candle series with the live rate
         if live_rate is not None and candles:

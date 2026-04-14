@@ -710,7 +710,7 @@ const FxPriceChart = (function () {
     if (!chartDiv) { chartDiv = document.createElement('div'); chartDiv.id = 'fx-lw-chart'; chartDiv.style.cssText = 'position:absolute;inset:0;'; wrapEl.insertBefore(chartDiv, wrapEl.firstChild); }
 
     const h = wrapEl.offsetHeight || 320;
-    const opts = buildOpts(wrapEl.offsetWidth, h < 220 ? 320 : h);
+    const opts = buildOpts(wrapEl.offsetWidth || wrapEl.clientWidth || 800, h < 220 ? 320 : h);
     chart = LightweightCharts.createChart(chartDiv, opts);
     createSeries();
 
