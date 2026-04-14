@@ -2407,7 +2407,27 @@ var AdvChart = (function () {
     updateSMCSidebar();
   }
 
-  return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice, hasData: function () { return !!(candleData && candleData.length) || !!(rawHistory && rawHistory.length); } };
+  return { init: init, updateData: updateData, updateSignal: updateSignal, updateCurrentPrice: updateCurrentPrice,
+    hasData: function () { return !!(candleData && candleData.length) || !!(rawHistory && rawHistory.length); },
+    reset: function () {
+      /* Clear candle/history data and wipe the chart series so stale candles
+         from the previous pair are never shown with a new pair's indicators. */
+      candleData  = null;
+      rawHistory  = null;
+      techData    = null;
+      aiSignalData = null;
+      if (mainSeries) { try { mainSeries.setData([]); } catch (e) {} }
+      clearPriceLines();
+      /* Re-show the loading spinner so the user knows a fetch is in progress. */
+      var loadEl = document.getElementById('adv-chart-loading');
+      if (loadEl) {
+        loadEl.innerHTML = '<span class="spin"></span>&nbsp;Loading chart…';
+        loadEl.style.display = 'flex';
+        loadEl.style.fontSize = '';
+        loadEl.style.color = '';
+      }
+    },
+  };
 }());
 
 (function () {
@@ -2836,6 +2856,12 @@ var AdvChart = (function () {
   function loadPairData(pair) {
     window._advCurrentPair = pair;
     document.getElementById('adv-last-updated').textContent = '';
+    /* Clear the chart and stale tech/signal data before fetching new pair data
+       so stale candles from the previous pair are not shown alongside this
+       pair's indicator lines. */
+    lastTech = null;
+    lastSig  = null;
+    AdvChart.reset();
     setLoading('adv-signal-wrap');
     setLoading('adv-structure-wrap');
     setLoading('adv-fvg-wrap');

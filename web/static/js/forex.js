@@ -198,7 +198,7 @@ function showToast(type, icon, title, msg, durationMs = 4000) {
 
 // ─── Tab Navigation ──────────────────────────────────────────────────────────
 const ALL_SECTIONS = [
-  'section-signal', 'section-risk',
+  'section-signal', 'section-history', 'section-risk',
   'section-technical', 'section-fvg', 'section-sr-breaks',
   'section-volatile', 'section-reversal',
   'section-success', 'section-patterns', 'section-smc', 'section-news', 'section-alerts',
@@ -206,7 +206,7 @@ const ALL_SECTIONS = [
 
 // Sections belonging to each tab
 const TAB_SECTIONS = {
-  'section-signal':    ['section-signal'],
+  'section-signal':    ['section-signal', 'section-history'],
   'section-risk':      ['section-risk'],
   'section-technical': ['section-technical'],
   'section-fvg':       ['section-fvg'],
