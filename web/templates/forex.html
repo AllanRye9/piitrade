@@ -357,11 +357,14 @@
           </div>
         </section>
 
-        <!-- ─── Historical Accuracy Chart (inside Signal section) ──────────────── -->
+        <!-- ─── Historical Accuracy Chart (shown alongside Signal section) ──────── -->
         <section id="section-history">
-          <div class="fx-section-title">📉 Historical Accuracy – Last 30 Days</div>
-          <div class="fx-chart-wrap">
-            <canvas id="accuracy-chart" height="400"
+          <div class="acc-section-header">
+            <div class="fx-section-title" style="margin-bottom:0">📉 Historical Accuracy – Last 30 Days</div>
+            <div class="acc-stats-row" id="accuracy-stats" aria-live="polite"></div>
+          </div>
+          <div class="acc-chart-card">
+            <canvas id="accuracy-chart"
               aria-label="Historical price and prediction accuracy chart"></canvas>
             <div class="chart-legend">
               <div class="legend-item">
