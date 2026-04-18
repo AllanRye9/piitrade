@@ -1161,7 +1161,62 @@ a:hover {
   border-top: 10px solid var(--sell-color);
 }
 
-/* ── AI Explanation ── */
+/* ── Historical Accuracy Section ── */
+.acc-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.acc-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  flex-wrap: wrap;
+}
+
+.acc-stat-pct {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.acc-stat-pct.stat-high  { color: var(--buy-color); }
+.acc-stat-pct.stat-mid   { color: #e3b341; }
+.acc-stat-pct.stat-low   { color: var(--sell-color); }
+
+.acc-stat-label {
+  color: var(--text2);
+  font-size: .78rem;
+}
+
+.acc-stat-sep {
+  color: var(--border);
+}
+
+.acc-stat-detail {
+  color: var(--text2);
+  font-size: .78rem;
+}
+
+.acc-chart-card {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px 10px;
+  overflow: hidden;
+}
+
+#accuracy-chart {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+}
+
+
 .fx-explanation {
   background: var(--surface);
   border: 1px solid var(--border);

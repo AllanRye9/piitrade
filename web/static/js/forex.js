@@ -526,6 +526,9 @@ function renderSignal(data) {
   if (offlineOverlay) offlineOverlay.hidden = isLive;
   if (signalCard) signalCard.classList.toggle('signal-offline', !isLive);
 
+  // Always render the history chart (history is available in both live and offline modes)
+  renderAccuracyChart(data.history || [], data.accuracy_30d || 0);
+
   // Don't populate fields with stale/static data when the feed is offline
   if (!isLive) {
     if (dataSourceBadge) {
@@ -570,6 +573,156 @@ function renderSignal(data) {
     dataSourceBadge.className = 'fx-data-source live';
     dataSourceBadge.title = data.data_source || '';
   }
+}
+
+// ─── Historical Accuracy Chart ────────────────────────────────────────────────
+function renderAccuracyChart(history, accuracy30d) {
+  const canvas = document.getElementById('accuracy-chart');
+  if (!canvas) return;
+
+  // Update summary stats
+  const total   = history.length;
+  const correct = history.filter(h => h.correct).length;
+  const statsEl = document.getElementById('accuracy-stats');
+  if (statsEl) {
+    const pct       = total ? Math.round((correct / total) * 100) : 0;
+    const rateClass = pct >= 60 ? 'stat-high' : pct >= 45 ? 'stat-mid' : 'stat-low';
+    statsEl.innerHTML = `
+      <span class="acc-stat-pct ${rateClass}">${pct}%</span>
+      <span class="acc-stat-label">accuracy</span>
+      <span class="acc-stat-sep">·</span>
+      <span class="acc-stat-detail">${correct} correct</span>
+      <span class="acc-stat-sep">/</span>
+      <span class="acc-stat-detail">${total} trades</span>
+      <span class="acc-stat-sep">·</span>
+      <span class="acc-stat-detail">last 30 days</span>
+    `;
+  }
+
+  if (!history.length) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const W = canvas.parentElement ? canvas.parentElement.clientWidth || 600 : 600;
+    const H = 200;
+    canvas.width  = W;
+    canvas.height = H;
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No history data available', W / 2, H / 2);
+    return;
+  }
+
+  // Layout constants
+  const PAD_LEFT   = 62;
+  const PAD_RIGHT  = 14;
+  const PAD_TOP    = 18;
+  const PAD_BOTTOM = 42;
+  const WRAP       = canvas.closest('.acc-chart-card');
+  const W          = WRAP ? Math.max(WRAP.clientWidth, 300) : 600;
+  const H          = 240;
+
+  canvas.width  = W;
+  canvas.height = H;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const plotW = W - PAD_LEFT - PAD_RIGHT;
+  const plotH = H - PAD_TOP  - PAD_BOTTOM;
+
+  // ── Background ──
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Compute price range ──
+  const prices = history.map(h => h.exit);
+  let minP = Math.min(...prices);
+  let maxP = Math.max(...prices);
+  if (minP === maxP) { minP -= 0.001; maxP += 0.001; }
+  const range = maxP - minP;
+  const padP  = range * 0.12;
+  const lo    = minP - padP;
+  const hi    = maxP + padP;
+
+  function xOf(i)     { return PAD_LEFT + (i / (history.length - 1 || 1)) * plotW; }
+  function yOf(price) { return PAD_TOP  + (1 - (price - lo) / (hi - lo)) * plotH; }
+
+  // ── Horizontal grid lines ──
+  const GRID_LINES = 4;
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth   = 1;
+  for (let g = 0; g <= GRID_LINES; g++) {
+    const y = PAD_TOP + (g / GRID_LINES) * plotH;
+    ctx.beginPath();
+    ctx.moveTo(PAD_LEFT, y);
+    ctx.lineTo(W - PAD_RIGHT, y);
+    ctx.stroke();
+  }
+
+  // ── Y-axis price labels ──
+  ctx.fillStyle  = '#8b949e';
+  ctx.font       = '10px Inter, sans-serif';
+  ctx.textAlign  = 'right';
+  const dec = ('' + prices[0]).split('.')[1]?.length || 4;
+  for (let g = 0; g <= GRID_LINES; g++) {
+    const priceLbl = hi - (g / GRID_LINES) * (hi - lo);
+    const y        = PAD_TOP + (g / GRID_LINES) * plotH;
+    ctx.fillText(priceLbl.toFixed(Math.min(dec, 5)), PAD_LEFT - 4, y + 3.5);
+  }
+
+  // ── Exit price line ──
+  ctx.beginPath();
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth   = 1.8;
+  ctx.lineJoin    = 'round';
+  history.forEach((h, i) => {
+    const x = xOf(i);
+    const y = yOf(h.exit);
+    if (i === 0) ctx.moveTo(x, y);
+    else         ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // ── Prediction dots ──
+  const CORRECT_COLOR   = '#3fb950';
+  const INCORRECT_COLOR = '#f85149';
+  const DOT_R           = Math.max(3, Math.min(5, plotW / history.length / 2 - 1));
+
+  history.forEach((h, i) => {
+    const x     = xOf(i);
+    const y     = yOf(h.exit);
+    const color = h.correct ? CORRECT_COLOR : INCORRECT_COLOR;
+    ctx.beginPath();
+    ctx.arc(x, y, DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#0d1117';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+  });
+
+  // ── X-axis date labels (show ~6 evenly spaced) ──
+  ctx.fillStyle = '#8b949e';
+  ctx.font      = '9px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  const labelStep = Math.max(1, Math.floor(history.length / 6));
+  history.forEach((h, i) => {
+    if (i % labelStep !== 0 && i !== history.length - 1) return;
+    const x   = xOf(i);
+    const lbl = h.day ? h.day.slice(5) : '';   // MM-DD
+    ctx.fillText(lbl, x, H - PAD_BOTTOM + 14);
+  });
+
+  // ── X-axis line ──
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD_LEFT, PAD_TOP + plotH);
+  ctx.lineTo(W - PAD_RIGHT, PAD_TOP + plotH);
+  ctx.stroke();
 }
 
 function formatPrice(price, pair) {
@@ -2385,6 +2538,19 @@ FxPriceChart.load(currentPair);
 // After a short delay, force a chart refresh in case the element had
 // zero width at init time (e.g. due to page layout settling)
 triggerChartReload(600);
+
+// Re-render accuracy chart on resize so it fills the container correctly
+(function initAccuracyChartResize() {
+  const canvas = document.getElementById('accuracy-chart');
+  if (!canvas || typeof ResizeObserver === 'undefined') return;
+  const obs = new ResizeObserver(() => {
+    if (signalData && signalData.history) {
+      renderAccuracyChart(signalData.history, signalData.accuracy_30d || 0);
+    }
+  });
+  const wrap = canvas.closest('.acc-chart-card');
+  if (wrap) obs.observe(wrap);
+})();
 
 // Show loading overlay while the initial signal + news load in parallel
 showPageLoader();
