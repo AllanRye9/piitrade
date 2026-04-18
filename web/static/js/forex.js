@@ -666,7 +666,8 @@ function renderAccuracyChart(history, accuracy30d) {
   ctx.fillStyle  = '#8b949e';
   ctx.font       = '10px Inter, sans-serif';
   ctx.textAlign  = 'right';
-  const dec = ('' + prices[0]).split('.')[1]?.length || 4;
+  // Use the maximum decimal places found across all prices for consistent formatting
+  const dec = Math.max(...prices.map(p => (String(p).split('.')[1] || '').length), 2);
   for (let g = 0; g <= GRID_LINES; g++) {
     const priceLbl = hi - (g / GRID_LINES) * (hi - lo);
     const y        = PAD_TOP + (g / GRID_LINES) * plotH;
@@ -705,6 +706,7 @@ function renderAccuracyChart(history, accuracy30d) {
   });
 
   // ── X-axis date labels (show ~6 evenly spaced) ──
+  // `day` is expected in ISO 'YYYY-MM-DD' format from the API
   ctx.fillStyle = '#8b949e';
   ctx.font      = '9px Inter, sans-serif';
   ctx.textAlign = 'center';
@@ -712,7 +714,7 @@ function renderAccuracyChart(history, accuracy30d) {
   history.forEach((h, i) => {
     if (i % labelStep !== 0 && i !== history.length - 1) return;
     const x   = xOf(i);
-    const lbl = h.day ? h.day.slice(5) : '';   // MM-DD
+    const lbl = h.day && h.day.length >= 10 ? h.day.slice(5, 10) : (h.day || '');  // MM-DD
     ctx.fillText(lbl, x, H - PAD_BOTTOM + 14);
   });
 
