@@ -308,12 +308,19 @@ async def forex_volatile(timeframe: str = "24h"):
 
 @router.get("/api/forex/movers")
 async def forex_movers(threshold: float = 0.2):
-    """Return pairs with large directional price moves over the last session (threshold %)."""
+    """Return pairs with large directional price moves over the last session (threshold %).
+
+    Args:
+        threshold: Minimum absolute % change required to include a pair (default 0.2%).
+    """
+    # Fetch the last 5 daily price points to capture the current session's move
+    # (open = prices[0], close = prices[-1], with a short window for responsiveness).
+    SESSION_PRICE_WINDOW = 5
     try:
         core = _core()
         results: list[dict[str, Any]] = []
         for pair in core._SUPPORTED_PAIRS:
-            prices = _get_prices_for_pair(pair, 5)
+            prices = _get_prices_for_pair(pair, SESSION_PRICE_WINDOW)
             if len(prices) < 2:
                 continue
             open_price = prices[0]

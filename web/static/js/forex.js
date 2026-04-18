@@ -2677,6 +2677,15 @@ if (disclaimerClose && disclaimerEl) {
 // ─── Large Price Movers ───────────────────────────────────────────────────────
 let moversLoaded = false;
 
+/** % change that maps to 100% bar width – moves at or above this level fill the bar completely. */
+const MAX_PCT_FOR_FULL_BAR  = 2;    // 2% move → 100% bar width
+/** Base delay (ms) before the first row's bar begins animating in. */
+const MOVERS_ANIM_BASE_DELAY = 80;
+/** Additional stagger delay (ms) per subsequent row. */
+const MOVERS_ANIM_STAGGER   = 50;
+/** Number of historical price points used to calculate the session move. */
+const MOVERS_PRICE_WINDOW   = 5;
+
 function loadMovers() {
   const loadingEl = document.getElementById('movers-loading');
   const emptyEl   = document.getElementById('movers-empty');
@@ -2706,10 +2715,10 @@ function loadMovers() {
         const cls     = isBuy ? 'buy' : 'sell';
         const arrow   = isBuy ? '▲' : '▼';
         const sign    = item.pct_change > 0 ? '+' : '';
-        const barPct  = Math.min(100, (Math.abs(item.pct_change) / 2) * 100); // 2% = 100% bar
+        const barPct  = Math.min(100, (Math.abs(item.pct_change) / MAX_PCT_FOR_FULL_BAR) * 100);
         const row = document.createElement('div');
         row.className = 'movers-row';
-        row.style.animationDelay = `${idx * 50}ms`;
+        row.style.animationDelay = `${idx * MOVERS_ANIM_STAGGER}ms`;
         row.innerHTML = `
           <span class="movers-pair">${escapeHtml(item.pair)}</span>
           <span class="movers-pct ${cls}">
@@ -2725,7 +2734,7 @@ function loadMovers() {
         listEl.appendChild(row);
         // Animate bar
         const fill = row.querySelector('.movers-bar-fill');
-        setTimeout(() => { if (fill) fill.style.width = barPct + '%'; }, 80 + idx * 50);
+        setTimeout(() => { if (fill) fill.style.width = barPct + '%'; }, MOVERS_ANIM_BASE_DELAY + idx * MOVERS_ANIM_STAGGER);
       });
 
       listEl.style.display = 'block';
