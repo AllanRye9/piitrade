@@ -1487,6 +1487,13 @@ async def advance_page(request: Request):
     return templates.TemplateResponse(request, "advance.html", _ctx(request))
 
 
+@app.get("/movers", response_class=HTMLResponse)
+async def movers_page(request: Request):
+    """Large Price Movements – pairs with significant directional moves in the current session."""
+    _record_visit(_get_client_ip(request))
+    return templates.TemplateResponse(request, "movers.html", _ctx(request))
+
+
 @app.get("/roadmap", response_class=HTMLResponse)
 async def roadmap_page(request: Request):
     """Product roadmap – redirects to landing page."""

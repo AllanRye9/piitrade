@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script>
+    /* Apply saved theme before any render to avoid flash of unstyled content */
+    (function () {
+      var t = localStorage.getItem('pii-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    }());
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Large Price Movements – PiiTrade | Forex Breakout &amp; Momentum Scanner</title>
+  <meta name="description" content="Detect significant directional price moves across 35+ forex pairs. Identify breakout momentum and mean-reversion opportunities with PiiTrade's Large Price Movements scanner." />
+  <meta name="keywords" content="forex large price movements, breakout scanner, momentum forex, bullish move, bearish move, piitrade movers" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://piitrade.onrender.com/movers" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PiiTrade – Large Price Movements Scanner" />
+  <meta property="og:description" content="Pairs showing significant directional price moves in the current session. Identify breakout momentum and mean-reversion opportunities." />
+  <meta property="og:url" content="https://piitrade.onrender.com/movers" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <meta property="og:image" content="https://piitrade.onrender.com/img/trader.png" />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
+  <style>
+    /* ── Movers page layout ── */
+    .movers-page-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .movers-page-hero {
+      text-align: center;
+      padding: 36px 16px 28px;
+    }
+
+    .movers-page-badge {
+      display: inline-block;
+      background: rgba(88,166,255,.12);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .movers-page-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .movers-page-desc {
+      color: var(--text2);
+      font-size: .95rem;
+      max-width: 640px;
+      margin: 0 auto 0;
+      line-height: 1.6;
+    }
+
+    .movers-page-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 20px;
+    }
+
+    .movers-page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .movers-page-legend {
+      display: flex;
+      gap: 18px;
+      font-size: .88rem;
+      font-weight: 600;
+    }
+
+    .movers-page-legend .leg-buy  { color: var(--buy-color); }
+    .movers-page-legend .leg-sell { color: var(--sell-color); }
+
+    .movers-refresh-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .movers-last-update {
+      font-size: .78rem;
+      color: var(--text2);
+    }
+
+    /* Threshold filter */
+    .movers-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .movers-filter-label {
+      font-size: .82rem;
+      color: var(--text2);
+    }
+
+    .movers-threshold-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .movers-threshold-btn.active,
+    .movers-threshold-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Error state */
+    .movers-error {
+      color: var(--danger);
+      font-size: .9rem;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    /* Page-level header nav */
+    .movers-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .movers-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .movers-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .movers-nav-links a {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: .88rem;
+      transition: color .15s;
+    }
+
+    .movers-nav-links a:hover { color: var(--text); }
+    .movers-nav-links a.active { color: var(--accent); font-weight: 600; }
+
+    /* Info callout */
+    .movers-info-callout {
+      background: rgba(88,166,255,.06);
+      border: 1px solid rgba(88,166,255,.18);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text2);
+      font-size: .85rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .movers-info-callout strong { color: var(--accent); }
+
+    /* Stats bar */
+    .movers-stats-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .movers-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .movers-stat-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .movers-stat-label {
+      font-size: .75rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .movers-stat-value.bullish { color: var(--buy-color); }
+    .movers-stat-value.bearish { color: var(--sell-color); }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════ LOADING OVERLAY ════════════════════════ -->
+  <div id="piitrade-loading-overlay" class="piitrade-loading-overlay" aria-live="polite" aria-label="Loading">
+    <div class="piitrade-loader-text" id="piitrade-loader-text">.... PIITRADE ....</div>
+  </div>
+
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="movers-page-header">
+    <a href="/" class="movers-nav-brand">
+      <img src="/img/trader.png" alt="PiiTrade logo" style="height:26px;width:26px;object-fit:contain;border-radius:5px;" />
+      PiiTrade
+    </a>
+    <nav class="movers-nav-links" role="navigation" aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="/forex">Dashboard</a>
+      <a href="/advance">Advanced</a>
+      <a href="/movers" class="active">📈 Movers</a>
+      <a href="/methodology">Method</a>
+      <a href="/disclaimer">Disclaimer</a>
+    </nav>
+  </header>
+
+  <!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
+  <main role="main">
+    <div class="movers-page-wrapper">
+
+      <!-- Hero -->
+      <div class="movers-page-hero">
+        <div class="movers-page-badge">⚡ Live Scanner</div>
+        <h1 class="movers-page-title">📈 Large Price Movements</h1>
+        <p class="movers-page-desc">
+          Pairs showing significant directional price moves in the current session.
+          A large move can signal breakout momentum or mean-reversion opportunities —
+          always confirm with additional analysis before trading.
+        </p>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="movers-stats-bar" id="movers-stats-bar" style="display:none">
+        <div class="movers-stat-item">
+          <span class="movers-stat-value" id="stat-total">0</span>
+          <span class="movers-stat-label">Moving Pairs</span>
+        </div>
+        <div class="movers-stat-item">
+          <span class="movers-stat-value bullish" id="stat-bullish">0</span>
+          <span class="movers-stat-label">▲ Bullish</span>
+        </div>
+        <div class="movers-stat-item">
+          <span class="movers-stat-value bearish" id="stat-bearish">0</span>
+          <span class="movers-stat-label">▼ Bearish</span>
+        </div>
+        <div class="movers-stat-item">
+          <span class="movers-stat-value" id="stat-threshold">—</span>
+          <span class="movers-stat-label">Min Move %</span>
+        </div>
+      </div>
+
+      <!-- Main card -->
+      <div class="movers-page-card">
+
+        <!-- Threshold filter -->
+        <div class="movers-filter-bar">
+          <span class="movers-filter-label">Min move threshold:</span>
+          <button class="movers-threshold-btn active" data-threshold="0.1">0.1%</button>
+          <button class="movers-threshold-btn active" data-threshold="0.2">0.2%</button>
+          <button class="movers-threshold-btn" data-threshold="0.5">0.5%</button>
+          <button class="movers-threshold-btn" data-threshold="1.0">1.0%</button>
+          <button class="movers-threshold-btn" data-threshold="2.0">2.0%</button>
+        </div>
+
+        <!-- Toolbar: legend + refresh -->
+        <div class="movers-page-toolbar">
+          <div class="movers-page-legend">
+            <span class="leg-buy">▲ Bullish Move</span>
+            <span class="leg-sell">▼ Bearish Move</span>
+          </div>
+          <div class="movers-refresh-bar">
+            <span class="movers-last-update" id="movers-last-update"></span>
+            <button id="btn-refresh-movers" class="fx-refresh-btn" type="button">↻ Refresh</button>
+          </div>
+        </div>
+
+        <!-- Info callout -->
+        <div class="movers-info-callout">
+          <strong>How to use:</strong> Pairs above the threshold are shown ranked by move size.
+          A <strong style="color:var(--buy-color)">▲ bullish</strong> move suggests upward momentum;
+          a <strong style="color:var(--sell-color)">▼ bearish</strong> move suggests downward pressure.
+          The bar visualises how large the move is relative to a 2% benchmark.
+          Always confirm with your own analysis before trading.
+        </div>
+
+        <!-- Loading state -->
+        <div id="movers-loading" class="ta-loading">Loading price movers…</div>
+
+        <!-- Empty state -->
+        <div id="movers-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:32px 0;text-align:center">
+          No significant price movements detected at this time.
+          Try lowering the threshold or check back later.
+        </div>
+
+        <!-- Error state -->
+        <div id="movers-error" class="movers-error" style="display:none">
+          ❌ Failed to load price movers. Please try again.
+        </div>
+
+        <!-- Movers list -->
+        <div id="movers-list" class="movers-list" style="display:none">
+          <div class="movers-header">
+            <span>Pair</span>
+            <span>Move</span>
+            <span>Pips</span>
+            <span>Open → Now</span>
+            <span>Direction</span>
+          </div>
+        </div>
+
+      </div><!-- /.movers-page-card -->
+
+      <!-- Disclaimer -->
+      <p style="color:var(--text2);font-size:.78rem;margin-top:24px;text-align:center;line-height:1.6">
+        ⚠️ <strong>Risk Disclaimer:</strong> Large price movements do not guarantee future direction.
+        Always use stop-losses and risk management. This data is for informational purposes only and
+        does not constitute financial advice. Trading involves significant risk of loss.
+        <a href="/disclaimer" style="color:var(--accent);text-decoration:none">Full disclaimer →</a>
+      </p>
+
+    </div><!-- /.movers-page-wrapper -->
+  </main>
+
+  <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+  <footer style="text-align:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--text2);font-size:.76rem;line-height:1.6;margin-top:8px">
+    <div style="display:flex;gap:14px;justify-content:center;margin-bottom:5px;flex-wrap:wrap">
+      <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+      <a href="/forex" style="color:var(--text2);text-decoration:none">Dashboard</a>
+      <a href="/advance" style="color:var(--text2);text-decoration:none">Advanced</a>
+      <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+    </div>
+    <div>© 2026 PiiTrade · Free AI Forex Signal Hub · Signals are for informational purposes only and do not constitute financial advice.</div>
+  </footer>
+
+  <script>
+    'use strict';
+
+    // ─── Theme ────────────────────────────────────────────────────────────────
+    (function () {
+      var saved = localStorage.getItem('pii-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    }());
+
+    // ─── Loading overlay ─────────────────────────────────────────────────────
+    function hidePageLoader() {
+      var ov = document.getElementById('piitrade-loading-overlay');
+      if (ov) {
+        ov.style.opacity = '0';
+        setTimeout(function () { ov.style.display = 'none'; }, 400);
+      }
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ─── Movers state ────────────────────────────────────────────────────────
+    var currentThreshold = 0.2;
+    var MAX_PCT_FOR_FULL_BAR = 2;
+    var MOVERS_ANIM_BASE_DELAY = 80;
+    var MOVERS_ANIM_STAGGER = 50;
+
+    // ─── Elements ────────────────────────────────────────────────────────────
+    var loadingEl    = document.getElementById('movers-loading');
+    var emptyEl      = document.getElementById('movers-empty');
+    var errorEl      = document.getElementById('movers-error');
+    var listEl       = document.getElementById('movers-list');
+    var statsBar     = document.getElementById('movers-stats-bar');
+    var statTotal    = document.getElementById('stat-total');
+    var statBullish  = document.getElementById('stat-bullish');
+    var statBearish  = document.getElementById('stat-bearish');
+    var statThresh   = document.getElementById('stat-threshold');
+    var lastUpdateEl = document.getElementById('movers-last-update');
+
+    function setLoading() {
+      loadingEl.style.display = 'block';
+      listEl.style.display    = 'none';
+      if (emptyEl)  emptyEl.style.display  = 'none';
+      if (errorEl)  errorEl.style.display  = 'none';
+      if (statsBar) statsBar.style.display = 'none';
+    }
+
+    function updateLastUpdated() {
+      if (lastUpdateEl) {
+        lastUpdateEl.textContent = 'Updated: ' + new Date().toLocaleTimeString();
+      }
+    }
+
+    // ─── Render movers ───────────────────────────────────────────────────────
+    function renderMovers(pairs) {
+      // Remove any previous data rows (keep the header)
+      var oldRows = listEl.querySelectorAll('.movers-row');
+      oldRows.forEach(function (r) { r.remove(); });
+
+      pairs.forEach(function (item, idx) {
+        var isBuy  = item.direction === 'BUY';
+        var cls    = isBuy ? 'buy' : 'sell';
+        var arrow  = isBuy ? '▲' : '▼';
+        var sign   = item.pct_change > 0 ? '+' : '';
+        var barPct = Math.min(100, (Math.abs(item.pct_change) / MAX_PCT_FOR_FULL_BAR) * 100);
+
+        var row = document.createElement('div');
+        row.className = 'movers-row';
+        row.style.animationDelay = (idx * MOVERS_ANIM_STAGGER) + 'ms';
+        row.innerHTML =
+          '<span class="movers-pair">' + escapeHtml(item.pair) + '</span>' +
+          '<span class="movers-pct ' + cls + '">' +
+            '<span class="movers-arrow">' + arrow + '</span>' +
+            sign + item.pct_change.toFixed(3) + '%' +
+            '<div class="movers-bar-wrap">' +
+              '<div class="movers-bar-fill ' + cls + '" style="width:0" data-target="' + barPct + '"></div>' +
+            '</div>' +
+          '</span>' +
+          '<span class="movers-pips ' + cls + '">' + item.pip_move.toLocaleString() + ' pips</span>' +
+          '<span class="movers-prices">' + escapeHtml(String(item.open)) + ' → <strong>' + escapeHtml(String(item.current)) + '</strong></span>' +
+          '<span class="movers-dir ' + cls + '">' + arrow + ' ' + escapeHtml(item.direction) + '</span>';
+
+        listEl.appendChild(row);
+
+        // Animate bar after a short delay
+        var fill = row.querySelector('.movers-bar-fill');
+        setTimeout(function () {
+          if (fill) fill.style.width = barPct + '%';
+        }, MOVERS_ANIM_BASE_DELAY + idx * MOVERS_ANIM_STAGGER);
+      });
+    }
+
+    // ─── Update stats bar ────────────────────────────────────────────────────
+    function updateStats(pairs, threshold) {
+      var bullish = pairs.filter(function (p) { return p.direction === 'BUY'; }).length;
+      var bearish = pairs.filter(function (p) { return p.direction === 'SELL'; }).length;
+
+      if (statTotal)   statTotal.textContent   = pairs.length;
+      if (statBullish) statBullish.textContent = bullish;
+      if (statBearish) statBearish.textContent = bearish;
+      if (statThresh)  statThresh.textContent  = threshold + '%';
+      if (statsBar)    statsBar.style.display  = 'flex';
+    }
+
+    // ─── Fetch and display movers ─────────────────────────────────────────────
+    function loadMovers(threshold) {
+      threshold = threshold || currentThreshold;
+      setLoading();
+
+      fetch('/api/forex/movers?threshold=' + encodeURIComponent(threshold))
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          loadingEl.style.display = 'none';
+
+          if (!data.pairs || data.pairs.length === 0) {
+            if (emptyEl) emptyEl.style.display = 'block';
+            updateStats([], threshold);
+            return;
+          }
+
+          renderMovers(data.pairs);
+          updateStats(data.pairs, data.threshold !== undefined ? data.threshold : threshold);
+          listEl.style.display = 'block';
+          updateLastUpdated();
+        })
+        .catch(function () {
+          loadingEl.style.display = 'none';
+          if (errorEl) errorEl.style.display = 'block';
+        });
+    }
+
+    // ─── Threshold buttons ────────────────────────────────────────────────────
+    var thresholdBtns = document.querySelectorAll('.movers-threshold-btn');
+    thresholdBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        thresholdBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentThreshold = parseFloat(btn.dataset.threshold);
+        loadMovers(currentThreshold);
+      });
+    });
+
+    // Set initial active state: 0.2% button
+    thresholdBtns.forEach(function (btn) {
+      btn.classList.remove('active');
+      if (parseFloat(btn.dataset.threshold) === currentThreshold) {
+        btn.classList.add('active');
+      }
+    });
+
+    // ─── Refresh button ───────────────────────────────────────────────────────
+    var refreshBtn = document.getElementById('btn-refresh-movers');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function () {
+        loadMovers(currentThreshold);
+      });
+    }
+
+    // ─── Auto-refresh every 60 seconds ───────────────────────────────────────
+    setInterval(function () { loadMovers(currentThreshold); }, 60000);
+
+    // ─── Initial load ─────────────────────────────────────────────────────────
+    loadMovers(currentThreshold);
+    setTimeout(hidePageLoader, 600);
+  </script>
+
+</body>
+</html>
