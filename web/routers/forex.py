@@ -38,13 +38,21 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
     if hist:
         return list(hist.values())
 
-    base_price, pip, seq = core._FOREX_HIST_SEQUENCES[pair]
+    fallback = core._FOREX_HIST_SEQUENCES.get(pair)
+    if not fallback:
+        logger.warning("No static fallback sequence for pair %s; skipping.", pair)
+        return []
+    base_price, pip, seq = fallback
     price = base_price
     prices: list[float] = [price]
     for _pred, _actual, delta in seq:
         price = round(price + delta * pip, 6)
         prices.append(price)
     return prices
+
+
+# Extra commodity instruments included in the movers scanner (live prices via Yahoo Finance)
+_MOVERS_EXTRA_PAIRS = ("XAU/USD", "WTI/USD")
 
 
 def _compute_volatility(prices: list[float], window: int) -> float:
@@ -319,7 +327,8 @@ async def forex_movers(threshold: float = 0.2):
     try:
         core = _core()
         results: list[dict[str, Any]] = []
-        for pair in core._SUPPORTED_PAIRS:
+        all_pairs = list(core._SUPPORTED_PAIRS) + list(_MOVERS_EXTRA_PAIRS)
+        for pair in all_pairs:
             prices = _get_prices_for_pair(pair, SESSION_PRICE_WINDOW)
             if len(prices) < 2:
                 continue

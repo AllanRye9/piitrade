@@ -995,6 +995,9 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/TRY": (38.200, 0.0001, _gen_seq("USD/TRY")),
     "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
+    # ── Commodities (static fallback – live prices come from Yahoo Finance) ───
+    "XAU/USD": (3200.00, 0.01, _gen_seq("XAU/USD")),
+    "WTI/USD": (70.00,   0.01, _gen_seq("WTI/USD")),
 }
 
 _PAYMENT_CONFIRMATIONS: list[dict[str, Any]] = []
