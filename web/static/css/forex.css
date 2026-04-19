@@ -4828,3 +4828,243 @@ canvas {
 .scanner-item-new {
   animation: scannerNewItem 1.2s ease forwards;
 }
+/* ═══════════════════════════════════════════════════════════════
+   📉 Historical Accuracy Chart – robust sizing
+   ═══════════════════════════════════════════════════════════════ */
+
+.acc-chart-card {
+  min-height: 200px;
+}
+
+#accuracy-chart {
+  min-height: 180px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📈 Large Price Movers Section
+   ═══════════════════════════════════════════════════════════════ */
+
+.movers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.movers-legend {
+  display: flex;
+  gap: 14px;
+  font-size: .82rem;
+}
+
+.movers-leg-item.buy  { color: var(--buy-color); }
+.movers-leg-item.sell { color: var(--sell-color); }
+
+.movers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.movers-header {
+  display: grid;
+  grid-template-columns: 90px 1fr 90px 1fr 90px;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface2);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.movers-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 90px 1fr 90px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  transition: background .18s;
+  animation: section-enter .35s ease both;
+  font-size: .88rem;
+}
+
+.movers-row:hover {
+  background: var(--surface);
+}
+
+.movers-pair {
+  font-weight: 700;
+  color: var(--text);
+  font-size: .9rem;
+}
+
+.movers-pct {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 700;
+  font-size: .92rem;
+}
+
+.movers-pct.buy  { color: var(--buy-color); }
+.movers-pct.sell { color: var(--sell-color); }
+
+.movers-arrow {
+  font-size: 1rem;
+}
+
+.movers-bar-wrap {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 120px;
+}
+
+.movers-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0;
+  transition: width .7s cubic-bezier(.22,1,.36,1);
+}
+
+.movers-bar-fill.buy  { background: var(--buy-color); }
+.movers-bar-fill.sell { background: var(--sell-color); }
+
+.movers-pips {
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.movers-pips.buy  { color: var(--buy-color); }
+.movers-pips.sell { color: var(--sell-color); }
+
+.movers-prices {
+  color: var(--text2);
+  font-size: .82rem;
+}
+
+.movers-prices strong {
+  color: var(--text);
+}
+
+.movers-dir {
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.movers-dir.buy  { color: var(--buy-color); }
+.movers-dir.sell { color: var(--sell-color); }
+
+/* Mobile responsive */
+@media (max-width: 540px) {
+  .movers-header {
+    display: none;
+  }
+  .movers-row {
+    grid-template-columns: 80px 1fr 70px;
+    grid-template-rows: auto auto;
+  }
+  .movers-prices { display: none; }
+  .movers-dir    { text-align: left; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎮 Enhanced Gamification & Animations
+   ═══════════════════════════════════════════════════════════════ */
+
+/* XP bar smooth fill transition */
+.xp-bar-fill {
+  transition: width .6s cubic-bezier(.22,1,.36,1);
+}
+
+/* Streak value pop animation */
+@keyframes streakPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.45); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.streak-value--updated {
+  animation: streakPop .45s ease forwards;
+}
+
+/* Level-up confetti burst */
+@keyframes levelUpBurst {
+  0%   { opacity: 1; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+.level-up-ring {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: levelUpBurst .8s ease forwards;
+}
+
+/* Price flash on signal update */
+@keyframes priceFlash {
+  0%   { background: rgba(88,166,255,.25); }
+  100% { background: transparent; }
+}
+
+.signal-level.price-flash {
+  animation: priceFlash .55s ease forwards;
+  border-radius: 6px;
+}
+
+/* Confidence bar animated fill */
+.confidence-fill {
+  transition: width .5s cubic-bezier(.22,1,.36,1);
+}
+
+/* Achievement badge bounce */
+@keyframes badgeBounce {
+  0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  80%  { transform: scale(0.92) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.achievement-badge--new {
+  animation: badgeBounce .55s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+/* Gamebar glow pulse when XP is gained */
+@keyframes gamebarGlow {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 14px rgba(88,166,255,.35); }
+}
+
+.fx-gamebar--xp-gained {
+  animation: gamebarGlow .7s ease;
+}
+
+/* Signal direction badge pulse on new signal */
+@keyframes directionPulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; }
+  60%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.signal-direction-badge.BUY  { animation: directionPulse 1.2s ease forwards; }
+.signal-direction-badge.SELL { animation: directionPulse 1.2s ease forwards; }

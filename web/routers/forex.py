@@ -306,6 +306,50 @@ async def forex_volatile(timeframe: str = "24h"):
         return JSONResponse({"error": "Internal server error."}, status_code=500)
 
 
+@router.get("/api/forex/movers")
+async def forex_movers(threshold: float = 0.2):
+    """Return pairs with large directional price moves over the last session (threshold %).
+
+    Args:
+        threshold: Minimum absolute % change required to include a pair (default 0.2%).
+    """
+    # Fetch the last 5 daily price points to capture the current session's move
+    # (open = prices[0], close = prices[-1], with a short window for responsiveness).
+    SESSION_PRICE_WINDOW = 5
+    try:
+        core = _core()
+        results: list[dict[str, Any]] = []
+        for pair in core._SUPPORTED_PAIRS:
+            prices = _get_prices_for_pair(pair, SESSION_PRICE_WINDOW)
+            if len(prices) < 2:
+                continue
+            open_price = prices[0]
+            close_price = prices[-1]
+            if open_price == 0:
+                continue
+            pct_change = ((close_price - open_price) / open_price) * 100
+            if abs(pct_change) < threshold:
+                continue
+            _pip_size, dec = core._pair_pip_dec(pair)
+            pip_move = abs(close_price - open_price) / _pip_size
+            live_rate = core._fetch_live_rate(pair)
+            current = live_rate if live_rate is not None else close_price
+            results.append({
+                "pair": pair,
+                "pct_change": round(pct_change, 3),
+                "pip_move": round(pip_move, 1),
+                "open": round(open_price, dec),
+                "current": round(current, dec),
+                "direction": "BUY" if pct_change > 0 else "SELL",
+            })
+
+        results.sort(key=lambda x: abs(x["pct_change"]), reverse=True)
+        return JSONResponse({"pairs": results, "threshold": threshold})
+    except Exception as exc:
+        logger.error("forex_movers error: %s", exc)
+        return JSONResponse({"error": "Internal server error."}, status_code=500)
+
+
 @router.get("/api/forex/reversals")
 async def forex_reversals():
     """Return pairs with detected potential trend reversals."""

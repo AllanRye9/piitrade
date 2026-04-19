@@ -52,16 +52,28 @@ function addXp(amount, label) {
     gameState.level = newLevel;
     showToast('toast-achievement', '🎖️', `Level ${newLevel} Reached!`,
       `You've earned ${gameState.xp} XP total. Keep watching signals!`);
+    // Level-up ring burst
+    const ring = document.createElement('div');
+    ring.className = 'level-up-ring';
+    document.body.appendChild(ring);
+    ring.addEventListener('animationend', () => ring.remove(), { once: true });
   }
   saveGameState();
   updateGameBar();
+  // Flash gamebar
+  const gamebar = document.getElementById('fx-gamebar');
+  if (gamebar) {
+    gamebar.classList.remove('fx-gamebar--xp-gained');
+    gamebar.offsetHeight; // reflow
+    gamebar.classList.add('fx-gamebar--xp-gained');
+  }
 }
 
 function checkAndAwardBadge(id, emoji, name, condition) {
   if (condition && !gameState.badges.includes(id)) {
     gameState.badges.push(id);
     saveGameState();
-    renderBadges();
+    renderBadges(true);
     showToast('toast-achievement', emoji, `Badge Unlocked: ${name}`, '');
   }
 }
@@ -75,11 +87,19 @@ function updateGameBar() {
   const watchedEl   = document.getElementById('signals-watched');
   if (xpBarFill)  xpBarFill.style.width = `${xpPct}%`;
   if (xpValueEl)  xpValueEl.textContent = `${gameState.xp} (Lv ${gameState.level})`;
-  if (streakEl)   streakEl.textContent  = gameState.streak;
+  if (streakEl) {
+    const oldVal = streakEl.textContent;
+    streakEl.textContent = gameState.streak;
+    if (String(gameState.streak) !== oldVal && gameState.streak > 0) {
+      streakEl.classList.remove('streak-value--updated');
+      streakEl.offsetHeight;
+      streakEl.classList.add('streak-value--updated');
+    }
+  }
   if (watchedEl)  watchedEl.textContent = gameState.signalsWatched;
 }
 
-function renderBadges() {
+function renderBadges(animateNew) {
   const container = document.getElementById('gamebar-badges');
   if (!container) return;
   const BADGE_MAP = {
@@ -93,11 +113,13 @@ function renderBadges() {
     sound_on:      { e: '🔊', t: 'Sound On' },
     high_conf:     { e: '💎', t: 'High Confidence Signal' },
   };
+  const prevCount = container.querySelectorAll('.achievement-badge').length;
   container.innerHTML = gameState.badges
     .filter(id => BADGE_MAP[id])
-    .map(id => {
+    .map((id, i) => {
       const b = BADGE_MAP[id];
-      return `<span class="achievement-badge" title="${b.t}">${b.e}</span>`;
+      const isNew = animateNew && i >= prevCount;
+      return `<span class="achievement-badge${isNew ? ' achievement-badge--new' : ''}" title="${b.t}">${b.e}</span>`;
     }).join('');
 }
 
@@ -200,7 +222,7 @@ function showToast(type, icon, title, msg, durationMs = 4000) {
 const ALL_SECTIONS = [
   'section-signal', 'section-history', 'section-risk',
   'section-technical', 'section-fvg', 'section-sr-breaks',
-  'section-volatile', 'section-reversal',
+  'section-movers', 'section-volatile', 'section-reversal',
   'section-success', 'section-patterns', 'section-smc', 'section-news', 'section-alerts',
 ];
 
@@ -211,6 +233,7 @@ const TAB_SECTIONS = {
   'section-technical': ['section-technical'],
   'section-fvg':       ['section-fvg'],
   'section-sr-breaks': ['section-sr-breaks'],
+  'section-movers':    ['section-movers'],
   'section-volatile':  ['section-volatile'],
   'section-reversal':  ['section-reversal'],
   'section-success':   ['section-success'],
@@ -262,6 +285,9 @@ document.querySelectorAll('.fx-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     activateTab(tab.dataset.section);
     // Lazy-load data for new tabs
+    if (tab.dataset.section === 'section-movers' && !moversLoaded) {
+      loadMovers();
+    }
     if (tab.dataset.section === 'section-volatile' && !volatileLoaded) {
       loadVolatilePairs(currentVolatileTf);
     }
@@ -557,6 +583,12 @@ function renderSignal(data) {
   entryPrice.textContent   = formatPrice(data.entry_price, data.pair);
   takeProfitEl.textContent = formatPrice(data.take_profit, data.pair);
   stopLossEl.textContent   = formatPrice(data.stop_loss, data.pair);
+  // Flash price level rows on update
+  document.querySelectorAll('.signal-level').forEach(el => {
+    el.classList.remove('price-flash');
+    el.offsetHeight;
+    el.classList.add('price-flash');
+  });
 
   // Model info
   if (modelVersionEl) modelVersionEl.textContent = data.model_version || '';
@@ -580,6 +612,13 @@ function renderAccuracyChart(history, accuracy30d) {
   const canvas = document.getElementById('accuracy-chart');
   if (!canvas) return;
 
+  // If the container has no width yet (layout not settled), defer to next frame
+  const WRAP = canvas.closest('.acc-chart-card');
+  if (WRAP && WRAP.clientWidth === 0) {
+    requestAnimationFrame(() => renderAccuracyChart(history, accuracy30d));
+    return;
+  }
+
   // Update summary stats
   const total   = history.length;
   const correct = history.filter(h => h.correct).length;
@@ -602,7 +641,7 @@ function renderAccuracyChart(history, accuracy30d) {
   if (!history.length) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const W = canvas.parentElement ? canvas.parentElement.clientWidth || 600 : 600;
+    const W = WRAP ? Math.max(WRAP.clientWidth, 300) : (canvas.parentElement ? canvas.parentElement.clientWidth || 600 : 600);
     const H = 200;
     canvas.width  = W;
     canvas.height = H;
@@ -620,7 +659,6 @@ function renderAccuracyChart(history, accuracy30d) {
   const PAD_RIGHT  = 14;
   const PAD_TOP    = 18;
   const PAD_BOTTOM = 42;
-  const WRAP       = canvas.closest('.acc-chart-card');
   const W          = WRAP ? Math.max(WRAP.clientWidth, 300) : 600;
   const H          = 240;
 
@@ -2387,6 +2425,7 @@ function resetAutoRefresh() {
 function refreshScanners() {
   loadFvgScanner();
   loadSrBreakouts();
+  loadMovers();
   loadPatternScanner();
   loadVolatilePairs(currentVolatileTf);
   loadReversalPairs();
@@ -2563,6 +2602,7 @@ Promise.all([loadSignal(currentPair), loadNews(), loadAlerts()])
     // when a user clicks any tab the data is already rendered and ready.
     loadFvgScanner();
     loadSrBreakouts();
+    loadMovers();
     loadVolatilePairs(currentVolatileTf);
     loadReversalPairs();
     loadPatternScanner();
@@ -2631,6 +2671,85 @@ const disclaimerEl    = document.querySelector('.global-disclaimer');
 if (disclaimerClose && disclaimerEl) {
   disclaimerClose.addEventListener('click', () => {
     disclaimerEl.classList.add('global-disclaimer--hidden');
+  });
+}
+
+// ─── Large Price Movers ───────────────────────────────────────────────────────
+let moversLoaded = false;
+
+/** % change that maps to 100% bar width – moves at or above this level fill the bar completely. */
+const MAX_PCT_FOR_FULL_BAR  = 2;    // 2% move → 100% bar width
+/** Base delay (ms) before the first row's bar begins animating in. */
+const MOVERS_ANIM_BASE_DELAY = 80;
+/** Additional stagger delay (ms) per subsequent row. */
+const MOVERS_ANIM_STAGGER   = 50;
+/** Number of historical price points used to calculate the session move. */
+const MOVERS_PRICE_WINDOW   = 5;
+
+function loadMovers() {
+  const loadingEl = document.getElementById('movers-loading');
+  const emptyEl   = document.getElementById('movers-empty');
+  const listEl    = document.getElementById('movers-list');
+  if (!loadingEl || !listEl) return;
+
+  loadingEl.style.display = 'block';
+  listEl.style.display    = 'none';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  fetch('/api/forex/movers')
+    .then(r => r.json())
+    .then(data => {
+      moversLoaded = true;
+      loadingEl.style.display = 'none';
+      if (!data.pairs || data.pairs.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Keep the header row, remove any previous data rows
+      const existingRows = listEl.querySelectorAll('.movers-row');
+      existingRows.forEach(r => r.remove());
+
+      data.pairs.forEach((item, idx) => {
+        const isBuy   = item.direction === 'BUY';
+        const cls     = isBuy ? 'buy' : 'sell';
+        const arrow   = isBuy ? '▲' : '▼';
+        const sign    = item.pct_change > 0 ? '+' : '';
+        const barPct  = Math.min(100, (Math.abs(item.pct_change) / MAX_PCT_FOR_FULL_BAR) * 100);
+        const row = document.createElement('div');
+        row.className = 'movers-row';
+        row.style.animationDelay = `${idx * MOVERS_ANIM_STAGGER}ms`;
+        row.innerHTML = `
+          <span class="movers-pair">${escapeHtml(item.pair)}</span>
+          <span class="movers-pct ${cls}">
+            <span class="movers-arrow">${arrow}</span>
+            ${sign}${item.pct_change.toFixed(3)}%
+            <div class="movers-bar-wrap">
+              <div class="movers-bar-fill ${cls}" style="width:0" data-target="${barPct}"></div>
+            </div>
+          </span>
+          <span class="movers-pips ${cls}">${item.pip_move.toLocaleString()} pips</span>
+          <span class="movers-prices">${item.open} → <strong>${item.current}</strong></span>
+          <span class="movers-dir ${cls}">${arrow} ${item.direction}</span>`;
+        listEl.appendChild(row);
+        // Animate bar
+        const fill = row.querySelector('.movers-bar-fill');
+        setTimeout(() => { if (fill) fill.style.width = barPct + '%'; }, MOVERS_ANIM_BASE_DELAY + idx * MOVERS_ANIM_STAGGER);
+      });
+
+      listEl.style.display = 'block';
+    })
+    .catch(() => {
+      loadingEl.textContent   = '❌ Failed to load price movers. Please retry.';
+      loadingEl.style.display = 'block';
+    });
+}
+
+const refreshMoversBtn = document.getElementById('btn-refresh-movers');
+if (refreshMoversBtn) {
+  refreshMoversBtn.addEventListener('click', () => {
+    moversLoaded = false;
+    loadMovers();
   });
 }
 

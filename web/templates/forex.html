@@ -119,6 +119,8 @@
         aria-label="Fair Value Gap Status">🌀 FVG Status</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-sr-breaks"
         aria-label="Support & Resistance Breaks">💥 S/R Breaks</button>
+      <button class="fx-tab" role="tab" aria-selected="false" data-section="section-movers"
+        aria-label="Large Price Movements">📈 Movers</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-volatile"
         aria-label="Highly Volatile Pairs">🔥 Volatile</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-reversal"
@@ -641,6 +643,36 @@
           </div>
           <div id="sr-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0">
             No S/R activity detected at this time. Markets may be ranging.
+          </div>
+        </section>
+
+        <!-- 5b. Large Price Movements (Movers) ──────────────────────────────── -->
+        <section id="section-movers">
+          <div class="fx-section-title">📈 Large Price Movements</div>
+          <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
+            Pairs showing significant directional price moves in the current session. A large move
+            can signal breakout momentum or mean-reversion opportunities — always confirm with
+            additional analysis before trading.
+          </p>
+          <div class="movers-toolbar">
+            <div class="movers-legend">
+              <span class="movers-leg-item buy">▲ Bullish Move</span>
+              <span class="movers-leg-item sell">▼ Bearish Move</span>
+            </div>
+            <button id="btn-refresh-movers" class="fx-refresh-btn" type="button">↻ Refresh</button>
+          </div>
+          <div id="movers-loading" class="ta-loading">Loading price movers…</div>
+          <div id="movers-empty" style="display:none;color:var(--text2);font-size:.9rem;padding:24px 0;text-align:center">
+            No significant price movements detected at this time.
+          </div>
+          <div id="movers-list" class="movers-list" style="display:none">
+            <div class="movers-header">
+              <span>Pair</span>
+              <span>Move</span>
+              <span>Pips</span>
+              <span>Open → Now</span>
+              <span>Direction</span>
+            </div>
           </div>
         </section>
 
