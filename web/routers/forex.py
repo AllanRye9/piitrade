@@ -40,6 +40,7 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
 
     fallback = core._FOREX_HIST_SEQUENCES.get(pair)
     if not fallback:
+        logger.warning("No static fallback sequence for pair %s; skipping.", pair)
         return []
     base_price, pip, seq = fallback
     price = base_price
