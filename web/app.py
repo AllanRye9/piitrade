@@ -46,6 +46,8 @@ except ImportError:
 _DIR = Path(__file__).parent
 _STATIC_DIR = _DIR / "static"
 _TEMPLATES_DIR = _DIR / "templates"
+_SPA_DIR = _STATIC_DIR / "dist"
+_SPA_INDEX = _SPA_DIR / "index.html"
 
 # ─── Configuration ─────────────────────────────────────────────────────────────
 # Resolve a stable secret key so that existing session cookies remain valid
@@ -1319,6 +1321,11 @@ class _CachedStaticFiles(StaticFiles):
 if _STATIC_DIR.exists():
     app.mount("/static", _CachedStaticFiles(directory=_STATIC_DIR), name="static")
 
+# Serve the React SPA's hashed JS/CSS bundles with aggressive long-lived caching.
+# The /assets/* path is referenced directly by the SPA's index.html.
+if (_SPA_DIR / "assets").exists():
+    app.mount("/assets", _CachedStaticFiles(directory=_SPA_DIR / "assets"), name="spa_assets")
+
 # Serve repository-level marketing/media images (e.g. /img/exness_*.png, /img/taptap.jfif)
 _IMG_DIR = _DIR.parent / "img"
 if _IMG_DIR.exists():
@@ -1338,6 +1345,24 @@ def _ctx(request: Request, **extra) -> dict[str, Any]:
         "csrf_token": _generate_csrf_token(_session_id(request)),
         **extra,
     }
+
+
+_SPA_HTML: str = (
+    _SPA_INDEX.read_text(encoding="utf-8") if _SPA_INDEX.exists()
+    else "<html><body><p>Frontend not built.</p></body></html>"
+)
+
+_SPA_EXCLUDED_PREFIXES: tuple[str, ...] = ("static/", "assets/", "api/", "_next/")
+
+
+def _serve_spa() -> HTMLResponse:
+    """Return the React SPA index.html for client-side routing.
+
+    All routes handled by the frontend React Router should return this so the
+    browser bootstraps the SPA and React Router renders the correct page.
+    The HTML is read once at startup and cached in _SPA_HTML for efficiency.
+    """
+    return HTMLResponse(content=_SPA_HTML, status_code=200)
 
 
 # ─── Page routes ──────────────────────────────────────────────────────────────
@@ -1413,65 +1438,30 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Landing page."""
+    """Landing page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    try:
-        pair = "EUR/USD"
-        live_rate = _fetch_live_rate(pair)
-        signal: dict[str, Any] = dict(_FOREX_SIGNALS[pair])
-        signal["pair"] = pair
-        prices = _get_prices_for_pair(pair, 30)
-        if live_rate is not None:
-            signal["entry_price"] = live_rate
-            signal["is_live"] = True
-            signal["data_source"] = "Frankfurter API (ECB)"
-        else:
-            signal["is_live"] = False
-            signal["data_source"] = "static (live feed unavailable)"
-        if prices:
-            direction, confidence = _compute_signal_from_prices(prices)
-            signal["direction"] = direction
-            signal["confidence"] = confidence
-            entry = live_rate if live_rate is not None else signal["entry_price"]
-            pip = 0.0001
-            dec = 4
-            tp_pips, sl_pips = _compute_tp_sl_pips(prices, pair)
-            if direction == "BUY":
-                signal["take_profit"] = round(entry + tp_pips * pip, dec)
-                signal["stop_loss"] = round(entry - sl_pips * pip, dec)
-            elif direction == "SELL":
-                signal["take_profit"] = round(entry - tp_pips * pip, dec)
-                signal["stop_loss"] = round(entry + sl_pips * pip, dec)
-            else:
-                signal["take_profit"] = round(entry + tp_pips * pip, dec)
-                signal["stop_loss"] = round(entry - sl_pips * pip, dec)
-        return templates.TemplateResponse(
-            request, "landing.html",
-            _ctx(request, signal=signal),
-        )
-    except Exception:
-        return JSONResponse({"error": "An internal error occurred."}, status_code=500)
+    return _serve_spa()
 
 
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
+    """Forex dashboard – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    try:
-        return templates.TemplateResponse(request, "forex.html", _ctx(request))
-    except Exception:
-        return JSONResponse({"error": "An internal error occurred."}, status_code=500)
+    return _serve_spa()
 
 
 @app.get("/methodology", response_class=HTMLResponse)
 async def methodology_page(request: Request):
+    """Methodology page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "methodology.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page(request: Request):
+    """Disclaimer page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/smc", response_class=HTMLResponse)
@@ -1482,9 +1472,9 @@ async def smc_page(request: Request):
 
 @app.get("/advance", response_class=HTMLResponse)
 async def advance_page(request: Request):
-    """Advanced Market Analysis – live sessions, BOS/CHoCH, FVG, order blocks & S/R."""
+    """Advanced Market Analysis – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "advance.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/movers", response_class=HTMLResponse)
@@ -1496,8 +1486,9 @@ async def movers_page(request: Request):
 
 @app.get("/roadmap", response_class=HTMLResponse)
 async def roadmap_page(request: Request):
-    """Product roadmap – redirects to landing page."""
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    """Product roadmap – served by the React SPA."""
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 @app.get("/privacy", response_class=HTMLResponse)
@@ -1560,9 +1551,9 @@ async def blog_smart_money_concepts(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    if _get_current_user(request):
-        return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse(request, "login.html", _ctx(request, error=None))
+    """Login page – served by the React SPA; auth is handled via /api/auth/login."""
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -2262,48 +2253,32 @@ async def subscribe_success(request: Request, session_id: str = ""):
 
 @app.get("/profile", response_class=HTMLResponse)
 async def profile_page(request: Request):
-    username = _get_current_user(request)
-    if not username:
-        return RedirectResponse(url="/login?next=/profile", status_code=status.HTTP_302_FOUND)
-    with _USERS_LOCK:
-        user = dict(_USERS.get(username, {}))
-
-    plan_label = next((p["label"] for p in _PLANS if p["id"] == user.get("plan")), None)
-    sub_active = _is_subscription_active(username)
-
-    return templates.TemplateResponse(
-        request, "profile.html",
-        _ctx(
-            request,
-            profile_user=user,
-            profile_username=username,
-            invoices=[],
-            local_payments=[],
-            portal_url=None,
-            plan_label=plan_label,
-            sub_active=sub_active,
-            stripe_available=False,
-        ),
-    )
+    """Profile page – served by the React SPA; auth is checked client-side via /api/auth/me."""
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
-    """Admin dashboard – redirects to /const for server-rendered admin panel."""
-    return RedirectResponse(url="/const", status_code=status.HTTP_302_FOUND)
+    """Admin dashboard – served by the React SPA; auth is checked client-side via /api/auth/me."""
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 # ─── Catch-all ────────────────────────────────────────────────────────────────
-# Must be the LAST route. Redirects any unmatched path to the landing page.
+# Must be the LAST route. Serves the React SPA index.html for any unmatched
+# path so that client-side React Router can handle the route in the browser.
 
 @app.get("/{full_path:path}", response_class=HTMLResponse)
 async def catch_all(request: Request, full_path: str):
-    """Redirect any unmatched GET routes to the landing page."""
-    # Skip paths that look like static asset requests to avoid hiding 404s
-    if full_path.startswith(("static/", "api/", "_next/")):
+    """Serve the React SPA for any unmatched GET route."""
+    # Return 404 for paths that should be served by the static file mounts
+    # (avoids hiding genuine 404s for asset/API requests).
+    if full_path.startswith(_SPA_EXCLUDED_PREFIXES):
         from fastapi import HTTPException
         raise HTTPException(status_code=404)
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 if __name__ == "__main__":
