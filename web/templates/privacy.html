@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – PiiTrade AI Signal Hub</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="PiiTrade Privacy Policy. Learn how we collect, use, and protect your data when you use our free AI-powered forex trading signal platform." />
+  <meta name="keywords"
+    content="PiiTrade privacy policy, data protection, cookies, trading platform privacy, GDPR" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.com/privacy" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9756287260068717"
+     crossorigin="anonymous"></script>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Privacy Policy – PiiTrade AI Signal Hub" />
+  <meta property="og:description"
+    content="Read the PiiTrade Privacy Policy to understand how your data is collected, used, and protected on our free AI forex signal platform." />
+  <meta property="og:url" content="https://piitrade.com/privacy" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <!-- Non-blocking Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
+  <style>
+    .policy-body {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+
+    .policy-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .policy-section h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .policy-section p,
+    .policy-section li {
+      font-size: 0.9rem;
+      color: var(--text2);
+      line-height: 1.75;
+    }
+
+    .policy-section ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .policy-section li {
+      margin-bottom: 6px;
+    }
+
+    .policy-section p + p {
+      margin-top: 10px;
+    }
+
+    .policy-highlight {
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.2);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text2);
+      font-size: 0.88rem;
+      margin: 20px 0 8px;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    .toc {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .toc h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .toc ol {
+      padding-left: 18px;
+    }
+
+    .toc li {
+      font-size: 0.88rem;
+      color: var(--accent);
+      line-height: 1.8;
+    }
+
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+    </div>
+    <nav class="fx-nav">
+      <a href="/">Home</a>
+      <a href="/forex">Dashboard</a>
+      <a href="/methodology">Methodology</a>
+      <a href="/about">About</a>
+      {% if current_user and is_admin %}
+      <a href="/const" class="nav-admin">⚙️ Admin</a>
+      <a href="/logout" class="btn-outline">Logout</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <!-- ═══════════════════════════════ CONTENT ═══════════════════════════════════ -->
+  <div class="page-wrapper">
+    <div class="main-content">
+      <div class="policy-body">
+        <a href="/" class="back-link">← Back to Home</a>
+
+        <h1 style="font-size:1.5rem;font-weight:700;margin:16px 0 8px;color:var(--text)">
+          🔒 Privacy Policy
+        </h1>
+        <p style="font-size:0.88rem;color:var(--text2);margin-bottom:24px">
+          Last updated: <strong>April 21, 2026</strong> &nbsp;·&nbsp; Effective date: April 21, 2026
+        </p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+          <h3>Table of Contents</h3>
+          <ol>
+            <li><a href="#information-collected">Information We Collect</a></li>
+            <li><a href="#how-we-use">How We Use Your Information</a></li>
+            <li><a href="#cookies">Cookies and Tracking Technologies</a></li>
+            <li><a href="#google-adsense">Google AdSense and Third-Party Advertising</a></li>
+            <li><a href="#third-party">Third-Party Services</a></li>
+            <li><a href="#data-retention">Data Retention</a></li>
+            <li><a href="#your-rights">Your Rights and Choices</a></li>
+            <li><a href="#security">Data Security</a></li>
+            <li><a href="#children">Children's Privacy</a></li>
+            <li><a href="#international">International Transfers</a></li>
+            <li><a href="#changes">Changes to This Policy</a></li>
+            <li><a href="#contact">Contact Us</a></li>
+          </ol>
+        </div>
+
+        <!-- Introduction -->
+        <div class="policy-section">
+          <h2>📋 Introduction</h2>
+          <p>
+            Welcome to PiiTrade ("we," "our," or "us"). PiiTrade is a free AI-powered trading signal platform
+            that provides buy/sell/hold signals, market analysis tools, and educational content for forex,
+            cryptocurrency, commodity, and stock markets.
+          </p>
+          <p>
+            This Privacy Policy explains how we collect, use, disclose, and safeguard your information when
+            you visit our website at <strong>piitrade.com</strong> and use our services. Please read this
+            policy carefully. If you disagree with its terms, please stop using our platform.
+          </p>
+          <div class="policy-highlight">
+            By accessing or using PiiTrade, you acknowledge that you have read, understood, and agree to be
+            bound by this Privacy Policy.
+          </div>
+        </div>
+
+        <!-- 1. Information Collected -->
+        <div id="information-collected" class="policy-section">
+          <h2>1. Information We Collect</h2>
+          <p>We collect information in the following ways:</p>
+
+          <p><strong>a) Information you provide to us directly:</strong></p>
+          <ul>
+            <li><strong>Account registration:</strong> When you create an account, we collect your username
+              and email address.</li>
+            <li><strong>Communications:</strong> If you contact us via email or our contact form, we collect
+              your name, email address, and the content of your message.</li>
+            <li><strong>Email subscriptions:</strong> If you subscribe to our signal alerts or newsletter,
+              we collect your email address.</li>
+          </ul>
+
+          <p style="margin-top:14px"><strong>b) Information collected automatically:</strong></p>
+          <ul>
+            <li><strong>Log data:</strong> When you visit our site, our servers automatically record
+              information including your IP address (partially anonymised), browser type, operating system,
+              referring URL, pages visited, and time/date of your visit.</li>
+            <li><strong>Cookies and similar technologies:</strong> We use cookies and similar tracking
+              technologies to enhance your experience on our platform. See the Cookies section below for
+              more detail.</li>
+            <li><strong>Device information:</strong> We may collect information about the device you use to
+              access our site, including device type, operating system, and browser version.</li>
+            <li><strong>Usage data:</strong> We collect aggregate data about how users interact with our
+              platform — such as which features are used most — to improve our service.</li>
+          </ul>
+        </div>
+
+        <!-- 2. How We Use -->
+        <div id="how-we-use" class="policy-section">
+          <h2>2. How We Use Your Information</h2>
+          <p>We use the information we collect to:</p>
+          <ul>
+            <li>Provide, operate, and improve the PiiTrade platform and its features</li>
+            <li>Create and manage your user account</li>
+            <li>Send you trading signal alerts and platform updates (where you have subscribed)</li>
+            <li>Respond to your questions, support requests, and feedback</li>
+            <li>Monitor and analyse usage patterns to improve the platform experience</li>
+            <li>Detect, investigate, and prevent fraudulent or unauthorised activity</li>
+            <li>Comply with legal obligations and enforce our Terms of Service</li>
+            <li>Display relevant third-party advertisements through Google AdSense</li>
+          </ul>
+          <p style="margin-top:10px">
+            We do <strong>not</strong> sell your personal information to third parties. We do not use your
+            data for personalised trading advice — all signals are generated algorithmically and uniformly
+            for all users.
+          </p>
+        </div>
+
+        <!-- 3. Cookies -->
+        <div id="cookies" class="policy-section">
+          <h2>3. 🍪 Cookies and Tracking Technologies</h2>
+          <p>
+            We use cookies — small text files stored on your device — to operate our platform. Below is a
+            summary of the types of cookies we use:
+          </p>
+          <ul>
+            <li>
+              <strong>Strictly necessary cookies:</strong> These are required for the website to function.
+              They include your session cookie (which keeps you logged in) and security cookies (CSRF
+              tokens). You cannot opt out of these without affecting core functionality.
+            </li>
+            <li>
+              <strong>Preference cookies:</strong> We store your chosen theme (dark/light) so the site
+              displays correctly on your next visit.
+            </li>
+            <li>
+              <strong>Analytics cookies:</strong> We may use anonymised analytics to understand aggregate
+              traffic patterns. No personally identifiable information is included in these measurements.
+            </li>
+            <li>
+              <strong>Advertising cookies:</strong> Google AdSense uses cookies to serve contextually
+              relevant advertisements. These are third-party cookies managed by Google. See the AdSense
+              section below for more information.
+            </li>
+          </ul>
+          <p style="margin-top:10px">
+            You can control cookies through your browser settings. Most browsers allow you to refuse new
+            cookies, accept cookies selectively, or delete existing cookies. Note that disabling cookies may
+            affect the functionality of some features on PiiTrade.
+          </p>
+        </div>
+
+        <!-- 4. Google AdSense -->
+        <div id="google-adsense" class="policy-section">
+          <h2>4. 📢 Google AdSense and Third-Party Advertising</h2>
+          <p>
+            PiiTrade uses <strong>Google AdSense</strong> to display advertisements on our website.
+            Google AdSense uses cookies and web beacons to serve ads based on your visits to this and
+            other websites across the internet.
+          </p>
+          <p>
+            Google's use of advertising cookies enables it and its partners to serve ads to your browser
+            based on your visit to our site and other sites on the internet. You may opt out of
+            personalised advertising by visiting
+            <a href="https://www.google.com/settings/ads" rel="noopener noreferrer" target="_blank"
+              style="color:var(--accent)">Google Ads Settings</a>.
+          </p>
+          <p>
+            Alternatively, you can opt out of third-party vendors' use of cookies for personalised
+            advertising by visiting
+            <a href="http://www.aboutads.info/choices/" rel="noopener noreferrer" target="_blank"
+              style="color:var(--accent)">www.aboutads.info/choices/</a>
+            or the
+            <a href="http://www.networkadvertising.org/managing/opt_out.asp" rel="noopener noreferrer"
+              target="_blank" style="color:var(--accent)">Network Advertising Initiative opt-out page</a>.
+          </p>
+          <div class="policy-highlight">
+            For more information on how Google uses data from sites that use its advertising services,
+            please visit:
+            <a href="https://policies.google.com/technologies/partner-sites" rel="noopener noreferrer"
+              target="_blank" style="color:var(--accent)">
+              https://policies.google.com/technologies/partner-sites
+            </a>
+          </div>
+        </div>
+
+        <!-- 5. Third-Party Services -->
+        <div id="third-party" class="policy-section">
+          <h2>5. 🔗 Third-Party Services</h2>
+          <p>
+            PiiTrade integrates with the following third-party services to provide its features.
+            Each service operates under its own privacy policy:
+          </p>
+          <ul>
+            <li>
+              <strong>European Central Bank / Frankfurter API:</strong> Used to fetch real-time forex
+              exchange rates. No personal data is sent to this service.
+            </li>
+            <li>
+              <strong>Yahoo Finance:</strong> Used to retrieve real-time prices for stocks, commodities,
+              and some cryptocurrency pairs. No personal data is sent.
+            </li>
+            <li>
+              <strong>CoinGecko API:</strong> Used to retrieve real-time cryptocurrency prices.
+              No personal data is sent.
+            </li>
+            <li>
+              <strong>Google Fonts:</strong> We load the Inter typeface from Google Fonts servers.
+              Google may collect your IP address when serving the font files.
+              See
+              <a href="https://policies.google.com/privacy" rel="noopener noreferrer" target="_blank"
+                style="color:var(--accent)">Google's Privacy Policy</a>.
+            </li>
+            <li>
+              <strong>Exness (affiliate partner):</strong> We may display Exness promotional banners
+              as part of an affiliate relationship. Clicking these links may place third-party cookies
+              from Exness on your device.
+            </li>
+          </ul>
+        </div>
+
+        <!-- 6. Data Retention -->
+        <div id="data-retention" class="policy-section">
+          <h2>6. 🗓️ Data Retention</h2>
+          <p>
+            We retain your personal information only for as long as necessary to fulfil the purposes
+            outlined in this Privacy Policy, unless a longer retention period is required or permitted
+            by law.
+          </p>
+          <ul>
+            <li>
+              <strong>Account data:</strong> Retained for the duration of your account's existence.
+              If you request account deletion, we will remove your data within 30 days except where
+              retention is required for legal purposes.
+            </li>
+            <li>
+              <strong>Log data (IP addresses, page views):</strong> Retained for up to 90 days for
+              security monitoring and abuse prevention.
+            </li>
+            <li>
+              <strong>Email subscription data:</strong> Retained until you unsubscribe. Upon
+              unsubscription, your email is removed from our mailing list within 14 days.
+            </li>
+          </ul>
+        </div>
+
+        <!-- 7. Your Rights -->
+        <div id="your-rights" class="policy-section">
+          <h2>7. ⚖️ Your Rights and Choices</h2>
+          <p>
+            Depending on your location, you may have the following rights regarding your personal data:
+          </p>
+          <ul>
+            <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
+            <li><strong>Rectification:</strong> Request correction of any inaccurate or incomplete data.</li>
+            <li><strong>Erasure ("right to be forgotten"):</strong> Request deletion of your personal data,
+              subject to legal retention requirements.</li>
+            <li><strong>Restriction:</strong> Request that we restrict the processing of your data in
+              certain circumstances.</li>
+            <li><strong>Portability:</strong> Request a machine-readable copy of your personal data.</li>
+            <li><strong>Objection:</strong> Object to the processing of your data for certain purposes,
+              including direct marketing.</li>
+          </ul>
+          <p style="margin-top:10px">
+            To exercise any of these rights, please contact us at
+            <a href="mailto:support@piitrade.com" style="color:var(--accent)">support@piitrade.com</a>
+            or use our <a href="/contact" style="color:var(--accent)">Contact page</a>. We will respond
+            to your request within 30 days.
+          </p>
+          <p>
+            If you are a resident of the European Economic Area (EEA) and believe we are unlawfully
+            processing your personal information, you have the right to complain to your local
+            supervisory authority.
+          </p>
+        </div>
+
+        <!-- 8. Security -->
+        <div id="security" class="policy-section">
+          <h2>8. 🔐 Data Security</h2>
+          <p>
+            We implement appropriate technical and organisational security measures to protect your personal
+            information against unauthorised access, alteration, disclosure, or destruction. These
+            measures include:
+          </p>
+          <ul>
+            <li>HTTPS encryption for all data transmitted to and from our platform</li>
+            <li>Password hashing using scrypt (a memory-hard, computationally expensive key derivation function)</li>
+            <li>CSRF token protection on all form submissions</li>
+            <li>Rate limiting on authentication endpoints to prevent brute-force attacks</li>
+            <li>Secure, HTTP-only session cookies</li>
+          </ul>
+          <p style="margin-top:10px">
+            No method of transmission over the internet, or method of electronic storage, is 100% secure.
+            While we strive to use commercially acceptable means to protect your personal information,
+            we cannot guarantee its absolute security.
+          </p>
+        </div>
+
+        <!-- 9. Children -->
+        <div id="children" class="policy-section">
+          <h2>9. 👶 Children's Privacy</h2>
+          <p>
+            PiiTrade is not intended for use by individuals under the age of 18. We do not knowingly
+            collect personal information from children under 18. If you are a parent or guardian and
+            believe your child has provided us with personal information, please contact us and we will
+            delete that information promptly.
+          </p>
+          <p>
+            Trading financial instruments involves substantial risk and is not appropriate for minors.
+            By using PiiTrade, you confirm that you are at least 18 years of age.
+          </p>
+        </div>
+
+        <!-- 10. International -->
+        <div id="international" class="policy-section">
+          <h2>10. 🌐 International Data Transfers</h2>
+          <p>
+            PiiTrade is operated from servers in various locations. If you are located outside the
+            jurisdiction where our servers are hosted, please be aware that your information may be
+            transferred to, stored in, and processed in that jurisdiction, where data protection laws
+            may differ from those in your country.
+          </p>
+          <p>
+            By using PiiTrade, you consent to the transfer of your information to these jurisdictions.
+            We take steps to ensure that any such transfers comply with applicable data protection laws
+            and that your information remains protected to the standard described in this Privacy Policy.
+          </p>
+        </div>
+
+        <!-- 11. Changes -->
+        <div id="changes" class="policy-section">
+          <h2>11. 📝 Changes to This Privacy Policy</h2>
+          <p>
+            We may update this Privacy Policy from time to time to reflect changes in our practices,
+            technology, legal requirements, or other factors. When we make material changes, we will
+            update the "Last updated" date at the top of this page.
+          </p>
+          <p>
+            We encourage you to review this Privacy Policy periodically to stay informed about how we
+            are protecting the information we collect. Your continued use of PiiTrade after any changes
+            constitutes your acceptance of the updated Privacy Policy.
+          </p>
+        </div>
+
+        <!-- 12. Contact -->
+        <div id="contact" class="policy-section">
+          <h2>12. 📧 Contact Us</h2>
+          <p>
+            If you have questions, concerns, or requests relating to this Privacy Policy or the way we
+            handle your personal data, please contact us:
+          </p>
+          <ul>
+            <li><strong>Email:</strong> <a href="mailto:support@piitrade.com" style="color:var(--accent)">support@piitrade.com</a></li>
+            <li><strong>Contact form:</strong> <a href="/contact" style="color:var(--accent)">piitrade.com/contact</a></li>
+            <li><strong>Website:</strong> <a href="https://piitrade.com" style="color:var(--accent)">https://piitrade.com</a></li>
+          </ul>
+          <p style="margin-top:10px">
+            We will make every reasonable effort to address your inquiry within 30 days of receipt.
+          </p>
+        </div>
+
+      </div><!-- /.policy-body -->
+
+      <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+      <footer
+        style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+        <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+          <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+          <a href="/about" style="color:var(--text2);text-decoration:none">About</a>
+          <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
+          <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+          <a href="/privacy" style="color:var(--text2);text-decoration:none">Privacy Policy</a>
+          <a href="/contact" style="color:var(--text2);text-decoration:none">Contact</a>
+          <a href="/blog" style="color:var(--text2);text-decoration:none">Blog</a>
+        </div>
+        <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for
+          informational purposes only and do not constitute financial advice.</div>
+      </footer>
+
+    </div><!-- /.main-content -->
+  </div><!-- /.page-wrapper -->
+
+</body>
+</html>

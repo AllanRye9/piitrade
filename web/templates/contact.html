@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact PiiTrade – Support, Feedback & Enquiries</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Contact PiiTrade for support, bug reports, feature requests, or general enquiries about our free AI forex trading signal platform." />
+  <meta name="keywords"
+    content="contact PiiTrade, forex signal support, trading platform help, PiiTrade feedback" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.com/contact" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9756287260068717"
+     crossorigin="anonymous"></script>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Contact PiiTrade – Support & Enquiries" />
+  <meta property="og:description"
+    content="Get in touch with the PiiTrade team for support, feedback, or business enquiries." />
+  <meta property="og:url" content="https://piitrade.com/contact" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <!-- Non-blocking Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
+  <style>
+    .contact-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+
+    .contact-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .contact-section h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .contact-section p {
+      font-size: 0.9rem;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+
+    .contact-section p + p {
+      margin-top: 8px;
+    }
+
+    .contact-form label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+      margin-top: 14px;
+    }
+
+    .contact-form label:first-of-type {
+      margin-top: 0;
+    }
+
+    .contact-form input,
+    .contact-form select,
+    .contact-form textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .contact-form input:focus,
+    .contact-form select:focus,
+    .contact-form textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .contact-form textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .contact-form select option {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .contact-submit {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .contact-note {
+      font-size: 0.78rem;
+      color: var(--text2);
+      margin-top: 12px;
+    }
+
+    .contact-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .contact-info-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .contact-info-card .ci-icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+
+    .contact-info-card h3 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 3px;
+    }
+
+    .contact-info-card a,
+    .contact-info-card p {
+      font-size: 0.82rem;
+      color: var(--accent);
+      text-decoration: none;
+      margin: 0;
+    }
+
+    .contact-info-card p {
+      color: var(--text2);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text2);
+      font-size: 0.88rem;
+      margin: 20px 0 8px;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    .success-banner {
+      background: rgba(63, 185, 80, 0.1);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-banner.visible {
+      display: block;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .faq-item h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .faq-item p {
+      font-size: 0.85rem;
+      color: var(--text2);
+      line-height: 1.6;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+    </div>
+    <nav class="fx-nav">
+      <a href="/">Home</a>
+      <a href="/forex">Dashboard</a>
+      <a href="/about">About</a>
+      <a href="/blog">Blog</a>
+      {% if current_user and is_admin %}
+      <a href="/const" class="nav-admin">⚙️ Admin</a>
+      <a href="/logout" class="btn-outline">Logout</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <!-- ═══════════════════════════════ CONTENT ═══════════════════════════════════ -->
+  <div class="page-wrapper">
+    <div class="main-content">
+      <div class="contact-body">
+        <a href="/" class="back-link">← Back to Home</a>
+
+        <h1 style="font-size:1.5rem;font-weight:700;margin:16px 0 6px;color:var(--text)">
+          💬 Contact Us
+        </h1>
+        <p style="font-size:0.9rem;color:var(--text2);margin-bottom:24px">
+          Have a question, a bug to report, or a feature request? We would love to hear from you.
+          Fill out the form below or reach us via email — we typically respond within 1–2 business days.
+        </p>
+
+        <!-- Contact channels -->
+        <div class="contact-section">
+          <h2>📬 Ways to Reach Us</h2>
+          <div class="contact-info-grid">
+            <div class="contact-info-card">
+              <div class="ci-icon">📧</div>
+              <h3>Support Email</h3>
+              <a href="mailto:support@piitrade.com">support@piitrade.com</a>
+            </div>
+            <div class="contact-info-card">
+              <div class="ci-icon">🐛</div>
+              <h3>Bug Reports</h3>
+              <a href="mailto:bugs@piitrade.com">bugs@piitrade.com</a>
+            </div>
+            <div class="contact-info-card">
+              <div class="ci-icon">🤝</div>
+              <h3>Business &amp; Partnerships</h3>
+              <a href="mailto:hello@piitrade.com">hello@piitrade.com</a>
+            </div>
+            <div class="contact-info-card">
+              <div class="ci-icon">⏱️</div>
+              <h3>Response Time</h3>
+              <p>Within 1–2 business days</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="contact-section">
+          <h2>✉️ Send a Message</h2>
+          <div id="successBanner" class="success-banner">
+            ✅ Thank you! Your message has been sent. We will get back to you within 1–2 business days.
+          </div>
+          <form class="contact-form" id="contactForm" novalidate>
+            <label for="contactName">Your Name</label>
+            <input type="text" id="contactName" name="name" placeholder="e.g. Jane Smith" autocomplete="name" />
+
+            <label for="contactEmail">Email Address <span style="color:var(--danger)">*</span></label>
+            <input type="email" id="contactEmail" name="email" placeholder="you@example.com" required autocomplete="email" />
+
+            <label for="contactSubject">Subject</label>
+            <select id="contactSubject" name="subject">
+              <option value="">— Select a topic —</option>
+              <option value="support">General Support</option>
+              <option value="bug">Bug Report</option>
+              <option value="feature">Feature Request</option>
+              <option value="signal">Signal Accuracy Question</option>
+              <option value="account">Account / Login Issue</option>
+              <option value="business">Business or Partnership Enquiry</option>
+              <option value="other">Other</option>
+            </select>
+
+            <label for="contactMessage">Message <span style="color:var(--danger)">*</span></label>
+            <textarea id="contactMessage" name="message" placeholder="Describe your question or issue in as much detail as possible…" required></textarea>
+
+            <div class="contact-submit">
+              <button type="submit" class="btn-primary" style="padding:9px 22px;font-size:.9rem;border:none;cursor:pointer">
+                Send Message →
+              </button>
+              <span id="formStatus" style="font-size:0.82rem;color:var(--text2)"></span>
+            </div>
+            <p class="contact-note">
+              By submitting this form you agree to our
+              <a href="/privacy" style="color:var(--accent)">Privacy Policy</a>.
+              We will only use your email address to respond to your enquiry.
+            </p>
+          </form>
+        </div>
+
+        <!-- FAQ -->
+        <div class="contact-section">
+          <h2>❓ Frequently Asked Questions</h2>
+
+          <div class="faq-item">
+            <h3>Is PiiTrade really free?</h3>
+            <p>Yes — completely free, forever. You can access all 35 forex pair signals, the volatility
+              scanner, risk calculator, SMC scanner, and all other tools without creating an account or
+              providing payment details.</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>How accurate are the trading signals?</h3>
+            <p>Signal accuracy varies by pair and market conditions. You can view the 30-day rolling
+              accuracy history for each pair directly on the
+              <a href="/forex" style="color:var(--accent)">Dashboard</a>. Past accuracy does not guarantee
+              future results — please read our
+              <a href="/disclaimer" style="color:var(--accent)">Risk Disclaimer</a>.</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>How often are signals updated?</h3>
+            <p>Signals update dynamically as new price data arrives. The model checks for updated rates
+              and recalculates indicators on each page load. The underlying LightGBM model is retrained
+              weekly on fresh historical data.</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Do I need to create an account to use PiiTrade?</h3>
+            <p>No — the dashboard is fully accessible without an account. You only need to register if
+              you want to save preferences or receive email signal alerts.</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>I found a bug — how do I report it?</h3>
+            <p>Please email <a href="mailto:bugs@piitrade.com" style="color:var(--accent)">bugs@piitrade.com</a>
+              with a description of the issue, the page URL, and your browser/OS. Screenshots are very
+              helpful. We aim to respond within 1 business day.</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Can I use PiiTrade signals for automated trading?</h3>
+            <p>Our signals are intended for informational and educational purposes. We do not provide
+              direct broker integration or automated order execution. Always conduct your own research
+              and consult a licensed financial adviser before trading.</p>
+          </div>
+        </div>
+
+      </div><!-- /.contact-body -->
+
+      <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+      <footer
+        style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+        <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+          <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+          <a href="/about" style="color:var(--text2);text-decoration:none">About</a>
+          <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
+          <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+          <a href="/privacy" style="color:var(--text2);text-decoration:none">Privacy Policy</a>
+          <a href="/contact" style="color:var(--text2);text-decoration:none">Contact</a>
+          <a href="/blog" style="color:var(--text2);text-decoration:none">Blog</a>
+        </div>
+        <div>© 2026 PiiTrade · Free AI Signal Hub – Forex · Crypto · Commodities · Stocks · Signals are for
+          informational purposes only and do not constitute financial advice.</div>
+      </footer>
+
+    </div><!-- /.main-content -->
+  </div><!-- /.page-wrapper -->
+
+  <script>
+    (function () {
+      const form = document.getElementById('contactForm');
+      const status = document.getElementById('formStatus');
+      const banner = document.getElementById('successBanner');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = document.getElementById('contactEmail').value.trim();
+        const message = document.getElementById('contactMessage').value.trim();
+        if (!email || !message) {
+          status.textContent = 'Please fill in your email address and message.';
+          status.style.color = 'var(--danger)';
+          return;
+        }
+        status.textContent = 'Sending…';
+        status.style.color = 'var(--text2)';
+
+        // Build mailto link as a lightweight no-server-needed fallback
+        const subject = encodeURIComponent(
+          document.getElementById('contactSubject').value || 'PiiTrade Enquiry'
+        );
+        const name = document.getElementById('contactName').value.trim();
+        const body = encodeURIComponent(
+          (name ? 'Name: ' + name + '\n' : '') +
+          'Email: ' + email + '\n\n' +
+          message
+        );
+        window.location.href = 'mailto:support@piitrade.com?subject=' + subject + '&body=' + body;
+
+        banner.classList.add('visible');
+        form.reset();
+        status.textContent = '';
+      });
+    })();
+  </script>
+
+</body>
+</html>
