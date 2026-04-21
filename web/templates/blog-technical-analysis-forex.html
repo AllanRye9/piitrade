@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical Analysis for Forex: RSI, MACD, EMA and Bollinger Bands Explained – PiiTrade</title>
+  <meta name="description"
+    content="Complete guide to forex technical analysis: how RSI, MACD, EMA, and Bollinger Bands work, what they signal, and how PiiTrade's AI uses them to generate trading signals." />
+  <meta name="keywords"
+    content="RSI forex, MACD explained, EMA trading, Bollinger Bands forex, technical analysis indicators, RSI overbought oversold, MACD crossover signal, moving average trading" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PiiTrade" />
+  <link rel="canonical" href="https://piitrade.com/blog/technical-analysis-forex" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9756287260068717"
+     crossorigin="anonymous"></script>
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Technical Analysis for Forex: RSI, MACD, EMA Explained – PiiTrade" />
+  <meta property="og:description" content="Learn how RSI, MACD, EMA, and Bollinger Bands work and how PiiTrade's AI uses them to generate trading signals." />
+  <meta property="og:url" content="https://piitrade.com/blog/technical-analysis-forex" />
+  <meta property="og:site_name" content="PiiTrade" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Technical Analysis for Forex: RSI, MACD, EMA and Bollinger Bands Explained",
+    "url": "https://piitrade.com/blog/technical-analysis-forex",
+    "author": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.com" },
+    "publisher": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.com" },
+    "datePublished": "2026-04-21",
+    "dateModified": "2026-04-21"
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+  <link rel="stylesheet" href="/static/css/forex.css" />
+  <link rel="icon" type="image/png" href="/img/trader.png" />
+  <style>
+    .article-body { max-width:800px; margin:0 auto; padding:24px 16px 64px; }
+    .article-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:24px; box-shadow:var(--shadow); }
+    .article-section h2 { font-size:1.1rem; font-weight:700; margin-bottom:14px; color:var(--text); }
+    .article-section h3 { font-size:0.96rem; font-weight:700; color:var(--text); margin:16px 0 8px; }
+    .article-section p, .article-section li { font-size:0.9rem; color:var(--text2); line-height:1.75; }
+    .article-section ul, .article-section ol { padding-left:20px; margin-top:8px; }
+    .article-section li { margin-bottom:7px; }
+    .article-section p + p { margin-top:10px; }
+    .callout { border-radius:8px; padding:14px 16px; margin:16px 0; font-size:0.88rem; line-height:1.6; }
+    .callout-info { background:rgba(88,166,255,0.08); border:1px solid rgba(88,166,255,0.2); color:var(--text2); }
+    .callout-success { background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.25); color:var(--text2); }
+    .callout-warn { background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); color:var(--text2); }
+    .indicator-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px; margin:14px 0; }
+    .indicator-card .ic-name { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); margin-bottom:6px; }
+    .indicator-card table { width:100%; border-collapse:collapse; }
+    .indicator-card td { padding:5px 8px; border-bottom:1px solid var(--border); font-size:0.84rem; }
+    .indicator-card td:first-child { color:var(--text2); width:40%; }
+    .indicator-card td:last-child { color:var(--text); }
+    .indicator-card tr:last-child td { border-bottom:none; }
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text2); font-size:0.88rem; margin:20px 0 8px; text-decoration:none; }
+    .back-link:hover { color:var(--text); }
+    .article-meta { display:flex; gap:16px; flex-wrap:wrap; font-size:0.82rem; color:var(--text2); margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+    .related-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+    .related-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; text-decoration:none; display:block; transition:border-color 0.2s; }
+    .related-card:hover { border-color:var(--accent); }
+    .related-card h3 { font-size:0.88rem; font-weight:700; color:var(--text); margin:0 0 4px; line-height:1.35; }
+    .related-card p { font-size:0.8rem; color:var(--text2); margin:0; line-height:1.4; }
+  </style>
+</head>
+
+<body>
+
+  <header class="fx-header">
+    <div class="brand">
+      <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
+      <span class="brand-title">PiiTrade</span>
+    </div>
+    <nav class="fx-nav">
+      <a href="/">Home</a>
+      <a href="/forex">Dashboard</a>
+      <a href="/blog">Blog</a>
+      <a href="/about">About</a>
+    </nav>
+  </header>
+
+  <div class="page-wrapper">
+    <div class="main-content">
+      <div class="article-body">
+
+        <a href="/blog" class="back-link">← Back to Blog</a>
+
+        <div style="display:inline-block;background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.2);border-radius:20px;padding:3px 12px;font-size:0.72rem;font-weight:700;color:#3fb950;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">
+          Technical Analysis
+        </div>
+
+        <h1 style="font-size:clamp(1.4rem,3.5vw,1.9rem);font-weight:800;color:var(--text);margin:0 0 12px;letter-spacing:-0.02em;line-height:1.2">
+          Technical Analysis for Forex: RSI, MACD, EMA and Bollinger Bands Explained
+        </h1>
+
+        <div class="article-meta">
+          <span>📅 April 21, 2026</span>
+          <span>⏱️ ~12 min read</span>
+          <span>✍️ PiiTrade Team</span>
+        </div>
+
+        <div class="article-section">
+          <p>
+            Technical analysis is the study of historical price action to forecast future price movements.
+            Rather than analysing a company's financials or a country's economic fundamentals, technical
+            analysts look at charts, patterns, and mathematical indicators derived from past price and
+            volume data.
+          </p>
+          <p>
+            PiiTrade's AI model is built on technical indicators as its primary feature set. Understanding
+            what RSI, MACD, EMA, and Bollinger Bands actually measure will help you interpret signals
+            more intelligently and identify when the model's confidence may be better or less reliable.
+          </p>
+        </div>
+
+        <!-- RSI -->
+        <div class="article-section">
+          <h2>1. RSI — Relative Strength Index</h2>
+
+          <div class="indicator-card">
+            <div class="ic-name">Quick Reference: RSI-14</div>
+            <table>
+              <tr><td>Period used by PiiTrade</td><td>14 periods (daily candles)</td></tr>
+              <tr><td>Range</td><td>0 to 100</td></tr>
+              <tr><td>Overbought threshold</td><td>Above 70</td></tr>
+              <tr><td>Oversold threshold</td><td>Below 30</td></tr>
+              <tr><td>Neutral zone</td><td>40–60</td></tr>
+            </table>
+          </div>
+
+          <h3>What RSI Measures</h3>
+          <p>
+            RSI measures the <strong>speed and magnitude of recent price changes</strong> to evaluate
+            whether an asset is overbought (potentially due for a pullback) or oversold (potentially
+            due for a bounce). It compares the average gain to the average loss over a look-back period
+            (14 periods in PiiTrade's model).
+          </p>
+
+          <h3>How to Interpret RSI</h3>
+          <ul>
+            <li>
+              <strong>RSI above 70 (Overbought):</strong> The pair has rallied strongly and may be
+              due for a correction or consolidation. Not a sell signal by itself — overbought can stay
+              overbought in strong trends — but a warning to tighten stop losses on long positions.
+            </li>
+            <li>
+              <strong>RSI below 30 (Oversold):</strong> The pair has fallen sharply and may be due
+              for a bounce. Similarly, not a buy signal alone, but suggests selling pressure may be
+              exhausted.
+            </li>
+            <li>
+              <strong>RSI crossing back through 50:</strong> Considered a momentum confirmation signal
+              — a cross above 50 suggests bullish momentum is building; a cross below 50 signals
+              bearish momentum.
+            </li>
+          </ul>
+
+          <h3>RSI Divergence (Advanced)</h3>
+          <p>
+            One of the most powerful RSI signals is <strong>divergence</strong> — when price makes
+            a new high but RSI does not (bearish divergence), or price makes a new low but RSI does
+            not (bullish divergence). Divergence often precedes reversals and is one of the features
+            PiiTrade's model implicitly captures through momentum features.
+          </p>
+          <div class="callout callout-info">
+            📊 PiiTrade uses RSI-14 as one of several features feeding into the LightGBM model.
+            It is not used as a standalone trading rule — the model combines RSI with MACD, EMA,
+            Bollinger Bands, momentum, and macro features to generate a composite signal.
+          </div>
+        </div>
+
+        <!-- MACD -->
+        <div class="article-section">
+          <h2>2. MACD — Moving Average Convergence Divergence</h2>
+
+          <div class="indicator-card">
+            <div class="ic-name">Quick Reference: MACD (12, 26, 9)</div>
+            <table>
+              <tr><td>Fast EMA</td><td>12 periods</td></tr>
+              <tr><td>Slow EMA</td><td>26 periods</td></tr>
+              <tr><td>Signal line</td><td>9-period EMA of MACD</td></tr>
+              <tr><td>MACD Histogram</td><td>MACD line − Signal line</td></tr>
+              <tr><td>Bullish signal</td><td>MACD line crosses above signal line</td></tr>
+              <tr><td>Bearish signal</td><td>MACD line crosses below signal line</td></tr>
+            </table>
+          </div>
+
+          <h3>What MACD Measures</h3>
+          <p>
+            MACD tracks the <strong>relationship between two exponential moving averages</strong> — a
+            fast (12-period) and a slow (26-period). When the fast EMA is above the slow EMA, the MACD
+            line is positive, indicating upward momentum. The signal line is a 9-period EMA of the MACD
+            line, used to generate trading signals.
+          </p>
+
+          <h3>Key MACD Signals</h3>
+          <ul>
+            <li>
+              <strong>Bullish crossover:</strong> MACD line crosses above the signal line — suggests
+              upside momentum is building. This is often the most watched MACD signal for long entries.
+            </li>
+            <li>
+              <strong>Bearish crossover:</strong> MACD line crosses below the signal line — suggests
+              downside momentum is building. Used as a short entry or exit signal for longs.
+            </li>
+            <li>
+              <strong>Zero-line cross:</strong> When MACD crosses above/below zero, it means the fast
+              EMA has crossed above/below the slow EMA — a stronger trend confirmation.
+            </li>
+            <li>
+              <strong>Histogram expansion:</strong> Growing histogram bars (either above or below zero)
+              indicate strengthening momentum in that direction.
+            </li>
+          </ul>
+
+          <div class="callout callout-success">
+            💡 <strong>Best use:</strong> MACD is most reliable as a <em>trend confirmation</em> tool
+            in trending markets. In choppy, sideways markets it generates many false signals.
+            PiiTrade's model accounts for this by using volatility features alongside MACD to weight
+            signal reliability by market regime.
+          </div>
+        </div>
+
+        <!-- EMA -->
+        <div class="article-section">
+          <h2>3. EMA — Exponential Moving Average</h2>
+
+          <div class="indicator-card">
+            <div class="ic-name">Quick Reference: EMA-20 and EMA-50</div>
+            <table>
+              <tr><td>EMA-20 period</td><td>20 trading days (short-term trend)</td></tr>
+              <tr><td>EMA-50 period</td><td>50 trading days (medium-term trend)</td></tr>
+              <tr><td>Bullish bias</td><td>Price above both EMAs; EMA-20 above EMA-50</td></tr>
+              <tr><td>Bearish bias</td><td>Price below both EMAs; EMA-20 below EMA-50</td></tr>
+            </table>
+          </div>
+
+          <h3>EMA vs. SMA</h3>
+          <p>
+            An Exponential Moving Average gives <strong>more weight to recent prices</strong> than a
+            Simple Moving Average (SMA), making it more responsive to recent price changes. For
+            fast-moving forex markets, EMAs are generally preferred over SMAs.
+          </p>
+
+          <h3>How Traders Use EMA</h3>
+          <ul>
+            <li>
+              <strong>Dynamic support/resistance:</strong> In an uptrend, the EMA-20 often acts as a
+              support level where price bounces back upward. In a downtrend, it acts as resistance.
+            </li>
+            <li>
+              <strong>Trend filter:</strong> Trading only in the direction of the EMA slope is a simple
+              but effective trend filter. If EMA-50 is pointing up, only take buy signals.
+            </li>
+            <li>
+              <strong>Golden/Death Cross:</strong> When EMA-20 crosses above EMA-50 (Golden Cross),
+              it signals a potential bullish trend shift. When EMA-20 crosses below EMA-50 (Death Cross),
+              it signals a bearish shift.
+            </li>
+            <li>
+              <strong>Price vs. EMA:</strong> PiiTrade's model calculates the distance of the current
+              price from EMA-20 and EMA-50 as features, capturing how extended or compressed price
+              action is relative to the trend.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Bollinger Bands -->
+        <div class="article-section">
+          <h2>4. Bollinger Bands</h2>
+
+          <div class="indicator-card">
+            <div class="ic-name">Quick Reference: Bollinger Bands (20, 2σ)</div>
+            <table>
+              <tr><td>Middle Band</td><td>20-period SMA</td></tr>
+              <tr><td>Upper Band</td><td>Middle Band + 2 standard deviations</td></tr>
+              <tr><td>Lower Band</td><td>Middle Band − 2 standard deviations</td></tr>
+              <tr><td>Bandwidth</td><td>Measures volatility: wide = high vol, narrow = low vol</td></tr>
+            </table>
+          </div>
+
+          <h3>What Bollinger Bands Measure</h3>
+          <p>
+            Bollinger Bands are a <strong>volatility indicator</strong> — they expand when volatility is
+            high and contract when it is low. They are based on a standard deviation calculation around
+            a 20-period simple moving average.
+          </p>
+
+          <h3>Key Bollinger Band Signals</h3>
+          <ul>
+            <li>
+              <strong>Bollinger Band squeeze:</strong> When the bands narrow significantly, volatility is
+              low and a breakout is likely approaching. The direction of the breakout is not predicted by
+              the squeeze alone — confirmation from other indicators is needed.
+            </li>
+            <li>
+              <strong>Price touching upper band:</strong> In a ranging market, this may suggest the pair
+              is overextended and due for a pullback. In a strong uptrend, price can "walk the band" —
+              touching or exceeding the upper band repeatedly.
+            </li>
+            <li>
+              <strong>Price touching lower band:</strong> In a ranging market, this suggests potential
+              oversold conditions. In a downtrend, price can walk the lower band.
+            </li>
+            <li>
+              <strong>Bandwidth feature:</strong> PiiTrade's AI uses Bollinger Band width as a feature to
+              capture the current volatility regime, helping the model weight signals differently in
+              high-volatility versus low-volatility environments.
+            </li>
+          </ul>
+        </div>
+
+        <!-- How they work together -->
+        <div class="article-section">
+          <h2>5. How PiiTrade Combines These Indicators</h2>
+          <p>
+            No indicator works reliably in isolation. PiiTrade's LightGBM model treats RSI, MACD, EMA,
+            and Bollinger Bands not as standalone signals, but as <em>features</em> — inputs that the
+            model weighs against each other based on patterns learned from 10+ years of historical data.
+          </p>
+          <p>
+            For example, a BUY signal with 75% confidence from PiiTrade might reflect:
+          </p>
+          <ul>
+            <li>RSI recovering from oversold territory (35 → 48), indicating momentum recovery</li>
+            <li>MACD line just crossing above signal line on the daily chart</li>
+            <li>Price bouncing off the EMA-20 in an established uptrend</li>
+            <li>Bollinger Band squeeze ending with an upward breakout</li>
+            <li>Positive news sentiment for the base currency in the past 3 days</li>
+          </ul>
+          <p>
+            All five factors aligning produces a strong confluence signal. The model has learned, through
+            5-fold time-series cross-validation, that this combination of features has historically
+            preceded upward moves in similar market conditions.
+          </p>
+          <div class="callout callout-warn">
+            ⚠️ Historical patterns are useful but not infallible. Always combine the AI signal with
+            your own chart analysis and strict risk management.
+          </div>
+          <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap">
+            <a href="/forex" class="btn-primary" style="text-decoration:none;padding:9px 20px;font-size:.88rem">Open Dashboard →</a>
+            <a href="/methodology" style="text-decoration:none;padding:9px 20px;font-size:.88rem;border:1px solid var(--border);border-radius:var(--radius);color:var(--text2)">Full AI Methodology →</a>
+          </div>
+        </div>
+
+        <!-- Related -->
+        <div style="margin-top:8px">
+          <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text2);margin-bottom:12px">Related Articles</div>
+          <div class="related-grid">
+            <a href="/blog/smart-money-concepts" class="related-card">
+              <h3>🏦 Smart Money Concepts: FVG, BOS, CHoCH</h3>
+              <p>Institutional order-flow concepts behind PiiTrade's Advanced scanner.</p>
+            </a>
+            <a href="/blog/forex-risk-management" class="related-card">
+              <h3>🛡️ Forex Risk Management Guide</h3>
+              <p>Position sizing, stop-loss placement, and drawdown management.</p>
+            </a>
+            <a href="/methodology" class="related-card">
+              <h3>🤖 PiiTrade AI Methodology</h3>
+              <p>Full technical breakdown of the LightGBM pipeline.</p>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
+        <div style="display:flex;gap:18px;justify-content:center;margin-bottom:6px;flex-wrap:wrap">
+          <a href="/" style="color:var(--text2);text-decoration:none">Home</a>
+          <a href="/about" style="color:var(--text2);text-decoration:none">About</a>
+          <a href="/blog" style="color:var(--text2);text-decoration:none">Blog</a>
+          <a href="/methodology" style="color:var(--text2);text-decoration:none">Methodology</a>
+          <a href="/disclaimer" style="color:var(--text2);text-decoration:none">Risk Disclaimer</a>
+          <a href="/privacy" style="color:var(--text2);text-decoration:none">Privacy Policy</a>
+          <a href="/contact" style="color:var(--text2);text-decoration:none">Contact</a>
+        </div>
+        <div>© 2026 PiiTrade · Signals are for informational purposes only and do not constitute financial advice.</div>
+      </footer>
+
+    </div>
+  </div>
+
+</body>
+</html>
