@@ -116,7 +116,14 @@
   <div class="brand">
     <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-    <span><a href="https://one.exnessonelink.com/a/kvpmgx0jy1"><img style="width: 900px; height: 50px; margin-left: 50px" src="/img/exness.png" alt="Exness"/></a></span>
+    <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
+      <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
+      </marquee>
+    </div>
+    <script>
+      (function(){var o="";for(var i=1;i<140;i++)o+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';document.getElementById("maqId").innerHTML=o;})();
+    </script>
   </div>
   <nav class="fx-nav">
     <a href="/">Home</a>
