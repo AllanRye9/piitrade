@@ -1559,11 +1559,12 @@ function calcMFI(prices, period = 14) {
   return 100 - 100 / (1 + mfr);
 }
 
-/** Compute VWAP approximation from close prices */
-function calcVWAP(prices) {
+/** Compute SMA of recent closes as a price-level reference (close-only, no volume data) */
+function calcRecentAvgPrice(prices) {
   if (prices.length < 5) return null;
-  // Approximate VWAP using simple average of recent closes (no volume data)
-  return prices.slice(-10).reduce((s, v) => s + v, 0) / Math.min(prices.length, 10);
+  // Simple average of recent 10 closes — used as a price-reference baseline
+  const n = Math.min(10, prices.length);
+  return prices.slice(-n).reduce((s, v) => s + v, 0) / n;
 }
 
 /** Map value to 0-100 signal strength */
@@ -1612,7 +1613,7 @@ function renderTechnicalIndicators(prices, currentPrice, pair) {
   const mom   = calcMomentum(prices, 10);
   const adx   = calcADX(prices, 14);
   const mfi   = calcMFI(prices, 14);
-  const vwap  = calcVWAP(prices);
+  const recentAvg = calcRecentAvgPrice(prices);
 
   // Helper: signal from RSI
   const rsiSig  = v => v == null ? 'neutral' : v > 70 ? 'bearish' : v < 30 ? 'bullish' : 'neutral';
@@ -1638,18 +1639,27 @@ function renderTechnicalIndicators(prices, currentPrice, pair) {
     return adx.diPlus > adx.diMinus ? 'bullish' : 'bearish';
   };
 
-  // Build indicator cards
+  // HTML helpers
   const sig = (s) => `<span class="ta-ind-signal ${s}">${s === 'bullish' ? '▲ BUY' : s === 'bearish' ? '▼ SELL' : '→ HOLD'}</span>`;
   const bar = (pct, s) => `<div class="ta-ind-bar-wrap"><div class="ta-ind-bar-fill ${s}" style="width:${pct}%"></div></div>`;
 
+  /**
+   * Render a single indicator card.
+   * @param {string} name - Indicator name
+   * @param {string} value - Formatted display value
+   * @param {'bullish'|'bearish'|'neutral'} signal - Signal direction
+   * @param {number} barPct - Bar fill percentage (0–100)
+   * @param {string} desc - Short description
+   */
   function card(name, value, signal, barPct, desc) {
+    const pct = Math.min(100, Math.max(0, barPct));
     return `<div class="ta-ind-card">
       <div class="ta-ind-name">${escapeHtml(name)}</div>
       <div class="ta-ind-value-row">
         <span class="ta-ind-value">${escapeHtml(String(value))}</span>
         ${sig(signal)}
       </div>
-      ${bar(Math.min(100, Math.max(0, barPct)), signal)}
+      ${bar(pct, signal)}
       <div class="ta-ind-desc">${escapeHtml(desc)}</div>
     </div>`;
   }
@@ -1658,17 +1668,24 @@ function renderTechnicalIndicators(prices, currentPrice, pair) {
     return `<div class="ta-ind-group-header">📌 ${escapeHtml(label)}</div>`;
   }
 
+  /** Price position vs EMA as bar pct (50=neutral, >50=bullish, <50=bearish) */
+  function emaBarPct(ema) {
+    if (ema == null) return 50;
+    const deviation = (currentPrice - ema) / ema;
+    return normSignal(deviation, -0.005, 0.005);
+  }
+
   let html = '';
 
   // ── Trend ─────────────────────────────────────────────────────────────────
   html += group('Trend Indicators');
-  html += card('EMA 5', fmt(ema5), priceVsEma(ema5), ema5 ? normSignal(currentPrice / (ema5 || 1), 0.995, 1.005) * (currentPrice > (ema5||1) ? 1 : -1) + 50 : 50, 'Price vs 5-period EMA');
-  html += card('EMA 20', fmt(ema20), priceVsEma(ema20), 50, 'Price vs 20-period EMA. Key short-term trend');
-  html += card('EMA 50', fmt(ema50), priceVsEma(ema50), 50, 'Price vs 50-period EMA. Medium-term bias');
-  html += card('EMA 100', fmt(ema100), priceVsEma(ema100), 50, 'Price vs 100-period EMA. Longer-term trend');
-  html += card('SMA 5',  fmt(sma5),  priceVsEma(sma5),  50, 'Simple 5-period MA – very short-term trend');
-  html += card('SMA 20', fmt(sma20), priceVsEma(sma20), 50, 'Simple 20-period MA – short-term trend');
-  html += card('SMA 50', fmt(sma50), priceVsEma(sma50), 50, 'Simple 50-period MA – medium-term trend');
+  html += card('EMA 5',   fmt(ema5),   priceVsEma(ema5),   emaBarPct(ema5),   'Price vs 5-period EMA');
+  html += card('EMA 20',  fmt(ema20),  priceVsEma(ema20),  emaBarPct(ema20),  'Price vs 20-period EMA. Key short-term trend');
+  html += card('EMA 50',  fmt(ema50),  priceVsEma(ema50),  emaBarPct(ema50),  'Price vs 50-period EMA. Medium-term bias');
+  html += card('EMA 100', fmt(ema100), priceVsEma(ema100), emaBarPct(ema100), 'Price vs 100-period EMA. Longer-term trend');
+  html += card('SMA 5',   fmt(sma5),   priceVsEma(sma5),   emaBarPct(sma5),   'Simple 5-period MA – very short-term trend');
+  html += card('SMA 20',  fmt(sma20),  priceVsEma(sma20),  emaBarPct(sma20),  'Simple 20-period MA – short-term trend');
+  html += card('SMA 50',  fmt(sma50),  priceVsEma(sma50),  emaBarPct(sma50),  'Simple 50-period MA – medium-term trend');
 
   // ── Momentum ──────────────────────────────────────────────────────────────
   html += group('Momentum Indicators');
@@ -1692,11 +1709,13 @@ function renderTechnicalIndicators(prices, currentPrice, pair) {
 
   // ── Bollinger Bands ───────────────────────────────────────────────────────
   html += group('Bollinger Bands (20, 2σ)');
-  html += card('BB Upper', fmt(bb ? bb.upper : null), bbSig(), 80, 'Upper band — potential resistance');
+  html += card('BB Upper',  fmt(bb ? bb.upper  : null), bbSig(), 80, 'Upper band — potential resistance');
   html += card('BB Middle', fmt(bb ? bb.middle : null), priceVsEma(bb ? bb.middle : null), 50, 'Middle band (SMA 20)');
-  html += card('BB Lower', fmt(bb ? bb.lower : null), bbSig(), 20, 'Lower band — potential support');
-  html += card('BB Bandwidth', bb ? fmtN(bb.bandwidth, 2) + '%' : '–', bb ? (bb.bandwidth < 1 ? 'neutral' : bb.bandwidth > 3 ? 'bullish' : 'neutral') : 'neutral', bb ? normSignal(bb.bandwidth, 0, 5) : 50, 'Bandwidth: squeeze < 1%, expansion > 3%');
-  html += card('%B (Bollinger)', bb ? fmtN((currentPrice - bb.lower) / (bb.upper - bb.lower + 1e-10) * 100, 1) + '%' : '–', bbSig(), bb ? normSignal((currentPrice - bb.lower) / (bb.upper - bb.lower + 1e-10) * 100, 0, 100) : 50, '% position within the bands');
+  html += card('BB Lower',  fmt(bb ? bb.lower  : null), bbSig(), 20, 'Lower band — potential support');
+  html += card('BB Bandwidth', bb ? fmtN(bb.bandwidth, 2) + '%' : '–', 'neutral', bb ? normSignal(bb.bandwidth, 0, 5) : 50, 'Squeeze < 1% (low vol), expansion > 3% (high vol)');
+  // Pre-compute %B to avoid duplication
+  const bbPercent = bb ? (currentPrice - bb.lower) / (bb.upper - bb.lower + 1e-10) * 100 : null;
+  html += card('%B (Bollinger)', bbPercent != null ? fmtN(bbPercent, 1) + '%' : '–', bbSig(), bbPercent != null ? normSignal(bbPercent, 0, 100) : 50, '% position within the bands (>80 overbought, <20 oversold)');
 
   // ── Volatility ─────────────────────────────────────────────────────────────
   html += group('Volatility Indicators');
@@ -1713,10 +1732,10 @@ function renderTechnicalIndicators(prices, currentPrice, pair) {
 
   // ── Price Levels ──────────────────────────────────────────────────────────
   html += group('Price Levels & Reference');
-  html += card('EMA 8',  fmt(ema8),  priceVsEma(ema8),  50, '8-period EMA — short-term trigger');
-  html += card('EMA 13', fmt(ema13), priceVsEma(ema13), 50, '13-period EMA — Fibonacci EMA');
-  html += card('SMA 10', fmt(sma10), priceVsEma(sma10), 50, '10-period SMA — half-month average');
-  html += card('VWAP', fmt(vwap), priceVsEma(vwap), 50, 'Volume-Weighted Avg Price approx (close-only)');
+  html += card('EMA 8',  fmt(ema8),  priceVsEma(ema8),  emaBarPct(ema8),  '8-period EMA — short-term trigger');
+  html += card('EMA 13', fmt(ema13), priceVsEma(ema13), emaBarPct(ema13), '13-period EMA — Fibonacci EMA');
+  html += card('SMA 10', fmt(sma10), priceVsEma(sma10), emaBarPct(sma10), '10-period SMA — half-month average');
+  html += card('Avg Price (10)', fmt(recentAvg), priceVsEma(recentAvg), emaBarPct(recentAvg), 'Simple average of the last 10 closes (price-level reference)');
 
   // ── EMA Crossovers ────────────────────────────────────────────────────────
   html += group('EMA Crossover Signals');
