@@ -1196,7 +1196,7 @@ def _classify_sr_levels(
     - **broke**: Price has moved beyond the level with confirming 5-bar momentum
       — breakout confirmed.
     """
-    SOON_PCT    = 0.003   # 0.3 % – approaching range
+    SOON_PCT    = 0.008   # 0.8 % – approaching range (covers ±60-80 pip levels)
     TOUCHED_PCT = 0.0005  # 0.05 % – at-level range
     BROKE_PCT   = 0.0005  # 0.05 % – minimum buffer past level to call a break
     results: list[dict[str, Any]] = []

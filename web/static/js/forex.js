@@ -2344,7 +2344,7 @@ async function loadFvgScanner() {
   contentEl.style.display = 'none';
 
   try {
-    const res = await fetch('/api/forex/fvg-scanner');
+    const res = await fetch('/api/forex/fvg-scanner', { cache: 'no-store' });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     fvgLoaded = true;
@@ -2628,7 +2628,7 @@ async function loadSrBreakouts() {
   if (emptyEl) emptyEl.style.display = 'none';
 
   try {
-    const res = await fetch('/api/forex/sr-breakouts');
+    const res = await fetch('/api/forex/sr-breakouts', { cache: 'no-store' });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     srBreakoutsLoaded = true;
