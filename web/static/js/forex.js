@@ -1276,6 +1276,10 @@ async function loadTechnicalAnalysis(pair) {
     const res = await fetch(`/api/forex/technical?pair=${encodeURIComponent(pair)}`);
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
+    // Inject price history from the cached signal response so indicators can use it
+    if (signalData && signalData.history && signalData.history.length) {
+      data.history = signalData.history;
+    }
     renderTechnicalAnalysis(data);
   } catch (err) {
     taLoading.textContent = 'Could not load technical analysis.';
@@ -1385,7 +1389,346 @@ function renderTechnicalAnalysis(data) {
 
   taLoading.style.display = 'none';
   taContent.style.display = 'grid';
+
+  // Compute and render 40+ indicators from price history
+  if (data.history && data.history.length >= 10) {
+    const prices = data.history.map(h => h.exit);
+    renderTechnicalIndicators(prices, data.current_price, data.pair);
+  }
 }
+
+// ─── 40+ Technical Indicators Computation ─────────────────────────────────────
+
+/** Compute Simple Moving Average */
+function calcSMA(prices, period) {
+  if (prices.length < period) return null;
+  const slice = prices.slice(-period);
+  return slice.reduce((s, v) => s + v, 0) / period;
+}
+
+/** Compute Exponential Moving Average */
+function calcEMA(prices, period) {
+  if (prices.length < period) return null;
+  const k = 2 / (period + 1);
+  let ema = prices.slice(0, period).reduce((s, v) => s + v, 0) / period;
+  for (let i = period; i < prices.length; i++) {
+    ema = prices[i] * k + ema * (1 - k);
+  }
+  return ema;
+}
+
+/** Compute RSI (Relative Strength Index) */
+function calcRSI(prices, period = 14) {
+  if (prices.length < period + 1) return null;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const diff = prices[i] - prices[i - 1];
+    if (diff >= 0) gains += diff; else losses -= diff;
+  }
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  for (let i = period + 1; i < prices.length; i++) {
+    const diff = prices[i] - prices[i - 1];
+    const g = diff >= 0 ? diff : 0;
+    const l = diff < 0 ? -diff : 0;
+    avgGain = (avgGain * (period - 1) + g) / period;
+    avgLoss = (avgLoss * (period - 1) + l) / period;
+  }
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+
+/** Compute MACD (12, 26, 9) — returns {macd, signal, histogram} */
+function calcMACD(prices) {
+  const ema12 = calcEMA(prices, 12);
+  const ema26 = calcEMA(prices, 26);
+  if (ema12 === null || ema26 === null) return null;
+  const macd = ema12 - ema26;
+  // Compute EMA9 of MACD line (approximate using last 9 MACD values)
+  const macdVals = [];
+  const k12 = 2 / 13, k26 = 2 / 27;
+  let e12 = prices.slice(0, 12).reduce((s, v) => s + v, 0) / 12;
+  let e26 = prices.slice(0, 26).reduce((s, v) => s + v, 0) / 26;
+  for (let i = 12; i < prices.length; i++) {
+    e12 = prices[i] * k12 + e12 * (1 - k12);
+    if (i >= 25) {
+      e26 = prices[i] * k26 + e26 * (1 - k26);
+      macdVals.push(e12 - e26);
+    }
+  }
+  const sig = macdVals.length >= 9 ? calcEMA(macdVals, 9) : (macdVals.length > 0 ? macdVals[macdVals.length - 1] : 0);
+  return { macd, signal: sig || 0, histogram: macd - (sig || 0) };
+}
+
+/** Compute Bollinger Bands */
+function calcBollingerBands(prices, period = 20, mult = 2) {
+  const sma = calcSMA(prices, period);
+  if (sma === null) return null;
+  const slice = prices.slice(-period);
+  const variance = slice.reduce((s, v) => s + (v - sma) ** 2, 0) / period;
+  const sd = Math.sqrt(variance);
+  return { upper: sma + mult * sd, middle: sma, lower: sma - mult * sd, bandwidth: (4 * mult * sd) / sma * 100 };
+}
+
+/** Compute ATR (Average True Range) — prices as close array */
+function calcATR(prices, period = 14) {
+  if (prices.length < period + 1) return null;
+  // Simplified ATR using |high-low| ≈ |price[i]-price[i-1]| for close-only data
+  const trs = [];
+  for (let i = 1; i < prices.length; i++) {
+    trs.push(Math.abs(prices[i] - prices[i - 1]));
+  }
+  return trs.slice(-period).reduce((s, v) => s + v, 0) / period;
+}
+
+/** Compute Stochastic %K and %D */
+function calcStochastic(prices, kPeriod = 14, dPeriod = 3) {
+  if (prices.length < kPeriod) return null;
+  const kVals = [];
+  for (let i = kPeriod - 1; i < prices.length; i++) {
+    const slice = prices.slice(i - kPeriod + 1, i + 1);
+    const lo = Math.min(...slice);
+    const hi = Math.max(...slice);
+    kVals.push(hi !== lo ? ((prices[i] - lo) / (hi - lo)) * 100 : 50);
+  }
+  const k = kVals[kVals.length - 1];
+  const d = kVals.length >= dPeriod ? kVals.slice(-dPeriod).reduce((s, v) => s + v, 0) / dPeriod : k;
+  return { k, d };
+}
+
+/** Compute CCI (Commodity Channel Index) */
+function calcCCI(prices, period = 20) {
+  const sma = calcSMA(prices, period);
+  if (sma === null) return null;
+  const slice = prices.slice(-period);
+  const meanDev = slice.reduce((s, v) => s + Math.abs(v - sma), 0) / period;
+  return meanDev === 0 ? 0 : (prices[prices.length - 1] - sma) / (0.015 * meanDev);
+}
+
+/** Compute Williams %R */
+function calcWillR(prices, period = 14) {
+  if (prices.length < period) return null;
+  const slice = prices.slice(-period);
+  const lo = Math.min(...slice);
+  const hi = Math.max(...slice);
+  return hi !== lo ? ((hi - prices[prices.length - 1]) / (hi - lo)) * -100 : -50;
+}
+
+/** Compute Rate of Change */
+function calcROC(prices, period = 10) {
+  if (prices.length < period + 1) return null;
+  const prev = prices[prices.length - 1 - period];
+  return prev !== 0 ? ((prices[prices.length - 1] - prev) / prev) * 100 : 0;
+}
+
+/** Compute Momentum */
+function calcMomentum(prices, period = 10) {
+  if (prices.length < period + 1) return null;
+  return prices[prices.length - 1] - prices[prices.length - 1 - period];
+}
+
+/** Compute ADX (simplified) */
+function calcADX(prices, period = 14) {
+  if (prices.length < period + 1) return null;
+  let dmPlus = 0, dmMinus = 0, tr = 0;
+  for (let i = 1; i <= period; i++) {
+    const up = prices[i] - prices[i - 1];
+    const dn = prices[i - 1] - prices[i];
+    dmPlus  += Math.max(up, 0);
+    dmMinus += Math.max(dn, 0);
+    tr += Math.abs(prices[i] - prices[i - 1]);
+  }
+  if (tr === 0) return null;
+  const diPlus  = (dmPlus / tr) * 100;
+  const diMinus = (dmMinus / tr) * 100;
+  const dx = Math.abs(diPlus - diMinus) / (diPlus + diMinus + 1e-9) * 100;
+  return { adx: dx, diPlus, diMinus };
+}
+
+/** Compute Money Flow Index (price-based approximation) */
+function calcMFI(prices, period = 14) {
+  if (prices.length < period + 1) return null;
+  let posFlow = 0, negFlow = 0;
+  for (let i = prices.length - period; i < prices.length; i++) {
+    const diff = prices[i] - prices[i - 1];
+    if (diff > 0) posFlow += prices[i]; else negFlow += prices[i];
+  }
+  if (negFlow === 0) return 100;
+  const mfr = posFlow / negFlow;
+  return 100 - 100 / (1 + mfr);
+}
+
+/** Compute VWAP approximation from close prices */
+function calcVWAP(prices) {
+  if (prices.length < 5) return null;
+  // Approximate VWAP using simple average of recent closes (no volume data)
+  return prices.slice(-10).reduce((s, v) => s + v, 0) / Math.min(prices.length, 10);
+}
+
+/** Map value to 0-100 signal strength */
+function normSignal(value, lo, hi) {
+  return Math.min(100, Math.max(0, ((value - lo) / (hi - lo)) * 100));
+}
+
+/**
+ * Build and render the 40+ technical indicators panel.
+ * @param {number[]} prices - Array of historical close prices (30 days)
+ * @param {number} currentPrice - Live current price
+ * @param {string} pair - Currency pair
+ */
+function renderTechnicalIndicators(prices, currentPrice, pair) {
+  const el = document.getElementById('ta-indicators-content');
+  if (!el) return;
+
+  const dec = getPairDecimals(pair);
+  const fmt = v => (v != null ? Number(v).toFixed(dec) : '–');
+  const fmtN = (v, d = 2) => (v != null ? Number(v).toFixed(d) : '–');
+
+  // ── Compute all indicators ──────────────────────────────────────────────────
+  const rsi14 = calcRSI(prices, 14);
+  const rsi7  = calcRSI(prices, 7);
+  const rsi21 = calcRSI(prices, 21);
+  const macd  = calcMACD(prices);
+  const bb    = calcBollingerBands(prices, 20, 2);
+  const bb1   = calcBollingerBands(prices, 20, 1);
+  const ema5  = calcEMA(prices, 5);
+  const ema8  = calcEMA(prices, 8);
+  const ema13 = calcEMA(prices, 13);
+  const ema20 = calcEMA(prices, 20);
+  const ema50 = calcEMA(prices, 50);
+  const ema100= calcEMA(prices, 100);
+  const sma5  = calcSMA(prices, 5);
+  const sma10 = calcSMA(prices, 10);
+  const sma20 = calcSMA(prices, 20);
+  const sma50 = calcSMA(prices, 50);
+  const atr14 = calcATR(prices, 14);
+  const atr7  = calcATR(prices, 7);
+  const stoch = calcStochastic(prices, 14, 3);
+  const cci   = calcCCI(prices, 20);
+  const willR = calcWillR(prices, 14);
+  const roc   = calcROC(prices, 10);
+  const roc20 = calcROC(prices, 20);
+  const mom   = calcMomentum(prices, 10);
+  const adx   = calcADX(prices, 14);
+  const mfi   = calcMFI(prices, 14);
+  const vwap  = calcVWAP(prices);
+
+  // Helper: signal from RSI
+  const rsiSig  = v => v == null ? 'neutral' : v > 70 ? 'bearish' : v < 30 ? 'bullish' : 'neutral';
+  const priceVsEma = v => v == null ? 'neutral' : currentPrice > v ? 'bullish' : 'bearish';
+  const macdSig  = () => macd == null ? 'neutral' : macd.histogram > 0 ? 'bullish' : 'bearish';
+  const bbSig    = () => {
+    if (!bb) return 'neutral';
+    if (currentPrice >= bb.upper) return 'bearish';
+    if (currentPrice <= bb.lower) return 'bullish';
+    return 'neutral';
+  };
+  const stochSig = () => {
+    if (!stoch) return 'neutral';
+    if (stoch.k > 80) return 'bearish';
+    if (stoch.k < 20) return 'bullish';
+    return 'neutral';
+  };
+  const cciSig   = v => v == null ? 'neutral' : v > 100 ? 'bearish' : v < -100 ? 'bullish' : 'neutral';
+  const willSig  = v => v == null ? 'neutral' : v < -80 ? 'bullish' : v > -20 ? 'bearish' : 'neutral';
+  const adxSig   = () => {
+    if (!adx) return 'neutral';
+    if (adx.adx < 20) return 'neutral';
+    return adx.diPlus > adx.diMinus ? 'bullish' : 'bearish';
+  };
+
+  // Build indicator cards
+  const sig = (s) => `<span class="ta-ind-signal ${s}">${s === 'bullish' ? '▲ BUY' : s === 'bearish' ? '▼ SELL' : '→ HOLD'}</span>`;
+  const bar = (pct, s) => `<div class="ta-ind-bar-wrap"><div class="ta-ind-bar-fill ${s}" style="width:${pct}%"></div></div>`;
+
+  function card(name, value, signal, barPct, desc) {
+    return `<div class="ta-ind-card">
+      <div class="ta-ind-name">${escapeHtml(name)}</div>
+      <div class="ta-ind-value-row">
+        <span class="ta-ind-value">${escapeHtml(String(value))}</span>
+        ${sig(signal)}
+      </div>
+      ${bar(Math.min(100, Math.max(0, barPct)), signal)}
+      <div class="ta-ind-desc">${escapeHtml(desc)}</div>
+    </div>`;
+  }
+
+  function group(label) {
+    return `<div class="ta-ind-group-header">📌 ${escapeHtml(label)}</div>`;
+  }
+
+  let html = '';
+
+  // ── Trend ─────────────────────────────────────────────────────────────────
+  html += group('Trend Indicators');
+  html += card('EMA 5', fmt(ema5), priceVsEma(ema5), ema5 ? normSignal(currentPrice / (ema5 || 1), 0.995, 1.005) * (currentPrice > (ema5||1) ? 1 : -1) + 50 : 50, 'Price vs 5-period EMA');
+  html += card('EMA 20', fmt(ema20), priceVsEma(ema20), 50, 'Price vs 20-period EMA. Key short-term trend');
+  html += card('EMA 50', fmt(ema50), priceVsEma(ema50), 50, 'Price vs 50-period EMA. Medium-term bias');
+  html += card('EMA 100', fmt(ema100), priceVsEma(ema100), 50, 'Price vs 100-period EMA. Longer-term trend');
+  html += card('SMA 5',  fmt(sma5),  priceVsEma(sma5),  50, 'Simple 5-period MA – very short-term trend');
+  html += card('SMA 20', fmt(sma20), priceVsEma(sma20), 50, 'Simple 20-period MA – short-term trend');
+  html += card('SMA 50', fmt(sma50), priceVsEma(sma50), 50, 'Simple 50-period MA – medium-term trend');
+
+  // ── Momentum ──────────────────────────────────────────────────────────────
+  html += group('Momentum Indicators');
+  html += card('RSI (14)', rsi14 != null ? fmtN(rsi14, 1) : '–', rsiSig(rsi14), rsi14 || 50, 'Overbought >70, oversold <30');
+  html += card('RSI (7)', rsi7 != null ? fmtN(rsi7, 1) : '–', rsiSig(rsi7), rsi7 || 50, 'Short-period RSI — more sensitive');
+  html += card('RSI (21)', rsi21 != null ? fmtN(rsi21, 1) : '–', rsiSig(rsi21), rsi21 || 50, 'Long-period RSI — fewer false signals');
+  html += card('Stochastic %K', stoch ? fmtN(stoch.k, 1) : '–', stochSig(), stoch ? stoch.k : 50, 'Overbought >80, oversold <20');
+  html += card('Stochastic %D', stoch ? fmtN(stoch.d, 1) : '–', stochSig(), stoch ? stoch.d : 50, '3-period SMA of %K — signal line');
+  html += card('CCI (20)', cci != null ? fmtN(cci, 1) : '–', cciSig(cci), cci != null ? normSignal(cci, -200, 200) : 50, 'Commodity Channel Index. Extremes ±100');
+  html += card('Williams %R', willR != null ? fmtN(willR, 1) : '–', willSig(willR), willR != null ? normSignal(willR, -100, 0) : 50, 'Overbought >-20, oversold <-80');
+  html += card('ROC (10)', roc != null ? fmtN(roc, 2) + '%' : '–', roc != null ? (roc > 0 ? 'bullish' : roc < 0 ? 'bearish' : 'neutral') : 'neutral', roc != null ? normSignal(roc, -2, 2) : 50, 'Rate of change over 10 periods');
+  html += card('ROC (20)', roc20 != null ? fmtN(roc20, 2) + '%' : '–', roc20 != null ? (roc20 > 0 ? 'bullish' : roc20 < 0 ? 'bearish' : 'neutral') : 'neutral', roc20 != null ? normSignal(roc20, -3, 3) : 50, 'Rate of change over 20 periods');
+  html += card('Momentum (10)', mom != null ? fmtN(mom, dec) : '–', mom != null ? (mom > 0 ? 'bullish' : mom < 0 ? 'bearish' : 'neutral') : 'neutral', mom != null ? normSignal(mom, -0.01, 0.01) : 50, 'Current price minus price 10 periods ago');
+  html += card('MFI (14)', mfi != null ? fmtN(mfi, 1) : '–', mfi != null ? (mfi > 70 ? 'bearish' : mfi < 30 ? 'bullish' : 'neutral') : 'neutral', mfi || 50, 'Money Flow Index — overbought >70, oversold <30');
+
+  // ── MACD ──────────────────────────────────────────────────────────────────
+  html += group('MACD (12, 26, 9)');
+  html += card('MACD Line', macd ? fmtN(macd.macd, 5) : '–', macdSig(), macd ? normSignal(macd.macd, -0.005, 0.005) : 50, 'EMA12 minus EMA26');
+  html += card('MACD Signal', macd ? fmtN(macd.signal, 5) : '–', macdSig(), macd ? normSignal(macd.signal, -0.005, 0.005) : 50, 'EMA9 of MACD line');
+  html += card('MACD Histogram', macd ? fmtN(macd.histogram, 5) : '–', macd ? (macd.histogram > 0 ? 'bullish' : 'bearish') : 'neutral', macd ? normSignal(macd.histogram, -0.003, 0.003) : 50, 'MACD minus Signal line');
+
+  // ── Bollinger Bands ───────────────────────────────────────────────────────
+  html += group('Bollinger Bands (20, 2σ)');
+  html += card('BB Upper', fmt(bb ? bb.upper : null), bbSig(), 80, 'Upper band — potential resistance');
+  html += card('BB Middle', fmt(bb ? bb.middle : null), priceVsEma(bb ? bb.middle : null), 50, 'Middle band (SMA 20)');
+  html += card('BB Lower', fmt(bb ? bb.lower : null), bbSig(), 20, 'Lower band — potential support');
+  html += card('BB Bandwidth', bb ? fmtN(bb.bandwidth, 2) + '%' : '–', bb ? (bb.bandwidth < 1 ? 'neutral' : bb.bandwidth > 3 ? 'bullish' : 'neutral') : 'neutral', bb ? normSignal(bb.bandwidth, 0, 5) : 50, 'Bandwidth: squeeze < 1%, expansion > 3%');
+  html += card('%B (Bollinger)', bb ? fmtN((currentPrice - bb.lower) / (bb.upper - bb.lower + 1e-10) * 100, 1) + '%' : '–', bbSig(), bb ? normSignal((currentPrice - bb.lower) / (bb.upper - bb.lower + 1e-10) * 100, 0, 100) : 50, '% position within the bands');
+
+  // ── Volatility ─────────────────────────────────────────────────────────────
+  html += group('Volatility Indicators');
+  html += card('ATR (14)', atr14 != null ? fmtN(atr14, dec) : '–', 'neutral', atr14 != null ? normSignal(atr14, 0, 0.005) : 50, 'Average True Range — market volatility');
+  html += card('ATR (7)', atr7 != null ? fmtN(atr7, dec) : '–', 'neutral', atr7 != null ? normSignal(atr7, 0, 0.005) : 50, 'Short-period ATR — recent volatility spike');
+  html += card('BB Inner (1σ)', fmt(bb1 ? bb1.upper : null), bbSig(), 60, 'Upper 1σ band — tighter range reference');
+  html += card('Price Range', prices.length >= 20 ? fmtN(Math.max(...prices.slice(-20)) - Math.min(...prices.slice(-20)), dec) : '–', 'neutral', 50, '20-period price range (high minus low)');
+
+  // ── Trend Strength ────────────────────────────────────────────────────────
+  html += group('Trend Strength');
+  html += card('ADX', adx ? fmtN(adx.adx, 1) : '–', adxSig(), adx ? normSignal(adx.adx, 0, 60) : 50, 'ADX: <20 weak, >25 strong trend');
+  html += card('+DI (14)', adx ? fmtN(adx.diPlus, 1) : '–', adx ? (adx.diPlus > adx.diMinus ? 'bullish' : 'neutral') : 'neutral', adx ? normSignal(adx.diPlus, 0, 50) : 50, 'Positive Directional Indicator');
+  html += card('-DI (14)', adx ? fmtN(adx.diMinus, 1) : '–', adx ? (adx.diMinus > adx.diPlus ? 'bearish' : 'neutral') : 'neutral', adx ? normSignal(adx.diMinus, 0, 50) : 50, 'Negative Directional Indicator');
+
+  // ── Price Levels ──────────────────────────────────────────────────────────
+  html += group('Price Levels & Reference');
+  html += card('EMA 8',  fmt(ema8),  priceVsEma(ema8),  50, '8-period EMA — short-term trigger');
+  html += card('EMA 13', fmt(ema13), priceVsEma(ema13), 50, '13-period EMA — Fibonacci EMA');
+  html += card('SMA 10', fmt(sma10), priceVsEma(sma10), 50, '10-period SMA — half-month average');
+  html += card('VWAP', fmt(vwap), priceVsEma(vwap), 50, 'Volume-Weighted Avg Price approx (close-only)');
+
+  // ── EMA Crossovers ────────────────────────────────────────────────────────
+  html += group('EMA Crossover Signals');
+  const ema5x20  = ema5  != null && ema20 != null ? (ema5  > ema20  ? 'bullish' : 'bearish') : 'neutral';
+  const ema20x50 = ema20 != null && ema50 != null ? (ema20 > ema50  ? 'bullish' : 'bearish') : 'neutral';
+  html += card('EMA 5 vs EMA 20', ema5x20 === 'bullish' ? 'Above ▲' : ema5x20 === 'bearish' ? 'Below ▼' : '–', ema5x20, ema5x20 === 'bullish' ? 75 : 25, 'EMA5 vs EMA20 crossover — fast vs slow');
+  html += card('EMA 20 vs EMA 50', ema20x50 === 'bullish' ? 'Golden ▲' : ema20x50 === 'bearish' ? 'Death ▼' : '–', ema20x50, ema20x50 === 'bullish' ? 80 : 20, 'Golden Cross / Death Cross signal');
+  html += card('Price vs SMA 50', sma50 != null ? (currentPrice > sma50 ? 'Above ▲' : 'Below ▼') : '–', priceVsEma(sma50), 50, 'Price position relative to SMA50 trend line');
+
+  el.innerHTML = html;
+}
+
 
 // ─── Success Rate Tracking ────────────────────────────────────────────────────
 // Map of pair → {accuracy, direction, total, correct, loaded}

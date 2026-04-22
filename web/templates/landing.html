@@ -520,17 +520,16 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <marquee behavior="scroll" direction="left" style="width:100%; height:56px;">
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId"></a>
-      </marquee>
-      </span>
+      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
+        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
+        </marquee>
+      </div>
       <script>
         let output = "";
-
-         for (let i = 1; i < 140; i++) {
-          output += `<img src="/img/exness_${i}.png" style="height:56px;margin-right:10px;">`;
+        for (let i = 1; i < 140; i++) {
+          output += `<img src="/img/exness_${i}.png" style="height:48px;margin-right:8px;vertical-align:middle;">`;
         }
-
         document.getElementById("maqId").innerHTML = output;
       </script>
     </div>
@@ -644,47 +643,42 @@
           <div class="feature-card">
             <div class="feat-icon">💱</div>
             <h3>35 Forex Pairs</h3>
-            <p>Majors, minors &amp; exotics — EUR/USD, GBP/USD, USD/JPY, exotic pairs, and more. 100% forex focused.</p>
+            <p>Major, minor, and exotic forex pairs — all in one unified dashboard with live signals. EUR/USD, GBP/JPY, USD/TRY and 32 more.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">🔥</div>
-            <h3>Volatility Scanner</h3>
-            <p>Identify the highest-momentum forex pairs across 1 h, 4 h, and 24 h timeframes.</p>
+            <div class="feat-icon">🤖</div>
+            <h3>ML-Powered Signals</h3>
+            <p>LightGBM model trained on 10+ years of market data for accurate BUY/SELL/HOLD predictions with confidence scores.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">🔔</div>
-            <h3>Market Alerts &amp; Events</h3>
-            <p>Track Fed rate decisions, FOMC statements, institutional activity, and significant forex price surges.
-            </p>
+            <div class="feat-icon">📡</div>
+            <h3>Real-Time Prices</h3>
+            <p>Live market data refreshed continuously. Always know where the forex market stands with up-to-the-minute prices.</p>
           </div>
           <div class="feature-card">
             <div class="feat-icon">📐</div>
             <h3>Risk Calculator</h3>
-            <p>Compute position size, pip value, risk-to-reward ratio, and required margin instantly for any forex pair.
-            </p>
+            <p>Built-in position sizing and risk management tools to protect your trading capital. Pip value, R:R ratio &amp; margin.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">🔍</div>
-            <h3>Technical Analysis</h3>
-            <p>Automated support/resistance levels, Fair Value Gaps (FVG), Break of Structure (BOS), and CHoCH.</p>
+            <div class="feat-icon">🔬</div>
+            <h3>11 Analysis Tools</h3>
+            <p>FVG scanner, S/R breakouts, pattern scanner, volatility rankings, reversals, BOS/CHoCH and more — all automated.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">🏆</div>
-            <h3>Signal Performance</h3>
-            <p>30-day accuracy history per pair with a visual chart to objectively evaluate model reliability.</p>
+            <div class="feat-icon">📉</div>
+            <h3>Historical Accuracy</h3>
+            <p>30-day prediction accuracy chart per pair. Visual breakdown of correct vs incorrect signals with stats.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">🗺️</div>
-            <h3>Development Roadmap</h3>
-            <p><strong>Upcoming:</strong> Multi-timeframe confluence scoring · Advanced AI retraining pipeline · Mobile
-              push alerts · TradingView chart integration · Premium tier with email signals · API access for developers.
-            </p>
+            <div class="feat-icon">🔮</div>
+            <h3>AI Signal Engine</h3>
+            <p>LightGBM gradient-boosted tree model using RSI, MACD, EMA-20/50, news sentiment, CPI delta &amp; PMI as features.</p>
           </div>
           <div class="feature-card">
-            <div class="feat-icon">📄</div>
-            <h3>Whitepaper</h3>
-            <p>The PiiTrade Whitepaper covers the LightGBM AI pipeline, feature engineering, signal generation logic,
-              and backtested accuracy results across 35 forex pairs. <em>Full document coming soon.</em></p>
+            <div class="feat-icon">🚀</div>
+            <h3>Crypto &amp; Stocks Soon</h3>
+            <p>Crypto, commodities, and stocks signals on the way — free AI tools for every asset class coming soon.</p>
           </div>
         </div>
       </div>
@@ -699,6 +693,33 @@
           Completely free, forever. No account needed, no hidden fees.
         </p>
         <a href="/forex" class="btn-primary">Open Free Dashboard →</a>
+      </div>
+
+      <!-- ═══════════════════════════════ TAPTAP SPONSOR ═══════════════════════════ -->
+      <div style="max-width:900px;margin:0 auto 40px;padding:0 16px;">
+        <a href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d"
+           target="_blank" rel="noopener noreferrer"
+           style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#1a1e2e 0%,#0d1117 100%);
+                  border:1px solid #30363d;border-radius:12px;padding:16px 20px;text-decoration:none;color:inherit;
+                  transition:border-color .2s,box-shadow .2s;"
+           onmouseover="this.style.borderColor='#58a6ff';this.style.boxShadow='0 4px 20px rgba(88,166,255,.12)'"
+           onmouseout="this.style.borderColor='#30363d';this.style.boxShadow='none'">
+          <img src="/img/taptap.png" alt="TapTap Send" style="height:60px;width:auto;object-fit:contain;border-radius:10px;flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.95rem;font-weight:700;color:#58a6ff;margin-bottom:5px;">💸 Sponsored: TapTap Send – Send Money Home</div>
+            <div style="font-size:.83rem;color:#c9d1d9;line-height:1.55;">
+              Taptap Send is an app that lets people send money back home to Africa, Asia, and the Caribbean quickly
+              and at very low prices. Since launching in summer 2018, we've already moved billions of dollars and
+              reached hundreds of thousands of customers. We're live in the UK, EU, US, UAE, Canada, Australia and
+              we support payments into Senegal, Mali, Guinea, Ghana, Cameroon, the Ivory Coast, Kenya, Madagascar,
+              Zambia, Bangladesh, Vietnam, DR Congo, Morocco, Sri Lanka, Rep. Congo, Pakistan, Nepal, Ethiopia,
+              Nigeria, Mozambique, Cambodia, Haiti, Tunisia, Uganda, Lebanon, Colombia, Guatemala, Philippines,
+              Egypt, Mexico, India, Turkey and Zimbabwe with more countries launching soon.
+            </div>
+          </div>
+          <span style="font-size:.82rem;font-weight:700;color:#fff;background:#58a6ff;border-radius:20px;
+                       padding:6px 14px;flex-shrink:0;white-space:nowrap;">Send Now →</span>
+        </a>
       </div>
 
       <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->

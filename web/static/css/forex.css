@@ -4,6 +4,12 @@
 
 /* Google Fonts (Inter) loaded non-blocking via HTML <link rel="preload"> */
 
+/* ── Prevent flash of white background before CSS variables apply ── */
+html {
+  background-color: #0d1117;
+  color: #e6edf3;
+}
+
 :root {
   --bg: #0d1117;
   --surface: #161b22;
@@ -5068,3 +5074,129 @@ canvas {
 
 .signal-direction-badge.BUY  { animation: directionPulse 1.2s ease forwards; }
 .signal-direction-badge.SELL { animation: directionPulse 1.2s ease forwards; }
+
+/* ═══════════════════════════════════════════════════════════════
+   📊 40+ Technical Indicators Panel
+   ═══════════════════════════════════════════════════════════════ */
+
+.ta-indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.ta-ind-loading {
+  grid-column: 1 / -1;
+  color: var(--text2);
+  font-size: .88rem;
+  padding: 12px 0;
+}
+
+.ta-ind-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: section-enter .3s ease both;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.ta-ind-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 3px 10px rgba(88,166,255,.1);
+}
+
+.ta-ind-name {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.ta-ind-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.ta-ind-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-ind-signal {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.ta-ind-signal.bullish {
+  background: rgba(63,185,80,.18);
+  color: var(--buy-color);
+  border: 1px solid rgba(63,185,80,.3);
+}
+
+.ta-ind-signal.bearish {
+  background: rgba(248,81,73,.18);
+  color: var(--sell-color);
+  border: 1px solid rgba(248,81,73,.3);
+}
+
+.ta-ind-signal.neutral {
+  background: rgba(210,153,34,.18);
+  color: var(--warn);
+  border: 1px solid rgba(210,153,34,.3);
+}
+
+.ta-ind-bar-wrap {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.ta-ind-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .7s cubic-bezier(.22,1,.36,1);
+}
+
+.ta-ind-bar-fill.bullish { background: var(--buy-color); }
+.ta-ind-bar-fill.bearish { background: var(--sell-color); }
+.ta-ind-bar-fill.neutral { background: var(--warn); }
+
+.ta-ind-desc {
+  font-size: .7rem;
+  color: var(--text2);
+  line-height: 1.35;
+}
+
+/* Group header inside indicators grid */
+.ta-ind-group-header {
+  grid-column: 1 / -1;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--accent);
+  padding: 6px 2px 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+@media (max-width: 540px) {
+  .ta-indicators-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
