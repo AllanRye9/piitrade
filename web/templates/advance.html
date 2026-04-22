@@ -351,10 +351,11 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 18px 20px;
+      padding: 18px 20px 14px;
       position: relative;
       overflow: hidden;
       transition: transform .2s, box-shadow .2s, border-color .2s;
+      animation: sectionIn .35s ease both;
     }
     .session-card:hover {
       transform: translateY(-2px);
@@ -371,6 +372,15 @@
       top: 0; left: 0; right: 0;
       height: 2px;
       background: linear-gradient(90deg, transparent, #3ecf8e, transparent);
+    }
+    /* Flash glow when a session just opened */
+    @keyframes sessionOpen {
+      0%   { box-shadow: 0 0 0 0 rgba(62,207,142,.8); }
+      40%  { box-shadow: 0 0 0 10px rgba(62,207,142,.3); }
+      100% { box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1); }
+    }
+    .session-card.just-opened {
+      animation: sessionOpen .9s ease forwards;
     }
     .session-flag { font-size: 1.6rem; line-height: 1; margin-bottom: 8px; }
     .session-name { font-weight: 700; font-size: .98rem; color: var(--text); }
@@ -418,6 +428,35 @@
       border-radius: 50%;
       background: #3ecf8e;
       animation: beepRing 1.4s ease-out infinite;
+    }
+
+    /* Session progress bar */
+    .session-progress-wrap {
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    .session-progress-track {
+      height: 4px;
+      background: rgba(255,255,255,.07);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 3px;
+    }
+    .session-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .6s ease;
+    }
+    .session-card.active .session-progress-fill {
+      background: linear-gradient(90deg, currentColor 0%, rgba(255,255,255,.5) 100%);
+    }
+    .session-card.adv-session-purple .session-progress-fill { background: linear-gradient(90deg, #b392f0, rgba(179,146,240,.4)); }
+    .session-card.adv-session-blue   .session-progress-fill { background: linear-gradient(90deg, #58a6ff, rgba(88,166,255,.4)); }
+    .session-card.adv-session-green  .session-progress-fill { background: linear-gradient(90deg, #3ecf8e, rgba(62,207,142,.4)); }
+    .session-card.adv-session-yellow .session-progress-fill { background: linear-gradient(90deg, #f0c040, rgba(240,192,64,.4)); }
+    .session-progress-label {
+      font-size: .68rem;
+      color: var(--text2);
     }
 
     .session-pairs { font-size: .78rem; color: var(--text2); line-height: 1.5; }
@@ -1243,7 +1282,7 @@
     <script>
       (function () {
         var out = "";
-        for (var i = 1; i < 140; i++) out += '<img src="/img/exness_' + i + '.png" style="height:48px;margin-right:8px;vertical-align:middle;">';
+        for (var i = 1; i < 140; i++) out += '<img src="/img/exness_' + i + '.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
         document.getElementById("maqId").innerHTML = out;
       })();
     </script>
@@ -2733,15 +2772,26 @@ var AdvChart = (function () {
     return (h > 0 ? h + 'h ' : '') + m + 'm';
   }
 
-  function renderSessions() {
-    const grid = document.getElementById('session-grid');
-    grid.innerHTML = SESSIONS.map(function (s) {
-      const active = isSessionActive(s.open, s.close);
-      const countdown = minsUntilEvent(s.open, s.close);
-      const mins = countdown.mins;
-      const warn = mins <= 15;
+  /* Compute what percentage of a session has elapsed (0-100) */
+  function sessionPct(open, close) {
+    var h = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
+    var duration = open < close ? close - open : (24 - open) + close;
+    var elapsed  = open < close ? h - open : (h >= open ? h - open : 24 - open + h);
+    return Math.min(100, Math.max(0, Math.round(elapsed / duration * 100)));
+  }
 
-      const liveBadge = active
+  /* Track which sessions were newly opened this render so we can animate them */
+  var _justOpened = {};
+
+  function renderSessions() {
+    var grid = document.getElementById('session-grid');
+    grid.innerHTML = SESSIONS.map(function (s) {
+      var active = isSessionActive(s.open, s.close);
+      var countdown = minsUntilEvent(s.open, s.close);
+      var mins = countdown.mins;
+      var warn = mins <= 15;
+
+      var liveBadge = active
         ? '<span class="session-badge live"><span class="live-dot"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>LIVE</span>'
         : '<span class="session-badge closed">⚫ CLOSED</span>';
 
@@ -2754,22 +2804,39 @@ var AdvChart = (function () {
       else if (warn && active) warnClass = ' warning-close';
 
       var colorClass = s.colorClass ? ' ' + s.colorClass : '';
+      var openedClass = _justOpened[s.name] ? ' just-opened' : '';
 
       var countdownEl = '<div class="session-countdown ' + cdClass + '" data-session="' + s.name + '">' +
         cdLabel + fmtCountdown(mins) +
       '</div>';
 
-      return '<div class="session-card' + (active ? ' active' : '') + warnClass + colorClass + '">' +
+      /* Progress bar — shown for active sessions */
+      var progressEl = '';
+      if (active) {
+        var pct = sessionPct(s.open, s.close);
+        progressEl = '<div class="session-progress-wrap">' +
+          '<div class="session-progress-track">' +
+          '<div class="session-progress-fill" id="spf-' + s.name.replace(' ', '-') + '" style="width:' + pct + '%"></div>' +
+          '</div>' +
+          '<span class="session-progress-label">' + pct + '% through session</span>' +
+          '</div>';
+      }
+
+      return '<div class="session-card' + (active ? ' active' : '') + warnClass + colorClass + openedClass + '">' +
         '<div class="session-flag">' + s.flag + '</div>' +
         '<div class="session-name">' + s.name + '</div>' +
         '<div class="session-time">' + pad(s.open) + ':00 – ' + pad(s.close) + ':00 UTC</div>' +
         liveBadge +
         countdownEl +
+        progressEl +
         '<div class="session-pairs">' + s.pairs + '</div>' +
         '<div class="session-pips">📊 ' + s.pipRange + '</div>' +
         '<div class="session-kz">⚡ ' + s.kzTip + '</div>' +
       '</div>';
     }).join('');
+
+    /* Remove just-opened flags after rendering (one-shot animation) */
+    _justOpened = {};
   }
 
   /* Lightweight per-second tick: only update countdown text + warning classes.
@@ -2783,6 +2850,10 @@ var AdvChart = (function () {
     SESSIONS.forEach(function (s) {
       var active = isSessionActive(s.open, s.close);
       if (_prevActiveStates[s.name] !== active) {
+        /* Mark as just-opened so renderSessions can apply the animation */
+        if (active && _prevActiveStates[s.name] === false) {
+          _justOpened[s.name] = true;
+        }
         _prevActiveStates[s.name] = active;
         stateChanged = true;
       }
@@ -2793,7 +2864,7 @@ var AdvChart = (function () {
       return;
     }
 
-    /* Otherwise just patch countdown text in-place */
+    /* Otherwise just patch countdown text and progress bar in-place */
     SESSIONS.forEach(function (s) {
       var el = document.querySelector('.session-countdown[data-session="' + s.name + '"]');
       if (!el) return;
@@ -2810,6 +2881,17 @@ var AdvChart = (function () {
       if (card) {
         card.classList.toggle('warning-open',  warn && !active);
         card.classList.toggle('warning-close', warn && active);
+      }
+
+      /* Update progress bar fill width */
+      if (active) {
+        var fillEl = document.getElementById('spf-' + s.name.replace(' ', '-'));
+        var lblEl = fillEl && fillEl.closest('.session-progress-wrap') && fillEl.closest('.session-progress-wrap').querySelector('.session-progress-label');
+        if (fillEl) {
+          var pct = sessionPct(s.open, s.close);
+          fillEl.style.width = pct + '%';
+          if (lblEl) lblEl.textContent = pct + '% through session';
+        }
       }
     });
   }
