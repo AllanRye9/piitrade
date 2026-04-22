@@ -26,6 +26,7 @@ html {
   --buy-color: #3fb950;
   --sell-color: #f85149;
   --hold-color: #d29922;
+  --card: #161b22;
 }
 
 *,
@@ -5205,4 +5206,127 @@ canvas {
   .ta-indicators-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Trading Session Strip ─────────────────────────────────────────────────── */
+.fx-session-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fx-session-strip::-webkit-scrollbar { display: none; }
+
+.fx-session-strip-label {
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--text2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fx-session-chips {
+  display: flex;
+  gap: 7px;
+  flex: 1;
+  flex-wrap: nowrap;
+}
+
+.fx-session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .73rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: default;
+  transition: transform .15s, box-shadow .15s;
+  flex-shrink: 0;
+}
+.fx-session-chip.live {
+  background: rgba(62, 207, 142, .12);
+  border: 1px solid rgba(62, 207, 142, .30);
+  color: #3ecf8e;
+}
+.fx-session-chip.closed {
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .07);
+  color: var(--text2);
+}
+.fx-session-chip.live:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(62, 207, 142, .18);
+}
+
+/* Animated live dot */
+.chip-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fx-session-chip.live .chip-dot {
+  background: #3ecf8e;
+}
+.fx-session-chip.closed .chip-dot {
+  background: var(--text2);
+  opacity: .5;
+}
+.fx-session-chip.live .chip-dot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: #3ecf8e;
+  animation: chipRing 1.5s ease-out infinite;
+}
+
+@keyframes chipRing {
+  0%   { transform: scale(1); opacity: .65; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* Flash animation applied when a chip newly becomes live */
+@keyframes chipActivate {
+  0%   { box-shadow: 0 0 0 0 rgba(62, 207, 142, .55); }
+  50%  { box-shadow: 0 0 0 6px rgba(62, 207, 142, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0); }
+}
+.fx-session-chip.flash-activate {
+  animation: chipActivate .8s ease both;
+}
+
+.chip-name { font-size: .73rem; }
+.chip-countdown {
+  font-family: monospace;
+  font-size: .68rem;
+  opacity: .75;
+}
+
+.fx-session-strip-link {
+  font-size: .71rem;
+  color: var(--accent);
+  white-space: nowrap;
+  text-decoration: none;
+  font-weight: 500;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.fx-session-strip-link:hover {
+  background: rgba(88, 166, 255, .1);
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .fx-session-strip { padding: 6px 12px; gap: 7px; }
+  .fx-session-strip-link { display: none; }
 }

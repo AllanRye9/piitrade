@@ -3385,3 +3385,73 @@ if (refreshPatternBtn) {
     loadPatternScanner();
   });
 }
+
+// ─── Live Session Strip ───────────────────────────────────────────────────────
+(function () {
+  const STRIP_SESSIONS = [
+    { name: 'Sydney',   flag: '🇦🇺', open: 22, close:  7, color: '#b392f0' },
+    { name: 'Tokyo',    flag: '🇯🇵', open:  0, close:  9, color: '#58a6ff' },
+    { name: 'London',   flag: '🇬🇧', open:  8, close: 17, color: '#3ecf8e' },
+    { name: 'New York', flag: '🇺🇸', open: 13, close: 22, color: '#f0c040' },
+  ];
+
+  function isActive(open, close) {
+    const now = new Date();
+    const h = now.getUTCHours() + now.getUTCMinutes() / 60;
+    return open < close ? h >= open && h < close : h >= open || h < close;
+  }
+
+  function minsUntil(open, close) {
+    const now = new Date();
+    const total = now.getUTCHours() * 60 + now.getUTCMinutes();
+    const diff = (target) => { const d = target - total; return d < 0 ? d + 1440 : d; };
+    const active = isActive(open, close);
+    return { active, mins: active ? diff(close * 60) : diff(open * 60) };
+  }
+
+  function fmt(mins) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return (h > 0 ? h + 'h ' : '') + m + 'm';
+  }
+
+  const chipsEl = document.getElementById('fx-session-chips');
+  if (!chipsEl) return;
+
+  let _prevActive = {};
+
+  function renderStrip() {
+    const stateChanged = STRIP_SESSIONS.some(s => {
+      const a = isActive(s.open, s.close);
+      return _prevActive[s.name] !== a;
+    });
+
+    if (stateChanged || chipsEl.children.length === 0) {
+      // Full rebuild
+      chipsEl.innerHTML = STRIP_SESSIONS.map(s => {
+        const { active, mins } = minsUntil(s.open, s.close);
+        const prevActive = _prevActive[s.name];
+        const justActivated = active && prevActive === false;
+        _prevActive[s.name] = active;
+        const dotHtml = `<span class="chip-dot"></span>`;
+        const countdown = `<span class="chip-countdown">${active ? '⏱' : '⏳'}${fmt(mins)}</span>`;
+        const flashCls = justActivated ? ' flash-activate' : '';
+        return `<span class="fx-session-chip ${active ? 'live' : 'closed'}${flashCls}" title="${s.name}: ${active ? 'LIVE · closes in ' : 'Closed · opens in '}${fmt(mins)}">${dotHtml}<span class="chip-name">${s.flag} ${s.name}</span>${countdown}</span>`;
+      }).join('');
+    } else {
+      // Patch countdown text only
+      STRIP_SESSIONS.forEach((s, i) => {
+        const chip = chipsEl.children[i];
+        if (!chip) return;
+        const { active, mins } = minsUntil(s.open, s.close);
+        const cdEl = chip.querySelector('.chip-countdown');
+        if (cdEl) cdEl.textContent = `${active ? '⏱' : '⏳'}${fmt(mins)}`;
+        chip.title = `${s.name}: ${active ? 'LIVE · closes in ' : 'Closed · opens in '}${fmt(mins)}`;
+      });
+    }
+  }
+
+  // Initialise previous-state snapshot before first render
+  STRIP_SESSIONS.forEach(s => { _prevActive[s.name] = undefined; });
+  renderStrip();
+  setInterval(renderStrip, 5000);
+})();
