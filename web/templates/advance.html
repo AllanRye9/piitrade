@@ -2774,7 +2774,8 @@ var AdvChart = (function () {
 
   /* Compute what percentage of a session has elapsed (0-100) */
   function sessionPct(open, close) {
-    var h = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
+    var now = new Date();
+    var h = now.getUTCHours() + now.getUTCMinutes() / 60;
     var duration = open < close ? close - open : (24 - open) + close;
     var elapsed  = open < close ? h - open : (h >= open ? h - open : 24 - open + h);
     return Math.min(100, Math.max(0, Math.round(elapsed / duration * 100)));
@@ -2816,7 +2817,7 @@ var AdvChart = (function () {
         var pct = sessionPct(s.open, s.close);
         progressEl = '<div class="session-progress-wrap">' +
           '<div class="session-progress-track">' +
-          '<div class="session-progress-fill" id="spf-' + s.name.replace(' ', '-') + '" style="width:' + pct + '%"></div>' +
+          '<div class="session-progress-fill" id="spf-' + s.name.replace(/ /g, '-') + '" style="width:' + pct + '%"></div>' +
           '</div>' +
           '<span class="session-progress-label">' + pct + '% through session</span>' +
           '</div>';
@@ -2885,7 +2886,7 @@ var AdvChart = (function () {
 
       /* Update progress bar fill width */
       if (active) {
-        var fillEl = document.getElementById('spf-' + s.name.replace(' ', '-'));
+        var fillEl = document.getElementById('spf-' + s.name.replace(/ /g, '-'));
         var lblEl = fillEl && fillEl.closest('.session-progress-wrap') && fillEl.closest('.session-progress-wrap').querySelector('.session-progress-label');
         if (fillEl) {
           var pct = sessionPct(s.open, s.close);

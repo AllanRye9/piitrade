@@ -3396,7 +3396,8 @@ if (refreshPatternBtn) {
   ];
 
   function isActive(open, close) {
-    const h = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
+    const now = new Date();
+    const h = now.getUTCHours() + now.getUTCMinutes() / 60;
     return open < close ? h >= open && h < close : h >= open || h < close;
   }
 
