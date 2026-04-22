@@ -75,20 +75,18 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <marquee behavior="scroll" direction="left" style="width:100%; height:56px;">
-        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId"></a>
-      </marquee>
-      </span>
+      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
+        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
+        </marquee>
+      </div>
       <script>
         let output = "";
-
         for (let i = 1; i < 140; i++) {
-          output += `<img src="/img/exness_${i}.png" style="height:56px;margin-right:10px;">`;
+          output += `<img src="/img/exness_${i}.png" style="height:48px;margin-right:8px;vertical-align:middle;">`;
         }
-
         document.getElementById("maqId").innerHTML = output;
       </script>
-
     </div>
     <nav class="fx-nav" role="navigation" aria-label="Main navigation">
       <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
@@ -110,25 +108,25 @@
       type="button">‹</button>
     <nav class="fx-tabs" id="fx-tabs-nav" role="tablist" aria-label="Forex Hub Sections">
       <button class="fx-tab active" role="tab" aria-selected="true" data-section="section-signal"
-        aria-label="AI Signal">📊 Signal</button>
+        aria-label="AI Signal Engine">🤖 AI Signal</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-risk"
-        aria-label="Risk Management Calculator">📐 Risk Calc</button>
+        aria-label="Risk & Position Calculator">📐 Risk Calc</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-technical"
-        aria-label="Technical Analysis">🔍 Technical</button>
+        aria-label="40+ Technical Indicators">📊 40+ Indicators</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-fvg"
-        aria-label="Fair Value Gap Status">🌀 FVG Status</button>
+        aria-label="Fair Value Gap Scanner">🌀 FVG Scanner</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-sr-breaks"
-        aria-label="Support & Resistance Breaks">💥 S/R Breaks</button>
+        aria-label="S/R Breakout Detector">💥 S/R Breakout</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-movers"
         aria-label="Large Price Movements">📈 Movers</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-volatile"
-        aria-label="Highly Volatile Pairs">🔥 Volatile</button>
+        aria-label="Volatility Rankings">🔥 Volatility</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-reversal"
-        aria-label="Trend Reversal Pairs">🔄 Reversal</button>
+        aria-label="Reversal Pattern Finder">🔄 Reversals</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-success"
-        aria-label="Pair Success Rates">🏆 Success</button>
+        aria-label="Historical Accuracy (last 30 data points)">🏆 Accuracy</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-patterns"
-        aria-label="Structure & Pattern Scanner">🔮 Scanner</button>
+        aria-label="Pattern Scanner">🔮 Pattern Scanner</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-smc"
         aria-label="SMC Image Analyzer">🧠 SMC</button>
       <button class="fx-tab" role="tab" aria-selected="false" data-section="section-news" aria-label="Market News">📰
@@ -183,20 +181,18 @@
 
     <!-- BANNER -->
     <div id="bannerBox"
-      style="width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;
-                             background:#000;border-radius:6px;overflow:hidden;box-sizing:border-box;position:relative;">
+      style="width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;
+                             background:linear-gradient(135deg,#1a1e2e 0%,#0d1117 100%);border-radius:6px;overflow:hidden;box-sizing:border-box;position:relative;border:1px solid #30363d;">
 
-     <a href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d" target="_blank"
-   style="display:block;width:100%;height:100%;position:relative;">
-  <img src="/img/taptap.png" alt="Banner"
-       style="width:100%;height:100%;object-fit:cover;display:block;">
-
-  <span class="banner-text"
-        style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);
-               color:#020202;font-size:14px;font-weight:bold;cursor:pointer;
-               animation:beepText 0.6s ease-in-out infinite;">
-    Click here!
-  </span>
+     <a href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d" target="_blank" rel="noopener noreferrer"
+   style="display:flex;width:100%;height:100%;align-items:center;gap:14px;padding:10px 16px;text-decoration:none;color:inherit;">
+  <img src="/img/taptap.png" alt="TapTap Send"
+       style="height:52px;width:auto;object-fit:contain;display:block;border-radius:8px;flex-shrink:0;">
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:.85rem;font-weight:700;color:#58a6ff;margin-bottom:3px;">💸 TapTap Send – Send Money Home</div>
+    <div style="font-size:.76rem;color:#c9d1d9;line-height:1.45;">Taptap Send is an app that lets people send money back home to Africa, Asia, and the Caribbean quickly and at very low prices. Live in UK, EU, US, UAE, Canada, Australia &amp; more. Supports Senegal, Ghana, Kenya, Nigeria, Bangladesh, Philippines, India &amp; 30+ countries.</div>
+  </div>
+  <span style="font-size:.78rem;font-weight:700;color:#fff;background:#58a6ff;border-radius:20px;padding:4px 12px;flex-shrink:0;white-space:nowrap;">Send Now →</span>
 </a>
     </div>
   </div>
@@ -302,7 +298,7 @@
           </div>
 
           <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
-          <div class="fx-section-title" style="margin-top:24px">📊 Live Signal</div>
+          <div class="fx-section-title" style="margin-top:24px">🤖 AI Signal Engine (LightGBM)</div>
           <div class="fx-signal-card" id="fx-signal-card">
             <!-- Live data unavailable overlay (shown when pair feed is offline) -->
             <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
@@ -384,7 +380,7 @@
 
         <!-- 3. Risk Management Calculator ──────────────────────────────────────── -->
         <section id="section-risk">
-          <div class="fx-section-title">📐 Risk Management Calculator</div>
+          <div class="fx-section-title">📐 Risk &amp; Position Calculator</div>
           <div class="risk-calc-card">
             <div class="risk-inputs">
               <div class="risk-group">
@@ -478,7 +474,7 @@
 
         <!-- 4. Technical Analysis ────────────────────────────────────────────────── -->
         <section id="section-technical">
-          <div class="fx-section-title">🔍 Technical Analysis</div>
+          <div class="fx-section-title">📊 40+ Technical Indicators</div>
           <div id="ta-loading" class="ta-loading">Loading technical data…</div>
           <div id="ta-content" class="ta-grid" style="display:none">
 
@@ -524,6 +520,14 @@
             <div class="ta-card ta-card-wide">
               <div class="ta-card-title">🔥 High Volume Trade Zones</div>
               <div id="ta-volume-content" class="ta-list"></div>
+            </div>
+
+            <!-- 40+ Technical Indicators Panel -->
+            <div class="ta-card ta-card-wide">
+              <div class="ta-card-title">📊 40+ Technical Indicators</div>
+              <div id="ta-indicators-content" class="ta-indicators-grid">
+                <div class="ta-ind-loading">Computing indicators…</div>
+              </div>
             </div>
 
           </div>
@@ -599,7 +603,7 @@
 
         <!-- 4c. Support / Resistance Breakout Scanner ────────────────────────────── -->
         <section id="section-sr-breaks">
-          <div class="fx-section-title">💥 Support &amp; Resistance Levels</div>
+          <div class="fx-section-title">💥 S/R Breakout Detector</div>
           <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             All trading pairs classified by their current relationship to major support and
             resistance levels — from those approaching, to those touching, to confirmed breaks.
@@ -677,7 +681,7 @@
         </section>
 
         <section id="section-volatile">
-          <div class="fx-section-title">🔥 Highly Volatile Trading Pairs</div>
+          <div class="fx-section-title">🔥 Volatility Rankings</div>
           <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Pairs ranked by price range movement over the selected timeframe. Higher volatility can signal trading
             opportunities but also greater risk.
@@ -696,7 +700,7 @@
 
         <!-- 6. Trend Reversal Pairs ─────────────────────────────────────────────── -->
         <section id="section-reversal">
-          <div class="fx-section-title">🔄 Potential Trend Reversal Pairs</div>
+          <div class="fx-section-title">🔄 Reversal Pattern Finder</div>
           <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Pairs where the AI model has detected a recent momentum shift, suggesting a potential change in trend
             direction.
@@ -709,7 +713,7 @@
 
         <!-- 7. Success Rate Tracking ─────────────────────────────────────────────── -->
         <section id="section-success">
-          <div class="fx-section-title">🏆 Pair Success Rates</div>
+          <div class="fx-section-title">🏆 Historical Accuracy (Last 30 Data Points)</div>
           <div class="success-intro">
             <p>Accuracy is computed from the last 30-day prediction history returned by the API for each pair.
               <span class="success-note">Click <em>Load All Pairs</em> to fetch rates for every available pair.</span>
@@ -745,7 +749,7 @@
 
         <!-- 8. Structure & Pattern Scanner ──────────────────────────────────────── -->
         <section id="section-patterns">
-          <div class="fx-section-title">🔮 Structure &amp; Pattern Scanner</div>
+          <div class="fx-section-title">🔮 Pattern Scanner</div>
           <p style="color:var(--text2);font-size:.9rem;margin:0 0 18px">
             Detects key market structure formations — BOS, CHoCH, FVG reactions, and S/R interactions —
             across all trading pairs. High-impact formations trigger sound alerts and pop-up notifications.
