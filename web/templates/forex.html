@@ -75,18 +75,13 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
-        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
-        </marquee>
-      </div>
-      <script>
-        let output = "";
-        for (let i = 1; i < 140; i++) {
-          output += `<img src="/img/exness_${i}.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display='none'">`;
-        }
-        document.getElementById("maqId").innerHTML = output;
-      </script>
+              <div class="exness-marquee-outer">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
+        </div>
+        <script>
+          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
+          el.innerHTML=imgs+imgs;})();
+        </script>
     </div>
     <nav class="fx-nav" role="navigation" aria-label="Main navigation">
       <button id="btn-sound" class="btn-sound" type="button" title="Toggle signal sounds"
@@ -287,7 +282,7 @@
           </div>
 
           <!-- 2. Live Signal Dashboard ─────────────────────────────────────────────── -->
-          <div class="fx-section-title" style="margin-top:24px">🤖 AI Signal Engine (LightGBM)</div>
+          <div class="fx-section-title" style="margin-top:24px">🤖 AI Signal Engine</div>
           <div class="fx-signal-card" id="fx-signal-card">
             <!-- Live data unavailable overlay (shown when pair feed is offline) -->
             <div id="signal-offline-overlay" class="signal-offline-overlay" hidden>
@@ -717,16 +712,14 @@
           <div class="fx-section-title" style="margin-top:28px">🧠 How Our AI Works</div>
           <div class="fx-explanation">
             <p>
-              Our AI analyzes 10+ years of historical price data, real-time news sentiment,
+              Our AI analyzes years of historical price data, real-time news sentiment,
               and economic events using machine learning to generate buy/sell/hold signals.
-              The model is retrained weekly using fresh market data collected automatically
-              via Zapier from Yahoo Finance.
+              The model is regularly retrained on fresh market data from institutional-grade sources.
             </p>
             <p>
-              The pipeline uses a <strong>LightGBM</strong> gradient-boosted tree model trained
-              on features including RSI, MACD, exponential moving averages (EMA-20/50),
-              news sentiment scores, CPI delta, and PMI readings. Training data is stored in
-              Google Sheets and predictions are displayed here in real time.
+              The AI model is trained on features including technical indicators, price momentum,
+              news sentiment scores, inflation data, and PMI readings. Predictions are
+              updated in real time as new market data arrives.
             </p>
             <div class="fx-disclaimer">
               ⚠️ <strong>Disclaimer:</strong> For informational purposes only. Not financial advice.

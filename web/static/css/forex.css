@@ -2166,6 +2166,34 @@ a:hover {
   }
 }
 
+/* ── CSS-based Exness marquee (replaces deprecated <marquee> tag) ──────────── */
+.exness-marquee-outer {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.exness-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  text-decoration: none;
+  animation: exness-marquee-scroll 90s linear infinite;
+  will-change: transform;
+}
+
+.exness-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes exness-marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 .fx-nav .btn-primary {
   background: var(--accent);
   color: #0d1117;
