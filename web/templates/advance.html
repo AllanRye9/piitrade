@@ -365,7 +365,6 @@
       border-color: #3ecf8e;
       box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1);
       background: linear-gradient(135deg, var(--card) 0%, rgba(62,207,142,.04) 100%);
-      animation: sectionIn .35s ease both, livePulse 2.5s ease-in-out .35s infinite;
     }
     .session-card.active::before {
       content: '';
@@ -373,16 +372,6 @@
       top: 0; left: 0; right: 0;
       height: 2px;
       background: linear-gradient(90deg, transparent, #3ecf8e, transparent);
-      animation: liveTopBar 2.5s ease-in-out infinite;
-    }
-    /* Continuous glow pulse for live session card */
-    @keyframes livePulse {
-      0%,100% { outline: 2px solid transparent; outline-offset: 0; }
-      50%      { outline: 2px solid rgba(62,207,142,.35); outline-offset: 2px; }
-    }
-    @keyframes liveTopBar {
-      0%,100% { opacity: 1; }
-      50%      { opacity: .4; }
     }
     /* Flash glow when a session just opened */
     @keyframes sessionOpen {
@@ -1257,13 +1246,10 @@
     .adv-chart-live-price.flash-down { animation: priceFlashDown .7s ease both; }
 
     /* ── Session colour accents per market ── */
-    .session-card.adv-session-purple.active { border-color: #b392f0 !important; box-shadow: 0 0 0 1px rgba(179,146,240,.3), 0 0 28px rgba(179,146,240,.1) !important; background: linear-gradient(135deg, var(--card) 0%, rgba(179,146,240,.04) 100%) !important; animation: sectionIn .35s ease both, livePulsePurple 2.5s ease-in-out .35s infinite !important; }
-    .session-card.adv-session-blue.active   { border-color: #58a6ff !important; box-shadow: 0 0 0 1px rgba(88,166,255,.3),  0 0 28px rgba(88,166,255,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(88,166,255,.04) 100%) !important;  animation: sectionIn .35s ease both, livePulseBlue 2.5s ease-in-out .35s infinite !important; }
-    .session-card.adv-session-green.active  { border-color: #3ecf8e !important; box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(62,207,142,.04) 100%) !important;  animation: sectionIn .35s ease both, livePulse 2.5s ease-in-out .35s infinite !important; }
-    .session-card.adv-session-yellow.active { border-color: #f0c040 !important; box-shadow: 0 0 0 1px rgba(240,192,64,.35),  0 0 28px rgba(240,192,64,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(240,192,64,.04) 100%) !important; animation: sectionIn .35s ease both, livePulseYellow 2.5s ease-in-out .35s infinite !important; }
-    @keyframes livePulsePurple  { 0%,100% { outline:2px solid transparent; outline-offset:0; } 50% { outline:2px solid rgba(179,146,240,.35); outline-offset:2px; } }
-    @keyframes livePulseBlue    { 0%,100% { outline:2px solid transparent; outline-offset:0; } 50% { outline:2px solid rgba(88,166,255,.35);  outline-offset:2px; } }
-    @keyframes livePulseYellow  { 0%,100% { outline:2px solid transparent; outline-offset:0; } 50% { outline:2px solid rgba(240,192,64,.35);   outline-offset:2px; } }
+    .session-card.adv-session-purple.active { border-color: #b392f0 !important; box-shadow: 0 0 0 1px rgba(179,146,240,.3), 0 0 28px rgba(179,146,240,.1) !important; background: linear-gradient(135deg, var(--card) 0%, rgba(179,146,240,.04) 100%) !important; }
+    .session-card.adv-session-blue.active   { border-color: #58a6ff !important; box-shadow: 0 0 0 1px rgba(88,166,255,.3),  0 0 28px rgba(88,166,255,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(88,166,255,.04) 100%) !important;  }
+    .session-card.adv-session-green.active  { border-color: #3ecf8e !important; box-shadow: 0 0 0 1px rgba(62,207,142,.35), 0 0 28px rgba(62,207,142,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(62,207,142,.04) 100%) !important;  }
+    .session-card.adv-session-yellow.active { border-color: #f0c040 !important; box-shadow: 0 0 0 1px rgba(240,192,64,.35),  0 0 28px rgba(240,192,64,.1) !important;  background: linear-gradient(135deg, var(--card) 0%, rgba(240,192,64,.04) 100%) !important; }
     .session-card.adv-session-purple::before { background: linear-gradient(90deg, transparent, #b392f0, transparent) !important; }
     .session-card.adv-session-blue::before   { background: linear-gradient(90deg, transparent, #58a6ff, transparent) !important; }
     .session-card.adv-session-yellow::before { background: linear-gradient(90deg, transparent, #f0c040, transparent) !important; }
@@ -1288,13 +1274,18 @@
   <div class="brand">
     <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
     <span class="brand-title">PiiTrade</span>
-            <div class="exness-marquee-outer">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
-        </div>
-        <script>
-          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
-          el.innerHTML=imgs+imgs;})();
-        </script>
+    <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
+      <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
+      </marquee>
+    </div>
+    <script>
+      (function () {
+        var out = "";
+        for (var i = 1; i < 140; i++) out += '<img src="/img/exness_' + i + '.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
+        document.getElementById("maqId").innerHTML = out;
+      })();
+    </script>
   </div>
   <nav class="fx-nav" role="navigation" aria-label="Main navigation">
     <a href="/" aria-label="Home page">Home</a>
@@ -1637,28 +1628,6 @@
       ⚠️ <strong>Disclaimer:</strong> All analysis is AI-generated and for informational purposes only.
       Always confirm with multiple timeframes and your own research before trading.
       Past patterns do not guarantee future performance. Trading involves risk.
-    </div>
-
-    <!-- ═══ TAPTAP SPONSOR ═══ -->
-    <div style="max-width:900px;margin:0 auto 24px;padding:0 16px;">
-      <a href="https://www.taptapsend.com/en-gb?is_retargeting=true&source_caller=ui&af_inactivity_window=14d&shortlink=appreferral&c=inapp_referral&pid=inapp_referral&af_xp=referral&af_reengagement_window=30d"
-         target="_blank" rel="noopener noreferrer"
-         style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#1a1e2e 0%,#0d1117 100%);
-                border:1px solid #30363d;border-radius:12px;padding:16px 20px;text-decoration:none;color:inherit;
-                transition:border-color .2s,box-shadow .2s;"
-         onmouseover="this.style.borderColor='#58a6ff';this.style.boxShadow='0 4px 20px rgba(88,166,255,.12)'"
-         onmouseout="this.style.borderColor='#30363d';this.style.boxShadow='none'">
-        <img src="/img/taptap.png" alt="TapTap Send" style="height:52px;width:auto;object-fit:contain;border-radius:10px;flex-shrink:0;" />
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:.9rem;font-weight:700;color:#58a6ff;margin-bottom:4px;">💸 Sponsored: TapTap Send – Send Money Home Instantly</div>
-          <div style="font-size:.78rem;color:#c9d1d9;line-height:1.5;">
-            Fast, low-cost money transfers to Africa, Asia, and the Caribbean. Trusted by hundreds of thousands of customers — moving billions globally.
-            Live in the UK, EU, US, UAE, Canada, Australia. Supports 30+ countries including Ghana, Kenya, Nigeria, India, Philippines and more.
-          </div>
-        </div>
-        <span style="font-size:.8rem;font-weight:700;color:#fff;background:#58a6ff;border-radius:20px;
-                     padding:6px 14px;flex-shrink:0;white-space:nowrap;">Send Now →</span>
-      </a>
     </div>
 
     <!-- ═══ PROFESSIONAL FOOTER ═══ -->
@@ -2827,20 +2796,19 @@ var AdvChart = (function () {
         ? '<span class="session-badge live"><span class="live-dot"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>LIVE</span>'
         : '<span class="session-badge closed">⚫ CLOSED</span>';
 
-      var cdClass = active ? 'closes-in' : 'opens-at';
-      var countdownText = active
-        ? ('⏱ Closes in ' + fmtCountdown(mins))
-        : ('⏳ Opens at ' + pad(s.open) + ':00 UTC');
-      if (warn && active) cdClass += ' warning';
+      var cdClass = active ? 'closes-in' : 'opens-in';
+      var cdLabel = active ? '⏱ Closes in ' : '⏳ Opens in ';
+      if (warn) cdClass += ' warning';
 
       var warnClass = '';
-      if (warn && active) warnClass = ' warning-close';
+      if (warn && !active) warnClass = ' warning-open';
+      else if (warn && active) warnClass = ' warning-close';
 
       var colorClass = s.colorClass ? ' ' + s.colorClass : '';
       var openedClass = _justOpened[s.name] ? ' just-opened' : '';
 
       var countdownEl = '<div class="session-countdown ' + cdClass + '" data-session="' + s.name + '">' +
-        countdownText +
+        cdLabel + fmtCountdown(mins) +
       '</div>';
 
       /* Progress bar — shown for active sessions */
@@ -2904,20 +2872,16 @@ var AdvChart = (function () {
       var active = isSessionActive(s.open, s.close);
       var countdown = minsUntilEvent(s.open, s.close);
       var mins = countdown.mins;
-      var warn = mins <= 15 && active;
-      if (active) {
-        el.textContent = '⏱ Closes in ' + fmtCountdown(mins);
-        el.className = 'session-countdown closes-in' + (warn ? ' warning' : '');
-      } else {
-        el.textContent = '⏳ Opens at ' + pad(s.open) + ':00 UTC';
-        el.className = 'session-countdown opens-at';
-      }
+      var warn = mins <= 15;
+      var cdLabel = active ? '⏱ Closes in ' : '⏳ Opens in ';
+      el.textContent = cdLabel + fmtCountdown(mins);
+      el.className = 'session-countdown ' + (active ? 'closes-in' : 'opens-in') + (warn ? ' warning' : '');
 
       /* Sync warning card classes */
       var card = el.closest('.session-card');
       if (card) {
+        card.classList.toggle('warning-open',  warn && !active);
         card.classList.toggle('warning-close', warn && active);
-        card.classList.remove('warning-open');
       }
 
       /* Update progress bar fill width */

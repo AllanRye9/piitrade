@@ -1438,30 +1438,30 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Landing page – served by the Jinja2 template."""
+    """Landing page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "landing.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/forex", response_class=HTMLResponse)
 async def forex_hub(request: Request):
-    """Forex dashboard – served by the Jinja2 template."""
+    """Forex dashboard – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "forex.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/methodology", response_class=HTMLResponse)
 async def methodology_page(request: Request):
-    """Methodology page – served by the Jinja2 template."""
+    """Methodology page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "methodology.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page(request: Request):
-    """Disclaimer page – served by the Jinja2 template."""
+    """Disclaimer page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "disclaimer.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/smc", response_class=HTMLResponse)
@@ -1472,9 +1472,9 @@ async def smc_page(request: Request):
 
 @app.get("/advance", response_class=HTMLResponse)
 async def advance_page(request: Request):
-    """Advanced Market Analysis – served by the Jinja2 template."""
+    """Advanced Market Analysis – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "advance.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/movers", response_class=HTMLResponse)
