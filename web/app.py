@@ -15,9 +15,6 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Optional
 
-import shutil
-import uuid
-
 import requests as _requests
 from fastapi import FastAPI, Form, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -100,9 +97,6 @@ _SESSION_HTTPS_ONLY = os.environ.get("SESSION_HTTPS_ONLY", "1") != "0"
 # Database connection URL (e.g. postgresql://user:pass@host/dbname).
 # Set the PIIDATA environment variable to enable persistent database storage.
 _PIIDATA = os.environ.get("PIIDATA", "")
-
-# Stripe payments have been removed – service is free
-_STRIPE_AVAILABLE = False
 
 # ─── SMTP / email configuration ───────────────────────────────────────────────
 _SMTP_HOST = os.environ.get("SMTP_HOST", "")
@@ -381,45 +375,7 @@ def _email_purchase_html(plan_label: str, start_date: str, end_date: str) -> str
 </body></html>"""
 
 
-def _email_renewal_html(plan_label: str, new_end_date: str) -> str:
-    """Return HTML body for a subscription renewal confirmation email."""
-    return f"""
-<html><body style="font-family:sans-serif;background:#0d1117;color:#c9d1d9;padding:32px">
-<div style="max-width:560px;margin:0 auto;background:#161b22;border-radius:12px;padding:32px;border:1px solid #30363d">
-  <h1 style="color:#3fb950;margin-top:0">🔄 Subscription Renewed</h1>
-  <p>Your <strong>{plan_label}</strong> subscription has been automatically renewed.</p>
-  <table style="width:100%;border-collapse:collapse;margin:20px 0">
-    <tr><td style="padding:8px 0;color:#8b949e">Plan</td>
-        <td style="padding:8px 0;font-weight:600">{plan_label}</td></tr>
-    <tr><td style="padding:8px 0;color:#8b949e">New expiry date</td>
-        <td style="padding:8px 0">{new_end_date}</td></tr>
-  </table>
-  <p>View your updated subscription on your
-     <a href="{_APP_BASE_URL}/profile" style="color:#58a6ff">profile page</a>.</p>
-  <hr style="border:none;border-top:1px solid #30363d;margin:24px 0"/>
-  <p style="font-size:.85rem;color:#8b949e">PiiTrade – AI Forex Signal Hub</p>
-</div>
-</body></html>"""
-
-
 # ─── Subscription helpers ─────────────────────────────────────────────────────
-
-def _is_subscription_active(username: str) -> bool:
-    """Return True if the user has an active, non-expired subscription (or is admin)."""
-    with _USERS_LOCK:
-        user = _USERS.get(username, {})
-    if user.get("role") == "admin":
-        return True
-    if user.get("subscription_status") != "active":
-        return False
-    sub_end = user.get("subscription_end")
-    if not sub_end:
-        return False
-    try:
-        return date.fromisoformat(sub_end) >= date.today()
-    except ValueError:
-        return False
-
 
 def _activate_subscription(username: str, plan_id: str, customer_id: Optional[str] = None) -> None:
     """Activate (or renew) a user's subscription for the given plan."""
@@ -436,60 +392,6 @@ def _activate_subscription(username: str, plan_id: str, customer_id: Optional[st
             _USERS[username]["subscription_end"] = end.isoformat()
             if customer_id:
                 _USERS[username]["customer_id"] = customer_id
-
-
-def _extend_subscription_by_customer(customer_id: str) -> None:
-    """Extend subscription for the user with the given Stripe customer ID."""
-    user_email: str = ""
-    plan_label: str = ""
-    new_end_str: str = ""
-    with _USERS_LOCK:
-        for username, user in _USERS.items():
-            if user.get("customer_id") == customer_id:
-                plan_id = user.get("plan", "monthly")
-                plan = next((p for p in _PLANS if p["id"] == plan_id), None)
-                if not plan:
-                    return
-                current_end_str = user.get("subscription_end")
-                if current_end_str:
-                    try:
-                        current_end = date.fromisoformat(current_end_str)
-                    except ValueError:
-                        current_end = date.today()
-                else:
-                    current_end = date.today()
-                new_end = max(current_end, date.today()) + timedelta(days=plan["duration_days"])
-                _USERS[username]["subscription_status"] = "active"
-                _USERS[username]["subscription_end"] = new_end.isoformat()
-                user_email = user.get("email", "")
-                plan_label = plan["label"]
-                new_end_str = new_end.isoformat()
-                break
-    # Send renewal confirmation email outside the lock
-    if user_email:
-        _send_email(
-            user_email,
-            "PiiTrade – Subscription Renewed",
-            _email_renewal_html(plan_label, new_end_str),
-        )
-
-
-def _deactivate_subscription_by_customer(customer_id: str) -> None:
-    """Set subscription to inactive for the user with the given Stripe customer ID."""
-    with _USERS_LOCK:
-        for username, user in _USERS.items():
-            if user.get("customer_id") == customer_id:
-                _USERS[username]["subscription_status"] = "inactive"
-                return
-
-
-def _find_username_by_customer(customer_id: str) -> Optional[str]:
-    """Return the username associated with a Stripe customer ID, or None."""
-    with _USERS_LOCK:
-        for username, user in _USERS.items():
-            if user.get("customer_id") == customer_id:
-                return username
-    return None
 
 
 def _get_current_user(request: Request) -> Optional[str]:
@@ -1420,20 +1322,6 @@ async def google_site_verification():
     if _verif.exists():
         return FileResponse(str(_verif), media_type="text/html")
     return JSONResponse({"error": "Not found"}, status_code=404)
-
-
-def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
-    """Return historical prices with static fallback for server-rendered pages."""
-    hist = _fetch_historical_rates(pair, days)
-    if hist:
-        return list(hist.values())
-    base_price, pip, seq = _FOREX_HIST_SEQUENCES[pair]
-    price = base_price
-    prices: list[float] = [price]
-    for _pred, _actual, delta in seq:
-        price = round(price + delta * pip, 6)
-        prices.append(price)
-    return prices
 
 
 @app.get("/", response_class=HTMLResponse)
