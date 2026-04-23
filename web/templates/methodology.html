@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Methodology &amp; Transparency – PiiTrade AI Signal Hub</title>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="How PiiTrade's AI trading signals work: machine-learning pipeline trained on historical price data, technical indicators, news sentiment, and macroeconomic indicators. Covers 51 pairs across forex, crypto, commodities, and stocks."/>
-  <meta name="keywords" content="AI trading signal methodology, forex signals, machine learning trading, forex signal transparency, how AI signals work, trading signal accuracy, technical indicators, news sentiment trading, PiiTrade methodology"/>
+  <meta name="description" content="How PiiTrade's AI trading signals work: LightGBM machine-learning pipeline trained on 10+ years of price data, RSI, MACD, EMA, news sentiment, and macroeconomic indicators. Covers 51 pairs across forex, crypto, commodities, and stocks."/>
+  <meta name="keywords" content="AI trading signal methodology, LightGBM forex signals, machine learning trading, forex signal transparency, how AI signals work, trading signal accuracy, technical indicators RSI MACD EMA, news sentiment trading, PiiTrade methodology"/>
   <meta name="robots" content="index, follow"/>
   <meta name="author" content="PiiTrade"/>
   <link rel="canonical" href="https://piitrade.com/methodology"/>
@@ -15,20 +15,20 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article"/>
   <meta property="og:title" content="Methodology &amp; Transparency – PiiTrade AI Signal Hub"/>
-  <meta property="og:description" content="Detailed explanation of PiiTrade's AI pipeline, data sources, feature engineering, and how buy/sell/hold signals are generated for 51 trading pairs."/>
+  <meta property="og:description" content="Detailed explanation of PiiTrade's LightGBM AI pipeline, data sources, feature engineering, and how buy/sell/hold signals are generated for 51 trading pairs."/>
   <meta property="og:url" content="https://piitrade.com/methodology"/>
   <meta property="og:site_name" content="PiiTrade"/>
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary"/>
   <meta name="twitter:title" content="PiiTrade Methodology – How Our AI Trading Signals Work"/>
-  <meta name="twitter:description" content="AI pipeline generating free trading signals for 51 pairs: forex, crypto, commodities, and stocks."/>
+  <meta name="twitter:description" content="LightGBM AI pipeline generating free trading signals for 51 pairs: forex, crypto, commodities, and stocks."/>
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "PiiTrade AI Signal Methodology & Transparency",
-    "description": "Detailed explanation of the machine-learning pipeline used to generate free buy/sell/hold signals for 51 trading pairs including forex, crypto, commodities, and stocks.",
+    "description": "Detailed explanation of the LightGBM machine-learning pipeline used to generate free buy/sell/hold signals for 51 trading pairs including forex, crypto, commodities, and stocks.",
     "url": "https://piitrade.com/methodology",
     "author": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.com/" },
     "publisher": { "@type": "Organization", "name": "PiiTrade", "url": "https://piitrade.com/" },
@@ -116,13 +116,14 @@
   <div class="brand">
     <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;"/>
     <span class="brand-title">PiiTrade</span>
-            <div class="exness-marquee-outer">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
-        </div>
-        <script>
-          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
-          el.innerHTML=imgs+imgs;})();
-        </script>
+    <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
+      <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
+        <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
+      </marquee>
+    </div>
+    <script>
+      (function(){var o="";for(var i=1;i<140;i++)o+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';document.getElementById("maqId").innerHTML=o;})();
+    </script>
   </div>
   <nav class="fx-nav">
     <a href="/">Home</a>
@@ -161,8 +162,10 @@
       NVDA, AMZN, MSFT, GOOGL, META).
     </p>
     <p style="margin-top:10px">
-      Signals are updated dynamically using live price feeds from institutional-grade data sources.
-      The model pipeline is designed to be transparent, reliable, and entirely free to use.
+      Signals are updated dynamically using live price feeds. For forex pairs, rates are
+      sourced from the European Central Bank via the Frankfurter API. For commodities,
+      crypto, and stocks, real-time data is sourced from Yahoo Finance. The model pipeline
+      is designed to be transparent, reproducible, and entirely free to use.
     </p>
   </div>
 
@@ -171,16 +174,21 @@
     <h2>📡 Data Sources</h2>
     <ul>
       <li>
-        <strong>Historical price data:</strong> Years of daily OHLCV (Open/High/Low/Close/Volume)
-        candles sourced from live market data providers.
+        <strong>Historical OHLCV prices:</strong> Twelve Data API (free tier – 800 API calls/day)
+        and Yahoo Finance via the <code>yfinance</code> Python library.
+        10+ years of daily candles are stored in the Google Sheet
+        <em>Training_Data</em> tab.
       </li>
       <li>
-        <strong>News sentiment:</strong> Financial headlines are collected and scored using
-        a natural language processing (NLP) sentiment model that measures market mood.
+        <strong>News sentiment:</strong> NewsAPI.org (free tier – 100 requests/day).
+        Article titles and descriptions are scraped for the pairs' base currencies
+        and scored using a simple VADER-based polarity model.
+        Results are stored in the <em>News_Sentiment</em> tab.
       </li>
       <li>
-        <strong>Economic indicators:</strong> Inflation data, PMI readings, and interest-rate
-        differentials sourced from government statistical agencies and central banks.
+        <strong>Economic indicators:</strong> CPI delta, PMI, and interest-rate
+        differentials are collected monthly via Zapier webhooks from freely available
+        government statistical agencies (BLS, ONS, Eurostat, BoJ).
       </li>
     </ul>
   </div>
@@ -189,19 +197,38 @@
   <div class="method-section">
     <h2>🤖 Machine Learning Model</h2>
     <p>
-      The model is a <strong>gradient-boosted tree classifier</strong>
+      The model is a <strong>LightGBM gradient-boosted tree classifier</strong>
       trained to predict the next-day direction (BUY / SELL / HOLD) for each pair.
       Features include:
     </p>
     <ul>
-      <li>Technical indicators: RSI, MACD, EMA, Bollinger Bands, and momentum oscillators</li>
-      <li>Daily return, short-term and medium-term price momentum</li>
-      <li>Aggregated news sentiment score (rolling window)</li>
-      <li>Macroeconomic data: inflation delta, PMI, yield spread (base vs. quote currency)</li>
+      <li>RSI-14, MACD (12/26/9), EMA-20, EMA-50, Bollinger Band width</li>
+      <li>Daily return, 5-day / 20-day momentum</li>
+      <li>Aggregated news sentiment score (rolling 3-day)</li>
+      <li>CPI delta, PMI, yield spread (base vs. quote currency)</li>
     </ul>
     <p style="margin-top:10px">
-      The model is retrained regularly on fresh data using
-      rigorous time-series cross-validation to prevent data leakage and ensure robust performance.
+      The model is retrained <strong>weekly</strong> using a Google Colab notebook
+      (free GPU runtime). The notebook reads the <em>Training_Data</em> sheet,
+      trains LightGBM with 5-fold time-series cross-validation, and writes the
+      latest predictions to the <em>Predictions</em> sheet.
+    </p>
+    <div class="code-block">
+# Simplified training snippet (Google Colab)
+import lightgbm as lgb
+from sklearn.model_selection import TimeSeriesSplit
+
+model = lgb.LGBMClassifier(
+    n_estimators=400, learning_rate=0.05,
+    num_leaves=31, class_weight='balanced'
+)
+tscv = TimeSeriesSplit(n_splits=5)
+# ... fit, evaluate, write predictions to Google Sheets
+    </div>
+    <p style="margin-top:12px">
+      Alternatively, <strong>Obviously AI</strong> or <strong>Akkio</strong>
+      (both free-tier) can be connected directly to the Google Sheet to train
+      and output predictions without writing any code.
     </p>
   </div>
 
@@ -209,40 +236,102 @@
   <div class="method-section">
     <h2>⚙️ Automation Pipeline</h2>
     <p>
-      The end-to-end pipeline is fully automated:
+      The end-to-end pipeline is orchestrated with <strong>Zapier</strong>
+      (free tier – 100 tasks/month):
     </p>
     <ul>
       <li>
-        <strong>Data collection:</strong> Live price data and economic indicators are
-        fetched automatically from market data providers on a scheduled basis.
+        <strong>Step 1 – Data collection:</strong> Daily Zapier schedule triggers
+        a webhook that calls Yahoo Finance / Twelve Data and appends new rows
+        to <em>Training_Data</em>.
       </li>
       <li>
-        <strong>News scraping:</strong> Financial headlines are collected and
-        scored for market sentiment using NLP models.
+        <strong>Step 2 – News scraping:</strong> Zapier RSS / NewsAPI zap appends
+        the latest headlines with sentiment scores to <em>News_Sentiment</em>.
       </li>
       <li>
-        <strong>Model inference:</strong> The trained model is evaluated against fresh
-        data and predictions are updated in real time.
+        <strong>Step 3 – Model inference:</strong> The Colab notebook (scheduled
+        weekly via Google Cloud Scheduler free tier) retrains and publishes
+        predictions to <em>Predictions</em>.
       </li>
       <li>
-        <strong>Alert dispatch:</strong> Significant signal changes trigger email
-        notifications to subscribers.
+        <strong>Step 4 – Alert dispatch:</strong> A Zapier "New Row" trigger on
+        <em>Predictions</em> fires a Twilio SendGrid email (free – 100 emails/day)
+        to all subscribers.
       </li>
     </ul>
   </div>
 
+  <!-- Free Tools -->
+  <div class="method-section">
+    <h2>🛠️ Free Tools Used</h2>
+    <table class="tool-table">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Role</th>
+          <th>Free Limit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Google Sheets <span class="free-badge">FREE</span></td>
+          <td>Central data store (Training_Data, Predictions, News_Sentiment)</td>
+          <td>15 GB Drive storage</td>
+        </tr>
+        <tr>
+          <td>Google Colab <span class="free-badge">FREE</span></td>
+          <td>Model training notebook (LightGBM)</td>
+          <td>Free GPU runtime (~12 hrs/day)</td>
+        </tr>
+        <tr>
+          <td>Zapier <span class="free-badge">FREE</span></td>
+          <td>Data collection, sheet updates, alert dispatch</td>
+          <td>100 tasks/month</td>
+        </tr>
+        <tr>
+          <td>Twelve Data <span class="free-badge">FREE</span></td>
+          <td>Real-time and historical OHLCV price data</td>
+          <td>800 API calls/day</td>
+        </tr>
+        <tr>
+          <td>NewsAPI.org <span class="free-badge">FREE</span></td>
+          <td>Forex news headlines for sentiment scoring</td>
+          <td>100 requests/day</td>
+        </tr>
+        <tr>
+          <td>Google Data Studio <span class="free-badge">FREE</span></td>
+          <td>Historical accuracy charts connected to Predictions sheet</td>
+          <td>Unlimited reports</td>
+        </tr>
+        <tr>
+          <td>Twilio SendGrid <span class="free-badge">FREE</span></td>
+          <td>Email alert delivery</td>
+          <td>100 emails/day</td>
+        </tr>
+        <tr>
+          <td>Obviously AI / Akkio <span class="free-badge">FREE</span></td>
+          <td>Alternative no-code ML training (Google Sheets connector)</td>
+          <td>Free tier available</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- Limitations -->
   <div class="method-section">
-    <h2>⚠️ Limitations &amp; Transparency Notice</h2>
+    <h2>⚠️ Limitations &amp; Black-Box Notice</h2>
     <p>
-      The AI model is a probabilistic classifier: it generates a confidence score
-      derived from predicted class probabilities, not a guaranteed certainty. Individual
-      predictions may be incorrect, especially in volatile markets.
+      LightGBM is an inherently black-box model: while feature importances
+      can be inspected, it does not provide human-readable reasoning for
+      individual predictions. The confidence score is derived from the
+      model's predicted class probability, not a rigorous uncertainty estimate.
     </p>
     <p style="margin-top:8px">
       Markets are influenced by events that cannot be captured in historical price data
       or news sentiment alone — geopolitical shocks, central bank surprises, or sudden
-      policy changes can quickly invalidate model assumptions. The model may underperform during
+      trade policy changes (such as the tariff announcements of early April 2026) can
+      quickly invalidate model assumptions. The model may underperform during
       high-volatility or news-driven regimes.
     </p>
     <div class="fx-disclaimer" style="margin-top:14px">
@@ -252,6 +341,85 @@
     </div>
   </div>
 </div>
+
+  <!-- ═══════════════════════════════ SEO GUIDE ═══════════════════════════════ -->
+  <div class="method-body" id="seo-guide">
+
+    <h1 style="font-size:1.4rem;font-weight:700;margin:32px 0 20px;color:var(--text)">
+      📈 SEO Strategy Guide
+    </h1>
+
+    <!-- Step 1 -->
+    <div class="method-section">
+      <h2>⚙️ Step 1: Solidify Your Technical SEO Foundation</h2>
+      <p>Before focusing on content and keywords, ensure search engines can properly crawl, render, and understand your website.</p>
+      <ul>
+        <li><strong>Ensure Discoverability:</strong> Create and maintain an XML Sitemap (a file listing all important URLs) and place it in a location accessible to search engine bots (usually <code>/sitemap.xml</code>).</li>
+        <li><strong>Monitor Indexing Status:</strong> Regularly check how many of your important pages are appearing in search results. Identify and fix pages that are unintentionally excluded due to server errors, "noindex" tags, or crawl blocks.</li>
+        <li><strong>Prioritize Mobile-Friendliness &amp; Page Speed:</strong> Search engines primarily evaluate your site based on the mobile experience. Ensure your site is responsive, text is readable without zooming, and pages load quickly (aim for under 2.5 seconds on mobile).</li>
+        <li><strong>Optimize User Experience (UX) Metrics:</strong> Pay attention to Core Web Vitals—specifically loading speed, visual stability (no shifting elements), and responsiveness to user clicks.</li>
+        <li><strong>Ensure a Crawlable &amp; Secure Site:</strong> Verify that your <code>robots.txt</code> file is not accidentally blocking important sections of your site. Ensure the entire site is served over HTTPS (SSL certificate) to protect user data and trust.</li>
+      </ul>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="method-section">
+      <h2>✍️ Step 2: Optimize Content and Keywords</h2>
+      <p>Content is the main reason people visit your site. The goal is to create pages that are useful, reliable, and tailored to your audience's search intent.</p>
+      <ul>
+        <li><strong>Analyze Search Intent:</strong> Understand why someone is searching for a term. Are they looking for information, trying to buy something, or looking for a specific brand? Tailor the format of your page (blog post, product page, landing page) to match that intent.</li>
+        <li><strong>Identify Keyword Opportunities:</strong> Find search queries where your site ranks on the second or third page of results (positions 11–30). Improving these existing pages is often faster than starting a new page from scratch.</li>
+        <li><strong>Optimize On-Page Elements:</strong> For any page you want to rank, ensure the target keyword appears naturally in the Title Tag (the blue link in results), the Meta Description (the snippet text), and the main H1 Heading.</li>
+        <li><strong>Create Comprehensive, People-First Content:</strong> Demonstrate E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness). Answer the question the user asked, and then answer the next logical questions they might have. Use clear formatting (bullet points, short paragraphs, subheadings) to make content scannable.</li>
+      </ul>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="method-section">
+      <h2>🔗 Step 3: Build Authority and Trust</h2>
+      <p>To rank well for competitive terms, search engines need signals that your site is a trusted and authoritative source within its niche.</p>
+      <ul>
+        <li><strong>Build High-Quality Backlinks:</strong> Focus on earning links from reputable websites in your industry. This can be achieved through guest posting, creating original research/data that others cite, or forming partnerships.</li>
+        <li><strong>Optimize Internal Linking:</strong> Use links within your own site to guide users and help search engines understand your site's structure. Link from high-authority pages (like your homepage or popular blog posts) to pages you want to boost.</li>
+        <li><strong>Leverage Structured Data (Schema Markup):</strong> Add specific code to your pages that tells search engines exactly what the content means (e.g., "This is a recipe with 4.5 stars and 30 min cook time"). This helps your listing stand out with rich snippets (stars, images, prices) in search results.</li>
+        <li><strong>Avoid Shortcuts:</strong> Steer clear of buying links, hiding text, using AI to mass-produce low-value content, or keyword stuffing. These tactics can trigger algorithmic suppression or manual penalties that are difficult to recover from.</li>
+      </ul>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="method-section">
+      <h2>📊 Step 4: Monitor, Measure, and Iterate</h2>
+      <p>SEO is not a one-time fix. You must track what is working and what is breaking.</p>
+      <ul>
+        <li><strong>Check for Penalties or Alerts:</strong> Regularly review your SEO dashboard or webmaster tool account for notifications regarding security issues, manual actions (penalties), or major crawl errors.</li>
+        <li><strong>Track Keyword Movements:</strong> Monitor the average position of your target keywords over time. A slow, steady upward trend is healthy; a sudden drop requires investigation.</li>
+        <li><strong>Analyze Traffic Drops:</strong> If organic traffic declines, segment the data. Is it due to a technical issue (broken pages), a seasonal trend, or a broader search engine algorithm update? Diagnose before making changes.</li>
+        <li><strong>Experiment with CTR (Click-Through Rate):</strong> If a page ranks well (Position 1–5) but gets few clicks, rewrite the Title Tag to be more compelling. Test emotional triggers or numbers (e.g., "7 Proven Ways to…" vs. "Ways to…").</li>
+      </ul>
+    </div>
+
+    <!-- Pro Tips -->
+    <div class="method-section">
+      <h2>💡 Pro Tips for Long-Term Success</h2>
+      <ul>
+        <li><strong>Request Re-Crawls:</strong> If you update a key page with new information, use the URL inspection feature in any major webmaster tool to ask the search engine to revisit the page immediately rather than waiting days or weeks.</li>
+        <li><strong>Connect Your Data Sources:</strong> If possible, connect your ranking data with your analytics platform. This allows you to see not just who came to the site, but what they did (did they buy? did they bounce immediately?). Use this to prioritize which pages to improve first.</li>
+        <li><strong>Focus on Searcher Satisfaction:</strong> The ultimate goal of a search engine is to satisfy the user. If a user clicks your result and immediately hits the back button to try a different result, your rankings will eventually drop. Make sure the page delivers exactly what the title promised.</li>
+      </ul>
+    </div>
+
+    <!-- Summary -->
+    <div class="method-section">
+      <h2>💎 Summary</h2>
+      <p>
+        Ranking on Google boils down to three pillars: A fast, accessible website (<strong>Technical</strong>),
+        Content that satisfies the user's question (<strong>Relevance</strong>), and Signals that other trusted
+        sites vouch for you (<strong>Authority</strong>). Use free webmaster tools as your diagnostic compass,
+        but let your focus on the user experience drive the strategy.
+      </p>
+    </div>
+
+  </div>
 
 <!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
 <footer style="text-align:center;padding:18px 24px;border-top:1px solid var(--border);color:var(--text2);font-size:.78rem;line-height:1.7;margin-top:8px">
