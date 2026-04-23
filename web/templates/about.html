@@ -269,14 +269,13 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
-        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
-        </marquee>
-      </div>
-      <script>
-        (function(){var o="";for(var i=1;i<140;i++)o+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';document.getElementById("maqId").innerHTML=o;})();
-      </script>
+              <div class="exness-marquee-outer">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
+        </div>
+        <script>
+          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
+          el.innerHTML=imgs+imgs;})();
+        </script>
     </div>
     <nav class="fx-nav">
       <a href="/">Home</a>
@@ -364,13 +363,13 @@
           <h2>🛠️ What PiiTrade Offers</h2>
           <ul>
             <li>
-              <strong>Real-time AI trading signals:</strong> Our LightGBM gradient-boosted classifier
+              <strong>Real-time AI trading signals:</strong> Our advanced AI model
               generates buy, sell, and hold signals with confidence scores for each supported pair.
               Signals update continuously as new price data arrives.
             </li>
             <li>
               <strong>Live exchange rate dashboard:</strong> View current bid/ask prices for all 35 forex
-              majors, minors, and exotic pairs sourced from the European Central Bank.
+              majors, minors, and exotic pairs sourced from live institutional data feeds.
             </li>
             <li>
               <strong>Volatility scanner:</strong> Identify which pairs are moving the most across 1-hour,
@@ -409,23 +408,23 @@
         <div class="about-section">
           <h2>🤖 Our Technology</h2>
           <p>
-            PiiTrade's signal engine is built on a <strong>LightGBM gradient-boosted tree classifier</strong>
+            PiiTrade's signal engine is built on a <strong>proprietary machine learning model</strong>
             — the same class of models used by professional quantitative trading firms. The model is trained on:
           </p>
           <ul>
-            <li>Over 10 years of daily OHLCV (Open/High/Low/Close/Volume) price data</li>
-            <li>Technical indicators: RSI-14, MACD (12/26/9), EMA-20, EMA-50, Bollinger Band width</li>
-            <li>Momentum features: daily returns, 5-day and 20-day rolling momentum</li>
-            <li>News sentiment: aggregated from financial headlines using VADER sentiment analysis</li>
-            <li>Macroeconomic indicators: CPI delta, PMI readings, central bank interest-rate differentials</li>
+            <li>Years of daily OHLCV (Open/High/Low/Close/Volume) price data</li>
+            <li>Technical indicators: RSI, MACD, EMA, Bollinger Bands, and more</li>
+            <li>Momentum features: daily returns, short-term and medium-term rolling momentum</li>
+            <li>News sentiment: aggregated from financial headlines and market news</li>
+            <li>Macroeconomic indicators: inflation data, PMI readings, central bank interest-rate differentials</li>
           </ul>
           <p style="margin-top:10px">
-            The model undergoes 5-fold time-series cross-validation to prevent data leakage and is retrained
-            weekly. Real-time predictions are served via a FastAPI backend that fetches live prices from the
-            European Central Bank API, Yahoo Finance, and CoinGecko.
+            The model undergoes rigorous cross-validation to prevent data leakage and is retrained
+            regularly. Real-time predictions are served via our backend that fetches live prices from
+            institutional-grade data sources.
           </p>
           <p>
-            For a full technical breakdown of our methodology, visit our
+            For a full breakdown of our methodology, visit our
             <a href="/methodology" style="color:var(--accent)">Methodology &amp; Transparency</a> page.
           </p>
         </div>
@@ -496,7 +495,7 @@
             </div>
             <div class="timeline-item">
               <div class="t-date">Late 2024 – Expansion</div>
-              <div class="t-text">Coverage expanded to 35 forex pairs. LightGBM pipeline stabilised
+              <div class="t-text">Coverage expanded to 35 forex pairs. AI model stabilised
                 with time-series cross-validation. Beta launched to early users.</div>
             </div>
             <div class="timeline-item">

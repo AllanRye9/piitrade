@@ -172,14 +172,13 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
-        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
-        </marquee>
-      </div>
-      <script>
-        (function(){var o="";for(var i=1;i<140;i++)o+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';document.getElementById("maqId").innerHTML=o;})();
-      </script>
+              <div class="exness-marquee-outer">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
+        </div>
+        <script>
+          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
+          el.innerHTML=imgs+imgs;})();
+        </script>
     </div>
     <nav class="fx-nav">
       <a href="/">Home</a>
@@ -276,8 +275,8 @@
           <a href="/methodology" class="blog-card">
             <div class="blog-card-icon">🤖</div>
             <div class="blog-card-category">Methodology</div>
-            <h2>How PiiTrade's AI Model Works: LightGBM, Features, and Training Pipeline</h2>
-            <p>A full technical breakdown of the machine-learning pipeline: data sources, feature
+            <h2>How PiiTrade's AI Model Works: Features, Training, and Signal Generation</h2>
+            <p>A full breakdown of the machine-learning pipeline: data sources, feature
               engineering, model architecture, training frequency, and accuracy evaluation.</p>
             <div class="blog-card-meta">
               <span>~9 min read</span>

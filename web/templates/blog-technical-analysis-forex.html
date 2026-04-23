@@ -74,14 +74,13 @@
     <div class="brand">
       <img src="/img/trader.png" alt="PiiTrade" style="height:30px;width:30px;object-fit:contain;border-radius:6px;" />
       <span class="brand-title">PiiTrade</span>
-      <div style="flex:1;min-width:0;overflow:hidden;height:56px;display:flex;align-items:center;">
-        <marquee behavior="scroll" direction="left" style="width:100%;height:56px;line-height:56px;">
-          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" id="maqId" style="display:inline-flex;align-items:center;height:56px;"></a>
-        </marquee>
-      </div>
-      <script>
-        (function(){var o="";for(var i=1;i<140;i++)o+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';document.getElementById("maqId").innerHTML=o;})();
-      </script>
+              <div class="exness-marquee-outer">
+          <a href="https://one.exnessonelink.com/a/kvpmgx0jy1" target="_blank" rel="noopener" class="exness-marquee-track" id="maqId"></a>
+        </div>
+        <script>
+          (function(){var el=document.getElementById("maqId");var imgs="";for(var i=1;i<140;i++)imgs+='<img src="/img/exness_'+i+'.png" style="height:48px;margin-right:8px;vertical-align:middle;" onerror="this.style.display=\'none\'">';
+          el.innerHTML=imgs+imgs;})();
+        </script>
     </div>
     <nav class="fx-nav">
       <a href="/">Home</a>
@@ -175,7 +174,7 @@
             PiiTrade's model implicitly captures through momentum features.
           </p>
           <div class="callout callout-info">
-            📊 PiiTrade uses RSI-14 as one of several features feeding into the LightGBM model.
+            📊 PiiTrade uses RSI-14 as one of several features feeding into the AI model.
             It is not used as a standalone trading rule — the model combines RSI with MACD, EMA,
             Bollinger Bands, momentum, and macro features to generate a composite signal.
           </div>
@@ -326,9 +325,9 @@
         <div class="article-section">
           <h2>5. How PiiTrade Combines These Indicators</h2>
           <p>
-            No indicator works reliably in isolation. PiiTrade's LightGBM model treats RSI, MACD, EMA,
+            No indicator works reliably in isolation. PiiTrade's AI model treats RSI, MACD, EMA,
             and Bollinger Bands not as standalone signals, but as <em>features</em> — inputs that the
-            model weighs against each other based on patterns learned from 10+ years of historical data.
+            model weighs against each other based on patterns learned from years of historical data.
           </p>
           <p>
             For example, a BUY signal with 75% confidence from PiiTrade might reflect:
@@ -341,8 +340,8 @@
             <li>Positive news sentiment for the base currency in the past 3 days</li>
           </ul>
           <p>
-            All five factors aligning produces a strong confluence signal. The model has learned, through
-            5-fold time-series cross-validation, that this combination of features has historically
+            Also, through
+            rigorous time-series cross-validation, that this combination of features has historically
             preceded upward moves in similar market conditions.
           </p>
           <div class="callout callout-warn">
@@ -369,7 +368,7 @@
             </a>
             <a href="/methodology" class="related-card">
               <h3>🤖 PiiTrade AI Methodology</h3>
-              <p>Full technical breakdown of the LightGBM pipeline.</p>
+              <p>Full breakdown of the AI pipeline, features, and signal generation.</p>
             </a>
           </div>
         </div>
