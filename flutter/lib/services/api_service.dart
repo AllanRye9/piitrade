@@ -113,7 +113,7 @@ class ApiService {
   }) async {
     final response = await _client
         .post(
-          Uri.parse('$_base/api/forex/subscribe'),
+          Uri.parse('$_base/api/forex/alerts/subscribe'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'email': email, 'pairs': pairs}),
         )
