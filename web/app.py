@@ -1409,28 +1409,28 @@ async def blog_index(request: Request):
 
 @app.get("/blog/how-to-read-forex-signals", response_class=HTMLResponse)
 async def blog_how_to_read_signals(request: Request):
-    """Blog article – served by the React SPA."""
+    """Blog article: How to Read AI Forex Trading Signals – served by the React SPA."""
     _record_visit(_get_client_ip(request))
     return _serve_spa()
 
 
 @app.get("/blog/forex-risk-management", response_class=HTMLResponse)
 async def blog_forex_risk_management(request: Request):
-    """Blog article – served by the React SPA."""
+    """Blog article: Forex Risk Management – The Complete Guide – served by the React SPA."""
     _record_visit(_get_client_ip(request))
     return _serve_spa()
 
 
 @app.get("/blog/technical-analysis-forex", response_class=HTMLResponse)
 async def blog_technical_analysis(request: Request):
-    """Blog article – served by the React SPA."""
+    """Blog article: Technical Analysis for Forex – RSI, MACD, EMA, Bollinger Bands – served by the React SPA."""
     _record_visit(_get_client_ip(request))
     return _serve_spa()
 
 
 @app.get("/blog/smart-money-concepts", response_class=HTMLResponse)
 async def blog_smart_money_concepts(request: Request):
-    """Blog article – served by the React SPA."""
+    """Blog article: Smart Money Concepts – FVG, BOS, CHoCH, Order Blocks – served by the React SPA."""
     _record_visit(_get_client_ip(request))
     return _serve_spa()
 
