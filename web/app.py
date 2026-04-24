@@ -1367,9 +1367,9 @@ async def advance_page(request: Request):
 
 @app.get("/movers", response_class=HTMLResponse)
 async def movers_page(request: Request):
-    """Large Price Movements – pairs with significant directional moves in the current session."""
+    """Movers page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "movers.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/roadmap", response_class=HTMLResponse)
@@ -1381,58 +1381,58 @@ async def roadmap_page(request: Request):
 
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy_page(request: Request):
-    """Privacy Policy page – required for AdSense and user trust."""
+    """Privacy Policy page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "privacy.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
-    """About PiiTrade – mission, platform overview, and technology."""
+    """About page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "about.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/contact", response_class=HTMLResponse)
 async def contact_page(request: Request):
-    """Contact page – support, bug reports, and enquiries."""
+    """Contact page – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "contact.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/blog", response_class=HTMLResponse)
 async def blog_index(request: Request):
-    """Blog index – educational guides on forex trading, AI signals, and risk management."""
+    """Blog index – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "blog.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/blog/how-to-read-forex-signals", response_class=HTMLResponse)
 async def blog_how_to_read_signals(request: Request):
-    """Blog article: How to Read AI Forex Trading Signals."""
+    """Blog article – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "blog-how-to-read-forex-signals.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/blog/forex-risk-management", response_class=HTMLResponse)
 async def blog_forex_risk_management(request: Request):
-    """Blog article: Forex Risk Management – The Complete Guide."""
+    """Blog article – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "blog-forex-risk-management.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/blog/technical-analysis-forex", response_class=HTMLResponse)
 async def blog_technical_analysis(request: Request):
-    """Blog article: Technical Analysis for Forex – RSI, MACD, EMA, Bollinger Bands."""
+    """Blog article – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "blog-technical-analysis-forex.html", _ctx(request))
+    return _serve_spa()
 
 
 @app.get("/blog/smart-money-concepts", response_class=HTMLResponse)
 async def blog_smart_money_concepts(request: Request):
-    """Blog article: Smart Money Concepts – FVG, BOS, CHoCH, Order Blocks."""
+    """Blog article – served by the React SPA."""
     _record_visit(_get_client_ip(request))
-    return templates.TemplateResponse(request, "blog-smart-money-concepts.html", _ctx(request))
+    return _serve_spa()
 
 
 # ─── Auth routes ──────────────────────────────────────────────────────────────
