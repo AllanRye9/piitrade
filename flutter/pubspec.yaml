@@ -4,25 +4,25 @@ version: 1.0.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
-  flutter: ">=3.22.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
   # HTTP client for the PiiTrade Forex API
-  http: ^1.2.1
+  http: ^1.4.0
 
   # Shared preferences for persisting server URL / settings
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.5.3
 
   # Cupertino icons (default Flutter icon pack)
-  cupertino_icons: ^1.0.6
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
