@@ -949,6 +949,8 @@ class _ForexScreenState extends State<ForexScreen>
                                 const SizedBox(height: 16),
                                 _buildHistoryChart(
                                     _signal!.history, _currentPair, cs),
+                                const SizedBox(height: 16),
+                                _buildTaptapCard(),
                               ],
                             )
                           : const SizedBox(key: ValueKey('empty')),
@@ -2675,6 +2677,63 @@ class _ForexScreenState extends State<ForexScreen>
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  // ── Taptap Send sponsor card ───────────────────────────────────────────────
+
+  Widget _buildTaptapCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: _kBorderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              'assets/images/taptap.png',
+              fit: BoxFit.cover,
+              height: 160,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '💸 Taptap Send',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Taptap Send is an app that lets people send money back home to Africa, '
+                  'Asia, the Caribbean, and Latin America quickly and at low cost. Since '
+                  'launching in 2018, we\'ve moved billions of dollars and are trusted by '
+                  'millions of customers worldwide. We\'re live in the UK, US, Canada, '
+                  'Australia, UAE, and across the EU, and we send to over 70 destinations '
+                  '— including Nigeria, Senegal, Kenya, Ghana, Bangladesh, Pakistan, India, '
+                  'Mexico, and Brazil, with more launching regularly.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white70,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
