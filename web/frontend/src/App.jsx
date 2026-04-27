@@ -52,6 +52,7 @@ function AppLayout() {
           <Route path="/admin" element={
             <ProtectedRoute adminOnly><Admin /></ProtectedRoute>
           } />
+          <Route path="/const" element={<Navigate to="/admin" replace />} />
         </Routes>
       </main>
       <Footer />

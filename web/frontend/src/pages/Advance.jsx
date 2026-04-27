@@ -85,7 +85,7 @@ function FVGScanner() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left" style={{ borderColor: 'var(--border)' }}>
-                    {['Pair', 'Type', 'High', 'Low', 'Status'].map(h => (
+                    {['Pair', 'Type', 'Top', 'Bottom', 'Status'].map(h => (
                       <th key={h} className="pb-2 pr-4 text-xs uppercase tracking-wide font-medium"
                         style={{ color: 'var(--text-muted)' }}>{h}</th>
                     ))}
@@ -100,9 +100,11 @@ function FVGScanner() {
                       <td className="py-2 pr-4 font-mono font-semibold text-xs" style={{ color: 'var(--accent)' }}>
                         {item.pair}
                       </td>
-                      <td className="py-2 pr-4 text-xs">{item.type || '—'}</td>
-                      <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--sell)' }}>{item.high ?? '—'}</td>
-                      <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--buy)' }}>{item.low ?? '—'}</td>
+                      <td className="py-2 pr-4 text-xs" style={{ color: item.fvg_type === 'bullish' ? 'var(--buy)' : 'var(--sell)' }}>
+                        {item.fvg_type || '—'}
+                      </td>
+                      <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--sell)' }}>{item.top ?? '—'}</td>
+                      <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--buy)' }}>{item.bottom ?? '—'}</td>
                       <td className="py-2 text-xs capitalize" style={{ color: 'var(--text-muted)' }}>{item.status || tab}</td>
                     </motion.tr>
                   ))}

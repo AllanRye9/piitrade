@@ -87,7 +87,7 @@ function SignalCard({ signal }) {
         <div className="mt-3 p-2.5 rounded-lg text-xs text-center"
           style={{ background: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--text-muted)' }}>
           30-day accuracy: <span className="font-bold" style={{ color: 'var(--accent)' }}>
-            {(signal.accuracy_30d * 100).toFixed(1)}%
+            {Number(signal.accuracy_30d).toFixed(1)}%
           </span>
         </div>
       )}
@@ -157,8 +157,10 @@ function TechnicalCard({ tech }) {
           {fvgs.slice(0, 3).map((f, i) => (
             <div key={i} className="flex justify-between text-xs py-0.5 border-b"
               style={{ borderColor: 'var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>{f.type || 'FVG'}</span>
-              <span className="font-mono">{f.high} / {f.low}</span>
+              <span style={{ color: f.type === 'bullish' ? 'var(--buy)' : 'var(--sell)' }}>
+                {f.type || 'FVG'}{f.filled ? ' (filled)' : ''}
+              </span>
+              <span className="font-mono">{f.top} / {f.bottom}</span>
             </div>
           ))}
         </div>
@@ -312,32 +314,35 @@ export default function Forex() {
       {/* Signal History */}
       {signal?.history && signal.history.length > 0 && (
         <div className="mt-6 card">
-          <h3 className="font-semibold mb-3">Recent Signal History</h3>
+          <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b" style={{ borderColor: 'var(--border)' }}>
-                  {['Date', 'Direction', 'Confidence', 'Entry', 'Result'].map(h => (
+                  {['Date', 'Predicted', 'Actual', 'Entry', 'Exit', 'Result'].map(h => (
                     <th key={h} className="pb-2 pr-4 font-medium text-xs uppercase tracking-wide"
                       style={{ color: 'var(--text-muted)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {signal.history.slice(0, 10).map((h, i) => (
+                {signal.history.slice(-10).reverse().map((h, i) => (
                   <tr key={i} className="border-b" style={{ borderColor: 'var(--border)' }}>
                     <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {h.date ? new Date(h.date).toLocaleDateString() : '—'}
+                      {h.day || '—'}
                     </td>
                     <td className="py-2 pr-4">
-                      <DirectionBadge direction={h.direction} />
+                      <DirectionBadge direction={h.predicted} />
                     </td>
-                    <td className="py-2 pr-4 font-mono text-xs">{h.confidence != null ? `${h.confidence}%` : '—'}</td>
-                    <td className="py-2 pr-4 font-mono text-xs">{h.entry_price ?? '—'}</td>
-                    <td className="py-2 text-xs" style={{
-                      color: h.result === 'win' ? 'var(--buy)' : h.result === 'loss' ? 'var(--sell)' : 'var(--text-muted)'
+                    <td className="py-2 pr-4">
+                      <DirectionBadge direction={h.actual} />
+                    </td>
+                    <td className="py-2 pr-4 font-mono text-xs">{h.entry ?? '—'}</td>
+                    <td className="py-2 pr-4 font-mono text-xs">{h.exit ?? '—'}</td>
+                    <td className="py-2 text-xs font-semibold" style={{
+                      color: h.correct ? 'var(--buy)' : 'var(--sell)'
                     }}>
-                      {h.result ?? '—'}
+                      {h.correct ? '✓' : '✗'}
                     </td>
                   </tr>
                 ))}
