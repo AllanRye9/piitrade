@@ -1315,6 +1315,15 @@ async def sitemap_xml():
     return JSONResponse({"error": "Not found"}, status_code=404)
 
 
+@app.get("/ads.txt")
+async def ads_txt():
+    """Serve ads.txt for ad network verification."""
+    _ads = _TEMPLATES_DIR / "ads.txt"
+    if _ads.exists():
+        return FileResponse(str(_ads), media_type="text/plain")
+    return JSONResponse({"error": "Not found"}, status_code=404)
+
+
 @app.get("/googlea792e3e93ca1f64f.html")
 async def google_site_verification():
     """Serve the Google Search Console site verification file."""
