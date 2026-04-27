@@ -1453,35 +1453,19 @@ async def login_submit(
 ):
     ip = request.client.host if request.client else "unknown"
     if not _check_rate_limit(ip, max_requests=10, window=60):
-        return templates.TemplateResponse(
-            request, "login.html",
-            _ctx(request, error="Too many login attempts. Please wait a minute."),
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
+        return RedirectResponse(url="/login?error=rate_limit", status_code=status.HTTP_302_FOUND)
     if not _verify_csrf_token(csrf_token, _session_id(request)):
-        return templates.TemplateResponse(
-            request, "login.html",
-            _ctx(request, error="Invalid request. Please try again."),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
+        return RedirectResponse(url="/login?error=csrf", status_code=status.HTTP_302_FOUND)
     username = username.strip()
     result = _find_user_by_identifier(username)
     if result:
         matched_username, user = result
         if _hash_password(password, user["salt"]) == user["password_hash"]:
             if user.get("role") != "admin":
-                return templates.TemplateResponse(
-                    request, "login.html",
-                    _ctx(request, error="Login is restricted to administrators only."),
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                )
+                return RedirectResponse(url="/login?error=unauthorized", status_code=status.HTTP_302_FOUND)
             request.session["username"] = matched_username
-            return RedirectResponse(url="/const", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse(
-        request, "login.html",
-        _ctx(request, error="Invalid username or password."),
-        status_code=status.HTTP_401_UNAUTHORIZED,
-    )
+            return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/login?error=invalid", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/logout")
@@ -1854,85 +1838,10 @@ async def api_auth_logout(request: Request):
 # ─── Admin dashboard ──────────────────────────────────────────────────────────
 
 @app.get("/const", response_class=HTMLResponse)
-async def admin_dashboard(request: Request):
-    if not _is_admin(request):
-        return RedirectResponse(url="/login?next=/const", status_code=status.HTTP_302_FOUND)
-    with _USERS_LOCK:
-        users_list = [
-            {
-                "username": k,
-                "email": v["email"],
-                "role": v["role"],
-                "created_at": v["created_at"],
-                "subscription_status": v.get("subscription_status", "inactive"),
-                "plan": v.get("plan"),
-                "subscription_start": v.get("subscription_start"),
-                "subscription_end": v.get("subscription_end"),
-            }
-            for k, v in _USERS.items()
-        ]
-    cache_info = []
-    with _CACHE_LOCK:
-        now_ts = datetime.now(timezone.utc).timestamp()
-        for key, entry in _RATE_CACHE.items():
-            age = int(now_ts - entry.get("fetched_at", now_ts))
-            cache_info.append({"key": key, "age_seconds": age, "fresh": age < _CACHE_TTL_SECONDS})
-
-    # Visitor tracking stats
-    today_str = date.today().isoformat()
-    with _VISITOR_LOG_LOCK:
-        total_visitors = len(_VISITOR_LOG)
-        unique_countries_set = {v["country"] for v in _VISITOR_LOG.values() if v.get("country") and v["country"] != "Local"}
-        unique_countries = len(unique_countries_set)
-        visitors_today = sum(
-            1 for v in _VISITOR_LOG.values()
-            if v.get("last_seen", "")[:10] == today_str or v.get("first_date", "") == today_str
-        )
-        # Top 10 countries by visitor count
-        country_counts: dict[str, int] = {}
-        for v in _VISITOR_LOG.values():
-            c = v.get("country", "")
-            if c and c != "Local":
-                country_counts[c] = country_counts.get(c, 0) + 1
-        top_countries = sorted(country_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        # Recent visitors (last 20 unique IPs by last_seen)
-        recent_visitors = sorted(
-            _VISITOR_LOG.items(),
-            key=lambda x: x[1].get("last_seen", ""),
-            reverse=True,
-        )[:20]
-    with _TOTAL_PAGE_VIEWS_LOCK:
-        total_page_views = _TOTAL_PAGE_VIEWS
-
-    visitor_stats = {
-        "total_visitors": total_visitors,
-        "unique_countries": unique_countries,
-        "visitors_today": visitors_today,
-        "total_page_views": total_page_views,
-        "top_countries": [{"country": c, "count": n} for c, n in top_countries],
-        "recent_visitors": [
-            {
-                "ip": _mask_ip(ip),
-                "country": data.get("country", "Unknown"),
-                "first_seen": data.get("first_seen", "")[:10],
-                "last_seen": data.get("last_seen", "")[:10],
-                "page_views": data.get("page_views", 0),
-            }
-            for ip, data in recent_visitors
-        ],
-    }
-
-    return templates.TemplateResponse(
-        request, "admin.html",
-        _ctx(
-            request,
-            users=users_list,
-            plans=_PLANS,
-            cache_info=sorted(cache_info, key=lambda x: x["key"]),
-            total_pairs=len(_SUPPORTED_PAIRS),
-            visitor_stats=visitor_stats,
-        ),
-    )
+async def const_page(request: Request):
+    """Admin dashboard alias – served by the React SPA (redirected from legacy POST /login)."""
+    _record_visit(_get_client_ip(request))
+    return _serve_spa()
 
 
 # ─── Admin API ────────────────────────────────────────────────────────────────

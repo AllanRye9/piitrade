@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --buy: #3fb950;
+  --sell: #f85149;
+  --hold: #d29922;
+}
+
+[data-theme="ocean"] {
+  --bg: #0a192f;
+  --surface: #112240;
+  --border: #233554;
+  --text: #ccd6f6;
+  --text-muted: #8892b0;
+  --accent: #64ffda;
+  --buy: #3fb950;
+  --sell: #f85149;
+  --hold: #d29922;
+}
+
+[data-theme="light"] {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --buy: #1a7f37;
+  --sell: #cf222e;
+  --hold: #9a6700;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.badge-buy {
+  background: color-mix(in srgb, var(--buy) 15%, transparent);
+  color: var(--buy);
+  border: 1px solid color-mix(in srgb, var(--buy) 30%, transparent);
+}
+
+.badge-sell {
+  background: color-mix(in srgb, var(--sell) 15%, transparent);
+  color: var(--sell);
+  border: 1px solid color-mix(in srgb, var(--sell) 30%, transparent);
+}
+
+.badge-hold {
+  background: color-mix(in srgb, var(--hold) 15%, transparent);
+  color: var(--hold);
+  border: 1px solid color-mix(in srgb, var(--hold) 30%, transparent);
+}
+
+.tab-active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.tab-inactive {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.tab-inactive:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
