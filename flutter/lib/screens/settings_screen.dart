@@ -71,7 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Enter the address of your PiiTrade Forex backend server '
-                  '(e.g. http://192.168.1.100:5000 or your Vercel URL).',
+                  '(e.g. https://piitrade.com).',
                   style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.6)),
                 ),
@@ -81,7 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     labelText: 'Server URL',
-                    hintText: 'https://your-app.vercel.app',
+                    hintText: 'https://piitrade.com',
                     prefixIcon: const Icon(Icons.link),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
