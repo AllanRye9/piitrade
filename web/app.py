@@ -19,7 +19,7 @@ import requests as _requests
 from fastapi import FastAPI, Form, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -1276,8 +1276,8 @@ async def sitemap_xml():
     """Serve sitemap.xml for search engine indexing."""
     _sitemap = _TEMPLATES_DIR / "sitemap.xml"
     if _sitemap.exists():
-        return FileResponse(str(_sitemap), media_type="application/xml")
-    return JSONResponse({"error": "Not found"}, status_code=404)
+        return Response(content=_sitemap.read_bytes(), media_type="application/xml")
+    return Response(status_code=404)
 
 
 @app.get("/ads.txt")
