@@ -4,7 +4,8 @@ import 'package:piitrade/models/forex_signal.dart';
 import 'package:piitrade/models/forex_technical.dart';
 import 'package:piitrade/models/forex_news.dart';
 
-void main() {  group('ApiService base URL normalisation', () {
+void main() {
+  group('ApiService base URL normalisation', () {
     test('serverUrl is stored as-is (trailing slash stripping is internal)', () {
       final api = ApiService('http://localhost:5000/');
       // The public field retains the original value; the private _base getter
