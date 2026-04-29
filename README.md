@@ -111,6 +111,20 @@ piitrade/
 | `GET /api/forex/alerts` | Economic alert cards |
 | `POST /api/forex/alerts/subscribe` | Subscribe email to signal alerts |
 
+## SEO & Sitemap
+
+The following paths are served by the backend for search-engine crawlers:
+
+| Path | File | Description |
+|------|------|-------------|
+| `/sitemap.xml` | `web/templates/sitemap.xml` | XML sitemap (all public routes) |
+| `/robots.txt` | `web/static/dist/robots.txt` | Crawler directives; references `/sitemap.xml` |
+| `/ads.txt` | `web/templates/ads.txt` | Ad network verification |
+
+Both `/sitemap.xml` and `/robots.txt` have dedicated routes in `web/app.py` that return the correct `Content-Type` (`application/xml` and `text/plain` respectively), ensuring search engines do not mistake them for HTML pages.
+
+If you add new public routes, update `web/templates/sitemap.xml` to include the new URL.
+
 ## Development Roadmap
 
 Planned upcoming features:

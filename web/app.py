@@ -1289,6 +1289,15 @@ async def ads_txt():
     return JSONResponse({"error": "Not found"}, status_code=404)
 
 
+@app.get("/robots.txt")
+async def robots_txt():
+    """Serve robots.txt for search engine crawlers."""
+    _robots = _SPA_DIR / "robots.txt"
+    if _robots.exists():
+        return FileResponse(str(_robots), media_type="text/plain")
+    return JSONResponse({"error": "Not found"}, status_code=404)
+
+
 @app.get("/googlea792e3e93ca1f64f.html")
 async def google_site_verification():
     """Serve the Google Search Console site verification file."""
