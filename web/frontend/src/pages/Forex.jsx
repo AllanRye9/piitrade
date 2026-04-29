@@ -1,8 +1,202 @@
-import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+
+// Forex trading sessions in UTC (startH/startM to endH/endM)
+const SESSIONS = [
+  { name: 'Sydney',   flag: '🇦🇺', startH: 21, startM: 0, endH: 6,  endM: 0,  color: '#58a6ff' },
+  { name: 'Tokyo',    flag: '🇯🇵', startH: 0,  startM: 0, endH: 9,  endM: 0,  color: '#a78bfa' },
+  { name: 'London',   flag: '🇬🇧', startH: 7,  startM: 0, endH: 16, endM: 0,  color: '#f0883e' },
+  { name: 'New York', flag: '🇺🇸', startH: 13, startM: 0, endH: 22, endM: 0,  color: '#3fb950' },
+]
+
+function minutesForward(from, to) {
+  if (to >= from) return to - from
+  return 1440 - from + to
+}
+
+function getSessionInfo(session, nowMin) {
+  const start = session.startH * 60 + session.startM
+  const end   = session.endH   * 60 + session.endM
+  const crossesMidnight = start > end
+  const isActive = crossesMidnight
+    ? (nowMin >= start || nowMin < end)
+    : (nowMin >= start && nowMin < end)
+
+  if (isActive) {
+    const minsLeft = minutesForward(nowMin, end)
+    return { status: minsLeft <= 30 ? 'ending' : 'active', minsLeft }
+  }
+  const minsToStart = minutesForward(nowMin, start)
+  return { status: minsToStart <= 30 ? 'starting' : 'inactive', minsToStart }
+}
+
+function pad2(n) { return String(n).padStart(2, '0') }
+
+function TradingSessionBanner() {
+  const [now, setNow] = useState(() => new Date())
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timerRef.current)
+  }, [])
+
+  const utcH   = now.getUTCHours()
+  const utcMin = now.getUTCMinutes()
+  const utcS   = now.getUTCSeconds()
+  const nowMin = utcH * 60 + utcMin
+  const timeStr = `${pad2(utcH)}:${pad2(utcMin)}:${pad2(utcS)} UTC`
+
+  const sessions = SESSIONS.map(s => ({ ...s, ...getSessionInfo(s, nowMin) }))
+  const activeCount = sessions.filter(s => s.status === 'active' || s.status === 'ending').length
+  const hasWarning  = sessions.some(s => s.status === 'ending' || s.status === 'starting')
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="mb-6 card overflow-hidden"
+      style={{ padding: '0.875rem 1.25rem' }}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: label + clock */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: activeCount > 0 ? 'var(--buy)' : 'var(--text-muted)',
+                animation: activeCount > 0 ? 'pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite' : 'none',
+              }}
+            />
+            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+              Market Sessions
+            </span>
+          </div>
+          <span className="font-mono text-sm font-bold" style={{ color: 'var(--accent)' }}>
+            {timeStr}
+          </span>
+          {activeCount > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{
+                background: 'color-mix(in srgb, var(--buy) 15%, transparent)',
+                color: 'var(--buy)',
+                border: '1px solid color-mix(in srgb, var(--buy) 30%, transparent)',
+              }}>
+              {activeCount} open
+            </span>
+          )}
+        </div>
+
+        {/* Right: session chips */}
+        <div className="flex flex-wrap gap-2">
+          {sessions.map(s => {
+            const isActive   = s.status === 'active'
+            const isEnding   = s.status === 'ending'
+            const isStarting = s.status === 'starting'
+            const dim        = s.status === 'inactive'
+
+            const borderColor = isEnding   ? 'var(--sell)'
+                               : isStarting ? 'var(--hold)'
+                               : isActive   ? s.color
+                               : 'var(--border)'
+            const bgColor     = isEnding   ? 'color-mix(in srgb, var(--sell) 12%, transparent)'
+                               : isStarting ? 'color-mix(in srgb, var(--hold) 12%, transparent)'
+                               : isActive   ? `color-mix(in srgb, ${s.color} 12%, transparent)`
+                               : 'transparent'
+            const textColor   = dim ? 'var(--text-muted)' : 'var(--text)'
+
+            return (
+              <motion.div
+                key={s.name}
+                animate={
+                  isEnding   ? { scale: [1, 1.03, 1] } :
+                  isStarting ? { scale: [1, 1.02, 1] } :
+                  isActive   ? {} : {}
+                }
+                transition={
+                  (isEnding || isStarting)
+                    ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
+                    : {}
+                }
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors"
+                style={{ borderColor, background: bgColor, color: textColor, opacity: dim ? 0.45 : 1 }}
+              >
+                <span>{s.flag}</span>
+                <span>{s.name}</span>
+
+                {(isActive || isEnding) && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{
+                      background: isEnding ? 'var(--sell)' : s.color,
+                      animation: 'pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite',
+                    }}
+                  />
+                )}
+
+                {isEnding && (
+                  <span className="font-semibold" style={{ color: 'var(--sell)' }}>
+                    ends {s.minsLeft}m
+                  </span>
+                )}
+                {isStarting && (
+                  <span className="font-semibold" style={{ color: 'var(--hold)' }}>
+                    opens {s.minsToStart}m
+                  </span>
+                )}
+                {isActive && !isEnding && (
+                  <span style={{ color: s.color, opacity: 0.8 }}>
+                    {Math.floor(s.minsLeft / 60)}h{pad2(s.minsLeft % 60)}m
+                  </span>
+                )}
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Warning bar */}
+      <AnimatePresence>
+        {hasWarning && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-2.5 pt-2.5 border-t flex flex-wrap gap-2"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {sessions.filter(s => s.status === 'ending').map(s => (
+              <span key={s.name} className="text-xs px-2 py-0.5 rounded"
+                style={{
+                  background: 'color-mix(in srgb, var(--sell) 12%, transparent)',
+                  color: 'var(--sell)',
+                  border: '1px solid color-mix(in srgb, var(--sell) 25%, transparent)',
+                }}>
+                ⚠ {s.name} closing in {s.minsLeft} min
+              </span>
+            ))}
+            {sessions.filter(s => s.status === 'starting').map(s => (
+              <span key={s.name} className="text-xs px-2 py-0.5 rounded"
+                style={{
+                  background: 'color-mix(in srgb, var(--hold) 12%, transparent)',
+                  color: 'var(--hold)',
+                  border: '1px solid color-mix(in srgb, var(--hold) 25%, transparent)',
+                }}>
+                🕐 {s.name} opens in {s.minsToStart} min
+              </span>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
 
 function DirectionBadge({ direction }) {
   const d = direction?.toUpperCase()
@@ -241,6 +435,7 @@ export default function Forex() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <TradingSessionBanner />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Forex Dashboard</h1>
