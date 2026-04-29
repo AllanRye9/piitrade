@@ -1916,6 +1916,9 @@ class _ForexScreenState extends State<ForexScreen>
     ];
 
     final activeItems = (_srGroups[_srFilter] as List<dynamic>?) ?? [];
+    final activeLabel = groups
+        .firstWhere((g) => g.$1 == _srFilter, orElse: () => ('', _srFilter))
+        .$2;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1975,7 +1978,7 @@ class _ForexScreenState extends State<ForexScreen>
                       const Text('📊', style: TextStyle(fontSize: 36)),
                       const SizedBox(height: 10),
                       Text(
-                        'No ${groups.firstWhere((g) => g.$1 == _srFilter, orElse: () => ('', _srFilter)).$2} levels found.',
+                        'No $activeLabel levels found.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
                       ),
@@ -3017,6 +3020,8 @@ class _ForexScreenState extends State<ForexScreen>
 // _TradingSessionBanner – live UTC clock + market session status chips
 // ══════════════════════════════════════════════════════════════════════════════
 
+/// Trading sessions defined in UTC hours (fixed, no DST adjustments).
+/// Actual market open/close times may shift slightly with daylight saving time.
 const _kSessions = [
   (name: 'Sydney',   flag: '🇦🇺', startH: 21, startM: 0, endH: 6,  endM: 0,  color: Color(0xFF58a6ff)),
   (name: 'Tokyo',    flag: '🇯🇵', startH: 0,  startM: 0, endH: 9,  endM: 0,  color: Color(0xFFa78bfa)),
@@ -3024,9 +3029,12 @@ const _kSessions = [
   (name: 'New York', flag: '🇺🇸', startH: 13, startM: 0, endH: 22, endM: 0,  color: Color(0xFF3fb950)),
 ];
 
+/// Minutes per day – used for midnight wrap-around in session time calculations.
+const _kMinutesInDay = 1440;
+
 int _minsForward(int from, int to) {
   if (to >= from) return to - from;
-  return 1440 - from + to;
+  return _kMinutesInDay - from + to;
 }
 
 String _pad2(int n) => n.toString().padLeft(2, '0');
