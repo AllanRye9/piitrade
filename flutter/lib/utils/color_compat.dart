@@ -11,6 +11,11 @@ extension ColorCompat on Color {
       return this;
     }
 
-    return withOpacity(alpha.clamp(0.0, 1.0));
+    return Color.fromARGB(
+      (alpha.clamp(0.0, 1.0) * 255).round(),
+      this.red,
+      this.green,
+      this.blue,
+    );
   }
 }
