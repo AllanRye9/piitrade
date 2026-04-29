@@ -98,9 +98,19 @@ class ApiService {
   }
 
   /// Returns detected chart patterns from the pattern scanner.
-  Future<Map<String, dynamic>> getForexPatternScanner() async {
+  /// [timeframe] must be one of: '30m', '1h', '4h', '1day' (default '1h').
+  Future<Map<String, dynamic>> getForexPatternScanner({String timeframe = '1h'}) async {
+    final uri = Uri.parse('$_base/api/forex/pattern-scanner')
+        .replace(queryParameters: {'timeframe': timeframe});
+    final response = await _client.get(uri).timeout(_kRequestTimeout);
+    _assertOk(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Returns upcoming economic calendar events.
+  Future<Map<String, dynamic>> getForexEconomicCalendar() async {
     final response = await _client
-        .get(Uri.parse('$_base/api/forex/pattern-scanner'))
+        .get(Uri.parse('$_base/api/forex/economic-calendar'))
         .timeout(_kRequestTimeout);
     _assertOk(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
