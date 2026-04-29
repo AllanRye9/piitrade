@@ -705,7 +705,7 @@ class _ForexScreenState extends State<ForexScreen>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: Image.asset(
-                  'assets/images/img/exness.png',
+                  'assets/images/exness.png',
                   fit: BoxFit.contain,
                   height: kToolbarHeight,
                 ),
@@ -2795,7 +2795,9 @@ class _AccuracyChartPainter extends CustomPainter {
     final maxP   = prices.reduce(math.max);
     final range  = (maxP - minP) == 0 ? 1.0 : maxP - minP;
 
-    double xOf(int i) => padLeft + (i / (history.length - 1)) * cw;
+    double xOf(int i) => history.length <= 1
+        ? padLeft + cw / 2
+        : padLeft + (i / (history.length - 1)) * cw;
     double yOf(double p) => padTop + ch - ((p - minP) / range) * ch;
 
     // ── Grid lines ──
