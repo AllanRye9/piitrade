@@ -196,8 +196,9 @@ class _ForexScreenState extends State<ForexScreen>
   String? _fvgError;
   String _fvgFilter = 'approaching';
 
-  // S/R breakouts
-  List<dynamic> _srBreakouts = [];
+  // S/R breakouts — keyed by group (soon_touching / touched / broke)
+  Map<String, dynamic> _srGroups = {};
+  String _srFilter = 'soon_touching';
   bool _loadingSr = false;
   String? _srError;
 
@@ -205,6 +206,12 @@ class _ForexScreenState extends State<ForexScreen>
   List<dynamic> _patterns = [];
   bool _loadingPatterns = false;
   String? _patternError;
+  String _patternTimeframe = '1h';
+
+  // Economic calendar
+  List<dynamic> _calendarEvents = [];
+  bool _loadingCalendar = false;
+  String? _calendarError;
 
   // Gamification
   _GameState _game = _GameState();
@@ -244,7 +251,7 @@ class _ForexScreenState extends State<ForexScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 11, vsync: this);
+    _tabController = TabController(length: 12, vsync: this);
     _api = ApiService(widget.serverUrl);
     _loadPrefs();
     _loadSignal();
@@ -254,6 +261,7 @@ class _ForexScreenState extends State<ForexScreen>
     _loadFvgScanner();
     _loadSrBreakouts();
     _loadPatternScanner();
+    _loadCalendar();
     // Auto-refresh signal data periodically
     _refreshTimer = Timer.periodic(_kAutoRefreshInterval, (_) {
       if (!mounted) return;
@@ -266,6 +274,7 @@ class _ForexScreenState extends State<ForexScreen>
       _loadFvgScanner().ignore();
       _loadSrBreakouts().ignore();
       _loadPatternScanner().ignore();
+      _loadCalendar().ignore();
     });
   }
 
@@ -407,7 +416,7 @@ class _ForexScreenState extends State<ForexScreen>
       final data = await _api.getForexSrBreakouts();
       if (mounted) {
         setState(() {
-          _srBreakouts = data['breakouts'] as List<dynamic>? ?? [];
+          _srGroups = data['sr_groups'] as Map<String, dynamic>? ?? {};
           _loadingSr = false;
         });
       }
@@ -421,7 +430,7 @@ class _ForexScreenState extends State<ForexScreen>
   Future<void> _loadPatternScanner() async {
     setState(() { _loadingPatterns = true; _patternError = null; });
     try {
-      final data = await _api.getForexPatternScanner();
+      final data = await _api.getForexPatternScanner(timeframe: _patternTimeframe);
       if (mounted) {
         final raw = data['patterns'] ?? data;
         setState(() {
@@ -432,6 +441,23 @@ class _ForexScreenState extends State<ForexScreen>
     } catch (e) {
       if (mounted) {
         setState(() { _patternError = e.toString(); _loadingPatterns = false; });
+      }
+    }
+  }
+
+  Future<void> _loadCalendar() async {
+    setState(() { _loadingCalendar = true; _calendarError = null; });
+    try {
+      final data = await _api.getForexEconomicCalendar();
+      if (mounted) {
+        setState(() {
+          _calendarEvents = data['events'] as List<dynamic>? ?? [];
+          _loadingCalendar = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _calendarError = e.toString(); _loadingCalendar = false; });
       }
     }
   }
@@ -673,6 +699,7 @@ class _ForexScreenState extends State<ForexScreen>
                 _buildScannerTab(cs),
                 _buildNewsTab(cs),
                 _buildAlertsTab(cs),
+                _buildCalendarTab(cs),
               ],
             ),
           ),
@@ -890,6 +917,7 @@ class _ForexScreenState extends State<ForexScreen>
           Tab(text: '🔮 Scanner'),
           Tab(text: '📰 News'),
           Tab(text: '🔔 Alerts'),
+          Tab(text: '📅 Calendar'),
         ],
       ),
     );
@@ -912,6 +940,8 @@ class _ForexScreenState extends State<ForexScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const _TradingSessionBanner(),
+            const SizedBox(height: 16),
             _buildPairSelector(cs),
             const SizedBox(height: 16),
             AnimatedSwitcher(
@@ -1723,6 +1753,7 @@ class _ForexScreenState extends State<ForexScreen>
     const filters = [
       ('approaching', '📍 Approaching'),
       ('reached', '🎯 Inside Zone'),
+      ('passed', '✅ Passed'),
       ('rejected', '🚫 Rejected'),
       ('all', '🔍 All Active'),
     ];
@@ -1731,6 +1762,7 @@ class _ForexScreenState extends State<ForexScreen>
         ? [
             ...(_fvgGrouped['approaching'] as List<dynamic>? ?? []),
             ...(_fvgGrouped['reached'] as List<dynamic>? ?? []),
+            ...(_fvgGrouped['passed'] as List<dynamic>? ?? []),
             ...(_fvgGrouped['rejected'] as List<dynamic>? ?? []),
           ]
         : (_fvgGrouped[_fvgFilter] as List<dynamic>? ?? []);
@@ -1876,18 +1908,47 @@ class _ForexScreenState extends State<ForexScreen>
     if (_srError != null) {
       return _buildErrorCard(_srError!, _loadSrBreakouts, cs);
     }
+
+    const groups = [
+      ('soon_touching', '⚡ Soon Touching'),
+      ('touched', '📌 Touched'),
+      ('broke', '💥 Broke'),
+    ];
+
+    final activeItems = (_srGroups[_srFilter] as List<dynamic>?) ?? [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
           color: _kCardBg,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              const Expanded(
-                child: Text(
-                  '💥 Support & Resistance Breakouts',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: groups.map((g) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(
+                          '${g.$2} (${(_srGroups[g.$1] as List?)?.length ?? 0})',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        selected: _srFilter == g.$1,
+                        onSelected: (_) => setState(() => _srFilter = g.$1),
+                        selectedColor: cs.primary.withValues(alpha: 0.25),
+                        backgroundColor: _kBorderColor,
+                        side: BorderSide(
+                          color: _srFilter == g.$1 ? cs.primary : Colors.transparent,
+                        ),
+                        labelStyle: TextStyle(
+                          color: _srFilter == g.$1 ? cs.primary : Colors.white70,
+                        ),
+                      ),
+                    )).toList(),
+                  ),
                 ),
               ),
               IconButton(
@@ -1901,12 +1962,12 @@ class _ForexScreenState extends State<ForexScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Text(
-            'Pairs that have recently broken through a major support or resistance level.',
+            'Pairs classified by their proximity to major support / resistance levels.',
             style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6)),
           ),
         ),
         Expanded(
-          child: _srBreakouts.isEmpty
+          child: activeItems.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1914,7 +1975,7 @@ class _ForexScreenState extends State<ForexScreen>
                       const Text('📊', style: TextStyle(fontSize: 36)),
                       const SizedBox(height: 10),
                       Text(
-                        'No S/R breakouts detected at this time.\nMarkets may be ranging.',
+                        'No ${groups.firstWhere((g) => g.$1 == _srFilter, orElse: () => ('', _srFilter)).$2} levels found.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
                       ),
@@ -1923,10 +1984,10 @@ class _ForexScreenState extends State<ForexScreen>
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _srBreakouts.length,
+                  itemCount: activeItems.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (_, i) =>
-                      _srBreakoutTile(_srBreakouts[i] as Map<String, dynamic>, cs),
+                      _srBreakoutTile(activeItems[i] as Map<String, dynamic>, cs),
                 ),
         ),
       ],
@@ -2376,23 +2437,70 @@ class _ForexScreenState extends State<ForexScreen>
     if (_patternError != null) {
       return _buildErrorCard(_patternError!, _loadPatternScanner, cs);
     }
-    if (_patterns.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+
+    const timeframes = [('30m', '30m'), ('1h', '1h'), ('4h', '4h'), ('1day', '1D')];
+
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('🔮 Pattern Scanner',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 10),
+        Row(
           children: [
-            const Text('🔮', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: 12),
-            Text('No patterns detected',
-                style: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.7),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            Text('No chart patterns found in the current scanner.',
-                style: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.45),
-                    fontSize: 13)),
+            const Text('Timeframe: ',
+                style: TextStyle(color: Colors.white70, fontSize: 13)),
+            ...timeframes.map((tf) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(tf.$2, style: const TextStyle(fontSize: 12)),
+                selected: _patternTimeframe == tf.$1,
+                onSelected: (_) {
+                  setState(() => _patternTimeframe = tf.$1);
+                  _loadPatternScanner();
+                },
+                selectedColor: cs.primary.withValues(alpha: 0.25),
+                backgroundColor: _kBorderColor,
+                side: BorderSide(
+                  color: _patternTimeframe == tf.$1 ? cs.primary : Colors.transparent,
+                ),
+                labelStyle: TextStyle(
+                  color: _patternTimeframe == tf.$1 ? cs.primary : Colors.white70,
+                ),
+              ),
+            )),
+          ],
+        ),
+      ],
+    );
+
+    if (_patterns.isEmpty) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header,
+            const SizedBox(height: 32),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🔮', style: TextStyle(fontSize: 40)),
+                  const SizedBox(height: 12),
+                  Text('No patterns detected',
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.7),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Text('No chart patterns found for $_patternTimeframe.',
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.45),
+                          fontSize: 13)),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -2405,10 +2513,7 @@ class _ForexScreenState extends State<ForexScreen>
         itemCount: _patterns.length + 1,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (_, i) {
-          if (i == 0) {
-            return const Text('🔮 Pattern Scanner',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600));
-          }
+          if (i == 0) return header;
           final p = _patterns[i - 1] as Map<String, dynamic>? ?? {};
           final pair       = p['pair'] as String? ?? '—';
           final label      = p['label'] as String?
@@ -2682,6 +2787,147 @@ class _ForexScreenState extends State<ForexScreen>
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Tab 12 – Economic Calendar
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCalendarTab(ColorScheme cs) {
+    if (_loadingCalendar) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_calendarError != null) {
+      return _buildErrorCard(_calendarError!, _loadCalendar, cs);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: _kCardBg,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(children: [
+            const Expanded(
+              child: Text(
+                '📅 Economic Calendar',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: _loadCalendar,
+              tooltip: 'Refresh calendar',
+            ),
+          ]),
+        ),
+        Expanded(
+          child: _calendarEvents.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('📅', style: TextStyle(fontSize: 40)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No upcoming events',
+                        style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                            fontSize: 15),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _calendarEvents.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => _calendarEventTile(
+                      _calendarEvents[i] as Map<String, dynamic>, cs),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _calendarEventTile(Map<String, dynamic> ev, ColorScheme cs) {
+    final time     = ev['time']     as String? ?? '—';
+    final event    = ev['event']    as String? ?? '—';
+    final currency = ev['currency'] as String? ?? '';
+    final impact   = ev['impact']   as String? ?? '';
+    final actual   = ev['actual']   as String? ?? '';
+    final forecast = ev['forecast'] as String? ?? '';
+    final previous = ev['previous'] as String? ?? '';
+
+    Color impactColor;
+    switch (impact.toLowerCase()) {
+      case 'high':   impactColor = _kSellColor; break;
+      case 'medium': impactColor = _kHoldColor; break;
+      default:       impactColor = _kBuyColor;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: _kBorderColor),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(time,
+              style: const TextStyle(
+                  fontFamily: 'monospace', fontSize: 12, color: Colors.white54)),
+          const SizedBox(width: 8),
+          if (currency.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(currency,
+                  style: TextStyle(
+                      color: cs.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
+            ),
+          const SizedBox(width: 8),
+          if (impact.isNotEmpty)
+            _badge(impact.toUpperCase(), impactColor),
+        ]),
+        const SizedBox(height: 6),
+        Text(event,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+        if (actual.isNotEmpty || forecast.isNotEmpty || previous.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            if (actual.isNotEmpty) ...[
+              _calendarStat('Actual', actual, _kBuyColor, cs),
+              const SizedBox(width: 16),
+            ],
+            if (forecast.isNotEmpty) ...[
+              _calendarStat('Forecast', forecast, Colors.white70, cs),
+              const SizedBox(width: 16),
+            ],
+            if (previous.isNotEmpty)
+              _calendarStat('Previous', previous, Colors.white54, cs),
+          ]),
+        ],
+      ]),
+    );
+  }
+
+  Widget _calendarStat(String label, String value, Color valueColor, ColorScheme cs) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: TextStyle(fontSize: 10, color: cs.onSurface.withValues(alpha: 0.5))),
+      const SizedBox(height: 2),
+      Text(value,
+          style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 13,
+              color: valueColor,
+              fontWeight: FontWeight.w600)),
+    ]);
+  }
+
   // ── Taptap Send sponsor card ───────────────────────────────────────────────
 
   Widget _buildTaptapCard() {
@@ -2762,6 +3008,251 @@ class _ForexScreenState extends State<ForexScreen>
             TextButton(onPressed: retry, child: const Text('Retry')),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// _TradingSessionBanner – live UTC clock + market session status chips
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _kSessions = [
+  (name: 'Sydney',   flag: '🇦🇺', startH: 21, startM: 0, endH: 6,  endM: 0,  color: Color(0xFF58a6ff)),
+  (name: 'Tokyo',    flag: '🇯🇵', startH: 0,  startM: 0, endH: 9,  endM: 0,  color: Color(0xFFa78bfa)),
+  (name: 'London',   flag: '🇬🇧', startH: 7,  startM: 0, endH: 16, endM: 0,  color: Color(0xFFf0883e)),
+  (name: 'New York', flag: '🇺🇸', startH: 13, startM: 0, endH: 22, endM: 0,  color: Color(0xFF3fb950)),
+];
+
+int _minsForward(int from, int to) {
+  if (to >= from) return to - from;
+  return 1440 - from + to;
+}
+
+String _pad2(int n) => n.toString().padLeft(2, '0');
+
+class _TradingSessionBanner extends StatefulWidget {
+  const _TradingSessionBanner();
+
+  @override
+  State<_TradingSessionBanner> createState() => _TradingSessionBannerState();
+}
+
+class _TradingSessionBannerState extends State<_TradingSessionBanner> {
+  Timer? _timer;
+  late DateTime _now;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now().toUtc();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now().toUtc());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  ({String status, int minsLeft, int minsToStart}) _sessionInfo(
+      ({String name, String flag, int startH, int startM, int endH, int endM, Color color}) s,
+      int nowMin) {
+    final start = s.startH * 60 + s.startM;
+    final end   = s.endH   * 60 + s.endM;
+    final crossesMidnight = start > end;
+    final isActive = crossesMidnight
+        ? (nowMin >= start || nowMin < end)
+        : (nowMin >= start && nowMin < end);
+
+    if (isActive) {
+      final minsLeft = _minsForward(nowMin, end);
+      return (status: minsLeft <= 30 ? 'ending' : 'active', minsLeft: minsLeft, minsToStart: 0);
+    }
+    final minsToStart = _minsForward(nowMin, start);
+    return (status: minsToStart <= 30 ? 'starting' : 'inactive', minsLeft: 0, minsToStart: minsToStart);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final utcH   = _now.hour;
+    final utcMin = _now.minute;
+    final utcS   = _now.second;
+    final nowMin = utcH * 60 + utcMin;
+    final timeStr = '${_pad2(utcH)}:${_pad2(utcMin)}:${_pad2(utcS)} UTC';
+
+    final sessions = _kSessions.map((s) {
+      final info = _sessionInfo(s, nowMin);
+      return (session: s, status: info.status, minsLeft: info.minsLeft, minsToStart: info.minsToStart);
+    }).toList();
+
+    final activeCount = sessions.where((s) => s.status == 'active' || s.status == 'ending').length;
+    final hasWarning  = sessions.any((s) => s.status == 'ending' || s.status == 'starting');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border.all(color: _kBorderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            // Pulse dot + label
+            Container(
+              width: 8, height: 8,
+              decoration: BoxDecoration(
+                color: activeCount > 0 ? _kBuyColor : Colors.white38,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Market Sessions',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.55),
+                  letterSpacing: 0.8),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              timeStr,
+              style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6C63FF)),
+            ),
+            if (activeCount > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _kBuyColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBuyColor.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  '$activeCount open',
+                  style: const TextStyle(
+                      color: _kBuyColor, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ]),
+          const SizedBox(height: 10),
+          // Session chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: sessions.map((s) {
+              final isActive   = s.status == 'active';
+              final isEnding   = s.status == 'ending';
+              final isStarting = s.status == 'starting';
+              final isDim      = s.status == 'inactive';
+
+              final borderColor = isEnding   ? _kSellColor
+                                 : isStarting ? _kHoldColor
+                                 : isActive   ? s.session.color
+                                 : _kBorderColor;
+              final bgColor     = isEnding   ? _kSellColor.withValues(alpha: 0.12)
+                                 : isStarting ? _kHoldColor.withValues(alpha: 0.12)
+                                 : isActive   ? s.session.color.withValues(alpha: 0.12)
+                                 : Colors.transparent;
+
+              return Opacity(
+                opacity: isDim ? 0.45 : 1.0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(s.session.flag, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(width: 5),
+                    Text(s.session.name,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDim ? Colors.white54 : Colors.white)),
+                    if ((isActive || isEnding) && !isDim) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        width: 6, height: 6,
+                        decoration: BoxDecoration(
+                          color: isEnding ? _kSellColor : s.session.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                    if (isEnding) ...[
+                      const SizedBox(width: 5),
+                      Text('ends ${s.minsLeft}m',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: _kSellColor,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                    if (isStarting) ...[
+                      const SizedBox(width: 5),
+                      Text('opens ${s.minsToStart}m',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: _kHoldColor,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                    if (isActive && !isEnding) ...[
+                      const SizedBox(width: 5),
+                      Text(
+                        '${s.minsLeft ~/ 60}h${_pad2(s.minsLeft % 60)}m',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: s.session.color.withValues(alpha: 0.8)),
+                      ),
+                    ],
+                  ]),
+                ),
+              );
+            }).toList(),
+          ),
+          // Warning chips
+          if (hasWarning) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                ...sessions.where((s) => s.status == 'ending').map((s) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _kSellColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: _kSellColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Text('⚠ ${s.session.name} closing in ${s.minsLeft} min',
+                      style: const TextStyle(fontSize: 11, color: _kSellColor)),
+                )),
+                ...sessions.where((s) => s.status == 'starting').map((s) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _kHoldColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: _kHoldColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Text('🕐 ${s.session.name} opens in ${s.minsToStart} min',
+                      style: const TextStyle(fontSize: 11, color: _kHoldColor)),
+                )),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
