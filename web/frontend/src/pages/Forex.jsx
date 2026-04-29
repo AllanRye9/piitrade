@@ -12,6 +12,7 @@ const SESSIONS = [
   { name: 'New York', flag: '🇺🇸', startH: 13, startM: 0, endH: 22, endM: 0,  color: '#3fb950' },
 ]
 
+// Minutes from 'from' to 'to' going forward in time, wrapping around midnight (1440 min/day)
 function minutesForward(from, to) {
   if (to >= from) return to - from
   return 1440 - from + to
@@ -116,7 +117,7 @@ function TradingSessionBanner() {
                 animate={
                   isEnding   ? { scale: [1, 1.03, 1] } :
                   isStarting ? { scale: [1, 1.02, 1] } :
-                  isActive   ? {} : {}
+                  {}
                 }
                 transition={
                   (isEnding || isStarting)
