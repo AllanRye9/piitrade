@@ -16,7 +16,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final serverUrl = prefs.getString('server_url') ??
-      (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.onrender.com');
+      (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.com');
   final loggedIn = prefs.getBool('is_logged_in') ?? false;
   runApp(PiiTradeApp(initialServerUrl: serverUrl, initiallyLoggedIn: loggedIn));
 }
@@ -56,7 +56,7 @@ class _PiiTradeAppState extends State<PiiTradeApp> {
     if (mounted) {
       setState(() {
         _serverUrl = prefs.getString('server_url') ??
-            (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.onrender.com');
+            (_kPiiDataUrl.isNotEmpty ? _kPiiDataUrl : 'https://piitrade.com');
       });
     }
   }
