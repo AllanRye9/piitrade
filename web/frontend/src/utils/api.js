@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://piitrade.com',
   withCredentials: true,
 })
 
