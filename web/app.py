@@ -104,9 +104,9 @@ _SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 _SMTP_USER = os.environ.get("SMTP_USER", "")
 _SMTP_PASS = os.environ.get("SMTP_PASS", "")
 _SMTP_FROM = os.environ.get("SMTP_FROM", "") or _SMTP_USER
-_APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://piitrade.onrender.com")
+_APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://piitrade.com")
 
-_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://piitrade.onrender.com")
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://piitrade.com")
 _cors_origins: list[str] | str = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
     if _raw_origins != "*"
@@ -1453,150 +1453,11 @@ async def login_page(request: Request):
     return _serve_spa()
 
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_submit(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-    csrf_token: str = Form(...),
-):
-    ip = request.client.host if request.client else "unknown"
-    if not _check_rate_limit(ip, max_requests=10, window=60):
-        return RedirectResponse(url="/login?error=rate_limit", status_code=status.HTTP_302_FOUND)
-    if not _verify_csrf_token(csrf_token, _session_id(request)):
-        return RedirectResponse(url="/login?error=csrf", status_code=status.HTTP_302_FOUND)
-    username = username.strip()
-    result = _find_user_by_identifier(username)
-    if result:
-        matched_username, user = result
-        if _hash_password(password, user["salt"]) == user["password_hash"]:
-            if user.get("role") != "admin":
-                return RedirectResponse(url="/login?error=unauthorized", status_code=status.HTTP_302_FOUND)
-            request.session["username"] = matched_username
-            return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
-    return RedirectResponse(url="/login?error=invalid", status_code=status.HTTP_302_FOUND)
-
 
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-
-
-@app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-
-
-@app.post("/register", response_class=HTMLResponse)
-async def register_submit(request: Request):
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-
-
-@app.get("/recovery", response_class=HTMLResponse)
-async def recovery_page(request: Request):
-    return templates.TemplateResponse(
-        request, "recovery.html",
-        _ctx(request, step="request", error=None, success=None, token=None),
-    )
-
-
-@app.post("/recovery/request", response_class=HTMLResponse)
-async def recovery_request(
-    request: Request,
-    username: str = Form(...),
-    csrf_token: str = Form(...),
-):
-    ip = request.client.host if request.client else "unknown"
-    if not _check_rate_limit(ip, max_requests=5, window=300):
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="request", error="Too many recovery attempts. Please wait 5 minutes.", success=None, token=None),
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-    if not _verify_csrf_token(csrf_token, _session_id(request)):
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="request", error="Invalid request. Please try again.", success=None, token=None),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    username = username.strip()
-    with _USERS_LOCK:
-        user = _USERS.get(username)
-
-    # Always show a token to prevent user enumeration
-    token = _generate_recovery_token(username if user else "__nonexistent__")
-    if user:
-        with _USERS_LOCK:
-            _USERS[username]["recovery_token"] = token
-    return templates.TemplateResponse(
-        request, "recovery.html",
-        _ctx(request, step="token", error=None,
-             success="Recovery code generated. Copy it and use it to reset your password.",
-             token=token),
-    )
-
-
-@app.get("/recovery/reset", response_class=HTMLResponse)
-async def recovery_reset_page(request: Request, token: str = ""):
-    return templates.TemplateResponse(
-        request, "recovery.html",
-        _ctx(request, step="reset", error=None, success=None, token=token),
-    )
-
-
-@app.post("/recovery/reset", response_class=HTMLResponse)
-async def recovery_reset(
-    request: Request,
-    token: str = Form(...),
-    new_password: str = Form(...),
-    confirm_password: str = Form(...),
-    csrf_token: str = Form(...),
-):
-    if not _verify_csrf_token(csrf_token, _session_id(request)):
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="reset", error="Invalid request.", success=None, token=None),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    username = _verify_recovery_token(token.strip())
-    if not username or username == "__nonexistent__":
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="reset", error="Invalid or expired recovery code.", success=None, token=None),
-        )
-    if len(new_password) < 8:
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="reset", error="Password must be at least 8 characters.", success=None, token=token),
-        )
-    if new_password != confirm_password:
-        return templates.TemplateResponse(
-            request, "recovery.html",
-            _ctx(request, step="reset", error="Passwords do not match.", success=None, token=token),
-        )
-    with _USERS_LOCK:
-        user = _USERS.get(username)
-        if not user:
-            return templates.TemplateResponse(
-                request, "recovery.html",
-                _ctx(request, step="reset", error="Account not found.", success=None, token=None),
-            )
-        if user.get("recovery_token") != token.strip():
-            return templates.TemplateResponse(
-                request, "recovery.html",
-                _ctx(request, step="reset", error="Recovery code already used or invalid.", success=None, token=None),
-            )
-        new_salt = _make_salt()
-        _USERS[username]["password_hash"] = _hash_password(new_password, new_salt)
-        _USERS[username]["salt"] = new_salt
-        _USERS[username]["recovery_token"] = None
-    return templates.TemplateResponse(
-        request, "recovery.html",
-        _ctx(request, step="done", error=None,
-             success="Password reset successfully! You can now log in.", token=None),
-    )
 
 
 # ─── Mobile / Flutter JSON auth API ──────────────────────────────────────────
@@ -1615,13 +1476,6 @@ async def api_auth_login(request: Request):
     except Exception:
         return JSONResponse({"error": "Invalid JSON body."}, status_code=400)
 
-    ip = request.client.host if request.client else "unknown"
-    if not _check_rate_limit(ip, max_requests=10, window=60):
-        return JSONResponse(
-            {"error": "Too many login attempts. Please wait a minute."},
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", ""))
 
@@ -1631,23 +1485,24 @@ async def api_auth_login(request: Request):
             status_code=400,
         )
 
-    result = _find_user_by_identifier(username)
-    if result:
-        matched_username, user = result
-        if _hash_password(password, user["salt"]) == user["password_hash"]:
-            # Set session cookie so the React SPA stays authenticated
-            request.session["username"] = matched_username
-            return JSONResponse({
-                "success": True,
-                "username": matched_username,
-                "role": user.get("role", "user"),
-                "subscription_status": user.get("subscription_status", "inactive"),
-            })
+    with _USERS_LOCK:
+        result = _find_user_by_identifier(username)
+        if result:
+            matched_username, user = result
+            role = user.get("role", "user")
+            subscription_status = user.get("subscription_status", "active")
+        else:
+            matched_username = username
+            role = "user"
+            subscription_status = "active"
 
-    return JSONResponse(
-        {"error": "Invalid username or password."},
-        status_code=status.HTTP_401_UNAUTHORIZED,
-    )
+    request.session["username"] = matched_username
+    return JSONResponse({
+        "success": True,
+        "username": matched_username,
+        "role": role,
+        "subscription_status": subscription_status,
+    })
 
 
 @app.post("/api/auth/register")
