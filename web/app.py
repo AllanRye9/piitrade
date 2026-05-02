@@ -1876,12 +1876,12 @@ _PLANS = [
 @app.get("/subscribe", response_class=HTMLResponse)
 async def subscribe_page(request: Request):
     """Redirect legacy subscribe URL to the forex dashboard (service is now free)."""
-    return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/forex", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 
 @app.get("/subscribe/success", response_class=HTMLResponse)
 async def subscribe_success(request: Request, session_id: str = ""):
-    return RedirectResponse(url="/forex", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/forex", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 
 # ─── Profile page ─────────────────────────────────────────────────────────────
