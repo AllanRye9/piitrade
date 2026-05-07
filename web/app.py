@@ -758,6 +758,7 @@ def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[d
         history.append({
             "day": dates[i], "predicted": pred, "actual": actual,
             "correct": pred == actual, "entry": round(prev, dec), "exit": round(curr, dec),
+            "posted_at": dates[i] + "T09:00:00Z",
         })
     return history[-30:]
 
@@ -922,6 +923,7 @@ def _build_forex_history(pair: str) -> list[dict[str, Any]]:
         history.append({
             "day": d, "predicted": pred, "actual": actual,
             "correct": pred == actual, "entry": entry, "exit": exit_price,
+            "posted_at": d + "T09:00:00Z",
         })
         price = exit_price
     return history
