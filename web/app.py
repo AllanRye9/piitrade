@@ -1183,6 +1183,40 @@ class _SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# Canonical host used for 301 redirects (strip www, enforce https).
+# Override with the CANONICAL_HOST environment variable if needed.
+_CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "piitrade.com")
+
+
+class _CanonicalRedirectMiddleware(BaseHTTPMiddleware):
+    """Redirect non-canonical requests to the canonical HTTPS, non-www URL.
+
+    Handles three cases that Google Search Console flags as "Page with redirect":
+      • http://piitrade.com/...   → https://piitrade.com/...   (301)
+      • http://www.piitrade.com/ → https://piitrade.com/...   (301)
+      • https://www.piitrade.com/→ https://piitrade.com/...   (301)
+
+    The middleware reads the X-Forwarded-Proto header (set by Render's reverse
+    proxy) to detect the original scheme, and the Host header to detect www.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        host = request.headers.get("host", "").split(":")[0]  # strip port if present
+        proto = request.headers.get("x-forwarded-proto", "https").lower()
+
+        needs_redirect = host.startswith("www.") or proto == "http"
+        if needs_redirect:
+            url = request.url
+            query = f"?{url.query}" if url.query else ""
+            location = f"https://{_CANONICAL_HOST}{url.path}{query}"
+            return Response(
+                status_code=status.HTTP_301_MOVED_PERMANENTLY,
+                headers={"Location": location},
+            )
+
+        return await call_next(request)
+
+
 app = FastAPI(
     title="PiiTrade – AI Forex Signal Hub",
     docs_url=None,
@@ -1204,6 +1238,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(_SecurityHeadersMiddleware)
+app.add_middleware(_CanonicalRedirectMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.include_router(_news_router.router)
