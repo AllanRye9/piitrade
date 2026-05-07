@@ -29,22 +29,27 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://piitrade.com/blog/how-to-read-forex-signals</loc>
+    <loc>https://piitrade.com/blog/what-is-fvg-trading</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://piitrade.com/blog/forex-risk-management</loc>
+    <loc>https://piitrade.com/blog/lightgbm-forex-signals</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://piitrade.com/blog/technical-analysis-forex</loc>
+    <loc>https://piitrade.com/blog/support-resistance-breakouts</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://piitrade.com/blog/smart-money-concepts</loc>
+    <loc>https://piitrade.com/blog/bos-choch-explained</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://piitrade.com/blog/risk-management-forex</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -75,6 +80,11 @@
   </url>
   <url>
     <loc>https://piitrade.com/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://piitrade.com/editorial-policy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

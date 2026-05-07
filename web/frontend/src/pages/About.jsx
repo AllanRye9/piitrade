@@ -47,6 +47,18 @@ export default function About() {
           </div>
         </div>
 
+        <div className="card">
+          <h2 className="font-semibold text-lg mb-3">Editorial & Transparency</h2>
+          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-muted)' }}>
+            Our content is created for educational use and reviewed for clarity before publication. We focus on
+            explaining market concepts, risk controls, and how to interpret model outputs responsibly.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            We do not provide guaranteed results or personalized investment advice. If any guide is outdated,
+            we publish corrections and updates to keep the information useful and accurate.
+          </p>
+        </div>
+
         <div className="card" style={{ borderColor: 'var(--accent)' }}>
           <h2 className="font-semibold text-lg mb-2" style={{ color: 'var(--accent)' }}>100% Free</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>

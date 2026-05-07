@@ -50,6 +50,8 @@ export default function Footer() {
                 style={{ color: 'var(--text-muted)' }}>Disclaimer</Link>
               <Link to="/privacy" className="text-sm hover:text-[var(--accent)] transition-colors"
                 style={{ color: 'var(--text-muted)' }}>Privacy Policy</Link>
+              <Link to="/editorial-policy" className="text-sm hover:text-[var(--accent)] transition-colors"
+                style={{ color: 'var(--text-muted)' }}>Editorial Policy</Link>
             </div>
           </div>
         </div>
