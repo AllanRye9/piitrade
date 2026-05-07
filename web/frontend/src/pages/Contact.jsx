@@ -1,3 +1,5 @@
+import { SUPPORT_EMAIL } from '../utils/site'
+
 export default function Contact() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
@@ -9,7 +11,7 @@ export default function Contact() {
       <div className="card">
         <h2 className="font-semibold text-lg mb-3">Best way to reach us</h2>
         <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-muted)' }}>
-          Email <span style={{ color: 'var(--text)' }}>support@piitrade.com</span> with the page URL, issue
+          Email <span style={{ color: 'var(--text)' }}>{SUPPORT_EMAIL}</span> with the page URL, issue
           details, and screenshots when relevant. This helps us investigate quickly and publish fixes or
           corrections.
         </p>
@@ -22,7 +24,7 @@ export default function Contact() {
         <div className="card text-center">
           <div className="text-2xl mb-2">📧</div>
           <div className="font-medium text-sm mb-0.5">Email</div>
-          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>support@piitrade.com</div>
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{SUPPORT_EMAIL}</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl mb-2">🐦</div>

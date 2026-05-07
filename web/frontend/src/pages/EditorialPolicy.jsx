@@ -1,3 +1,5 @@
+import { SUPPORT_EMAIL } from '../utils/site'
+
 export default function EditorialPolicy() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -44,7 +46,7 @@ export default function EditorialPolicy() {
             describing the issue. Verified corrections are prioritized and updated in the next editorial cycle.
           </p>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Contact: <span style={{ color: 'var(--text)' }}>support@piitrade.com</span>
+            Contact: <span style={{ color: 'var(--text)' }}>{SUPPORT_EMAIL}</span>
           </p>
         </div>
       </div>
