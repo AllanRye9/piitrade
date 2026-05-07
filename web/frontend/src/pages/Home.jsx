@@ -116,6 +116,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* User Value */}
+      <section className="py-6 px-4 max-w-5xl mx-auto">
+        <div className="card">
+          <h2 className="text-xl font-bold mb-4">How this helps traders in practice</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h3 className="font-semibold mb-1">1) Build a daily routine</h3>
+              <p style={{ color: 'var(--text-muted)' }}>
+                Start with high-volatility pairs, confirm structure, then validate entries with risk limits.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">2) Reduce emotional trading</h3>
+              <p style={{ color: 'var(--text-muted)' }}>
+                Use objective data points (signal confidence, S/R, FVG state) instead of impulsive entries.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">3) Review and improve</h3>
+              <p style={{ color: 'var(--text-muted)' }}>
+                Compare outcomes over time and refine position sizing instead of chasing every market move.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto card">

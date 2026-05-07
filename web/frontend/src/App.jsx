@@ -18,6 +18,7 @@ import Privacy from './pages/Privacy'
 import Contact from './pages/Contact'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import EditorialPolicy from './pages/EditorialPolicy'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
@@ -43,6 +44,7 @@ function AppLayout() {
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/editorial-policy" element={<EditorialPolicy />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/login" element={<Login />} />
