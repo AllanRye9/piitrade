@@ -211,16 +211,17 @@ function PatternScanner() {
   // Auto-cycle through pairs every 4 seconds when no manual filter is set
   const allPairs = [...new Set((data?.patterns || []).map(p => p.pair))]
   const [highlightedPair, setHighlightedPair] = useState(null)
+  const idxRef = useRef(0)
 
   useEffect(() => {
     if (pairFilter || allPairs.length === 0) {
       setHighlightedPair(null)
+      idxRef.current = 0
       return
     }
-    let idx = 0
     autoRef.current = setInterval(() => {
-      idx = (idx + 1) % allPairs.length
-      setHighlightedPair(allPairs[idx])
+      idxRef.current = (idxRef.current + 1) % allPairs.length
+      setHighlightedPair(allPairs[idxRef.current])
     }, 4000)
     return () => clearInterval(autoRef.current)
   }, [data, pairFilter])
@@ -342,17 +343,20 @@ function PatternScanner() {
                         </td>
                         <td className="py-2 pr-3 text-xs font-medium">{p.type || p.label || '—'}</td>
                         <td className="py-2 pr-3">
-                          {p.direction && (
-                            <span
-                              className="text-xs font-bold px-2 py-0.5 rounded-full"
-                              style={{
-                                color: dirColor(p.direction),
-                                background: `color-mix(in srgb, ${dirColor(p.direction)} 15%, transparent)`,
-                              }}
-                            >
-                              {p.direction.toUpperCase() === 'BUY' ? '▲' : p.direction.toUpperCase() === 'SELL' ? '▼' : '◆'} {p.direction}
-                            </span>
-                          )}
+                          {p.direction && (() => {
+                            const upperDir = p.direction.toUpperCase()
+                            return (
+                              <span
+                                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                style={{
+                                  color: dirColor(p.direction),
+                                  background: `color-mix(in srgb, ${dirColor(p.direction)} 15%, transparent)`,
+                                }}
+                              >
+                                {upperDir === 'BUY' ? '▲' : upperDir === 'SELL' ? '▼' : '◆'} {p.direction}
+                              </span>
+                            )
+                          })()}
                         </td>
                         <td className="py-2 pr-3"><ImpactBadge impact={p.impact} /></td>
                         <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>

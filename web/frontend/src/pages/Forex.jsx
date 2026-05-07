@@ -62,6 +62,8 @@ function TradingSessionBanner() {
   const hasWarning  = sessions.some(s => s.status === 'ending' || s.status === 'starting')
 
   // Fire sounds when session state transitions happen
+  // Use a stable key (comma-joined statuses) so effect only runs when states change
+  const sessionStateKey = sessions.map(s => s.status).join(',')
   useEffect(() => {
     sessions.forEach(s => {
       const prev = prevStatesRef.current[s.name]
@@ -74,7 +76,7 @@ function TradingSessionBanner() {
       }
       prevStatesRef.current[s.name] = curr
     })
-  }) // intentionally runs every render (every second) to catch transitions
+  }, [sessionStateKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <motion.div
@@ -283,7 +285,7 @@ function PriceRow({ label, value, color, filled, fillLabel }) {
   )
 }
 
-function SignalCard({ signal, onSoundRef }) {
+function SignalCard({ signal }) {
   const prevKeyRef = useRef(null)
   const signalKey = signal ? `${signal.generated_at}-${signal.direction}` : null
 
