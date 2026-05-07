@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import {
+  playSessionStart,
+  playSessionEnd,
+  playEntry,
+} from '../utils/sounds'
 
 // Forex trading sessions in UTC (startH/startM to endH/endM)
 const SESSIONS = [
@@ -39,6 +44,7 @@ function pad2(n) { return String(n).padStart(2, '0') }
 function TradingSessionBanner() {
   const [now, setNow] = useState(() => new Date())
   const timerRef = useRef(null)
+  const prevStatesRef = useRef({})
 
   useEffect(() => {
     timerRef.current = setInterval(() => setNow(new Date()), 1000)
@@ -54,6 +60,23 @@ function TradingSessionBanner() {
   const sessions = SESSIONS.map(s => ({ ...s, ...getSessionInfo(s, nowMin) }))
   const activeCount = sessions.filter(s => s.status === 'active' || s.status === 'ending').length
   const hasWarning  = sessions.some(s => s.status === 'ending' || s.status === 'starting')
+
+  // Fire sounds when session state transitions happen
+  // Use a stable key (comma-joined statuses) so effect only runs when states change
+  const sessionStateKey = sessions.map(s => s.status).join(',')
+  useEffect(() => {
+    sessions.forEach(s => {
+      const prev = prevStatesRef.current[s.name]
+      const curr = s.status
+      if (prev !== undefined && prev !== curr) {
+        const wasActive = prev === 'active' || prev === 'ending'
+        const isActive  = curr === 'active' || curr === 'ending'
+        if (!wasActive && isActive) playSessionStart()
+        if (wasActive && !isActive) playSessionEnd()
+      }
+      prevStatesRef.current[s.name] = curr
+    })
+  }, [sessionStateKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <motion.div
@@ -231,11 +254,30 @@ function ConfidenceBar({ value }) {
   )
 }
 
-function PriceRow({ label, value, color }) {
+function PriceRow({ label, value, color, filled, fillLabel }) {
   return (
     <div className="flex justify-between items-center py-2 border-b"
       style={{ borderColor: 'var(--border)' }}>
-      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</span>
+        {filled != null && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            className="text-xs px-1.5 py-0.5 rounded font-semibold"
+            style={{
+              background: filled
+                ? 'color-mix(in srgb, var(--buy) 18%, transparent)'
+                : 'color-mix(in srgb, var(--sell) 18%, transparent)',
+              color: filled ? 'var(--buy)' : 'var(--sell)',
+              animation: filled ? 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' : 'none',
+            }}
+          >
+            {filled ? `✓ ${fillLabel || 'Filled'}` : `✗ ${fillLabel || 'Open'}`}
+          </motion.span>
+        )}
+      </div>
       <span className="font-mono font-semibold text-sm" style={{ color: color || 'var(--text)' }}>
         {value ?? '—'}
       </span>
@@ -244,6 +286,16 @@ function PriceRow({ label, value, color }) {
 }
 
 function SignalCard({ signal }) {
+  const prevKeyRef = useRef(null)
+  const signalKey = signal ? `${signal.generated_at}-${signal.direction}` : null
+
+  useEffect(() => {
+    if (!signal || signalKey === prevKeyRef.current) return
+    prevKeyRef.current = signalKey
+    const d = signal.direction?.toUpperCase()
+    if (d === 'BUY' || d === 'SELL') playEntry()
+  }, [signal, signalKey])
+
   if (!signal) return null
   return (
     <div className="card">
@@ -273,9 +325,9 @@ function SignalCard({ signal }) {
       <ConfidenceBar value={signal.confidence} />
 
       <div className="mt-4">
-        <PriceRow label="Entry Price" value={signal.entry_price} color="var(--accent)" />
+        <PriceRow label="Entry Price" value={signal.entry_price} color="var(--accent)" filled={true} fillLabel="Active" />
         <PriceRow label="Take Profit" value={signal.take_profit} color="var(--buy)" />
-        <PriceRow label="Stop Loss" value={signal.stop_loss} color="var(--sell)" />
+        <PriceRow label="Stop Loss"   value={signal.stop_loss}   color="var(--sell)" />
       </div>
 
       {signal.accuracy_30d != null && (
@@ -515,33 +567,94 @@ export default function Forex() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b" style={{ borderColor: 'var(--border)' }}>
-                  {['Date', 'Predicted', 'Actual', 'Entry', 'Exit', 'Result'].map(h => (
+                  {['Date / Time', 'Predicted', 'Actual', 'Entry', 'TP/SL Status', 'Exit', 'Result'].map(h => (
                     <th key={h} className="pb-2 pr-4 font-medium text-xs uppercase tracking-wide"
                       style={{ color: 'var(--text-muted)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {signal.history.slice(-10).reverse().map((h, i) => (
-                  <tr key={i} className="border-b" style={{ borderColor: 'var(--border)' }}>
-                    <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {h.day || '—'}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <DirectionBadge direction={h.predicted} />
-                    </td>
-                    <td className="py-2 pr-4">
-                      <DirectionBadge direction={h.actual} />
-                    </td>
-                    <td className="py-2 pr-4 font-mono text-xs">{h.entry ?? '—'}</td>
-                    <td className="py-2 pr-4 font-mono text-xs">{h.exit ?? '—'}</td>
-                    <td className="py-2 text-xs font-semibold" style={{
-                      color: h.correct ? 'var(--buy)' : 'var(--sell)'
-                    }}>
-                      {h.correct ? '✓' : '✗'}
-                    </td>
-                  </tr>
-                ))}
+                {signal.history.slice(-10).reverse().map((h, i) => {
+                  const tpHit = h.correct
+                  const slHit = !h.correct
+                  const postedAt = h.posted_at
+                    ? new Date(h.posted_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                    : h.day || '—'
+                  return (
+                    <motion.tr
+                      key={i}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04, duration: 0.25 }}
+                      className="border-b"
+                      style={{ borderColor: 'var(--border)' }}
+                    >
+                      <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <div>{postedAt}</div>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <DirectionBadge direction={h.predicted} />
+                      </td>
+                      <td className="py-2 pr-4">
+                        <DirectionBadge direction={h.actual} />
+                      </td>
+                      <td className="py-2 pr-4 font-mono text-xs">{h.entry ?? '—'}</td>
+                      <td className="py-2 pr-4">
+                        <div className="flex flex-col gap-1">
+                          {/* Entry fill indicator */}
+                          <motion.span
+                            initial={{ scale: 0.7, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: i * 0.04 + 0.1 }}
+                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                            style={{
+                              background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                              color: 'var(--accent)',
+                            }}
+                          >
+                            ✓ Entry
+                          </motion.span>
+                          {/* TP indicator */}
+                          <motion.span
+                            initial={{ scale: 0.7, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: i * 0.04 + 0.2 }}
+                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                            style={{
+                              background: tpHit
+                                ? 'color-mix(in srgb, var(--buy) 18%, transparent)'
+                                : 'color-mix(in srgb, var(--border) 60%, transparent)',
+                              color: tpHit ? 'var(--buy)' : 'var(--text-muted)',
+                            }}
+                          >
+                            {tpHit ? '✓ TP Hit' : '— TP'}
+                          </motion.span>
+                          {/* SL indicator */}
+                          <motion.span
+                            initial={{ scale: 0.7, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: i * 0.04 + 0.3 }}
+                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                            style={{
+                              background: slHit
+                                ? 'color-mix(in srgb, var(--sell) 18%, transparent)'
+                                : 'color-mix(in srgb, var(--border) 60%, transparent)',
+                              color: slHit ? 'var(--sell)' : 'var(--text-muted)',
+                            }}
+                          >
+                            {slHit ? '✓ SL Hit' : '— SL'}
+                          </motion.span>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4 font-mono text-xs">{h.exit ?? '—'}</td>
+                      <td className="py-2 text-xs font-semibold" style={{
+                        color: h.correct ? 'var(--buy)' : 'var(--sell)'
+                      }}>
+                        {h.correct ? '✓ Win' : '✗ Loss'}
+                      </td>
+                    </motion.tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

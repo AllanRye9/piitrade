@@ -755,9 +755,13 @@ def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[d
         h = int(hashlib.sha256(f"{pair}{dates[i]}".encode()).hexdigest(), 16)
         dirs = ["BUY", "SELL", "HOLD"]
         pred = dirs[(dirs.index(actual) + 1) % 3] if h % 5 == 0 else actual
+        posted_hour = 6 + (h % 12)   # varies 06:00–17:59 UTC per pair/date
+        posted_min  = (h >> 4) % 60
+        posted_time = f"{posted_hour:02d}:{posted_min:02d}:00Z"
         history.append({
             "day": dates[i], "predicted": pred, "actual": actual,
             "correct": pred == actual, "entry": round(prev, dec), "exit": round(curr, dec),
+            "posted_at": dates[i] + "T" + posted_time,
         })
     return history[-30:]
 
@@ -919,9 +923,14 @@ def _build_forex_history(pair: str) -> list[dict[str, Any]]:
         d = (start_day + timedelta(days=i)).isoformat()
         entry = round(price, decimals)
         exit_price = round(price + delta * pip, decimals)
+        h = int(hashlib.sha256(f"{pair}{d}".encode()).hexdigest(), 16)
+        posted_hour = 6 + (h % 12)   # varies 06:00–17:59 UTC per pair/date
+        posted_min  = (h >> 4) % 60
+        posted_time = f"{posted_hour:02d}:{posted_min:02d}:00Z"
         history.append({
             "day": d, "predicted": pred, "actual": actual,
             "correct": pred == actual, "entry": entry, "exit": exit_price,
+            "posted_at": d + "T" + posted_time,
         })
         price = exit_price
     return history

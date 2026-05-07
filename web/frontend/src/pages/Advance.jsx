@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
@@ -195,6 +195,8 @@ function PatternScanner() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [timeframe, setTimeframe] = useState('1h')
+  const [pairFilter, setPairFilter] = useState('')
+  const autoRef = useRef(null)
 
   const load = (tf = timeframe) => {
     setLoading(true)
@@ -206,13 +208,67 @@ function PatternScanner() {
   }
   useEffect(() => { load() }, [])
 
-  const patterns = data?.patterns || []
+  // Auto-cycle through pairs every 4 seconds when no manual filter is set
+  const allPairs = [...new Set((data?.patterns || []).map(p => p.pair))]
+  const [highlightedPair, setHighlightedPair] = useState(null)
+  const idxRef = useRef(0)
+
+  useEffect(() => {
+    if (pairFilter || allPairs.length === 0) {
+      setHighlightedPair(null)
+      idxRef.current = 0
+      return
+    }
+    autoRef.current = setInterval(() => {
+      idxRef.current = (idxRef.current + 1) % allPairs.length
+      setHighlightedPair(allPairs[idxRef.current])
+    }, 4000)
+    return () => clearInterval(autoRef.current)
+  }, [data, pairFilter])
+
+  const patterns = (data?.patterns || []).filter(p =>
+    !pairFilter || p.pair.toLowerCase().includes(pairFilter.toLowerCase())
+  )
+
+  const dirColor = (dir) => {
+    const d = dir?.toUpperCase()
+    if (d === 'BUY')  return 'var(--buy)'
+    if (d === 'SELL') return 'var(--sell)'
+    return 'var(--text-muted)'
+  }
+
+  const dirRowBg = (dir) => {
+    const d = dir?.toUpperCase()
+    if (d === 'BUY')  return 'color-mix(in srgb, var(--buy) 6%, transparent)'
+    if (d === 'SELL') return 'color-mix(in srgb, var(--sell) 6%, transparent)'
+    return 'transparent'
+  }
 
   return (
-    <div className="card">
+    <motion.div
+      className="card"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="font-semibold text-lg">Pattern Scanner</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Pair filter input */}
+          <input
+            type="text"
+            value={pairFilter}
+            onChange={e => setPairFilter(e.target.value)}
+            placeholder="Filter pair…"
+            className="px-3 py-1 rounded text-sm border outline-none font-mono"
+            style={{
+              background: 'var(--surface)',
+              borderColor: pairFilter ? 'var(--accent)' : 'var(--border)',
+              color: 'var(--text)',
+              width: '110px',
+            }}
+          />
+          {/* Timeframe buttons */}
           {['30m', '1h', '4h', '1day'].map(tf => (
             <button
               key={tf}
@@ -226,10 +282,31 @@ function PatternScanner() {
           ))}
         </div>
       </div>
+
+      {/* Auto-cycling pair highlight badge */}
+      <AnimatePresence mode="wait">
+        {!pairFilter && highlightedPair && (
+          <motion.div
+            key={highlightedPair}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.3 }}
+            className="mb-3 flex items-center gap-2"
+          >
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Spotlight →</span>
+            <span className="font-mono font-bold text-sm px-2 py-0.5 rounded"
+              style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}>
+              {highlightedPair}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={() => load()} /> : (
         patterns.length === 0 ? (
           <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>
-            No patterns found for {timeframe}
+            No patterns found{pairFilter ? ` for "${pairFilter}"` : ` for ${timeframe}`}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -243,34 +320,58 @@ function PatternScanner() {
                 </tr>
               </thead>
               <tbody>
-                {patterns.map((p, i) => (
-                  <tr key={i} className="border-b hover:bg-[var(--border)] transition-colors"
-                    style={{ borderColor: 'var(--border)' }}>
-                    <td className="py-2 pr-3 font-mono font-semibold text-xs" style={{ color: 'var(--accent)' }}>
-                      {p.pair}
-                    </td>
-                    <td className="py-2 pr-3 text-xs font-medium">{p.type || p.label || '—'}</td>
-                    <td className="py-2 pr-3">
-                      {p.direction && (
-                        <span className={`text-xs font-bold ${
-                          p.direction?.toUpperCase() === 'BULLISH' ? 'text-[var(--buy)]' : 'text-[var(--sell)]'
-                        }`}>
-                          {p.direction}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-3"><ImpactBadge impact={p.impact} /></td>
-                    <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {p.description || '—'}
-                    </td>
-                  </tr>
-                ))}
+                <AnimatePresence>
+                  {patterns.map((p, i) => {
+                    const isHighlighted = !pairFilter && p.pair === highlightedPair
+                    return (
+                      <motion.tr
+                        key={`${p.pair}-${p.type}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.25 }}
+                        className="border-b transition-colors"
+                        style={{
+                          borderColor: 'var(--border)',
+                          background: isHighlighted
+                            ? `color-mix(in srgb, var(--accent) 8%, ${dirRowBg(p.direction)})`
+                            : dirRowBg(p.direction),
+                        }}
+                      >
+                        <td className="py-2 pr-3 font-mono font-semibold text-xs" style={{ color: 'var(--accent)' }}>
+                          {p.pair}
+                        </td>
+                        <td className="py-2 pr-3 text-xs font-medium">{p.type || p.label || '—'}</td>
+                        <td className="py-2 pr-3">
+                          {p.direction && (() => {
+                            const upperDir = p.direction.toUpperCase()
+                            return (
+                              <span
+                                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                style={{
+                                  color: dirColor(p.direction),
+                                  background: `color-mix(in srgb, ${dirColor(p.direction)} 15%, transparent)`,
+                                }}
+                              >
+                                {upperDir === 'BUY' ? '▲' : upperDir === 'SELL' ? '▼' : '◆'} {p.direction}
+                              </span>
+                            )
+                          })()}
+                        </td>
+                        <td className="py-2 pr-3"><ImpactBadge impact={p.impact} /></td>
+                        <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {p.description || '—'}
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
         )
       )}
-    </div>
+    </motion.div>
   )
 }
 
