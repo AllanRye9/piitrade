@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import { normalizeTradingPairInput } from '../utils/forexPairs'
 
 function TabBar({ tabs, active, onChange }) {
   return (
@@ -39,14 +40,6 @@ function ImpactBadge({ impact }) {
       {impact}
     </span>
   )
-}
-
-function normalizeTradingPairInput(value) {
-  const cleaned = value.trim().toUpperCase().replace(/\s+/g, '').replace(/-/g, '/')
-  if (/^[A-Z]{6}$/.test(cleaned)) {
-    return `${cleaned.slice(0, 3)}/${cleaned.slice(3)}`
-  }
-  return cleaned
 }
 
 function getEventDay(event) {

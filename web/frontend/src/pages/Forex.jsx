@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import { normalizeTradingPairInput } from '../utils/forexPairs'
 import {
   playSessionStart,
   playSessionEnd,
@@ -40,14 +41,6 @@ function getSessionInfo(session, nowMin) {
 }
 
 function pad2(n) { return String(n).padStart(2, '0') }
-
-function normalizeTradingPairInput(value) {
-  const cleaned = value.trim().toUpperCase().replace(/\s+/g, '').replace(/-/g, '/')
-  if (/^[A-Z]{6}$/.test(cleaned)) {
-    return `${cleaned.slice(0, 3)}/${cleaned.slice(3)}`
-  }
-  return cleaned
-}
 
 function TradingSessionBanner() {
   const [now, setNow] = useState(() => new Date())
@@ -357,7 +350,11 @@ function SignalCard({ signal }) {
 }
 
 function UpcomingSignalCard({ pair, signal, onRefresh }) {
-  const outcomeLabel = signal?.signal_outcome === 'take_profit' ? 'take profit' : signal?.signal_outcome === 'stop_loss' ? 'stop loss' : 'its target'
+  const outcomeLabels = {
+    take_profit: 'take profit',
+    stop_loss: 'stop loss',
+  }
+  const outcomeLabel = outcomeLabels[signal?.signal_outcome] || 'its target'
   const lastDirection = signal?.issued_direction?.toUpperCase()
 
   return (

@@ -125,8 +125,12 @@ async def forex_signals(pair: str = "EUR/USD"):
 
         live_rate = core._fetch_live_rate(pair)
         hist_rates = core._fetch_historical_rates(pair, 30)
-        latest_hist_rate = list(hist_rates.values())[-1] if hist_rates else None
-        status_price = live_rate if live_rate is not None else latest_hist_rate if latest_hist_rate is not None else signal.get("entry_price")
+        latest_hist_rate = next(reversed(hist_rates.values())) if hist_rates else None
+        status_price = signal.get("entry_price")
+        if latest_hist_rate is not None:
+            status_price = latest_hist_rate
+        if live_rate is not None:
+            status_price = live_rate
 
         signal_state, signal_outcome = _get_signal_completion_status(issued_signal, status_price)
         signal["issued_direction"] = issued_signal.get("direction")
