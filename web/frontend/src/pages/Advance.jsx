@@ -58,7 +58,7 @@ function eventMatchesTradingPair(event, value) {
     return parts.includes(currency)
   }
 
-  return currency.includes(normalized) || normalized.includes(currency)
+  return normalized === currency
 }
 
 function FVGScanner() {
