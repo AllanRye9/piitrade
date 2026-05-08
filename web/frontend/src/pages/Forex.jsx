@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import { normalizeTradingPairInput } from '../utils/forexPairs'
 import {
   playSessionStart,
   playSessionEnd,
@@ -348,6 +349,36 @@ function SignalCard({ signal }) {
   )
 }
 
+function UpcomingSignalCard({ pair, signal, onRefresh }) {
+  const outcomeLabels = {
+    take_profit: 'take profit',
+    stop_loss: 'stop loss',
+  }
+  const outcomeLabel = outcomeLabels[signal?.signal_outcome] || 'its target'
+  const lastDirection = signal?.issued_direction?.toUpperCase()
+
+  return (
+    <div className="card">
+      <LoadingSpinner text={`Preparing the next AI setup for ${pair}...`} />
+      <div className="mt-2 text-center space-y-2">
+        <p className="text-sm font-medium">
+          The last {lastDirection || 'AI'} signal has already closed at {outcomeLabel}.
+        </p>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          A fresh unfilled signal will appear here as soon as the next setup is ready.
+        </p>
+        <button
+          onClick={onRefresh}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+          style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+        >
+          Check again
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function TechnicalCard({ tech }) {
   if (!tech) return null
   const sr = tech.support_resistance || {}
@@ -444,6 +475,8 @@ function TechnicalCard({ tech }) {
 export default function Forex() {
   const [pairs, setPairs] = useState({ major: [], minor: [], exotic: [], all: [] })
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
+  const [pairInput, setPairInput] = useState('EUR/USD')
+  const [pairInputError, setPairInputError] = useState('')
   const [signal, setSignal] = useState(null)
   const [tech, setTech] = useState(null)
   const [loadingSignal, setLoadingSignal] = useState(false)
@@ -456,6 +489,10 @@ export default function Forex() {
       .then(res => setPairs(res.data))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    setPairInput(selectedPair)
+  }, [selectedPair])
 
   const fetchSignal = useCallback(() => {
     setLoadingSignal(true)
@@ -480,15 +517,74 @@ export default function Forex() {
     fetchTech()
   }, [fetchSignal, fetchTech])
 
+  const availablePairs = useMemo(() => pairs.all || [], [pairs.all])
+
   const groupedPairs = [
     { label: 'Major', pairs: pairs.major || [] },
     { label: 'Minor', pairs: pairs.minor || [] },
     { label: 'Exotic', pairs: pairs.exotic || [] },
   ].filter(g => g.pairs.length > 0)
 
+  const runPairAnalysis = useCallback(() => {
+    const normalizedPair = normalizeTradingPairInput(pairInput)
+    if (!normalizedPair) {
+      setPairInputError('Enter a trading pair such as GBP/JPY.')
+      return
+    }
+    if (availablePairs.length > 0 && !availablePairs.includes(normalizedPair)) {
+      setPairInputError('That trading pair is not supported on the dashboard yet.')
+      return
+    }
+    setPairInput(normalizedPair)
+    setPairInputError('')
+    if (normalizedPair === selectedPair) {
+      fetchSignal()
+      fetchTech()
+      return
+    }
+    setSelectedPair(normalizedPair)
+  }, [availablePairs, fetchSignal, fetchTech, pairInput, selectedPair])
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <TradingSessionBanner />
+      <div className="card mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
+              Analyze a trading pair
+            </label>
+            <input
+              type="text"
+              value={pairInput}
+              onChange={e => {
+                setPairInput(e.target.value)
+                if (pairInputError) setPairInputError('')
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') runPairAnalysis()
+              }}
+              placeholder="e.g. GBP/JPY"
+              className="w-full px-3 py-2.5 rounded-lg text-sm font-mono border outline-none"
+              style={{
+                background: 'var(--surface)',
+                borderColor: pairInputError ? 'var(--sell)' : 'var(--border)',
+                color: 'var(--text)',
+              }}
+            />
+            <p className="text-xs mt-2" style={{ color: pairInputError ? 'var(--sell)' : 'var(--text-muted)' }}>
+              {pairInputError || 'Enter a supported pair to refresh the AI signal and technical analysis.'}
+            </p>
+          </div>
+          <button
+            onClick={runPairAnalysis}
+            className="px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+          >
+            Run analysis
+          </button>
+        </div>
+      </div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Forex Dashboard</h1>
@@ -499,7 +595,10 @@ export default function Forex() {
         <div className="flex items-center gap-3">
           <select
             value={selectedPair}
-            onChange={e => setSelectedPair(e.target.value)}
+            onChange={e => {
+              setSelectedPair(e.target.value)
+              setPairInputError('')
+            }}
             className="px-3 py-2 rounded-lg text-sm font-mono border outline-none"
             style={{
               background: 'var(--surface)',
@@ -539,6 +638,8 @@ export default function Forex() {
             <div className="card"><LoadingSpinner /></div>
           ) : errorSignal ? (
             <div className="card"><ErrorMessage message={errorSignal} onRetry={fetchSignal} /></div>
+          ) : signal?.signal_state === 'filled' ? (
+            <UpcomingSignalCard pair={selectedPair} signal={signal} onRefresh={fetchSignal} />
           ) : (
             <SignalCard signal={signal} />
           )}

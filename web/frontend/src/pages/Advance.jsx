@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import { normalizeTradingPairInput } from '../utils/forexPairs'
 
 function TabBar({ tabs, active, onChange }) {
   return (
@@ -39,6 +40,25 @@ function ImpactBadge({ impact }) {
       {impact}
     </span>
   )
+}
+
+function getEventDay(event) {
+  return (event?.time || '').split(' ')[0] || '—'
+}
+
+function eventMatchesTradingPair(event, value) {
+  const normalized = normalizeTradingPairInput(value)
+  if (!normalized) return true
+
+  const currency = String(event?.currency || '').toUpperCase()
+  if (!currency) return false
+
+  if (normalized.includes('/')) {
+    const parts = normalized.split('/').filter(Boolean)
+    return parts.includes(currency)
+  }
+
+  return normalized === currency
 }
 
 function FVGScanner() {
@@ -379,6 +399,9 @@ function EconomicCalendar() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [impactFilter, setImpactFilter] = useState('all')
+  const [dayFilter, setDayFilter] = useState('all')
+  const [pairFilter, setPairFilter] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -391,6 +414,16 @@ function EconomicCalendar() {
   useEffect(load, [])
 
   const events = data?.events || []
+  const dayOptions = useMemo(() => [...new Set(events.map(getEventDay).filter(Boolean))], [events])
+  const filteredEvents = useMemo(() => (
+    events.filter(ev => {
+      const impactMatches = impactFilter === 'all' || (ev.impact || '').toLowerCase() === impactFilter
+      const dayMatches = dayFilter === 'all' || getEventDay(ev) === dayFilter
+      const pairMatches = eventMatchesTradingPair(ev, pairFilter)
+      return impactMatches && dayMatches && pairMatches
+    })
+  ), [dayFilter, events, impactFilter, pairFilter])
+  const hasActiveFilters = impactFilter !== 'all' || dayFilter !== 'all' || pairFilter.trim() !== ''
 
   return (
     <div className="card">
@@ -399,9 +432,58 @@ function EconomicCalendar() {
         <button onClick={load} className="text-xs px-3 py-1 rounded border hover:border-[var(--accent)] transition-colors"
           style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>↻ Refresh</button>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <select
+          value={impactFilter}
+          onChange={e => setImpactFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg text-sm border outline-none"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+        >
+          <option value="all">All impact</option>
+          <option value="high">High impact</option>
+          <option value="medium">Medium impact</option>
+          <option value="low">Low impact</option>
+        </select>
+        <select
+          value={dayFilter}
+          onChange={e => setDayFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg text-sm border outline-none"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+        >
+          <option value="all">All dates / days</option>
+          {dayOptions.map(day => (
+            <option key={day} value={day}>{day}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={pairFilter}
+          onChange={e => setPairFilter(e.target.value)}
+          placeholder="Filter by pair, e.g. GBP/JPY"
+          className="md:col-span-2 px-3 py-2 rounded-lg text-sm font-mono border outline-none"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+        />
+      </div>
+      {hasActiveFilters && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => {
+              setImpactFilter('all')
+              setDayFilter('all')
+              setPairFilter('')
+            }}
+            className="text-xs px-3 py-1 rounded border hover:border-[var(--accent)] transition-colors"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
       {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={load} /> : (
-        events.length === 0 ? (
-          <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No upcoming events</p>
+        filteredEvents.length === 0 ? (
+          <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>
+            {hasActiveFilters ? 'No events match the current filters' : 'No upcoming events'}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -414,7 +496,7 @@ function EconomicCalendar() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((ev, i) => (
+                {filteredEvents.map((ev, i) => (
                   <tr key={i} className="border-b hover:bg-[var(--border)] transition-colors"
                     style={{ borderColor: 'var(--border)' }}>
                     <td className="py-2 pr-3 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{ev.time || '—'}</td>

@@ -51,6 +51,31 @@ def _get_prices_for_pair(pair: str, days: int = 30) -> list[float]:
     return prices
 
 
+def _get_signal_completion_status(signal: dict[str, Any], current_price: float | None) -> tuple[str, str | None]:
+    """Return whether a BUY/SELL signal is still open or already completed."""
+    direction = str(signal.get("direction") or "").upper()
+    take_profit = signal.get("take_profit")
+    stop_loss = signal.get("stop_loss")
+
+    if current_price is None or direction not in {"BUY", "SELL"}:
+        return "open", None
+    if take_profit is None or stop_loss is None:
+        return "open", None
+
+    if direction == "BUY":
+        if current_price >= take_profit:
+            return "filled", "take_profit"
+        if current_price <= stop_loss:
+            return "filled", "stop_loss"
+        return "open", None
+
+    if current_price <= take_profit:
+        return "filled", "take_profit"
+    if current_price >= stop_loss:
+        return "filled", "stop_loss"
+    return "open", None
+
+
 # Extra commodity instruments included in the movers scanner (live prices via Yahoo Finance)
 _MOVERS_EXTRA_PAIRS = ("XAU/USD", "WTI/USD")
 
@@ -94,11 +119,28 @@ async def forex_signals(pair: str = "EUR/USD"):
                 status_code=400,
             )
 
-        signal: dict[str, Any] = dict(core._FOREX_SIGNALS[pair])
+        issued_signal: dict[str, Any] = dict(core._FOREX_SIGNALS[pair])
+        signal: dict[str, Any] = dict(issued_signal)
         signal["pair"] = pair
 
         live_rate = core._fetch_live_rate(pair)
         hist_rates = core._fetch_historical_rates(pair, 30)
+        latest_hist_rate = next(reversed(hist_rates.values())) if hist_rates else None
+        status_price = signal.get("entry_price")
+        if latest_hist_rate is not None:
+            status_price = latest_hist_rate
+        if live_rate is not None:
+            status_price = live_rate
+
+        signal_state, signal_outcome = _get_signal_completion_status(issued_signal, status_price)
+        signal["issued_direction"] = issued_signal.get("direction")
+        signal["issued_generated_at"] = issued_signal.get("generated_at")
+        signal["issued_entry_price"] = issued_signal.get("entry_price")
+        signal["issued_take_profit"] = issued_signal.get("take_profit")
+        signal["issued_stop_loss"] = issued_signal.get("stop_loss")
+        signal["current_price"] = status_price
+        signal["signal_state"] = signal_state
+        signal["signal_outcome"] = signal_outcome
 
         if live_rate is not None:
             signal["entry_price"] = live_rate
