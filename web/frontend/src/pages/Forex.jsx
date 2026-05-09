@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
-import { normalizeTradingPairInput } from '../utils/forexPairs'
+import { normalizeTradingPairInput, ALL_FOREX_PAIRS } from '../utils/forexPairs'
 import {
   playSessionStart,
   playSessionEnd,
@@ -11,6 +11,13 @@ import {
 } from '../utils/sounds'
 
 const MAX_QUICK_PAIRS = 12
+const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
+
+function getInstrumentTypeFromPair(pair) {
+  const normalized = normalizeTradingPairInput(pair || '')
+  if (normalized.endsWith('/JPY')) return 'jpy'
+  return 'forex'
+}
 
 // Forex trading sessions in UTC (startH/startM to endH/endM)
 const SESSIONS = [
@@ -286,6 +293,44 @@ function PriceRow({ label, value, color, filled, fillLabel }) {
       </span>
     </div>
   )
+}
+
+function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeProfit, pairType }) {
+  const balance = parseFloat(accountBalance) || 0
+  const riskPercent = parseFloat(riskPct) || 0
+  const entry = parseFloat(entryPrice) || 0
+  const sl = parseFloat(stopLoss) || 0
+  const tp = parseFloat(takeProfit) || 0
+
+  if (!balance || !riskPercent || entry <= 0 || sl <= 0) return null
+
+  const riskAmount = balance * (riskPercent / 100)
+  const priceDiffSL = Math.abs(entry - sl)
+  const priceDiffTP = tp ? Math.abs(tp - entry) : null
+  if (!priceDiffSL) return null
+
+  let pipSize = 0.0001
+  let pipValuePerLot = 10
+  let lotSize = 100000
+  if (pairType === 'jpy') {
+    pipSize = 0.01
+    pipValuePerLot = 1000 / entry
+  }
+
+  const slPips = priceDiffSL / pipSize
+  const tpPips = priceDiffTP !== null ? priceDiffTP / pipSize : null
+  const positionSizeLots = riskAmount / (slPips * pipValuePerLot)
+  const positionSizeUnits = positionSizeLots * lotSize
+  const rrRatio = tpPips ? (tpPips / slPips) : null
+
+  return {
+    riskAmount,
+    slPips: slPips.toFixed(1),
+    tpPips: tpPips?.toFixed(1),
+    positionSizeLots: positionSizeLots.toFixed(2),
+    positionSizeUnits,
+    rrRatio: rrRatio?.toFixed(2),
+  }
 }
 
 function SignalCard({ signal }) {
@@ -647,7 +692,6 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
 
 export default function Forex() {
   const [pairs, setPairs] = useState({ major: [], minor: [], exotic: [], all: [] })
-  const [selectedPair, setSelectedPair] = useState('EUR/USD')
   const [pairInput, setPairInput] = useState('EUR/USD')
   const [pairInputError, setPairInputError] = useState('')
   const [signal, setSignal] = useState(null)
@@ -660,8 +704,17 @@ export default function Forex() {
   const [errorTech, setErrorTech] = useState(null)
   // Popup state — analysis is only shown when user clicks Analyze Pair
   const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
-  const [showAllPairs, setShowAllPairs] = useState(false)
   const [analyzedPair, setAnalyzedPair] = useState(null)
+  const [riskWidgetOpen, setRiskWidgetOpen] = useState(false)
+  const [riskWidgetMaximized, setRiskWidgetMaximized] = useState(false)
+  const [riskWidgetOffset, setRiskWidgetOffset] = useState({ x: 0, y: 0 })
+  const [riskBalance, setRiskBalance] = useState('10000')
+  const [riskPct, setRiskPct] = useState('1')
+  const [riskEntry, setRiskEntry] = useState('')
+  const [riskStop, setRiskStop] = useState('')
+  const [riskTake, setRiskTake] = useState('')
+  const [riskPairType, setRiskPairType] = useState('forex')
+  const dragRef = useRef({ pointerId: null, startX: 0, startY: 0, originX: 0, originY: 0 })
 
   useEffect(() => {
     api.get('/api/forex/pairs')
@@ -696,14 +749,42 @@ export default function Forex() {
       .finally(() => setLoadingTech(false))
   }, [])
 
-  const availablePairs = useMemo(() => pairs.all || [], [pairs.all])
+  const groupedPairs = useMemo(() => {
+    const fromApi = [
+      { label: 'Major', pairs: pairs.major || [] },
+      { label: 'Minor', pairs: pairs.minor || [] },
+      { label: 'Exotic', pairs: pairs.exotic || [] },
+    ].filter(g => g.pairs.length > 0)
 
-  const groupedPairs = [
-    { label: 'Major', pairs: pairs.major || [] },
-    { label: 'Minor', pairs: pairs.minor || [] },
-    { label: 'Exotic', pairs: pairs.exotic || [] },
-  ].filter(g => g.pairs.length > 0)
+    if (fromApi.length > 0) return fromApi
+
+    const majorFallback = ALL_FOREX_PAIRS.filter(p => PRIMARY_MAJORS.has(p))
+    const exoticFallback = ALL_FOREX_PAIRS.filter(p => p.includes('USD') && !PRIMARY_MAJORS.has(p))
+    const minorFallback = ALL_FOREX_PAIRS.filter(p => !majorFallback.includes(p) && !exoticFallback.includes(p))
+
+    return [
+      { label: 'Major', pairs: majorFallback },
+      { label: 'Minor', pairs: minorFallback },
+      { label: 'Exotic', pairs: exoticFallback },
+    ]
+  }, [pairs.exotic, pairs.major, pairs.minor])
+
+  const availablePairs = useMemo(() => {
+    const merged = new Set(ALL_FOREX_PAIRS)
+    ;(pairs.all || []).forEach(p => merged.add(p))
+    groupedPairs.forEach(g => g.pairs.forEach(p => merged.add(p)))
+    return Array.from(merged)
+  }, [groupedPairs, pairs.all])
+
   const quickPairs = useMemo(() => (availablePairs || []).slice(0, MAX_QUICK_PAIRS), [availablePairs])
+  const riskResult = useMemo(() => calcRiskPosition({
+    accountBalance: riskBalance,
+    riskPct,
+    entryPrice: riskEntry,
+    stopLoss: riskStop,
+    takeProfit: riskTake,
+    pairType: riskPairType,
+  }), [riskBalance, riskPct, riskEntry, riskStop, riskTake, riskPairType])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -712,20 +793,58 @@ export default function Forex() {
       return
     }
     if (availablePairs.length > 0 && !availablePairs.includes(normalizedPair)) {
-      setPairInputError('That trading pair is not supported on the dashboard yet.')
+      setPairInputError('That trading pair is not supported. Use the quick pair chips or show-more dropdown.')
       return
     }
     setPairInput(normalizedPair)
     setPairInputError('')
-    setSelectedPair(normalizedPair)
     setAnalyzedPair(normalizedPair)
     setSignal(null)
     setTech(null)
     setShowAnalysisPopup(true)
-    setShowAllPairs(false)
     fetchSignalForPair(normalizedPair)
     fetchTechForPair(normalizedPair)
   }, [availablePairs, fetchSignalForPair, fetchTechForPair, pairInput])
+
+  const copySignalToRiskCalculator = useCallback((signalData, pair) => {
+    if (!signalData) return
+    setRiskEntry(signalData.entry_price != null ? String(signalData.entry_price) : '')
+    setRiskStop(signalData.stop_loss != null ? String(signalData.stop_loss) : '')
+    setRiskTake(signalData.take_profit != null ? String(signalData.take_profit) : '')
+    setRiskPairType(getInstrumentTypeFromPair(pair))
+    setRiskWidgetOpen(true)
+  }, [])
+
+  const handleRiskDragStart = useCallback((e) => {
+    dragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: riskWidgetOffset.x,
+      originY: riskWidgetOffset.y,
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }, [riskWidgetOffset.x, riskWidgetOffset.y])
+
+  const handleRiskDragMove = useCallback((e) => {
+    if (dragRef.current.pointerId !== e.pointerId) return
+    const dx = e.clientX - dragRef.current.startX
+    const dy = e.clientY - dragRef.current.startY
+    setRiskWidgetOffset({
+      x: dragRef.current.originX + dx,
+      y: dragRef.current.originY + dy,
+    })
+  }, [])
+
+  const handleRiskDragEnd = useCallback((e) => {
+    if (dragRef.current.pointerId !== e.pointerId) return
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch (err) {
+      // releasePointerCapture may throw DOMException if the capture was auto-released first.
+    }
+    dragRef.current.pointerId = null
+  }, [])
 
   const closePopup = useCallback(() => {
     setShowAnalysisPopup(false)
@@ -743,9 +862,43 @@ export default function Forex() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <TradingSessionBanner />
 
+      <div className="mb-6 rounded-xl border overflow-hidden"
+        style={{
+          borderColor: 'color-mix(in srgb, var(--accent) 45%, var(--border))',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)) 0%, var(--surface) 55%, color-mix(in srgb, var(--buy) 10%, var(--surface)) 100%)',
+          boxShadow: '0 16px 48px color-mix(in srgb, var(--accent) 18%, transparent)',
+        }}>
+        <div className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold">AI Trading Dashboard</h1>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              Live pair intelligence, fast signal execution support, and one-click risk setup.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs px-2 py-1 rounded-full border"
+              style={{ borderColor: 'color-mix(in srgb, var(--buy) 35%, transparent)', color: 'var(--buy)', background: 'color-mix(in srgb, var(--buy) 12%, transparent)' }}>
+              ● Live Feeds
+            </span>
+            <span className="text-xs px-2 py-1 rounded-full border"
+              style={{ borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)', color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }}>
+              AI-Driven
+            </span>
+            <span className="text-xs px-2 py-1 rounded-full border"
+              style={{ borderColor: 'color-mix(in srgb, var(--hold) 35%, transparent)', color: 'var(--hold)', background: 'color-mix(in srgb, var(--hold) 12%, transparent)' }}>
+              Risk-Aware
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* AI-Powered Pair Analysis Search */}
       <div className="mb-6 rounded-xl border overflow-hidden"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        style={{
+          borderColor: 'color-mix(in srgb, var(--accent) 28%, var(--border))',
+          background: 'var(--surface)',
+          boxShadow: '0 10px 36px color-mix(in srgb, var(--accent) 12%, transparent)',
+        }}>
         {/* Header bar */}
         <div className="px-5 py-3 border-b flex items-center gap-2"
           style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
@@ -831,55 +984,30 @@ export default function Forex() {
               ))
             }
           </div>
-          {/* Show all pairs toggle */}
-          {availablePairs.length > MAX_QUICK_PAIRS && (
-            <button
-              onClick={() => setShowAllPairs(v => !v)}
-              className="mt-2 text-xs font-medium underline underline-offset-2 transition-colors hover:opacity-70"
-              style={{ color: 'var(--accent)' }}
+          <div className="mt-3">
+            <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--text-muted)' }}>
+              Show more pairs
+            </label>
+            <select
+              value=""
+              onChange={e => {
+                if (!e.target.value) return
+                setPairInput(e.target.value)
+                setPairInputError('')
+              }}
+              className="w-full md:w-80 px-3 py-2 rounded-lg text-sm font-mono border outline-none"
+              style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
             >
-              {showAllPairs ? '▲ Hide all pairs' : `▼ Show all ${availablePairs.length} pairs`}
-            </button>
-          )}
-          {/* All pairs list */}
-          <AnimatePresence>
-            {showAllPairs && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="mt-3 overflow-hidden"
-              >
-                {groupedPairs.map(({ label, pairs: ps }) => (
-                  <div key={label} className="mb-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide mb-1.5"
-                      style={{ color: 'var(--text-muted)' }}>{label}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {ps.map(p => (
-                        <button
-                          key={p}
-                          onClick={() => {
-                            setPairInput(p)
-                            setPairInputError('')
-                            setShowAllPairs(false)
-                          }}
-                          className="px-2 py-0.5 rounded text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                          style={{
-                            borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
-                            color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                            background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                          }}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <option value="">Select from all {availablePairs.length} supported pairs…</option>
+              {groupedPairs.map(({ label, pairs: groupItems }) => (
+                <optgroup key={label} label={label}>
+                  {groupItems.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -953,6 +1081,20 @@ export default function Forex() {
                       <UpcomingSignalCard pair={analyzedPair} signal={signal} onRefresh={() => fetchSignalForPair(analyzedPair)} />
                     ) : (
                       <SignalCard signal={signal} />
+                    )}
+                    {signal && (
+                      <button
+                        onClick={() => copySignalToRiskCalculator(signal, analyzedPair)}
+                        aria-label="Copy AI signal values to the dashboard risk calculator"
+                        className="mt-3 w-full px-3 py-2 rounded-lg text-sm font-semibold border transition-colors hover:opacity-85"
+                        style={{
+                          borderColor: 'color-mix(in srgb, var(--accent) 35%, var(--border))',
+                          color: 'var(--accent)',
+                          background: 'color-mix(in srgb, var(--accent) 8%, transparent)',
+                        }}
+                      >
+                        🧮 Copy signal to Risk Calculator
+                      </button>
                     )}
                   </div>
                   <div>
@@ -1072,6 +1214,144 @@ export default function Forex() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div
+        className="fixed z-40"
+        style={{
+          right: 20,
+          bottom: 20,
+          transform: `translate(${riskWidgetOffset.x}px, ${riskWidgetOffset.y}px)`,
+        }}
+      >
+        {!riskWidgetOpen && (
+          <button
+            onClick={() => setRiskWidgetOpen(true)}
+            className="w-12 h-12 rounded-full border text-lg shadow-lg transition-transform hover:scale-105"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--accent) 35%, var(--border))',
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, var(--surface)) 0%, var(--surface) 100%)',
+            }}
+            aria-label="Open risk calculator widget"
+            title="Open risk calculator"
+          >
+            <span aria-hidden="true">🧮</span>
+            <span className="sr-only">Open risk calculator</span>
+          </button>
+        )}
+        {riskWidgetOpen && (
+          <div
+            className="rounded-xl border overflow-hidden"
+            style={{
+              width: riskWidgetMaximized ? 420 : 320,
+              borderColor: 'color-mix(in srgb, var(--accent) 30%, var(--border))',
+              background: 'var(--surface)',
+              boxShadow: '0 18px 48px rgba(0,0,0,0.45)',
+            }}
+          >
+            <div
+              className="px-3 py-2 border-b flex items-center justify-between cursor-move select-none"
+              style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 8%, transparent)' }}
+              onPointerDown={handleRiskDragStart}
+              onPointerMove={handleRiskDragMove}
+              onPointerUp={handleRiskDragEnd}
+            >
+              <div className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>🧮 Dashboard Risk Calculator</div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setRiskWidgetMaximized(v => !v)}
+                  className="w-7 h-7 rounded text-xs border"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  title={riskWidgetMaximized ? 'Minimize' : 'Maximize'}
+                >
+                  {riskWidgetMaximized ? '🗕' : '🗖'}
+                </button>
+                <button
+                  onClick={() => setRiskWidgetOpen(false)}
+                  className="w-7 h-7 rounded text-xs border"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  title="Minimize to icon"
+                >
+                  —
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 space-y-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  value={riskBalance}
+                  onChange={e => setRiskBalance(e.target.value)}
+                  placeholder="Balance"
+                  className="px-2 py-2 rounded text-xs font-mono border outline-none"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+                <input
+                  type="number"
+                  value={riskPct}
+                  onChange={e => setRiskPct(e.target.value)}
+                  placeholder="Risk %"
+                  className="px-2 py-2 rounded text-xs font-mono border outline-none"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                <input
+                  type="number"
+                  value={riskEntry}
+                  onChange={e => setRiskEntry(e.target.value)}
+                  placeholder="Entry"
+                  className="px-2 py-2 rounded text-xs font-mono border outline-none"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+                <input
+                  type="number"
+                  value={riskStop}
+                  onChange={e => setRiskStop(e.target.value)}
+                  placeholder="Stop loss"
+                  className="px-2 py-2 rounded text-xs font-mono border outline-none"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+                <input
+                  type="number"
+                  value={riskTake}
+                  onChange={e => setRiskTake(e.target.value)}
+                  placeholder="Take profit (optional)"
+                  className="px-2 py-2 rounded text-xs font-mono border outline-none"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                />
+              </div>
+
+              <select
+                value={riskPairType}
+                onChange={e => setRiskPairType(e.target.value)}
+                className="w-full px-2 py-2 rounded text-xs border outline-none"
+                style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+              >
+                <option value="forex">Forex (non-JPY)</option>
+                <option value="jpy">Forex JPY pairs</option>
+              </select>
+
+              {riskResult ? (
+                <div className="text-xs rounded-lg p-2.5 border space-y-1.5"
+                  style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)' }}>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Risk</span><span className="font-mono">${riskResult.riskAmount.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>SL</span><span className="font-mono">{riskResult.slPips} pips</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Position</span><span className="font-mono">{riskResult.positionSizeUnits.toLocaleString(undefined, { maximumFractionDigits: 0 })} units</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Lots</span><span className="font-mono">{riskResult.positionSizeLots}</span></div>
+                  {riskResult.rrRatio && (
+                    <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>R:R</span><span className="font-mono">1:{riskResult.rrRatio}</span></div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Fill balance, risk %, entry and stop loss to calculate.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
