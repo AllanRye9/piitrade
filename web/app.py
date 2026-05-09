@@ -778,6 +778,8 @@ _SUPPORTED_PAIRS = (
     # ── Exotic pairs ───────────────────────────────────────────────────────────
     "USD/MXN", "USD/NOK", "USD/SEK", "USD/SGD", "USD/HKD",
     "USD/TRY", "USD/ZAR", "USD/CNY",
+    # ── Metals & Crypto ────────────────────────────────────────────────────────
+    "XAU/USD", "BTC/USD", "ETH/USD",
 )
 
 
@@ -835,6 +837,10 @@ _FOREX_SIGNALS: dict[str, dict[str, Any]] = {
     "USD/TRY": {"direction": "BUY",  "confidence": 72.6, "entry_price": 38.4500,"take_profit": 39.2000,"stop_loss": 38.0500, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "USD/ZAR": {"direction": "BUY",  "confidence": 65.9, "entry_price": 18.7200,"take_profit": 19.1000,"stop_loss": 18.5000, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
     "USD/CNY": {"direction": "BUY",  "confidence": 58.7, "entry_price": 7.2368, "take_profit": 7.2800, "stop_loss": 7.2100, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    # ── Metals & Crypto ────────────────────────────────────────────────────────
+    "XAU/USD": {"direction": "BUY",  "confidence": 69.4, "entry_price": 3208.40, "take_profit": 3242.00, "stop_loss": 3186.50, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "BTC/USD": {"direction": "BUY",  "confidence": 73.8, "entry_price": 102450.0, "take_profit": 106800.0, "stop_loss": 99550.0, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
+    "ETH/USD": {"direction": "SELL", "confidence": 66.1, "entry_price": 3225.40, "take_profit": 3090.00, "stop_loss": 3318.00, "generated_at": "2026-04-03T09:00:00Z", "model_version": "LightGBM v2.3", "features_used": _FEATURES_DEFAULT},
 }
 
 _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]] = {
@@ -905,6 +911,9 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/CNY": (7.2200, 0.0001, _gen_seq("USD/CNY")),
     # ── Commodities (static fallback – live prices come from Yahoo Finance) ───
     "XAU/USD": (3200.00, 0.01, _gen_seq("XAU/USD")),
+    # ── Crypto (static fallback – live prices come from CoinGecko/Yahoo) ─────
+    "BTC/USD": (101500.0, 1.0, _gen_seq("BTC/USD")),
+    "ETH/USD": (3180.00, 0.01, _gen_seq("ETH/USD")),
     "WTI/USD": (70.00,   0.01, _gen_seq("WTI/USD")),
 }
 

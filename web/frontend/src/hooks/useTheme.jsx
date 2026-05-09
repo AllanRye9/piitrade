@@ -5,7 +5,10 @@ const ThemeContext = createContext(null)
 const THEMES = ['dark', 'ocean', 'light']
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme')
+    return THEMES.includes(saved) ? saved : 'dark'
+  })
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)

@@ -66,6 +66,7 @@ function FVGScanner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [tab, setTab] = useState('approaching')
+  const [pairFilter, setPairFilter] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -78,13 +79,15 @@ function FVGScanner() {
   useEffect(load, [])
 
   const grouped = data?.grouped || {}
-  const tabs = ['approaching', 'reached', 'passed', 'rejected'].map(k => ({
+  const tabs = ['approaching', 'reached', 'rejected'].map(k => ({
     key: k,
     label: k.charAt(0).toUpperCase() + k.slice(1),
     count: (grouped[k] || []).length,
   }))
 
-  const items = grouped[tab] || []
+  const items = (grouped[tab] || []).filter(item =>
+    !pairFilter || (item.pair || '').toLowerCase().includes(pairFilter.toLowerCase())
+  )
 
   return (
     <div className="card">
@@ -96,9 +99,19 @@ function FVGScanner() {
       {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={load} /> : (
         <>
           <TabBar tabs={tabs} active={tab} onChange={setTab} />
+          <div className="mb-4">
+            <input
+              type="text"
+              value={pairFilter}
+              onChange={e => setPairFilter(e.target.value)}
+              placeholder="Filter pair, e.g. BTC/USD"
+              className="w-full md:w-64 px-3 py-2 rounded-lg text-sm font-mono border outline-none"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+            />
+          </div>
           {items.length === 0 ? (
             <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>
-              No {tab} FVG zones found
+              No {tab} FVG zones found{pairFilter ? ` for "${pairFilter}"` : ''}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -143,6 +156,7 @@ function SRBreakouts() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [tab, setTab] = useState('soon_touching')
+  const [pairFilter, setPairFilter] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -157,11 +171,11 @@ function SRBreakouts() {
   const groups = data?.sr_groups || {}
   const tabs = [
     { key: 'soon_touching', label: 'Soon Touching' },
-    { key: 'touched', label: 'Touched' },
-    { key: 'broke', label: 'Broke' },
   ].map(t => ({ ...t, count: (groups[t.key] || []).length }))
 
-  const items = groups[tab] || []
+  const items = (groups[tab] || []).filter(item =>
+    !pairFilter || (item.pair || '').toLowerCase().includes(pairFilter.toLowerCase())
+  )
 
   return (
     <div className="card">
@@ -173,9 +187,19 @@ function SRBreakouts() {
       {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={load} /> : (
         <>
           <TabBar tabs={tabs} active={tab} onChange={setTab} />
+          <div className="mb-4">
+            <input
+              type="text"
+              value={pairFilter}
+              onChange={e => setPairFilter(e.target.value)}
+              placeholder="Filter pair, e.g. XAU/USD"
+              className="w-full md:w-64 px-3 py-2 rounded-lg text-sm font-mono border outline-none"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
+            />
+          </div>
           {items.length === 0 ? (
             <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>
-              No {tab.replace('_', ' ')} breakouts found
+              No {tab.replace('_', ' ')} breakouts found{pairFilter ? ` for "${pairFilter}"` : ''}
             </p>
           ) : (
             <div className="overflow-x-auto">

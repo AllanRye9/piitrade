@@ -382,7 +382,7 @@ function UpcomingSignalCard({ pair, signal, onRefresh }) {
 function TechnicalCard({ tech }) {
   if (!tech) return null
   const sr = tech.support_resistance || {}
-  const fvgs = tech.fvg || []
+  const fvgs = (tech.fvg || []).filter(f => !f.filled)
   const bos = tech.bos || []
   const choch = tech.choch || []
   const hvz = tech.high_volume_zones || []
@@ -486,7 +486,18 @@ export default function Forex() {
 
   useEffect(() => {
     api.get('/api/forex/pairs')
-      .then(res => setPairs(res.data))
+      .then(res => {
+        const nextPairs = res.data
+        const freshPairs = nextPairs?.all || []
+        setPairs(nextPairs)
+        if (freshPairs.length > 0) {
+          setSelectedPair(prev => (freshPairs.includes(prev) ? prev : freshPairs[0]))
+          setPairInput(prev => {
+            const normalized = normalizeTradingPairInput(prev)
+            return freshPairs.includes(normalized) ? normalized : freshPairs[0]
+          })
+        }
+      })
       .catch(() => {})
   }, [])
 
@@ -524,6 +535,7 @@ export default function Forex() {
     { label: 'Minor', pairs: pairs.minor || [] },
     { label: 'Exotic', pairs: pairs.exotic || [] },
   ].filter(g => g.pairs.length > 0)
+  const quickPairs = useMemo(() => (availablePairs || []).slice(0, 12), [availablePairs])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -557,6 +569,7 @@ export default function Forex() {
             <input
               type="text"
               value={pairInput}
+              list="pair-suggestions"
               onChange={e => {
                 setPairInput(e.target.value)
                 if (pairInputError) setPairInputError('')
@@ -572,9 +585,37 @@ export default function Forex() {
                 color: 'var(--text)',
               }}
             />
+            <datalist id="pair-suggestions">
+              {availablePairs.map(p => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
             <p className="text-xs mt-2" style={{ color: pairInputError ? 'var(--sell)' : 'var(--text-muted)' }}>
-              {pairInputError || 'Enter a supported pair to refresh the AI signal and technical analysis.'}
+              {pairInputError || 'Type or pick a supported pair to quickly find fresh, unfilled setups.'}
             </p>
+            {quickPairs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {quickPairs.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => {
+                      setPairInput(p)
+                      setPairInputError('')
+                      if (p === selectedPair) {
+                        fetchSignal()
+                        fetchTech()
+                      } else {
+                        setSelectedPair(p)
+                      }
+                    }}
+                    className="text-xs px-2.5 py-1 rounded border hover:border-[var(--accent)] transition-colors font-mono"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button
             onClick={runPairAnalysis}
@@ -661,7 +702,7 @@ export default function Forex() {
       </div>
 
       {/* Signal History */}
-      {signal?.history && signal.history.length > 0 && (
+      {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
         <div className="mt-6 card">
           <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
           <div className="overflow-x-auto">
