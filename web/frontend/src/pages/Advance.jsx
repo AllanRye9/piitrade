@@ -543,16 +543,231 @@ function EconomicCalendar() {
   )
 }
 
+function EventsCalendar() {
+  const MAX_CALENDAR_COLUMNS = 5
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [activePopup, setActivePopup] = useState(null)
+
+  const load = () => {
+    setLoading(true)
+    setError(null)
+    api.get('/api/forex/economic-calendar')
+      .then(res => setData(res.data))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
+  }
+  useEffect(load, [])
+
+  // Group events by day abbreviation
+  const grouped = useMemo(() => {
+    const events = data?.events || []
+    const map = {}
+    for (const ev of events) {
+      const day = (ev.time || '').split(' ')[0] || '—'
+      if (!map[day]) map[day] = []
+      map[day].push(ev)
+    }
+    return map
+  }, [data])
+
+  const days = Object.keys(grouped)
+
+  const impactColor = (impact) => {
+    const i = (impact || '').toLowerCase()
+    if (i === 'high') return '#f85149'      // red
+    if (i === 'medium') return '#3b82f6'    // blue
+    return '#6b7280'                         // grey/low
+  }
+
+  const impactBg = (impact) => {
+    const i = (impact || '').toLowerCase()
+    if (i === 'high') return 'color-mix(in srgb, #f85149 12%, transparent)'
+    if (i === 'medium') return 'color-mix(in srgb, #3b82f6 12%, transparent)'
+    return 'color-mix(in srgb, #6b7280 10%, transparent)'
+  }
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="font-semibold text-lg flex items-center gap-2">
+            📅 Events Calendar
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Weekly economic events. Click or hover an event for details.
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Legend */}
+          <div className="hidden sm:flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#f85149' }} />
+              <span style={{ color: 'var(--text-muted)' }}>High</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#3b82f6' }} />
+              <span style={{ color: 'var(--text-muted)' }}>Medium</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#6b7280' }} />
+              <span style={{ color: 'var(--text-muted)' }}>Low</span>
+            </span>
+          </div>
+          <button onClick={load} className="text-xs px-3 py-1 rounded border hover:border-[var(--accent)] transition-colors"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>↻ Refresh</button>
+        </div>
+      </div>
+
+      {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={load} /> : (
+        days.length === 0 ? (
+          <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No events found this week.</p>
+        ) : (
+          <div className="grid gap-3"
+            style={{ gridTemplateColumns: `repeat(${Math.min(days.length, MAX_CALENDAR_COLUMNS)}, minmax(0, 1fr))` }}>
+            {days.map(day => {
+              const events = grouped[day] || []
+              const highCount = events.filter(e => (e.impact || '').toLowerCase() === 'high').length
+              const midCount = events.filter(e => (e.impact || '').toLowerCase() === 'medium').length
+              return (
+                <div key={day} className="rounded-xl border overflow-hidden"
+                  style={{ borderColor: 'var(--border)' }}>
+                  {/* Day header */}
+                  <div className="px-3 py-2 border-b flex items-center justify-between"
+                    style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--border) 50%, transparent)' }}>
+                    <span className="font-bold text-sm">{day}</span>
+                    <div className="flex gap-1">
+                      {highCount > 0 && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                          style={{ background: 'color-mix(in srgb, #f85149 15%, transparent)', color: '#f85149' }}>
+                          {highCount}
+                        </span>
+                      )}
+                      {midCount > 0 && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                          style={{ background: 'color-mix(in srgb, #3b82f6 15%, transparent)', color: '#3b82f6' }}>
+                          {midCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Events */}
+                  <div className="p-2 flex flex-col gap-1.5">
+                    {events.map((ev, i) => {
+                      const popupKey = `${day}-${i}`
+                      const isOpen = activePopup === popupKey
+                      const color = impactColor(ev.impact)
+                      const bg = impactBg(ev.impact)
+                      return (
+                        <div key={i} className="relative">
+                          <button
+                            onClick={() => setActivePopup(isOpen ? null : popupKey)}
+                            className="w-full text-left rounded-lg px-2 py-1.5 border transition-all"
+                            style={{
+                              background: isOpen ? bg : 'transparent',
+                              borderColor: isOpen ? color : 'transparent',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = bg
+                              e.currentTarget.style.borderColor = color
+                            }}
+                            onMouseLeave={e => {
+                              if (!isOpen) {
+                                e.currentTarget.style.background = 'transparent'
+                                e.currentTarget.style.borderColor = 'transparent'
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ background: color }} />
+                              <span className="text-xs font-mono font-bold"
+                                style={{ color: 'var(--accent)' }}>
+                                {ev.currency}
+                              </span>
+                            </div>
+                            <p className="text-xs mt-0.5 leading-tight line-clamp-2"
+                              style={{ color: 'var(--text)' }}>
+                              {ev.event}
+                            </p>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                              {(ev.time || '').split(' ')[1] || ev.time}
+                            </p>
+                          </button>
+
+                          {/* Popup */}
+                          <AnimatePresence>
+                            {isOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute z-40 left-0 mt-1 w-64 rounded-xl border shadow-xl"
+                                style={{
+                                  background: 'var(--surface)',
+                                  borderColor: color,
+                                  boxShadow: `0 8px 32px color-mix(in srgb, ${color} 20%, transparent)`,
+                                }}
+                              >
+                                <div className="p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-bold text-sm">{ev.currency}</span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase"
+                                      style={{ background: impactBg(ev.impact), color }}>
+                                      {ev.impact}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm font-medium mb-3">{ev.event}</p>
+                                  <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                                    <div className="rounded-lg p-2" style={{ background: 'var(--bg)' }}>
+                                      <div className="font-semibold" style={{ color: ev.actual ? 'var(--buy)' : 'var(--text-muted)' }}>
+                                        {ev.actual || '—'}
+                                      </div>
+                                      <div style={{ color: 'var(--text-muted)' }}>Actual</div>
+                                    </div>
+                                    <div className="rounded-lg p-2" style={{ background: 'var(--bg)' }}>
+                                      <div className="font-semibold">{ev.forecast || '—'}</div>
+                                      <div style={{ color: 'var(--text-muted)' }}>Forecast</div>
+                                    </div>
+                                    <div className="rounded-lg p-2" style={{ background: 'var(--bg)' }}>
+                                      <div className="font-semibold">{ev.previous || '—'}</div>
+                                      <div style={{ color: 'var(--text-muted)' }}>Previous</div>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>
+                                    {ev.time}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 export default function Advance() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Advanced Analysis</h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          FVG Scanner, S/R Breakouts, Pattern Scanner, Economic Calendar
+          FVG Scanner, S/R Breakouts, Pattern Scanner, Events Calendar, Economic Data
         </p>
       </div>
       <div className="flex flex-col gap-6">
+        <EventsCalendar />
         <FVGScanner />
         <SRBreakouts />
         <PatternScanner />

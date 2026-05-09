@@ -474,6 +474,176 @@ function TechnicalCard({ tech }) {
   )
 }
 
+function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents }) {
+  const currencies = pair ? pair.split('/').filter(Boolean) : []
+
+  const relatedNews = useMemo(() => {
+    if (!news || !news.length) return []
+    return news.filter(n => {
+      const text = `${n.headline} ${n.summary}`.toUpperCase()
+      return currencies.some(c => text.includes(c))
+    }).slice(0, 4)
+  }, [news, currencies])
+
+  const relatedEvents = useMemo(() => {
+    if (!calendarEvents || !calendarEvents.length) return []
+    return calendarEvents.filter(ev => {
+      const cur = (ev.currency || '').toUpperCase()
+      return currencies.includes(cur)
+    }).slice(0, 6)
+  }, [calendarEvents, currencies])
+
+  const aiSummary = useMemo(() => {
+    if (!signal) return null
+    const dir = (signal.direction || 'HOLD').toUpperCase()
+    const conf = Number(signal.confidence || 50).toFixed(1)
+    const sr = tech?.support_resistance || {}
+    const supportLevels = (sr.support || []).slice(0, 2)
+    const resistanceLevels = (sr.resistance || []).slice(0, 2)
+    const highEvents = (relatedEvents || []).filter(e => (e.impact || '').toLowerCase() === 'high')
+
+    let lines = []
+
+    if (dir === 'BUY') {
+      lines.push(`📈 The AI model signals a BUY opportunity on ${pair} with ${conf}% confidence, indicating bullish momentum in current market conditions.`)
+    } else if (dir === 'SELL') {
+      lines.push(`📉 The AI model signals a SELL setup on ${pair} with ${conf}% confidence, reflecting bearish pressure in the current structure.`)
+    } else {
+      lines.push(`◆ The AI model is neutral on ${pair} (${conf}% confidence). The market lacks a clear directional bias at this time.`)
+    }
+
+    if (supportLevels.length > 0) {
+      lines.push(`🔵 Key support is identified near ${supportLevels.join(', ')} — watch for price reactions at these levels.`)
+    }
+    if (resistanceLevels.length > 0) {
+      lines.push(`🔴 Resistance sits around ${resistanceLevels.join(', ')} — a break above could accelerate the move.`)
+    }
+    if (highEvents.length > 0) {
+      const eventNames = highEvents.map(e => e.event).join(', ')
+      lines.push(`⚠️ High-impact news upcoming: ${eventNames}. Consider reducing position size or waiting for the release.`)
+    } else {
+      lines.push(`✅ No high-impact economic events are currently scheduled for these currencies — cleaner technical conditions.`)
+    }
+
+    const sentiments = (relatedNews || []).map(n => n.sentiment).filter(Boolean)
+    const bullish = sentiments.filter(s => s === 'bullish').length
+    const bearish = sentiments.filter(s => s === 'bearish').length
+    if (bullish > bearish) {
+      lines.push(`📰 News sentiment for ${currencies.join('/')} is predominantly bullish, supporting the technical outlook.`)
+    } else if (bearish > bullish) {
+      lines.push(`📰 News sentiment for ${currencies.join('/')} leans bearish — fundamental headwinds may add selling pressure.`)
+    } else if (sentiments.length > 0) {
+      lines.push(`📰 News sentiment is mixed — monitor headlines closely before executing.`)
+    }
+
+    return lines
+  }, [signal, tech, relatedNews, relatedEvents, pair, currencies])
+
+  if (!signal && !tech) return null
+
+  return (
+    <motion.div
+      className="card mb-6"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xl">🤖</span>
+        <h2 className="font-bold text-base">AI-Powered Analysis — {pair}</h2>
+        <span className="text-xs px-2 py-0.5 rounded-full font-medium ml-auto"
+          style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}>
+          Fundamental + Technical
+        </span>
+      </div>
+
+      {/* AI Summary */}
+      {aiSummary && (
+        <div className="mb-5 p-4 rounded-lg border-l-4"
+          style={{ background: 'color-mix(in srgb, var(--accent) 6%, transparent)', borderColor: 'var(--accent)' }}>
+          <div className="space-y-2">
+            {aiSummary.map((line, i) => (
+              <p key={i} className="text-sm leading-relaxed">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Related News */}
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: 'var(--text-muted)' }}>
+            📰 Fundamental News ({relatedNews.length})
+          </h3>
+          {relatedNews.length === 0 ? (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No recent news for {pair} currencies.</p>
+          ) : (
+            <div className="space-y-2">
+              {relatedNews.map((n, i) => {
+                const sentColor = n.sentiment === 'bullish' ? 'var(--buy)' : n.sentiment === 'bearish' ? 'var(--sell)' : 'var(--text-muted)'
+                return (
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+                    className="block p-2.5 rounded-lg border transition-colors hover:border-[var(--accent)]"
+                    style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-xs font-medium leading-snug line-clamp-2">{n.headline}</p>
+                      <span className="text-xs font-semibold shrink-0 capitalize"
+                        style={{ color: sentColor }}>
+                        {n.sentiment || '—'}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <span>{n.source}</span>
+                      {n.published_at && <span>· {n.published_at}</span>}
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Related Economic Events */}
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: 'var(--text-muted)' }}>
+            📅 Upcoming Events ({relatedEvents.length})
+          </h3>
+          {relatedEvents.length === 0 ? (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No upcoming events for {currencies.join('/')}.</p>
+          ) : (
+            <div className="space-y-2">
+              {relatedEvents.map((ev, i) => {
+                const impact = (ev.impact || '').toLowerCase()
+                const impactColor = impact === 'high' ? 'var(--sell)' : impact === 'medium' ? '#3b82f6' : 'var(--text-muted)'
+                return (
+                  <div key={i} className="p-2.5 rounded-lg border"
+                    style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium truncate mr-2">{ev.event}</span>
+                      <span className="text-xs font-bold shrink-0 uppercase"
+                        style={{ color: impactColor }}>
+                        {ev.impact}
+                      </span>
+                    </div>
+                    <div className="flex gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <span className="font-mono font-bold" style={{ color: 'var(--accent)' }}>{ev.currency}</span>
+                      <span>{ev.time}</span>
+                      {ev.forecast && <span>Fcst: {ev.forecast}</span>}
+                      {ev.previous && <span>Prev: {ev.previous}</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function Forex() {
   const [pairs, setPairs] = useState({ major: [], minor: [], exotic: [], all: [] })
   const [selectedPair, setSelectedPair] = useState('EUR/USD')
@@ -481,6 +651,8 @@ export default function Forex() {
   const [pairInputError, setPairInputError] = useState('')
   const [signal, setSignal] = useState(null)
   const [tech, setTech] = useState(null)
+  const [news, setNews] = useState([])
+  const [calendarEvents, setCalendarEvents] = useState([])
   const [loadingSignal, setLoadingSignal] = useState(false)
   const [loadingTech, setLoadingTech] = useState(false)
   const [errorSignal, setErrorSignal] = useState(null)
@@ -500,6 +672,12 @@ export default function Forex() {
           })
         }
       })
+      .catch(() => {})
+    api.get('/api/forex/news')
+      .then(res => setNews(res.data?.news || []))
+      .catch(() => {})
+    api.get('/api/forex/economic-calendar')
+      .then(res => setCalendarEvents(res.data?.events || []))
       .catch(() => {})
   }, [])
 
@@ -562,77 +740,87 @@ export default function Forex() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <TradingSessionBanner />
-      <div className="card mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-          <div className="flex-1">
-            <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
-              Analyze a trading pair
-            </label>
-            <input
-              type="text"
-              value={pairInput}
-              list="pair-suggestions"
-              onChange={e => {
-                setPairInput(e.target.value)
-                if (pairInputError) setPairInputError('')
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') runPairAnalysis()
-              }}
-              placeholder="e.g. GBP/JPY"
-              className="w-full px-3 py-2.5 rounded-lg text-sm font-mono border outline-none"
-              style={{
-                background: 'var(--surface)',
-                borderColor: pairInputError ? 'var(--sell)' : 'var(--border)',
-                color: 'var(--text)',
-              }}
-            />
-            <datalist id="pair-suggestions">
-              {availablePairs.map(p => (
-                <option key={p} value={p} />
-              ))}
-            </datalist>
-            <p className="text-xs mt-2" style={{ color: pairInputError ? 'var(--sell)' : 'var(--text-muted)' }}>
-              {pairInputError || 'Type or pick a supported pair to quickly view open trading opportunities.'}
-            </p>
-            {quickPairs.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {quickPairs.map(p => (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      setPairInput(p)
-                      setPairInputError('')
-                      if (p === selectedPair) {
-                        fetchSignal()
-                        fetchTech()
-                      } else {
-                        setSelectedPair(p)
-                      }
-                    }}
-                    className="text-xs px-2.5 py-1 rounded border hover:border-[var(--accent)] transition-colors font-mono"
-                    style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
+
+      {/* AI-Powered Pair Analysis Search */}
+      <div className="mb-6 rounded-xl border overflow-hidden"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        {/* Header bar */}
+        <div className="px-5 py-3 border-b flex items-center gap-2"
+          style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
+          <span className="text-base">🤖</span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>AI-Powered Pair Analysis</span>
+          <span className="text-xs ml-2 px-2 py-0.5 rounded-full"
+            style={{ background: 'color-mix(in srgb, var(--buy) 15%, transparent)', color: 'var(--buy)' }}>
+            ● Live
+          </span>
+        </div>
+        {/* Search area */}
+        <div className="p-5">
+          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+            Enter a forex pair to get a full technical + fundamental AI analysis including news, market events, signals, support/resistance, and pattern insights.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base select-none">🔍</span>
+              <input
+                type="text"
+                value={pairInput}
+                onChange={e => {
+                  setPairInput(e.target.value)
+                  if (pairInputError) setPairInputError('')
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') runPairAnalysis()
+                }}
+                placeholder="e.g. EUR/USD, GBP/JPY, XAU/USD…"
+                className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-mono border-2 outline-none transition-colors"
+                style={{
+                  background: 'var(--bg)',
+                  borderColor: pairInputError ? 'var(--sell)' : 'color-mix(in srgb, var(--accent) 40%, var(--border))',
+                  color: 'var(--text)',
+                }}
+              />
+            </div>
+            <motion.button
+              onClick={runPairAnalysis}
+              whileTap={{ scale: 0.97 }}
+              className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-85 flex items-center gap-2 justify-center shrink-0"
+              style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+            >
+              <span>Analyze Pair</span>
+              <span>→</span>
+            </motion.button>
           </div>
-          <button
-            onClick={runPairAnalysis}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
-          >
-            Run analysis
-          </button>
+          {pairInputError && (
+            <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--sell)' }}>
+              <span>⚠</span> {pairInputError}
+            </p>
+          )}
+          {/* Quick pair chips */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {['EUR/USD', 'GBP/USD', 'USD/JPY', 'GBP/JPY', 'XAU/USD', 'BTC/USD'].map(p => (
+              <button
+                key={p}
+                onClick={() => { setPairInput(p); setPairInputError('') }}
+                className="px-2.5 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                style={{
+                  borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
+                  color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                  background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Forex Dashboard</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            AI-powered signals with technical analysis
+            AI-powered signals with technical + fundamental analysis
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -702,6 +890,19 @@ export default function Forex() {
           )}
         </div>
       </div>
+
+      {/* AI Full Analysis Panel */}
+      {(signal || tech) && (
+        <div className="mt-6">
+          <AIAnalysisPanel
+            pair={selectedPair}
+            signal={signal}
+            tech={tech}
+            news={news}
+            calendarEvents={calendarEvents}
+          />
+        </div>
+      )}
 
       {/* Signal History */}
       {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
