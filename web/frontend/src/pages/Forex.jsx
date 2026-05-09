@@ -14,6 +14,28 @@ const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD
 const MIN_FAVORABLE_RR_RATIO = 2
 const RISK_WIDGET_MOBILE_HELP = 'Positioned below the trading pairs for quick mobile access.'
 const RISK_WIDGET_DESKTOP_HELP = 'Drag from this header to reposition the calculator.'
+const RISK_WIDGET_EDGE_GAP = 12
+const RISK_WIDGET_TOP_GAP = 72
+
+function getPairCategory(pair) {
+  const normalized = normalizeTradingPairInput(pair || '')
+  if (!normalized) return 'Minor'
+  if (PRIMARY_MAJORS.has(normalized)) return 'Major'
+  if (normalized.includes('USD')) return 'Exotic'
+  return 'Minor'
+}
+
+function sortPairsByCoverageOrder(items) {
+  const order = new Map(ALL_FOREX_PAIRS.map((pair, index) => [pair, index]))
+  return Array.from(new Set(items)).sort((a, b) => {
+    const aIndex = order.get(a)
+    const bIndex = order.get(b)
+    if (aIndex != null && bIndex != null) return aIndex - bIndex
+    if (aIndex != null) return -1
+    if (bIndex != null) return 1
+    return a.localeCompare(b)
+  })
+}
 
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -767,6 +789,7 @@ export default function Forex() {
   const [riskTake, setRiskTake] = useState('')
   const [riskPairType, setRiskPairType] = useState('forex')
   const [isMobileRiskLayout, setIsMobileRiskLayout] = useState(false)
+  const riskWidgetRef = useRef(null)
   const dragRef = useRef({ pointerId: null, startX: 0, startY: 0, originX: 0, originY: 0 })
 
   useEffect(() => {
@@ -803,31 +826,51 @@ export default function Forex() {
   }, [])
 
   const groupedPairs = useMemo(() => {
-    const fromApi = [
-      { label: 'Major', pairs: pairs.major || [] },
-      { label: 'Minor', pairs: pairs.minor || [] },
-      { label: 'Exotic', pairs: pairs.exotic || [] },
-    ].filter(g => g.pairs.length > 0)
+    const grouped = {
+      Major: new Set(),
+      Minor: new Set(),
+      Exotic: new Set(),
+    }
 
-    if (fromApi.length > 0) return fromApi
+    const addPair = (pair, forcedCategory) => {
+      const normalized = normalizeTradingPairInput(pair || '')
+      if (!normalized) return
+      const category = forcedCategory || getPairCategory(normalized)
+      grouped[category].add(normalized)
+    }
 
-    const majorFallback = ALL_FOREX_PAIRS.filter(p => PRIMARY_MAJORS.has(p))
-    const exoticFallback = ALL_FOREX_PAIRS.filter(p => p.includes('USD') && !PRIMARY_MAJORS.has(p))
-    const minorFallback = ALL_FOREX_PAIRS.filter(p => !majorFallback.includes(p) && !exoticFallback.includes(p))
+    ALL_FOREX_PAIRS.forEach(pair => addPair(pair))
+    ;(pairs.all || []).forEach(pair => addPair(pair))
+    ;(pairs.major || []).forEach(pair => addPair(pair, 'Major'))
+    ;(pairs.minor || []).forEach(pair => addPair(pair, 'Minor'))
+    ;(pairs.exotic || []).forEach(pair => addPair(pair, 'Exotic'))
 
-    return [
-      { label: 'Major', pairs: majorFallback },
-      { label: 'Minor', pairs: minorFallback },
-      { label: 'Exotic', pairs: exoticFallback },
-    ]
-  }, [pairs.exotic, pairs.major, pairs.minor])
+    return ['Major', 'Minor', 'Exotic'].map(label => ({
+      label,
+      pairs: sortPairsByCoverageOrder(Array.from(grouped[label])),
+    })).filter(group => group.pairs.length > 0)
+  }, [pairs.all, pairs.exotic, pairs.major, pairs.minor])
 
   const availablePairs = useMemo(() => {
-    const merged = new Set(ALL_FOREX_PAIRS)
-    ;(pairs.all || []).forEach(p => merged.add(p))
-    groupedPairs.forEach(g => g.pairs.forEach(p => merged.add(p)))
-    return Array.from(merged)
-  }, [groupedPairs, pairs.all])
+    const merged = new Set()
+    groupedPairs.forEach(group => group.pairs.forEach(pair => merged.add(pair)))
+    return sortPairsByCoverageOrder(Array.from(merged))
+  }, [groupedPairs])
+
+  const pairCategoryStats = useMemo(() => {
+    const totalPairs = availablePairs.length || 1
+    const tones = {
+      Major: { accent: 'var(--accent)', icon: '👑' },
+      Minor: { accent: 'var(--buy)', icon: '⚡' },
+      Exotic: { accent: 'var(--hold)', icon: '🌍' },
+    }
+
+    return groupedPairs.map(group => ({
+      ...group,
+      coverage: Math.round((group.pairs.length / totalPairs) * 100),
+      ...tones[group.label],
+    }))
+  }, [availablePairs.length, groupedPairs])
 
   const riskResult = useMemo(() => calcRiskPosition({
     accountBalance: riskBalance,
@@ -867,6 +910,28 @@ export default function Forex() {
     setRiskWidgetOpen(true)
   }, [])
 
+  const clampRiskWidgetOffset = useCallback((offset, rect) => {
+    if (typeof window === 'undefined' || isMobileRiskLayout) {
+      return { x: 0, y: 0 }
+    }
+
+    const nextRect = rect || riskWidgetRef.current?.getBoundingClientRect()
+    const fallbackWidth = riskWidgetOpen ? (riskWidgetMaximized ? 420 : 340) : 48
+    const fallbackHeight = riskWidgetOpen ? 520 : 48
+    const width = nextRect?.width || fallbackWidth
+    const height = nextRect?.height || fallbackHeight
+
+    const minX = width + 20 + RISK_WIDGET_EDGE_GAP - window.innerWidth
+    const maxX = 20 - RISK_WIDGET_EDGE_GAP
+    const minY = height + 20 + RISK_WIDGET_TOP_GAP - window.innerHeight
+    const maxY = 20 - RISK_WIDGET_EDGE_GAP
+
+    return {
+      x: Math.min(maxX, Math.max(minX, offset.x)),
+      y: Math.min(maxY, Math.max(minY, offset.y)),
+    }
+  }, [isMobileRiskLayout, riskWidgetMaximized, riskWidgetOpen])
+
   const handleRiskDragStart = useCallback((e) => {
     if (isMobileRiskLayout) return
     dragRef.current = {
@@ -883,11 +948,11 @@ export default function Forex() {
     if (dragRef.current.pointerId !== e.pointerId) return
     const dx = e.clientX - dragRef.current.startX
     const dy = e.clientY - dragRef.current.startY
-    setRiskWidgetOffset({
+    setRiskWidgetOffset(clampRiskWidgetOffset({
       x: dragRef.current.originX + dx,
       y: dragRef.current.originY + dy,
-    })
-  }, [])
+    }))
+  }, [clampRiskWidgetOffset])
 
   const handleRiskDragEnd = useCallback((e) => {
     if (dragRef.current.pointerId !== e.pointerId) return
@@ -929,6 +994,21 @@ export default function Forex() {
     setRiskWidgetOffset({ x: 0, y: 0 })
     setRiskWidgetOpen(true)
   }, [isMobileRiskLayout])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isMobileRiskLayout) return undefined
+
+    const syncRiskWidgetBounds = () => {
+      setRiskWidgetOffset(prev => {
+        const next = clampRiskWidgetOffset(prev)
+        return next.x === prev.x && next.y === prev.y ? prev : next
+      })
+    }
+
+    syncRiskWidgetBounds()
+    window.addEventListener('resize', syncRiskWidgetBounds)
+    return () => window.removeEventListener('resize', syncRiskWidgetBounds)
+  }, [clampRiskWidgetOffset, isMobileRiskLayout, riskWidgetMaximized, riskWidgetOpen])
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -1033,25 +1113,67 @@ export default function Forex() {
           )}
           <div className="mt-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                  Trading Pairs
-                </h3>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Tap any pair below to load it instantly.
-                </p>
-              </div>
-              <span className="text-xs px-2.5 py-1 rounded-full w-fit"
-                style={{
-                  color: 'var(--accent)',
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                    Trading Pairs
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    Tap any pair below to load it instantly from every supported category.
+                  </p>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full w-fit"
+                  style={{
+                    color: 'var(--accent)',
                   background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
                 }}>
-                {availablePairs.length} supported pairs
-              </span>
-            </div>
-            {groupedPairs.map(({ label, pairs: groupItems }, groupIndex) => (
-              <motion.div
-                key={label}
+                  {availablePairs.length} supported pairs
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {pairCategoryStats.map((group, index) => (
+                  <motion.div
+                    key={`${group.label}-stat`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.08 + index * 0.05 }}
+                    className="rounded-xl border p-3"
+                    style={{
+                      borderColor: `color-mix(in srgb, ${group.accent} 26%, var(--border))`,
+                      background: `color-mix(in srgb, ${group.accent} 10%, var(--surface))`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          {group.icon} {group.label}
+                        </div>
+                        <div className="mt-1 text-xl font-bold" style={{ color: group.accent }}>
+                          {group.pairs.length}
+                        </div>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full"
+                        style={{
+                          color: group.accent,
+                          background: `color-mix(in srgb, ${group.accent} 14%, transparent)`,
+                        }}>
+                        {group.coverage}% of board
+                      </span>
+                    </div>
+                    <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--border) 75%, transparent)' }}>
+                      <motion.div
+                        className="h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${group.coverage}%` }}
+                        transition={{ duration: 0.5, delay: 0.12 + index * 0.05, ease: 'easeOut' }}
+                        style={{ background: group.accent }}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              {groupedPairs.map(({ label, pairs: groupItems }, groupIndex) => (
+                <motion.div
+                  key={label}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.12 + groupIndex * 0.06 }}
@@ -1298,6 +1420,7 @@ export default function Forex() {
       </AnimatePresence>
 
       <div
+        ref={riskWidgetRef}
         className={isMobileRiskLayout ? 'mt-8' : 'fixed z-40'}
         style={isMobileRiskLayout ? undefined : {
           right: 20,
