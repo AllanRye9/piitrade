@@ -10,6 +10,8 @@ import {
   playEntry,
 } from '../utils/sounds'
 
+const MAX_QUICK_PAIRS = 12
+
 // Forex trading sessions in UTC (startH/startM to endH/endM)
 const SESSIONS = [
   { name: 'Sydney',   flag: '🇦🇺', startH: 21, startM: 0, endH: 6,  endM: 0,  color: '#58a6ff' },
@@ -535,7 +537,7 @@ export default function Forex() {
     { label: 'Minor', pairs: pairs.minor || [] },
     { label: 'Exotic', pairs: pairs.exotic || [] },
   ].filter(g => g.pairs.length > 0)
-  const quickPairs = useMemo(() => (availablePairs || []).slice(0, 12), [availablePairs])
+  const quickPairs = useMemo(() => (availablePairs || []).slice(0, MAX_QUICK_PAIRS), [availablePairs])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -591,7 +593,7 @@ export default function Forex() {
               ))}
             </datalist>
             <p className="text-xs mt-2" style={{ color: pairInputError ? 'var(--sell)' : 'var(--text-muted)' }}>
-              {pairInputError || 'Type or pick a supported pair to quickly find fresh, unfilled setups.'}
+              {pairInputError || 'Type or pick a supported pair to quickly view open trading opportunities.'}
             </p>
             {quickPairs.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">

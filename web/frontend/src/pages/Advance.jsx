@@ -104,7 +104,7 @@ function FVGScanner() {
               type="text"
               value={pairFilter}
               onChange={e => setPairFilter(e.target.value)}
-              placeholder="Filter pair, e.g. BTC/USD"
+              placeholder="Filter pair, e.g. EUR/USD"
               className="w-full md:w-64 px-3 py-2 rounded-lg text-sm font-mono border outline-none"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
             />
