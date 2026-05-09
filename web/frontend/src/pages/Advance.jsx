@@ -549,6 +549,7 @@ function EventsCalendar() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activePopup, setActivePopup] = useState(null)
+  const [impactFilter, setImpactFilter] = useState('all')
 
   const load = () => {
     setLoading(true)
@@ -560,9 +561,11 @@ function EventsCalendar() {
   }
   useEffect(load, [])
 
-  // Group events by day abbreviation
+  // Group events by day abbreviation, filtered by impact
   const grouped = useMemo(() => {
-    const events = data?.events || []
+    const events = (data?.events || []).filter(ev =>
+      impactFilter === 'all' || (ev.impact || '').toLowerCase() === impactFilter
+    )
     const map = {}
     for (const ev of events) {
       const day = (ev.time || '').split(' ')[0] || '—'
@@ -570,7 +573,7 @@ function EventsCalendar() {
       map[day].push(ev)
     }
     return map
-  }, [data])
+  }, [data, impactFilter])
 
   const days = Object.keys(grouped)
 
@@ -590,7 +593,7 @@ function EventsCalendar() {
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
         <div>
           <h2 className="font-semibold text-lg flex items-center gap-2">
             📅 Events Calendar
@@ -599,22 +602,30 @@ function EventsCalendar() {
             Weekly economic events. Click or hover an event for details.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Legend */}
-          <div className="hidden sm:flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#f85149' }} />
-              <span style={{ color: 'var(--text-muted)' }}>High</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#3b82f6' }} />
-              <span style={{ color: 'var(--text-muted)' }}>Medium</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#6b7280' }} />
-              <span style={{ color: 'var(--text-muted)' }}>Low</span>
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Impact filter buttons */}
+          {[
+            { value: 'all', label: 'All', color: 'var(--text-muted)' },
+            { value: 'high', label: 'High', color: '#f85149' },
+            { value: 'medium', label: 'Medium', color: '#3b82f6' },
+            { value: 'low', label: 'Low', color: '#6b7280' },
+          ].map(f => (
+            <button
+              key={f.value}
+              onClick={() => setImpactFilter(f.value)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all font-medium"
+              style={{
+                borderColor: impactFilter === f.value ? f.color : 'var(--border)',
+                color: impactFilter === f.value ? f.color : 'var(--text-muted)',
+                background: impactFilter === f.value ? `color-mix(in srgb, ${f.color} 12%, transparent)` : 'transparent',
+              }}
+            >
+              {f.value !== 'all' && (
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: f.color }} />
+              )}
+              {f.label}
+            </button>
+          ))}
           <button onClick={load} className="text-xs px-3 py-1 rounded border hover:border-[var(--accent)] transition-colors"
             style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>↻ Refresh</button>
         </div>
@@ -622,7 +633,9 @@ function EventsCalendar() {
 
       {loading ? <LoadingSpinner /> : error ? <ErrorMessage message={error} onRetry={load} /> : (
         days.length === 0 ? (
-          <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No events found this week.</p>
+          <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>
+            {impactFilter !== 'all' ? `No ${impactFilter}-impact events found.` : 'No events found this week.'}
+          </p>
         ) : (
           <div className="grid gap-3"
             style={{ gridTemplateColumns: `repeat(${Math.min(days.length, MAX_CALENDAR_COLUMNS)}, minmax(0, 1fr))` }}>
