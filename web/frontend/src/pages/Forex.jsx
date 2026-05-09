@@ -12,6 +12,8 @@ import {
 
 const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
 const MIN_FAVORABLE_RR_RATIO = 2
+const RISK_CALCULATOR_PANEL_WIDTH = 340
+const PAIR_CHIPS_MAX_HEIGHT = 112
 
 function getPairCategory(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -420,8 +422,9 @@ function DashboardRiskCalculator({
 }) {
   return (
     <div
-      className="rounded-xl border p-3 h-fit"
+      className="w-full xl:justify-self-end rounded-xl border p-3 h-fit"
       style={{
+        maxWidth: RISK_CALCULATOR_PANEL_WIDTH,
         borderColor: 'color-mix(in srgb, var(--accent) 26%, var(--border))',
         background: 'color-mix(in srgb, var(--accent) 4%, var(--surface))',
       }}
@@ -1120,7 +1123,7 @@ export default function Forex() {
         </div>
         {/* Search area */}
         <div className="p-4">
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-4">
             <div>
               <p className="text-xs mb-2.5" style={{ color: 'var(--text-muted)' }}>
                 Enter any forex pair to get technical + fundamental AI analysis, then size risk in the built-in calculator.
@@ -1207,7 +1210,7 @@ export default function Forex() {
                             color: group.accent,
                             background: `color-mix(in srgb, ${group.accent} 14%, transparent)`,
                           }}>
-                          {group.coverage}%
+                          {group.coverage}% coverage
                         </span>
                       </div>
                     </motion.div>
@@ -1234,7 +1237,7 @@ export default function Forex() {
                           {groupItems.length} pairs
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                      <div className="flex flex-wrap gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}>
                         {groupItems.map(p => (
                           <motion.button
                             key={p}
