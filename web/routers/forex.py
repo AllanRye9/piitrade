@@ -473,7 +473,6 @@ async def forex_fvg_scanner():
         grouped: dict[str, list[dict[str, Any]]] = {
             "approaching": [],
             "reached": [],
-            "passed": [],
             "rejected": [],
         }
         pair_fvgs: dict[str, list[dict[str, Any]]] = {}
@@ -517,7 +516,6 @@ async def forex_fvg_scanner():
         grouped["approaching"].sort(key=lambda x: x.get("dist", 1.0))
         grouped["reached"].sort(key=lambda x: x.get("dist", 1.0))
         grouped["rejected"].sort(key=lambda x: x.get("dist", 1.0))
-        grouped["passed"] = []
         return JSONResponse({
             "grouped": grouped,
             "pair_fvgs": pair_fvgs,
@@ -535,8 +533,6 @@ async def forex_sr_breakouts():
         core = _core()
         sr_groups: dict[str, list[dict[str, Any]]] = {
             "soon_touching": [],
-            "touched": [],
-            "broke": [],
         }
         seen_in_sr: dict[str, set[str]] = {k: set() for k in sr_groups}
 
