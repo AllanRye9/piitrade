@@ -14,8 +14,10 @@ const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD
 const MIN_FAVORABLE_RR_RATIO = 2
 const RISK_WIDGET_MOBILE_HELP = 'Positioned below the trading pairs for quick mobile access.'
 const RISK_WIDGET_DESKTOP_HELP = 'Drag from this header to reposition the calculator.'
+const RISK_WIDGET_BASE_INSET = 20
 const RISK_WIDGET_EDGE_GAP = 12
 const RISK_WIDGET_TOP_GAP = 72
+const RISK_WIDGET_FALLBACK_HEIGHT = 520
 
 function getPairCategory(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -917,14 +919,14 @@ export default function Forex() {
 
     const nextRect = rect || riskWidgetRef.current?.getBoundingClientRect()
     const fallbackWidth = riskWidgetOpen ? (riskWidgetMaximized ? 420 : 340) : 48
-    const fallbackHeight = riskWidgetOpen ? 520 : 48
+    const fallbackHeight = riskWidgetOpen ? RISK_WIDGET_FALLBACK_HEIGHT : 48
     const width = nextRect?.width || fallbackWidth
     const height = nextRect?.height || fallbackHeight
 
-    const minX = width + 20 + RISK_WIDGET_EDGE_GAP - window.innerWidth
-    const maxX = 20 - RISK_WIDGET_EDGE_GAP
-    const minY = height + 20 + RISK_WIDGET_TOP_GAP - window.innerHeight
-    const maxY = 20 - RISK_WIDGET_EDGE_GAP
+    const minX = width + RISK_WIDGET_BASE_INSET + RISK_WIDGET_EDGE_GAP - window.innerWidth
+    const maxX = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
+    const minY = height + RISK_WIDGET_BASE_INSET + RISK_WIDGET_TOP_GAP - window.innerHeight
+    const maxY = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
 
     return {
       x: Math.min(maxX, Math.max(minX, offset.x)),
@@ -1118,7 +1120,7 @@ export default function Forex() {
                     Trading Pairs
                   </h3>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    Tap any pair below to load it instantly from every supported category.
+                    Tap any pair below to load it instantly from any supported category.
                   </p>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full w-fit"
