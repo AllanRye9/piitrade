@@ -11,6 +11,7 @@ import {
 } from '../utils/sounds'
 
 const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
+const MIN_FAVORABLE_RR_RATIO = 2
 
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -1469,7 +1470,7 @@ export default function Forex() {
                       <RiskWidgetResultRow
                         label="Risk to reward"
                         value={`1:${riskResult.rrRatio}`}
-                        tone={riskResult.rrRatioValue >= 2 ? 'var(--buy)' : 'var(--hold)'}
+                        tone={riskResult.rrRatioValue >= MIN_FAVORABLE_RR_RATIO ? 'var(--buy)' : 'var(--hold)'}
                       />
                       <RiskWidgetResultRow
                         label="Take profit distance"
