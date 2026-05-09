@@ -771,20 +771,72 @@ function EventsCalendar() {
 }
 
 export default function Advance() {
+  const sectionSummaries = [
+    { key: 'events-calendar', label: 'Events Calendar', status: 'Live', desc: 'Clickable weekly macro events with impact clusters.' },
+    { key: 'fvg-scanner', label: 'FVG Scanner', status: 'Unmitigated', desc: 'Track approaching/reached/rejected imbalance zones.' },
+    { key: 'sr-breakouts', label: 'S/R Breakouts', status: 'Live', desc: 'Find pairs nearing support/resistance reaction levels.' },
+    { key: 'pattern-scanner', label: 'Pattern Scanner', status: 'Live', desc: 'Surface direction-ready structures by timeframe.' },
+    { key: 'economic-calendar', label: 'Economic Data', status: 'Live', desc: 'Filter data by date, impact, and currency relevance.' },
+  ]
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Advanced Analysis</h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          FVG Scanner, S/R Breakouts, Pattern Scanner, Events Calendar, Economic Data
+          Faster navigation for all live and unmitigated opportunities.
         </p>
       </div>
+      <div className="card mb-6">
+        <h2 className="font-semibold text-base mb-3">Section Summary</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          {sectionSummaries.map(section => (
+            <a
+              key={section.key}
+              href={`#${section.key}`}
+              className="rounded-lg border p-3 transition-colors hover:border-[var(--accent)]"
+              style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-sm font-semibold">{section.label}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }}>
+                  {section.status}
+                </span>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{section.desc}</p>
+            </a>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {sectionSummaries.map(section => (
+            <a
+              key={`${section.key}-chip`}
+              href={`#${section.key}`}
+              className="text-xs px-2 py-1 rounded-full border"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              {section.label}
+            </a>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-col gap-6">
-        <EventsCalendar />
-        <FVGScanner />
-        <SRBreakouts />
-        <PatternScanner />
-        <EconomicCalendar />
+        <section id="events-calendar" className="scroll-mt-24">
+          <EventsCalendar />
+        </section>
+        <section id="fvg-scanner" className="scroll-mt-24">
+          <FVGScanner />
+        </section>
+        <section id="sr-breakouts" className="scroll-mt-24">
+          <SRBreakouts />
+        </section>
+        <section id="pattern-scanner" className="scroll-mt-24">
+          <PatternScanner />
+        </section>
+        <section id="economic-calendar" className="scroll-mt-24">
+          <EconomicCalendar />
+        </section>
       </div>
     </div>
   )
