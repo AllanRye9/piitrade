@@ -329,6 +329,7 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
     positionSizeLots: positionSizeLots.toFixed(2),
     positionSizeUnits,
     rrRatio: rrRatio?.toFixed(2),
+    rrRatioValue: rrRatio,
   }
 }
 
@@ -1339,7 +1340,7 @@ export default function Forex() {
               >
                 <div className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>🧮 Dashboard Risk Calculator</div>
                 <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {isMobileRiskLayout ? 'Pinned at the bottom for quick mobile access.' : 'Drag from this header to reposition the calculator.'}
+                  {isMobileRiskLayout ? 'Positioned below the trading pairs for quick mobile access.' : 'Drag from this header to reposition the calculator.'}
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -1468,7 +1469,7 @@ export default function Forex() {
                       <RiskWidgetResultRow
                         label="Risk to reward"
                         value={`1:${riskResult.rrRatio}`}
-                        tone={parseFloat(riskResult.rrRatio) >= 2 ? 'var(--buy)' : 'var(--hold)'}
+                        tone={riskResult.rrRatioValue >= 2 ? 'var(--buy)' : 'var(--hold)'}
                       />
                       <RiskWidgetResultRow
                         label="Take profit distance"
