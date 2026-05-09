@@ -1318,7 +1318,7 @@ export default function Forex() {
                 </div>
 
                 {/* Signal History */}
-                {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
+                {signal?.history && signal.history.length > 0 && (
                   <div className="card">
                     <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
                     <div className="overflow-x-auto">
