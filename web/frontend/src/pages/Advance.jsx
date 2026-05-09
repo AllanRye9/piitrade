@@ -520,6 +520,7 @@ function EconomicCalendar() {
 }
 
 function EventsCalendar() {
+  const MAX_CALENDAR_COLUMNS = 5
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -600,7 +601,7 @@ function EventsCalendar() {
           <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No events found this week.</p>
         ) : (
           <div className="grid gap-3"
-            style={{ gridTemplateColumns: `repeat(${Math.min(days.length, 5)}, minmax(0, 1fr))` }}>
+            style={{ gridTemplateColumns: `repeat(${Math.min(days.length, MAX_CALENDAR_COLUMNS)}, minmax(0, 1fr))` }}>
             {days.map(day => {
               const events = grouped[day] || []
               const highCount = events.filter(e => (e.impact || '').toLowerCase() === 'high').length

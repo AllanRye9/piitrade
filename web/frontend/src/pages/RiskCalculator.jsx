@@ -105,10 +105,9 @@ export default function RiskCalculator() {
     if (pairType === 'crypto') pipSize = 1
 
     const slPips = priceDiffSL / pipSize
-    const tpPips = priceDiffTP != null ? priceDiffTP / pipSize : null
+    const tpPips = priceDiffTP !== null ? priceDiffTP / pipSize : null
 
     // Standard lot calculations
-    const stdLotPipValue = pairType === 'jpy' ? 7.83 : pairType === 'xauusd' ? 10 : pairType === 'us30' ? 1 : 10
     const positionSizeUnits = (riskAmount / priceDiffSL)
     const positionSizeLots = positionSizeUnits / 100000
 
