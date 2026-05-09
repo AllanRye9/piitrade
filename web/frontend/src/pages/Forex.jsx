@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -997,7 +997,7 @@ export default function Forex() {
     setRiskWidgetOpen(true)
   }, [isMobileRiskLayout])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === 'undefined' || isMobileRiskLayout) return undefined
 
     const syncRiskWidgetBounds = () => {
