@@ -430,7 +430,11 @@ function DashboardRiskCalculator({
       }}
     >
       <div className="mb-3">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--accent)' }}>
+        <h3
+          className="text-sm font-semibold flex items-center gap-1.5"
+          style={{ color: 'var(--accent)' }}
+          aria-label="Dashboard Risk Calculator"
+        >
           <span aria-hidden="true">🧮</span>
           <span>Dashboard Risk Calculator</span>
         </h3>
@@ -1244,6 +1248,7 @@ export default function Forex() {
                         className="flex flex-wrap gap-1.5 overflow-y-auto pr-1"
                         style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}
                         tabIndex={0}
+                        role="region"
                         aria-label={`${label} trading pairs`}
                       >
                         {groupItems.map(p => (
