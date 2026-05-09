@@ -313,7 +313,6 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
   let pipValuePerLot = 10
   let lotSize = 100000
   if (pairType === 'jpy') {
-    if (entry <= 0) return null
     pipSize = 0.01
     pipValuePerLot = 1000 / entry
   }
@@ -329,7 +328,7 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
     slPips: slPips.toFixed(1),
     tpPips: tpPips?.toFixed(1),
     positionSizeLots: positionSizeLots.toFixed(2),
-    positionSizeUnits: positionSizeUnits.toFixed(0),
+    positionSizeUnits,
     rrRatio: rrRatio?.toFixed(2),
   }
 }
@@ -841,7 +840,7 @@ export default function Forex() {
     if (dragRef.current.pointerId !== e.pointerId) return
     try {
       e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch (_) {
+    } catch (err) {
       // releasePointerCapture may throw DOMException if the capture was auto-released first.
     }
     dragRef.current.pointerId = null
@@ -1338,7 +1337,7 @@ export default function Forex() {
                   style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)' }}>
                   <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Risk</span><span className="font-mono">${riskResult.riskAmount.toFixed(2)}</span></div>
                   <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>SL</span><span className="font-mono">{riskResult.slPips} pips</span></div>
-                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Position</span><span className="font-mono">{Number(riskResult.positionSizeUnits).toLocaleString()} units</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Position</span><span className="font-mono">{riskResult.positionSizeUnits.toLocaleString(undefined, { maximumFractionDigits: 0 })} units</span></div>
                   <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>Lots</span><span className="font-mono">{riskResult.positionSizeLots}</span></div>
                   {riskResult.rrRatio && (
                     <div className="flex justify-between"><span style={{ color: 'var(--text-muted)' }}>R:R</span><span className="font-mono">1:{riskResult.rrRatio}</span></div>
