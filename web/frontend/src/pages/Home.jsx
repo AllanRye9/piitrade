@@ -41,6 +41,11 @@ const stats = [
   { label: 'Indicators Used', value: '40+' },
 ]
 
+const sectionReveal = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0 },
+}
+
 export default function Home() {
   return (
     <div>
@@ -85,19 +90,36 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="border-y py-5" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.5 }}
+        className="border-y py-5"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
         <div className="max-w-4xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {stats.map(({ label, value }) => (
-            <div key={label}>
+            <motion.div
+              key={label}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
               <div className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{value}</div>
               <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{label}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Feature Cards */}
-      <section className="py-16 px-4 max-w-6xl mx-auto">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5, delay: 0.08 }}
+        className="py-16 px-4 max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold text-center mb-10">Everything You Need to Trade Smarter</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map(({ icon, title, desc }, i) => (
@@ -106,6 +128,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
+              whileHover={{ y: -6, scale: 1.01 }}
               className="card hover:border-[var(--accent)] transition-colors cursor-default"
             >
               <div className="text-3xl mb-3">{icon}</div>
@@ -114,11 +137,17 @@ export default function Home() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* User Value */}
-      <section className="py-6 px-4 max-w-5xl mx-auto">
-        <div className="card">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="py-6 px-4 max-w-5xl mx-auto">
+        <motion.div className="card" whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
           <h2 className="text-xl font-bold mb-4">How this helps traders in practice</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -140,12 +169,22 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* CTA */}
-      <section className="py-16 px-4 text-center">
-        <div className="max-w-2xl mx-auto card">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.5, delay: 0.12 }}
+        className="py-16 px-4 text-center">
+        <motion.div
+          className="max-w-2xl mx-auto card"
+          whileHover={{ y: -4, scale: 1.01 }}
+          transition={{ duration: 0.2 }}
+        >
           <h2 className="text-2xl font-bold mb-3">Start Trading with AI Signals Today</h2>
           <p className="mb-6" style={{ color: 'var(--text-muted)' }}>
             No subscription required. Access all signals, scanners, and analysis tools for free.
@@ -157,8 +196,8 @@ export default function Home() {
           >
             Launch Dashboard →
           </Link>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
     </div>
   )
 }

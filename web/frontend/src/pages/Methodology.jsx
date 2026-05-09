@@ -34,7 +34,7 @@ export default function Methodology() {
 
         <div className="card">
           <h2 className="font-semibold text-lg mb-3">📊 Training Data</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {[
               { label: 'Years of Data', value: '10+' },
               { label: 'Currency Pairs', value: '35+' },
