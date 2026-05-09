@@ -839,7 +839,7 @@ export default function Advance() {
             </div>
             <h1 className="text-3xl font-bold leading-tight">Advanced Analysis</h1>
             <p className="text-sm mt-3 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
-              Move through every live scanner like a trading runbook: scan the board, spot the best setup, and chain confirmations before execution.
+              Move through every live scanner like a trading runbook: scan the market, spot the best setup, and chain confirmations before execution.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {sectionSummaries.map(section => (

@@ -923,14 +923,14 @@ export default function Forex() {
     const width = nextRect?.width || fallbackWidth
     const height = nextRect?.height || fallbackHeight
 
-    const minX = width + RISK_WIDGET_BASE_INSET + RISK_WIDGET_EDGE_GAP - window.innerWidth
-    const maxX = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
-    const minY = height + RISK_WIDGET_BASE_INSET + RISK_WIDGET_TOP_GAP - window.innerHeight
-    const maxY = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
+    const leftBoundary = width + RISK_WIDGET_BASE_INSET + RISK_WIDGET_EDGE_GAP - window.innerWidth
+    const rightBoundary = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
+    const topBoundary = height + RISK_WIDGET_BASE_INSET + RISK_WIDGET_TOP_GAP - window.innerHeight
+    const bottomBoundary = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
 
     return {
-      x: Math.min(maxX, Math.max(minX, offset.x)),
-      y: Math.min(maxY, Math.max(minY, offset.y)),
+      x: Math.min(rightBoundary, Math.max(leftBoundary, offset.x)),
+      y: Math.min(bottomBoundary, Math.max(topBoundary, offset.y)),
     }
   }, [isMobileRiskLayout, riskWidgetMaximized, riskWidgetOpen])
 
@@ -1120,7 +1120,7 @@ export default function Forex() {
                     Trading Pairs
                   </h3>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    Tap any pair below to load it instantly from any supported category.
+                    Tap any pair in the sections below to load it instantly from any supported category.
                   </p>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full w-fit"
