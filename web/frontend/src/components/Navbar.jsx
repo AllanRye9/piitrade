@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth } from '../hooks/useAuth'
@@ -14,7 +14,6 @@ export default function Navbar() {
   const { theme, cycleTheme } = useTheme()
   const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
-  const navigate = useNavigate()
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -79,15 +78,7 @@ export default function Navbar() {
                 </span>
                 <span>{user.username}</span>
               </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden md:block px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-                style={{ background: 'var(--accent)', color: 'var(--bg)' }}
-              >
-                Login
-              </Link>
-            )}
+            ) : null}
 
             {/* Mobile menu button */}
             <button
@@ -133,13 +124,7 @@ export default function Navbar() {
                   className="px-3 py-2 rounded-md text-sm" style={{ color: 'var(--text)' }}>
                   Profile ({user.username})
                 </Link>
-              ) : (
-                <Link to="/login" onClick={() => setMenuOpen(false)}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-center mt-1"
-                  style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
-                  Login
-                </Link>
-              )}
+              ) : null}
             </div>
           </motion.div>
         )}

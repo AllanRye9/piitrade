@@ -76,6 +76,23 @@ def _get_signal_completion_status(signal: dict[str, Any], current_price: float |
     return "open", None
 
 
+def _pair_has_open_signal(core: Any, pair: str, current_price: float | None = None) -> bool:
+    issued_signal = core._FOREX_SIGNALS.get(pair)
+    if not issued_signal:
+        return False
+
+    if current_price is None:
+        live_rate = core._fetch_live_rate(pair)
+        if live_rate is not None:
+            current_price = live_rate
+        else:
+            hist_rates = core._fetch_historical_rates(pair, 30)
+            current_price = next(reversed(hist_rates.values())) if hist_rates else issued_signal.get("entry_price")
+
+    signal_state, _signal_outcome = _get_signal_completion_status(issued_signal, current_price)
+    return signal_state == "open"
+
+
 # Extra commodity instruments included in the movers scanner (live prices via Yahoo Finance)
 _MOVERS_EXTRA_PAIRS = ("XAU/USD", "WTI/USD")
 
@@ -232,7 +249,11 @@ async def forex_pairs():
         minor: list[str] = []
         exotic: list[str] = []
 
+        open_signal_pairs: list[str] = []
         for p in core._SUPPORTED_PAIRS:
+            if not _pair_has_open_signal(core, p):
+                continue
+            open_signal_pairs.append(p)
             base, quote = p.split("/")
             if "USD" in (base, quote):
                 other = base if quote == "USD" else quote
@@ -248,7 +269,7 @@ async def forex_pairs():
             "major": major,
             "minor": minor,
             "exotic": exotic,
-            "all": list(core._SUPPORTED_PAIRS),
+            "all": open_signal_pairs,
             "ecb_live": ecb_live,
         })
     except Exception as exc:
@@ -337,10 +358,15 @@ async def forex_volatile(timeframe: str = "24h"):
 
         results: list[dict[str, Any]] = []
         for pair in core._SUPPORTED_PAIRS:
-            prices = _get_prices_for_pair(pair, 30)
-            vol = _compute_volatility(prices, window)
-            signal_info = core._FOREX_SIGNALS[pair]
+            signal_info = core._FOREX_SIGNALS.get(pair)
+            if not signal_info:
+                continue
             live_rate = core._fetch_live_rate(pair)
+            prices = _get_prices_for_pair(pair, 30)
+            current_price = live_rate if live_rate is not None else (prices[-1] if prices else signal_info["entry_price"])
+            if not _pair_has_open_signal(core, pair, current_price):
+                continue
+            vol = _compute_volatility(prices, window)
             results.append({
                 "pair": pair,
                 "volatility_pct": vol,
@@ -371,6 +397,9 @@ async def forex_movers(threshold: float = 0.2):
         results: list[dict[str, Any]] = []
         all_pairs = list(core._SUPPORTED_PAIRS) + list(_MOVERS_EXTRA_PAIRS)
         for pair in all_pairs:
+            signal_info = core._FOREX_SIGNALS.get(pair)
+            if not signal_info:
+                continue
             prices = _get_prices_for_pair(pair, SESSION_PRICE_WINDOW)
             if len(prices) < 2:
                 continue
@@ -385,6 +414,8 @@ async def forex_movers(threshold: float = 0.2):
             pip_move = abs(close_price - open_price) / _pip_size
             live_rate = core._fetch_live_rate(pair)
             current = live_rate if live_rate is not None else close_price
+            if not _pair_has_open_signal(core, pair, current):
+                continue
             results.append({
                 "pair": pair,
                 "pct_change": round(pct_change, 3),
@@ -408,12 +439,17 @@ async def forex_reversals():
         core = _core()
         results: list[dict[str, Any]] = []
         for pair in core._SUPPORTED_PAIRS:
+            signal_info = core._FOREX_SIGNALS.get(pair)
+            if not signal_info:
+                continue
+            live_rate = core._fetch_live_rate(pair)
             prices = _get_prices_for_pair(pair, 30)
+            current_price = live_rate if live_rate is not None else (prices[-1] if prices else signal_info["entry_price"])
+            if not _pair_has_open_signal(core, pair, current_price):
+                continue
             rev = _detect_reversal(prices)
             if rev["reversal"] == "none":
                 continue
-            signal_info = core._FOREX_SIGNALS[pair]
-            live_rate = core._fetch_live_rate(pair)
             results.append({
                 "pair": pair,
                 "reversal_type": rev["reversal"],
@@ -438,7 +474,6 @@ async def forex_fvg_scanner():
         grouped: dict[str, list[dict[str, Any]]] = {
             "approaching": [],
             "reached": [],
-            "passed": [],
             "rejected": [],
         }
         pair_fvgs: dict[str, list[dict[str, Any]]] = {}
@@ -450,9 +485,13 @@ async def forex_fvg_scanner():
                 continue
             prices = _get_prices_for_pair(pair, 30)
             current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
+            if not _pair_has_open_signal(core, pair, current_price):
+                continue
             ta = core._build_technical_analysis(pair, current_price)
             entries = core._classify_fvg_status(pair, current_price, ta["fvg"], prices)
             for entry in entries:
+                if entry.get("status") == "passed":
+                    continue
                 bucket = entry.get("status", "")
                 if bucket in grouped and pair not in seen_in_bucket[bucket]:
                     entry["direction"] = core._FOREX_SIGNALS[pair]["direction"]
@@ -472,9 +511,12 @@ async def forex_fvg_scanner():
                     "current_price": round(current_price, dec),
                 }
                 for fvg in ta["fvg"]
+                if not fvg.get("filled", False)
             ]
 
         grouped["approaching"].sort(key=lambda x: x.get("dist", 1.0))
+        grouped["reached"].sort(key=lambda x: x.get("dist", 1.0))
+        grouped["rejected"].sort(key=lambda x: x.get("dist", 1.0))
         return JSONResponse({
             "grouped": grouped,
             "pair_fvgs": pair_fvgs,
@@ -492,8 +534,6 @@ async def forex_sr_breakouts():
         core = _core()
         sr_groups: dict[str, list[dict[str, Any]]] = {
             "soon_touching": [],
-            "touched": [],
-            "broke": [],
         }
         seen_in_sr: dict[str, set[str]] = {k: set() for k in sr_groups}
 
@@ -503,11 +543,15 @@ async def forex_sr_breakouts():
                 continue
             prices = _get_prices_for_pair(pair, 30)
             current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
+            if not _pair_has_open_signal(core, pair, current_price):
+                continue
             ta = core._build_technical_analysis(pair, current_price)
             sr = ta["support_resistance"]
             items = core._classify_sr_levels(pair, current_price, prices, sr["support"], sr["resistance"])
             items.sort(key=lambda x: x.get("dist", 1.0))
             for item in items:
+                if item.get("status") != "soon_touching":
+                    continue
                 item["direction"] = core._FOREX_SIGNALS[pair]["direction"]
                 item["confidence"] = core._FOREX_SIGNALS[pair]["confidence"]
                 status = item.get("status", "")
@@ -548,6 +592,8 @@ async def forex_pattern_scanner(timeframe: str = "1h"):
             prices = prices_full[-analysis_window:] if len(prices_full) >= analysis_window else prices_full
             current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
             signal = core._FOREX_SIGNALS[pair]
+            if not _pair_has_open_signal(core, pair, current_price):
+                continue
             direction = signal["direction"]
             confidence = signal.get("confidence", 0.5)
             ta = core._build_technical_analysis(pair, current_price)
@@ -635,36 +681,7 @@ async def forex_pattern_scanner(timeframe: str = "1h"):
             sr_items = core._classify_sr_levels(pair, current_price, prices, sr["support"], sr["resistance"])
             for item in sr_items:
                 sr_status = item.get("status", "")
-                is_res = item["type"].startswith("resistance")
-                sr_dir = "BUY" if is_res else "SELL"
-
-                if sr_status == "broke":
-                    all_candidates.append({
-                        "pair": pair,
-                        "type": "sr_broke",
-                        "label": "S/R Breakout Formation",
-                        "impact": "high",
-                        "direction": sr_dir,
-                        "description": (
-                            f"{pair}: {item['description']} "
-                            "Confirmed breakouts beyond key levels often precede "
-                            "significant directional moves."
-                        ),
-                    })
-                elif sr_status == "touched":
-                    all_candidates.append({
-                        "pair": pair,
-                        "type": "sr_touched",
-                        "label": "Key Level Touch",
-                        "impact": "medium",
-                        "direction": direction,
-                        "description": (
-                            f"{pair}: {item['description']} "
-                            "Price testing a key level can produce a bounce or breakout - "
-                            "watch for volume and momentum confirmation."
-                        ),
-                    })
-                elif sr_status == "soon_touching":
+                if sr_status == "soon_touching":
                     all_candidates.append({
                         "pair": pair,
                         "type": "sr_approaching",

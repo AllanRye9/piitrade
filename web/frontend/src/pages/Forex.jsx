@@ -10,6 +10,8 @@ import {
   playEntry,
 } from '../utils/sounds'
 
+const MAX_QUICK_PAIRS = 12
+
 // Forex trading sessions in UTC (startH/startM to endH/endM)
 const SESSIONS = [
   { name: 'Sydney',   flag: '🇦🇺', startH: 21, startM: 0, endH: 6,  endM: 0,  color: '#58a6ff' },
@@ -382,7 +384,7 @@ function UpcomingSignalCard({ pair, signal, onRefresh }) {
 function TechnicalCard({ tech }) {
   if (!tech) return null
   const sr = tech.support_resistance || {}
-  const fvgs = tech.fvg || []
+  const fvgs = (tech.fvg || []).filter(f => !f.filled)
   const bos = tech.bos || []
   const choch = tech.choch || []
   const hvz = tech.high_volume_zones || []
@@ -658,7 +660,18 @@ export default function Forex() {
 
   useEffect(() => {
     api.get('/api/forex/pairs')
-      .then(res => setPairs(res.data))
+      .then(res => {
+        const nextPairs = res.data
+        const freshPairs = nextPairs?.all || []
+        setPairs(nextPairs)
+        if (freshPairs.length > 0) {
+          setSelectedPair(prev => (freshPairs.includes(prev) ? prev : freshPairs[0]))
+          setPairInput(prev => {
+            const normalized = normalizeTradingPairInput(prev)
+            return freshPairs.includes(normalized) ? normalized : freshPairs[0]
+          })
+        }
+      })
       .catch(() => {})
     api.get('/api/forex/news')
       .then(res => setNews(res.data?.news || []))
@@ -702,6 +715,7 @@ export default function Forex() {
     { label: 'Minor', pairs: pairs.minor || [] },
     { label: 'Exotic', pairs: pairs.exotic || [] },
   ].filter(g => g.pairs.length > 0)
+  const quickPairs = useMemo(() => (availablePairs || []).slice(0, MAX_QUICK_PAIRS), [availablePairs])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -891,7 +905,7 @@ export default function Forex() {
       )}
 
       {/* Signal History */}
-      {signal?.history && signal.history.length > 0 && (
+      {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
         <div className="mt-6 card">
           <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
           <div className="overflow-x-auto">
