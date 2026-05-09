@@ -772,53 +772,226 @@ function EventsCalendar() {
 
 export default function Advance() {
   const sectionSummaries = [
-    { key: 'events-calendar', label: 'Events Calendar', status: 'Live', desc: 'Clickable weekly macro events with impact clusters.' },
-    { key: 'fvg-scanner', label: 'FVG Scanner', status: 'Unmitigated', desc: 'Track approaching/reached/rejected imbalance zones.' },
-    { key: 'sr-breakouts', label: 'S/R Breakouts', status: 'Live', desc: 'Find pairs nearing support/resistance reaction levels.' },
-    { key: 'pattern-scanner', label: 'Pattern Scanner', status: 'Live', desc: 'Surface direction-ready structures by timeframe.' },
-    { key: 'economic-calendar', label: 'Economic Data', status: 'Live', desc: 'Filter data by date, impact, and currency relevance.' },
+    { key: 'events-calendar', label: 'Events Calendar', status: 'Live', desc: 'Clickable weekly macro events with impact clusters.', icon: '📅', accent: 'var(--accent)' },
+    { key: 'fvg-scanner', label: 'FVG Scanner', status: 'Unmitigated', desc: 'Track approaching, reached, and rejected imbalance zones.', icon: '🧲', accent: 'var(--hold)' },
+    { key: 'sr-breakouts', label: 'S/R Breakouts', status: 'Live', desc: 'Find pairs nearing support or resistance reaction levels.', icon: '🧱', accent: 'var(--buy)' },
+    { key: 'pattern-scanner', label: 'Pattern Scanner', status: 'Live', desc: 'Surface direction-ready structures by timeframe.', icon: '⚡', accent: 'var(--accent)' },
+    { key: 'economic-calendar', label: 'Economic Data', status: 'Live', desc: 'Filter data by date, impact, and currency relevance.', icon: '🌐', accent: 'var(--buy)' },
+  ]
+
+  const statCards = [
+    { label: 'Modules online', value: sectionSummaries.length, tone: 'var(--accent)', note: 'Every scanner is one tap away.' },
+    { label: 'Live feeds', value: sectionSummaries.filter(section => section.status === 'Live').length, tone: 'var(--buy)', note: 'Realtime context for fast execution.' },
+    { label: 'Action mode', value: 'Game on', tone: 'var(--hold)', note: 'Treat every section like a new level.' },
+  ]
+
+  const missionCards = [
+    {
+      title: 'Start with momentum',
+      desc: 'Open Pattern Scanner first, then confirm the move with S/R Breakouts.',
+      progress: 78,
+      tone: 'var(--accent)',
+      icon: '🎯',
+    },
+    {
+      title: 'Hunt inefficiencies',
+      desc: 'Use FVG Scanner to find clean zones before market structure shifts.',
+      progress: 64,
+      tone: 'var(--hold)',
+      icon: '🗺️',
+    },
+    {
+      title: 'Protect the setup',
+      desc: 'Cross-check Events Calendar so macro catalysts do not surprise the trade.',
+      progress: 91,
+      tone: 'var(--buy)',
+      icon: '🛡️',
+    },
   ]
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Advanced Analysis</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          Faster navigation for all live and unmitigated opportunities.
-        </p>
-      </div>
-      <div className="card mb-6">
-        <h2 className="font-semibold text-base mb-3">Section Summary</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          {sectionSummaries.map(section => (
-            <a
-              key={section.key}
-              href={`#${section.key}`}
-              className="rounded-lg border p-3 transition-colors hover:border-[var(--accent)]"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
-            >
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-sm font-semibold">{section.label}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }}>
-                  {section.status}
-                </span>
-              </div>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{section.desc}</p>
-            </a>
-          ))}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="relative overflow-hidden rounded-3xl border p-6 mb-6"
+        style={{
+          borderColor: 'color-mix(in srgb, var(--accent) 22%, var(--border))',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)) 0%, var(--surface) 56%, color-mix(in srgb, var(--buy) 8%, var(--surface)) 100%)',
+        }}
+      >
+        <div className="absolute -top-20 right-0 w-56 h-56 rounded-full opacity-40 blur-3xl"
+          style={{ background: 'color-mix(in srgb, var(--accent) 28%, transparent)' }} />
+        <div className="absolute -bottom-24 left-10 w-52 h-52 rounded-full opacity-30 blur-3xl"
+          style={{ background: 'color-mix(in srgb, var(--buy) 22%, transparent)' }} />
+
+        <div className="relative grid grid-cols-1 xl:grid-cols-[1.3fr,0.9fr] gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full border mb-4"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--accent) 28%, var(--border))',
+                background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+                color: 'var(--accent)',
+              }}>
+              <span>🎮</span>
+              <span className="font-semibold uppercase tracking-wide">Advanced Command Deck</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight">Advanced Analysis</h1>
+            <p className="text-sm mt-3 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
+              Move through every live scanner like a trading runbook: scan the market, spot the best setup, and chain confirmations before execution.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {sectionSummaries.map(section => (
+                <a
+                  key={`${section.key}-hero`}
+                  href={`#${section.key}`}
+                  className="text-xs px-3 py-1.5 rounded-full border transition-transform hover:-translate-y-0.5"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--border) 90%, transparent)',
+                    color: 'var(--text)',
+                    background: 'color-mix(in srgb, var(--bg) 45%, transparent)',
+                  }}
+                >
+                  {section.icon} {section.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
+            {statCards.map((card, index) => (
+              <motion.div
+                key={card.label}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: 0.08 + index * 0.06 }}
+                className="rounded-2xl border p-4"
+                style={{
+                  borderColor: `color-mix(in srgb, ${card.tone} 28%, var(--border))`,
+                  background: `color-mix(in srgb, ${card.tone} 10%, var(--bg))`,
+                }}
+              >
+                <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                  {card.label}
+                </div>
+                <div className="mt-2 text-2xl font-bold" style={{ color: card.tone }}>
+                  {card.value}
+                </div>
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                  {card.note}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {sectionSummaries.map(section => (
-            <a
-              key={`${section.key}-chip`}
-              href={`#${section.key}`}
-              className="text-xs px-2 py-1 rounded-full border"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-            >
-              {section.label}
-            </a>
-          ))}
+      </motion.section>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr,0.8fr] gap-6 mb-6">
+        <div className="card">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="font-semibold text-base">Quick Jump Board</h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Everything is grouped so you can jump directly into the next confirmation step.
+              </p>
+            </div>
+            <span className="text-xs px-2.5 py-1 rounded-full"
+              style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }}>
+              {sectionSummaries.length} sections
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {sectionSummaries.map((section, index) => (
+              <motion.a
+                key={section.key}
+                href={`#${section.key}`}
+                whileHover={{ y: -3 }}
+                className="rounded-2xl border p-4"
+                style={{
+                  borderColor: `color-mix(in srgb, ${section.accent} 22%, var(--border))`,
+                  background: `color-mix(in srgb, ${section.accent} 8%, var(--bg))`,
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      Stage {String(index + 1).padStart(2, '0')}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-sm font-semibold">
+                      <span>{section.icon}</span>
+                      <span>{section.label}</span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full"
+                    style={{
+                      color: section.accent,
+                      background: `color-mix(in srgb, ${section.accent} 14%, transparent)`,
+                    }}>
+                    {section.status}
+                  </span>
+                </div>
+                <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+                  {section.desc}
+                </p>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="font-semibold text-base">Today&apos;s Mission</h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                A gamified checklist to guide the next high-conviction setup.
+              </p>
+            </div>
+            <span className="text-lg" aria-hidden="true">🏁</span>
+          </div>
+          <div className="space-y-3">
+            {missionCards.map((mission, index) => (
+              <motion.div
+                key={mission.title}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.1 + index * 0.06 }}
+                className="rounded-2xl border p-4"
+                style={{
+                  borderColor: `color-mix(in srgb, ${mission.tone} 24%, var(--border))`,
+                  background: `color-mix(in srgb, ${mission.tone} 8%, var(--bg))`,
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">{mission.icon}</span>
+                    <div>
+                      <h3 className="text-sm font-semibold">{mission.title}</h3>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        {mission.desc}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full"
+                    style={{
+                      color: mission.tone,
+                      background: `color-mix(in srgb, ${mission.tone} 14%, transparent)`,
+                    }}>
+                    {mission.progress}% ready
+                  </span>
+                </div>
+                <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--border) 75%, transparent)' }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${mission.progress}%` }}
+                    transition={{ duration: 0.55, delay: 0.15 + index * 0.08, ease: 'easeOut' }}
+                    style={{ background: mission.tone }}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
       <div className="flex flex-col gap-6">
