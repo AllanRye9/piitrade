@@ -474,7 +474,7 @@ function TechnicalCard({ tech }) {
   )
 }
 
-function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents }) {
+function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) {
   const currencies = pair ? pair.split('/').filter(Boolean) : []
 
   const relatedNews = useMemo(() => {
@@ -539,6 +539,7 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents }) {
     return lines
   }, [signal, tech, relatedNews, relatedEvents, pair, currencies])
 
+  if (loading) return <div className="card"><LoadingSpinner /></div>
   if (!signal && !tech) return null
 
   return (
@@ -657,20 +658,16 @@ export default function Forex() {
   const [loadingTech, setLoadingTech] = useState(false)
   const [errorSignal, setErrorSignal] = useState(null)
   const [errorTech, setErrorTech] = useState(null)
+  // Popup state — analysis is only shown when user clicks Analyze Pair
+  const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
+  const [showAllPairs, setShowAllPairs] = useState(false)
+  const [analyzedPair, setAnalyzedPair] = useState(null)
 
   useEffect(() => {
     api.get('/api/forex/pairs')
       .then(res => {
         const nextPairs = res.data
-        const freshPairs = nextPairs?.all || []
         setPairs(nextPairs)
-        if (freshPairs.length > 0) {
-          setSelectedPair(prev => (freshPairs.includes(prev) ? prev : freshPairs[0]))
-          setPairInput(prev => {
-            const normalized = normalizeTradingPairInput(prev)
-            return freshPairs.includes(normalized) ? normalized : freshPairs[0]
-          })
-        }
       })
       .catch(() => {})
     api.get('/api/forex/news')
@@ -681,32 +678,23 @@ export default function Forex() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    setPairInput(selectedPair)
-  }, [selectedPair])
-
-  const fetchSignal = useCallback(() => {
+  const fetchSignalForPair = useCallback((pair) => {
     setLoadingSignal(true)
     setErrorSignal(null)
-    api.get('/api/forex/signals', { params: { pair: selectedPair } })
+    api.get('/api/forex/signals', { params: { pair } })
       .then(res => setSignal(res.data))
       .catch(e => setErrorSignal(e.message || 'Failed to load signal'))
       .finally(() => setLoadingSignal(false))
-  }, [selectedPair])
+  }, [])
 
-  const fetchTech = useCallback(() => {
+  const fetchTechForPair = useCallback((pair) => {
     setLoadingTech(true)
     setErrorTech(null)
-    api.get('/api/forex/technical', { params: { pair: selectedPair } })
+    api.get('/api/forex/technical', { params: { pair } })
       .then(res => setTech(res.data))
       .catch(e => setErrorTech(e.message || 'Failed to load technical data'))
       .finally(() => setLoadingTech(false))
-  }, [selectedPair])
-
-  useEffect(() => {
-    fetchSignal()
-    fetchTech()
-  }, [fetchSignal, fetchTech])
+  }, [])
 
   const availablePairs = useMemo(() => pairs.all || [], [pairs.all])
 
@@ -729,13 +717,27 @@ export default function Forex() {
     }
     setPairInput(normalizedPair)
     setPairInputError('')
-    if (normalizedPair === selectedPair) {
-      fetchSignal()
-      fetchTech()
-      return
-    }
     setSelectedPair(normalizedPair)
-  }, [availablePairs, fetchSignal, fetchTech, pairInput, selectedPair])
+    setAnalyzedPair(normalizedPair)
+    setSignal(null)
+    setTech(null)
+    setShowAnalysisPopup(true)
+    setShowAllPairs(false)
+    fetchSignalForPair(normalizedPair)
+    fetchTechForPair(normalizedPair)
+  }, [availablePairs, fetchSignalForPair, fetchTechForPair, pairInput])
+
+  const closePopup = useCallback(() => {
+    setShowAnalysisPopup(false)
+  }, [])
+
+  // Close popup on Escape key
+  useEffect(() => {
+    if (!showAnalysisPopup) return
+    const handler = (e) => { if (e.key === 'Escape') closePopup() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showAnalysisPopup, closePopup])
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -757,7 +759,7 @@ export default function Forex() {
         {/* Search area */}
         <div className="p-5">
           <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-            Enter a forex pair to get a full technical + fundamental AI analysis including news, market events, signals, support/resistance, and pattern insights.
+            Enter any forex pair to get a full technical + fundamental AI analysis including signals, support/resistance, news, and market events.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
@@ -772,7 +774,7 @@ export default function Forex() {
                 onKeyDown={e => {
                   if (e.key === 'Enter') runPairAnalysis()
                 }}
-                placeholder="e.g. EUR/USD, GBP/JPY, XAU/USD…"
+                placeholder="e.g. EUR/USD, GBP/JPY, USD/JPY…"
                 className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-mono border-2 outline-none transition-colors"
                 style={{
                   background: 'var(--bg)',
@@ -798,213 +800,278 @@ export default function Forex() {
           )}
           {/* Quick pair chips */}
           <div className="flex flex-wrap gap-1.5 mt-3">
-            {['EUR/USD', 'GBP/USD', 'USD/JPY', 'GBP/JPY', 'XAU/USD', 'BTC/USD'].map(p => (
-              <button
-                key={p}
-                onClick={() => { setPairInput(p); setPairInputError('') }}
-                className="px-2.5 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                style={{
-                  borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
-                  color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                  background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                }}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Forex Dashboard</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            AI-powered signals with technical + fundamental analysis
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedPair}
-            onChange={e => {
-              setSelectedPair(e.target.value)
-              setPairInputError('')
-            }}
-            className="px-3 py-2 rounded-lg text-sm font-mono border outline-none"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-              color: 'var(--text)',
-            }}
-          >
-            {groupedPairs.length > 0 ? (
-              groupedPairs.map(({ label, pairs: ps }) => (
-                <optgroup key={label} label={label}>
-                  {ps.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </optgroup>
+            {quickPairs.length > 0
+              ? quickPairs.map(p => (
+                <button
+                  key={p}
+                  onClick={() => { setPairInput(p); setPairInputError('') }}
+                  className="px-2.5 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  style={{
+                    borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
+                    color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                    background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                  }}
+                >
+                  {p}
+                </button>
               ))
-            ) : (
-              <option value="EUR/USD">EUR/USD</option>
-            )}
-          </select>
-          <button
-            onClick={() => { fetchSignal(); fetchTech() }}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
-          >
-            ↻ Refresh
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Signal */}
-        <div>
-          <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-            AI Signal — {selectedPair}
-          </h2>
-          {loadingSignal ? (
-            <div className="card"><LoadingSpinner /></div>
-          ) : errorSignal ? (
-            <div className="card"><ErrorMessage message={errorSignal} onRetry={fetchSignal} /></div>
-          ) : signal?.signal_state === 'filled' ? (
-            <UpcomingSignalCard pair={selectedPair} signal={signal} onRefresh={fetchSignal} />
-          ) : (
-            <SignalCard signal={signal} />
-          )}
-        </div>
-
-        {/* Technical */}
-        <div>
-          <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-            Technical Analysis
-          </h2>
-          {loadingTech ? (
-            <div className="card"><LoadingSpinner /></div>
-          ) : errorTech ? (
-            <div className="card"><ErrorMessage message={errorTech} onRetry={fetchTech} /></div>
-          ) : (
-            <TechnicalCard tech={tech} />
-          )}
-        </div>
-      </div>
-
-      {/* AI Full Analysis Panel */}
-      {(signal || tech) && (
-        <div className="mt-6">
-          <AIAnalysisPanel
-            pair={selectedPair}
-            signal={signal}
-            tech={tech}
-            news={news}
-            calendarEvents={calendarEvents}
-          />
-        </div>
-      )}
-
-      {/* Signal History */}
-      {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
-        <div className="mt-6 card">
-          <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b" style={{ borderColor: 'var(--border)' }}>
-                  {['Date / Time', 'Predicted', 'Actual', 'Entry', 'TP/SL Status', 'Exit', 'Result'].map(h => (
-                    <th key={h} className="pb-2 pr-4 font-medium text-xs uppercase tracking-wide"
-                      style={{ color: 'var(--text-muted)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {signal.history.slice(-10).reverse().map((h, i) => {
-                  const tpHit = h.correct
-                  const slHit = !h.correct
-                  const postedAt = h.posted_at
-                    ? new Date(h.posted_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                    : h.day || '—'
-                  return (
-                    <motion.tr
-                      key={i}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.25 }}
-                      className="border-b"
-                      style={{ borderColor: 'var(--border)' }}
-                    >
-                      <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <div>{postedAt}</div>
-                      </td>
-                      <td className="py-2 pr-4">
-                        <DirectionBadge direction={h.predicted} />
-                      </td>
-                      <td className="py-2 pr-4">
-                        <DirectionBadge direction={h.actual} />
-                      </td>
-                      <td className="py-2 pr-4 font-mono text-xs">{h.entry ?? '—'}</td>
-                      <td className="py-2 pr-4">
-                        <div className="flex flex-col gap-1">
-                          {/* Entry fill indicator */}
-                          <motion.span
-                            initial={{ scale: 0.7, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: i * 0.04 + 0.1 }}
-                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
-                            style={{
-                              background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                              color: 'var(--accent)',
-                            }}
-                          >
-                            ✓ Entry
-                          </motion.span>
-                          {/* TP indicator */}
-                          <motion.span
-                            initial={{ scale: 0.7, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: i * 0.04 + 0.2 }}
-                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
-                            style={{
-                              background: tpHit
-                                ? 'color-mix(in srgb, var(--buy) 18%, transparent)'
-                                : 'color-mix(in srgb, var(--border) 60%, transparent)',
-                              color: tpHit ? 'var(--buy)' : 'var(--text-muted)',
-                            }}
-                          >
-                            {tpHit ? '✓ TP Hit' : '— TP'}
-                          </motion.span>
-                          {/* SL indicator */}
-                          <motion.span
-                            initial={{ scale: 0.7, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: i * 0.04 + 0.3 }}
-                            className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
-                            style={{
-                              background: slHit
-                                ? 'color-mix(in srgb, var(--sell) 18%, transparent)'
-                                : 'color-mix(in srgb, var(--border) 60%, transparent)',
-                              color: slHit ? 'var(--sell)' : 'var(--text-muted)',
-                            }}
-                          >
-                            {slHit ? '✓ SL Hit' : '— SL'}
-                          </motion.span>
-                        </div>
-                      </td>
-                      <td className="py-2 pr-4 font-mono text-xs">{h.exit ?? '—'}</td>
-                      <td className="py-2 text-xs font-semibold" style={{
-                        color: h.correct ? 'var(--buy)' : 'var(--sell)'
-                      }}>
-                        {h.correct ? '✓ Win' : '✗ Loss'}
-                      </td>
-                    </motion.tr>
-                  )
-                })}
-              </tbody>
-            </table>
+              : ['EUR/USD', 'GBP/USD', 'USD/JPY', 'GBP/JPY', 'AUD/USD', 'USD/CAD'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => { setPairInput(p); setPairInputError('') }}
+                  className="px-2.5 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  style={{
+                    borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
+                    color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                    background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                  }}
+                >
+                  {p}
+                </button>
+              ))
+            }
           </div>
+          {/* Show all pairs toggle */}
+          {availablePairs.length > MAX_QUICK_PAIRS && (
+            <button
+              onClick={() => setShowAllPairs(v => !v)}
+              className="mt-2 text-xs font-medium underline underline-offset-2 transition-colors hover:opacity-70"
+              style={{ color: 'var(--accent)' }}
+            >
+              {showAllPairs ? '▲ Hide all pairs' : `▼ Show all ${availablePairs.length} pairs`}
+            </button>
+          )}
+          {/* All pairs list */}
+          <AnimatePresence>
+            {showAllPairs && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 overflow-hidden"
+              >
+                {groupedPairs.map(({ label, pairs: ps }) => (
+                  <div key={label} className="mb-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide mb-1.5"
+                      style={{ color: 'var(--text-muted)' }}>{label}</div>
+                    <div className="flex flex-wrap gap-1">
+                      {ps.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => {
+                            setPairInput(p)
+                            setPairInputError('')
+                            setShowAllPairs(false)
+                          }}
+                          className="px-2 py-0.5 rounded text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                          style={{
+                            borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
+                            color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                            background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                          }}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
+      </div>
+
+      {/* Analysis Popup Modal */}
+      <AnimatePresence>
+        {showAnalysisPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 overflow-y-auto"
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+            onClick={e => { if (e.target === e.currentTarget) closePopup() }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.97 }}
+              transition={{ duration: 0.25 }}
+              className="w-full max-w-5xl rounded-2xl border overflow-hidden"
+              style={{ background: 'var(--bg)', borderColor: 'var(--border)', boxShadow: '0 24px 80px rgba(0,0,0,0.5)' }}
+            >
+              {/* Popup header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b"
+                style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🤖</span>
+                  <div>
+                    <h2 className="font-bold text-base" style={{ color: 'var(--accent)' }}>
+                      AI Analysis — {analyzedPair}
+                    </h2>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Technical + Fundamental + AI Insights
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closePopup}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-lg font-bold transition-colors hover:bg-[var(--border)]"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Popup body */}
+              <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                {/* AI Analysis Panel */}
+                <AIAnalysisPanel
+                  pair={analyzedPair}
+                  signal={signal}
+                  tech={tech}
+                  news={news}
+                  calendarEvents={calendarEvents}
+                  loading={loadingSignal || loadingTech}
+                />
+
+                {/* Signal + Technical grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div>
+                    <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      AI Signal — {analyzedPair}
+                    </h3>
+                    {loadingSignal ? (
+                      <div className="card"><LoadingSpinner /></div>
+                    ) : errorSignal ? (
+                      <div className="card"><ErrorMessage message={errorSignal} onRetry={() => fetchSignalForPair(analyzedPair)} /></div>
+                    ) : signal?.signal_state === 'filled' ? (
+                      <UpcomingSignalCard pair={analyzedPair} signal={signal} onRefresh={() => fetchSignalForPair(analyzedPair)} />
+                    ) : (
+                      <SignalCard signal={signal} />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      Technical Analysis
+                    </h3>
+                    {loadingTech ? (
+                      <div className="card"><LoadingSpinner /></div>
+                    ) : errorTech ? (
+                      <div className="card"><ErrorMessage message={errorTech} onRetry={() => fetchTechForPair(analyzedPair)} /></div>
+                    ) : (
+                      <TechnicalCard tech={tech} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Signal History */}
+                {signal?.signal_state !== 'filled' && signal?.history && signal.history.length > 0 && (
+                  <div className="card">
+                    <h3 className="font-semibold mb-3">Recent Signal History (30 days)</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left border-b" style={{ borderColor: 'var(--border)' }}>
+                            {['Date / Time', 'Predicted', 'Actual', 'Entry', 'TP/SL Status', 'Exit', 'Result'].map(h => (
+                              <th key={h} className="pb-2 pr-4 font-medium text-xs uppercase tracking-wide"
+                                style={{ color: 'var(--text-muted)' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {signal.history.slice(-10).reverse().map((h, i) => {
+                            const tpHit = h.correct
+                            const slHit = !h.correct
+                            const postedAt = h.posted_at
+                              ? new Date(h.posted_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                              : h.day || '—'
+                            return (
+                              <motion.tr
+                                key={i}
+                                initial={{ opacity: 0, x: -12 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.04, duration: 0.25 }}
+                                className="border-b"
+                                style={{ borderColor: 'var(--border)' }}
+                              >
+                                <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                  <div>{postedAt}</div>
+                                </td>
+                                <td className="py-2 pr-4">
+                                  <DirectionBadge direction={h.predicted} />
+                                </td>
+                                <td className="py-2 pr-4">
+                                  <DirectionBadge direction={h.actual} />
+                                </td>
+                                <td className="py-2 pr-4 font-mono text-xs">{h.entry ?? '—'}</td>
+                                <td className="py-2 pr-4">
+                                  <div className="flex flex-col gap-1">
+                                    <motion.span
+                                      initial={{ scale: 0.7, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      transition={{ delay: i * 0.04 + 0.1 }}
+                                      className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                                      style={{
+                                        background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                                        color: 'var(--accent)',
+                                      }}
+                                    >
+                                      ✓ Entry
+                                    </motion.span>
+                                    <motion.span
+                                      initial={{ scale: 0.7, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      transition={{ delay: i * 0.04 + 0.2 }}
+                                      className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                                      style={{
+                                        background: tpHit
+                                          ? 'color-mix(in srgb, var(--buy) 18%, transparent)'
+                                          : 'color-mix(in srgb, var(--border) 60%, transparent)',
+                                        color: tpHit ? 'var(--buy)' : 'var(--text-muted)',
+                                      }}
+                                    >
+                                      {tpHit ? '✓ TP Hit' : '— TP'}
+                                    </motion.span>
+                                    <motion.span
+                                      initial={{ scale: 0.7, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      transition={{ delay: i * 0.04 + 0.3 }}
+                                      className="text-xs px-1.5 py-0.5 rounded font-medium w-fit"
+                                      style={{
+                                        background: slHit
+                                          ? 'color-mix(in srgb, var(--sell) 18%, transparent)'
+                                          : 'color-mix(in srgb, var(--border) 60%, transparent)',
+                                        color: slHit ? 'var(--sell)' : 'var(--text-muted)',
+                                      }}
+                                    >
+                                      {slHit ? '✓ SL Hit' : '— SL'}
+                                    </motion.span>
+                                  </div>
+                                </td>
+                                <td className="py-2 pr-4 font-mono text-xs">{h.exit ?? '—'}</td>
+                                <td className="py-2 text-xs font-semibold" style={{
+                                  color: h.correct ? 'var(--buy)' : 'var(--sell)'
+                                }}>
+                                  {h.correct ? '✓ Win' : '✗ Loss'}
+                                </td>
+                              </motion.tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

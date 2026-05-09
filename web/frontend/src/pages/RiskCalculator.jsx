@@ -97,19 +97,36 @@ export default function RiskCalculator() {
 
     if (!priceDiffSL) return null
 
-    // Pip calculation per type
-    let pipSize = 0.0001 // forex default
-    if (pairType === 'jpy') pipSize = 0.01
-    if (pairType === 'xauusd') pipSize = 0.1
-    if (pairType === 'us30') pipSize = 1
-    if (pairType === 'crypto') pipSize = 1
+    // Pip size and pip value per standard lot in USD
+    // For pairs where USD is the quote currency (EUR/USD, GBP/USD, AUD/USD, NZD/USD):
+    //   pip value per lot = pipSize × 100,000 = $10 (non-JPY) or $1,000/entry (JPY)
+    // For USD-base pairs (USD/JPY etc.) we must divide by entry price to convert to USD.
+    let pipSize = 0.0001      // standard forex pip
+    let pipValuePerLot = 10   // USD per pip per standard lot (USD-quoted pairs)
+    let lotSize = 100000      // units per standard lot
+
+    if (pairType === 'jpy') {
+      pipSize = 0.01
+      // JPY pairs: pip value ≈ 1,000 JPY / entryPrice → ~$6.67 at 150 JPY
+      pipValuePerLot = 1000 / entry
+      lotSize = 100000
+    } else if (pairType === 'us30') {
+      pipSize = 1
+      pipValuePerLot = 1  // $1 per point per mini-contract
+      lotSize = 1
+    } else if (pairType === 'crypto') {
+      pipSize = 1
+      pipValuePerLot = 1  // $1 per unit
+      lotSize = 1
+    }
+    // else: standard forex (USD-quoted) — defaults above are correct
 
     const slPips = priceDiffSL / pipSize
     const tpPips = priceDiffTP !== null ? priceDiffTP / pipSize : null
 
-    // Standard lot calculations
-    const positionSizeUnits = (riskAmount / priceDiffSL)
-    const positionSizeLots = positionSizeUnits / 100000
+    // Accurate position sizing: lots = risk / (sl_pips × pip_value_per_lot)
+    const positionSizeLots = riskAmount / (slPips * pipValuePerLot)
+    const positionSizeUnits = positionSizeLots * lotSize
 
     const rrRatio = tpPips ? (tpPips / slPips) : null
     const rewardAmount = tpPips ? (riskAmount * rrRatio) : null
@@ -118,11 +135,13 @@ export default function RiskCalculator() {
       riskAmount,
       slPips: slPips.toFixed(1),
       tpPips: tpPips?.toFixed(1),
-      positionSizeUnits: positionSizeUnits.toFixed(0),
-      positionSizeLots: positionSizeLots.toFixed(2),
+      positionSizeUnits: positionSizeUnits.toFixed(pairType === 'crypto' || pairType === 'us30' ? 4 : 0),
+      positionSizeLots: positionSizeLots.toFixed(pairType === 'crypto' || pairType === 'us30' ? 4 : 2),
       rrRatio: rrRatio?.toFixed(2),
       rewardAmount,
       riskPercent,
+      lotLabel: pairType === 'us30' ? 'contracts' : pairType === 'crypto' ? 'coins' : 'lots',
+      unitsLabel: pairType === 'us30' ? 'points' : pairType === 'crypto' ? 'units' : 'units',
     }
   }, [accountBalance, riskPct, entryPrice, stopLoss, takeProfit, pairType])
 
@@ -166,7 +185,6 @@ export default function RiskCalculator() {
                 >
                   <option value="forex">Forex (non-JPY)</option>
                   <option value="jpy">Forex JPY Pairs</option>
-                  <option value="xauusd">Gold (XAU/USD)</option>
                   <option value="us30">US30 / Indices</option>
                   <option value="crypto">Crypto</option>
                 </select>
@@ -283,8 +301,8 @@ export default function RiskCalculator() {
                   large
                 />
                 <ResultRow
-                  label="Position Size (lots)"
-                  value={`${result.positionSizeLots} lots`}
+                  label={`Position Size (${result.lotLabel})`}
+                  value={`${result.positionSizeLots} ${result.lotLabel}`}
                   color="var(--accent)"
                 />
                 {result.tpPips && (

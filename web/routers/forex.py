@@ -480,39 +480,45 @@ async def forex_fvg_scanner():
         seen_in_bucket: dict[str, set[str]] = {k: set() for k in grouped}
 
         for pair in core._SUPPORTED_PAIRS:
-            live_rate = core._fetch_live_rate(pair)
-            if pair in core._YF_PAIRS and live_rate is None:
-                continue
-            prices = _get_prices_for_pair(pair, 30)
-            current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
-            if not _pair_has_open_signal(core, pair, current_price):
-                continue
-            ta = core._build_technical_analysis(pair, current_price)
-            entries = core._classify_fvg_status(pair, current_price, ta["fvg"], prices)
-            for entry in entries:
-                if entry.get("status") == "passed":
+            try:
+                live_rate = core._fetch_live_rate(pair)
+                if pair in core._YF_PAIRS and live_rate is None:
                     continue
-                bucket = entry.get("status", "")
-                if bucket in grouped and pair not in seen_in_bucket[bucket]:
-                    entry["direction"] = core._FOREX_SIGNALS[pair]["direction"]
-                    grouped[bucket].append(entry)
-                    seen_in_bucket[bucket].add(pair)
+                prices = _get_prices_for_pair(pair, 30)
+                if not prices:
+                    continue
+                current_price = live_rate if live_rate is not None else prices[-1]
+                if not _pair_has_open_signal(core, pair, current_price):
+                    continue
+                ta = core._build_technical_analysis(pair, current_price)
+                entries = core._classify_fvg_status(pair, current_price, ta["fvg"], prices)
+                for entry in entries:
+                    if entry.get("status") == "passed":
+                        continue
+                    bucket = entry.get("status", "")
+                    if bucket in grouped and pair not in seen_in_bucket[bucket]:
+                        entry["direction"] = core._FOREX_SIGNALS[pair]["direction"]
+                        grouped[bucket].append(entry)
+                        seen_in_bucket[bucket].add(pair)
 
-            _pip, dec = core._pair_pip_dec(pair)
-            pair_fvgs[pair] = [
-                {
-                    "type": fvg["type"],
-                    "top": round(fvg["top"], dec),
-                    "bottom": round(fvg["bottom"], dec),
-                    "mid": round((fvg["top"] + fvg["bottom"]) / 2, dec),
-                    "filled": fvg.get("filled", False),
-                    "created": fvg.get("created", ""),
-                    "description": fvg.get("description", ""),
-                    "current_price": round(current_price, dec),
-                }
-                for fvg in ta["fvg"]
-                if not fvg.get("filled", False)
-            ]
+                _pip, dec = core._pair_pip_dec(pair)
+                pair_fvgs[pair] = [
+                    {
+                        "type": fvg["type"],
+                        "top": round(fvg["top"], dec),
+                        "bottom": round(fvg["bottom"], dec),
+                        "mid": round((fvg["top"] + fvg["bottom"]) / 2, dec),
+                        "filled": fvg.get("filled", False),
+                        "created": fvg.get("created", ""),
+                        "description": fvg.get("description", ""),
+                        "current_price": round(current_price, dec),
+                    }
+                    for fvg in ta["fvg"]
+                    if not fvg.get("filled", False)
+                ]
+            except Exception as pair_exc:
+                logger.warning("forex_fvg_scanner skipping pair %s: %s", pair, pair_exc)
+                continue
 
         grouped["approaching"].sort(key=lambda x: x.get("dist", 1.0))
         grouped["reached"].sort(key=lambda x: x.get("dist", 1.0))
@@ -538,26 +544,32 @@ async def forex_sr_breakouts():
         seen_in_sr: dict[str, set[str]] = {k: set() for k in sr_groups}
 
         for pair in core._SUPPORTED_PAIRS:
-            live_rate = core._fetch_live_rate(pair)
-            if pair in core._YF_PAIRS and live_rate is None:
-                continue
-            prices = _get_prices_for_pair(pair, 30)
-            current_price = live_rate if live_rate is not None else (prices[-1] if prices else 0.0)
-            if not _pair_has_open_signal(core, pair, current_price):
-                continue
-            ta = core._build_technical_analysis(pair, current_price)
-            sr = ta["support_resistance"]
-            items = core._classify_sr_levels(pair, current_price, prices, sr["support"], sr["resistance"])
-            items.sort(key=lambda x: x.get("dist", 1.0))
-            for item in items:
-                if item.get("status") != "soon_touching":
+            try:
+                live_rate = core._fetch_live_rate(pair)
+                if pair in core._YF_PAIRS and live_rate is None:
                     continue
-                item["direction"] = core._FOREX_SIGNALS[pair]["direction"]
-                item["confidence"] = core._FOREX_SIGNALS[pair]["confidence"]
-                status = item.get("status", "")
-                if status in sr_groups and pair not in seen_in_sr[status]:
-                    sr_groups[status].append(item)
-                    seen_in_sr[status].add(pair)
+                prices = _get_prices_for_pair(pair, 30)
+                if not prices:
+                    continue
+                current_price = live_rate if live_rate is not None else prices[-1]
+                if not _pair_has_open_signal(core, pair, current_price):
+                    continue
+                ta = core._build_technical_analysis(pair, current_price)
+                sr = ta["support_resistance"]
+                items = core._classify_sr_levels(pair, current_price, prices, sr["support"], sr["resistance"])
+                items.sort(key=lambda x: x.get("dist", 1.0))
+                for item in items:
+                    if item.get("status") != "soon_touching":
+                        continue
+                    item["direction"] = core._FOREX_SIGNALS[pair]["direction"]
+                    item["confidence"] = core._FOREX_SIGNALS[pair]["confidence"]
+                    status = item.get("status", "")
+                    if status in sr_groups and pair not in seen_in_sr[status]:
+                        sr_groups[status].append(item)
+                        seen_in_sr[status].add(pair)
+            except Exception as pair_exc:
+                logger.warning("forex_sr_breakouts skipping pair %s: %s", pair, pair_exc)
+                continue
 
         for group_items in sr_groups.values():
             group_items.sort(key=lambda x: x.get("dist", 1.0))
