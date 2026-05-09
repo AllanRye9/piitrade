@@ -11,6 +11,7 @@ import {
 } from '../utils/sounds'
 
 const MAX_QUICK_PAIRS = 12
+const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
 
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -757,10 +758,14 @@ export default function Forex() {
 
     if (fromApi.length > 0) return fromApi
 
+    const majorFallback = ALL_FOREX_PAIRS.filter(p => PRIMARY_MAJORS.has(p))
+    const exoticFallback = ALL_FOREX_PAIRS.filter(p => p.includes('USD') && !PRIMARY_MAJORS.has(p))
+    const minorFallback = ALL_FOREX_PAIRS.filter(p => !majorFallback.includes(p) && !exoticFallback.includes(p))
+
     return [
-      { label: 'Major', pairs: ALL_FOREX_PAIRS.filter(p => ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'].includes(p)) },
-      { label: 'Minor', pairs: ALL_FOREX_PAIRS.filter(p => !p.startsWith('USD/') && !['EUR/USD', 'GBP/USD', 'AUD/USD', 'NZD/USD'].includes(p)) },
-      { label: 'Exotic', pairs: ALL_FOREX_PAIRS.filter(p => p.startsWith('USD/') && !['USD/JPY', 'USD/CHF', 'USD/CAD'].includes(p)) },
+      { label: 'Major', pairs: majorFallback },
+      { label: 'Minor', pairs: minorFallback },
+      { label: 'Exotic', pairs: exoticFallback },
     ]
   }, [pairs.exotic, pairs.major, pairs.minor])
 
@@ -786,7 +791,7 @@ export default function Forex() {
       return
     }
     if (availablePairs.length > 0 && !availablePairs.includes(normalizedPair)) {
-      setPairInputError('That trading pair is not supported. Pick one from the dropdown list.')
+      setPairInputError('That trading pair is not supported. Use the quick pair chips or show-more dropdown.')
       return
     }
     setPairInput(normalizedPair)
@@ -833,7 +838,9 @@ export default function Forex() {
     if (dragRef.current.pointerId !== e.pointerId) return
     try {
       e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch (_) {}
+    } catch (_) {
+      // Pointer capture can already be released by the browser; safe to ignore.
+    }
     dragRef.current.pointerId = null
   }, [])
 
