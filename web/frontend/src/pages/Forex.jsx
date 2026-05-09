@@ -433,7 +433,6 @@ function DashboardRiskCalculator({
         <h3
           className="text-sm font-semibold flex items-center gap-1.5"
           style={{ color: 'var(--accent)' }}
-          aria-label="Dashboard Risk Calculator"
         >
           <span aria-hidden="true">🧮</span>
           <span>Dashboard Risk Calculator</span>
@@ -1245,7 +1244,7 @@ export default function Forex() {
                         </span>
                       </div>
                       <div
-                        className="flex flex-wrap gap-1.5 overflow-y-auto pr-1"
+                        className="flex flex-wrap gap-1.5 overflow-y-auto pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-md"
                         style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}
                         tabIndex={0}
                         role="region"
