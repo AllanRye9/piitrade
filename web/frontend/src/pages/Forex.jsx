@@ -313,6 +313,7 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
   let pipValuePerLot = 10
   let lotSize = 100000
   if (pairType === 'jpy') {
+    if (entry <= 0) return null
     pipSize = 0.01
     pipValuePerLot = 1000 / entry
   }
@@ -770,8 +771,10 @@ export default function Forex() {
   }, [pairs.exotic, pairs.major, pairs.minor])
 
   const availablePairs = useMemo(() => {
-    const fromGroups = groupedPairs.flatMap(g => g.pairs)
-    return Array.from(new Set([...ALL_FOREX_PAIRS, ...(pairs.all || []), ...fromGroups]))
+    const merged = new Set(ALL_FOREX_PAIRS)
+    ;(pairs.all || []).forEach(p => merged.add(p))
+    groupedPairs.forEach(g => g.pairs.forEach(p => merged.add(p)))
+    return Array.from(merged)
   }, [groupedPairs, pairs.all])
 
   const quickPairs = useMemo(() => (availablePairs || []).slice(0, MAX_QUICK_PAIRS), [availablePairs])
@@ -839,7 +842,7 @@ export default function Forex() {
     try {
       e.currentTarget.releasePointerCapture(e.pointerId)
     } catch (_) {
-      // Pointer capture can already be released by the browser; safe to ignore.
+      // releasePointerCapture may throw DOMException if the capture was auto-released first.
     }
     dragRef.current.pointerId = null
   }, [])
@@ -1083,6 +1086,7 @@ export default function Forex() {
                     {signal && (
                       <button
                         onClick={() => copySignalToRiskCalculator(signal, analyzedPair)}
+                        aria-label="Copy AI signal values to the dashboard risk calculator"
                         className="mt-3 w-full px-3 py-2 rounded-lg text-sm font-semibold border transition-colors hover:opacity-85"
                         style={{
                           borderColor: 'color-mix(in srgb, var(--accent) 35%, var(--border))',
@@ -1231,7 +1235,8 @@ export default function Forex() {
             aria-label="Open risk calculator widget"
             title="Open risk calculator"
           >
-            🧮
+            <span aria-hidden="true">🧮</span>
+            <span className="sr-only">Open risk calculator</span>
           </button>
         )}
         {riskWidgetOpen && (
