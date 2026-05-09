@@ -834,10 +834,10 @@ export default function Forex() {
       Exotic: new Set(),
     }
 
-    const addPair = (pair, forcedCategory) => {
+    const addPair = (pair, overrideCategory) => {
       const normalized = normalizeTradingPairInput(pair || '')
       if (!normalized) return
-      const category = forcedCategory || getPairCategory(normalized)
+      const category = overrideCategory || getPairCategory(normalized)
       grouped[category].add(normalized)
     }
 
@@ -1002,8 +1002,8 @@ export default function Forex() {
 
     const syncRiskWidgetBounds = () => {
       setRiskWidgetOffset(prev => {
-        const next = clampRiskWidgetOffset(prev)
-        return next.x === prev.x && next.y === prev.y ? prev : next
+        const clampedOffset = clampRiskWidgetOffset(prev)
+        return clampedOffset.x === prev.x && clampedOffset.y === prev.y ? prev : clampedOffset
       })
     }
 
