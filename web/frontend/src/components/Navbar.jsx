@@ -21,6 +21,7 @@ export default function Navbar() {
     { to: '/forex', label: 'Dashboard' },
     { to: '/advance', label: 'Advanced' },
     { to: '/movers', label: 'Movers' },
+    { to: '/risk', label: 'Risk Calc' },
     { to: '/methodology', label: 'Methodology' },
   ]
 
