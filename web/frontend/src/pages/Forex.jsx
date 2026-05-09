@@ -301,7 +301,7 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
   const sl = parseFloat(stopLoss) || 0
   const tp = parseFloat(takeProfit) || 0
 
-  if (!balance || !riskPercent || !entry || !sl) return null
+  if (!balance || !riskPercent || entry <= 0 || sl <= 0) return null
 
   const riskAmount = balance * (riskPercent / 100)
   const priceDiffSL = Math.abs(entry - sl)
