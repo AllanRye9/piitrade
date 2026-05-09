@@ -337,6 +337,7 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
 }
 
 function getRiskRewardTone(rrRatioValue) {
+  if (rrRatioValue == null) return 'var(--text-muted)'
   return rrRatioValue >= MIN_FAVORABLE_RR_RATIO ? 'var(--buy)' : 'var(--hold)'
 }
 
@@ -1317,8 +1318,14 @@ export default function Forex() {
             aria-label="Open risk calculator widget"
             title="Open risk calculator"
           >
-            <span aria-hidden="true">{isMobileRiskLayout ? '🧮 Open risk calculator' : '🧮'}</span>
-            <span className="sr-only">Open risk calculator</span>
+            {isMobileRiskLayout ? (
+              <span>🧮 Open risk calculator</span>
+            ) : (
+              <>
+                <span aria-hidden="true">🧮</span>
+                <span className="sr-only">Open risk calculator</span>
+              </>
+            )}
           </button>
         )}
         {riskWidgetOpen && (
@@ -1359,6 +1366,7 @@ export default function Forex() {
                     }}
                     className="w-7 h-7 rounded text-xs border"
                     style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                    aria-label={riskWidgetMaximized ? 'Minimize risk calculator panel' : 'Maximize risk calculator panel'}
                     title={riskWidgetMaximized ? 'Minimize' : 'Maximize'}
                   >
                     {riskWidgetMaximized ? '🗕' : '🗖'}
@@ -1371,6 +1379,7 @@ export default function Forex() {
                   }}
                   className="w-7 h-7 rounded text-xs border"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  aria-label={isMobileRiskLayout ? 'Hide risk calculator' : 'Minimize risk calculator to icon'}
                   title={isMobileRiskLayout ? 'Hide calculator' : 'Minimize to icon'}
                 >
                   —
