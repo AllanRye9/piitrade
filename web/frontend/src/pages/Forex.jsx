@@ -12,6 +12,8 @@ import {
 
 const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
 const MIN_FAVORABLE_RR_RATIO = 2
+const RISK_WIDGET_MOBILE_HELP = 'Positioned below the trading pairs for quick mobile access.'
+const RISK_WIDGET_DESKTOP_HELP = 'Drag from this header to reposition the calculator.'
 
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -332,6 +334,10 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
     rrRatio: rrRatio?.toFixed(2),
     rrRatioValue: rrRatio,
   }
+}
+
+function getRiskRewardTone(rrRatioValue) {
+  return rrRatioValue >= MIN_FAVORABLE_RR_RATIO ? 'var(--buy)' : 'var(--hold)'
 }
 
 function RiskWidgetField({ label, value, onChange, placeholder, suffix, hint, step = 'any', min }) {
@@ -838,7 +844,7 @@ export default function Forex() {
       return
     }
     if (availablePairs.length > 0 && !availablePairs.includes(normalizedPair)) {
-      setPairInputError('That trading pair is not supported. Choose one of the trading pairs listed below.')
+      setPairInputError('That trading pair is not supported. Choose one from the grouped trading pairs listed below.')
       return
     }
     setPairInput(normalizedPair)
@@ -1341,7 +1347,7 @@ export default function Forex() {
               >
                 <div className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>🧮 Dashboard Risk Calculator</div>
                 <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {isMobileRiskLayout ? 'Positioned below the trading pairs for quick mobile access.' : 'Drag from this header to reposition the calculator.'}
+                  {isMobileRiskLayout ? RISK_WIDGET_MOBILE_HELP : RISK_WIDGET_DESKTOP_HELP}
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -1470,7 +1476,7 @@ export default function Forex() {
                       <RiskWidgetResultRow
                         label="Risk to reward"
                         value={`1:${riskResult.rrRatio}`}
-                        tone={riskResult.rrRatioValue >= MIN_FAVORABLE_RR_RATIO ? 'var(--buy)' : 'var(--hold)'}
+                        tone={getRiskRewardTone(riskResult.rrRatioValue)}
                       />
                       <RiskWidgetResultRow
                         label="Take profit distance"
