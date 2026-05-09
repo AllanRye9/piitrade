@@ -430,7 +430,10 @@ function DashboardRiskCalculator({
       }}
     >
       <div className="mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>🧮 Dashboard Risk Calculator</h3>
+        <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--accent)' }}>
+          <span aria-hidden="true">🧮</span>
+          <span>Dashboard Risk Calculator</span>
+        </h3>
         <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
           Built into AI-Powered Pair Analysis for faster setup.
         </p>
@@ -1237,7 +1240,12 @@ export default function Forex() {
                           {groupItems.length} pairs
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}>
+                      <div
+                        className="flex flex-wrap gap-1.5 overflow-y-auto pr-1"
+                        style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}
+                        tabIndex={0}
+                        aria-label={`${label} trading pairs`}
+                      >
                         {groupItems.map(p => (
                           <motion.button
                             key={p}
