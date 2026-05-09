@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -12,12 +12,8 @@ import {
 
 const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'])
 const MIN_FAVORABLE_RR_RATIO = 2
-const RISK_WIDGET_MOBILE_HELP = 'Positioned below the trading pairs for quick mobile access.'
-const RISK_WIDGET_DESKTOP_HELP = 'Drag from this header to reposition the calculator.'
-const RISK_WIDGET_BASE_INSET = 20
-const RISK_WIDGET_EDGE_GAP = 12
-const RISK_WIDGET_TOP_GAP = 72
-const RISK_WIDGET_FALLBACK_HEIGHT = 520
+const RISK_CALCULATOR_PANEL_WIDTH = 340
+const PAIR_CHIPS_MAX_HEIGHT = 112
 
 function getPairCategory(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -409,6 +405,161 @@ function RiskWidgetResultRow({ label, value, tone = 'var(--text)' }) {
   )
 }
 
+function DashboardRiskCalculator({
+  riskBalance,
+  setRiskBalance,
+  riskPct,
+  setRiskPct,
+  riskEntry,
+  setRiskEntry,
+  riskStop,
+  setRiskStop,
+  riskTake,
+  setRiskTake,
+  riskPairType,
+  setRiskPairType,
+  riskResult,
+}) {
+  return (
+    <div
+      className="w-full xl:justify-self-end rounded-xl border p-3 h-fit"
+      style={{
+        maxWidth: RISK_CALCULATOR_PANEL_WIDTH,
+        borderColor: 'color-mix(in srgb, var(--accent) 26%, var(--border))',
+        background: 'color-mix(in srgb, var(--accent) 4%, var(--surface))',
+      }}
+    >
+      <div className="mb-3">
+        <h3
+          className="text-sm font-semibold flex items-center gap-1.5"
+          style={{ color: 'var(--accent)' }}
+        >
+          <span aria-hidden="true">🧮</span>
+          <span>Dashboard Risk Calculator</span>
+        </h3>
+        <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
+          Built into AI-Powered Pair Analysis for faster setup.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3">
+          <RiskWidgetField
+            label="Account balance"
+            value={riskBalance}
+            onChange={setRiskBalance}
+            placeholder="10000"
+            suffix="USD"
+            min="1"
+            hint="Your available trading capital."
+          />
+          <RiskWidgetField
+            label="Risk per trade"
+            value={riskPct}
+            onChange={setRiskPct}
+            placeholder="1"
+            suffix="%"
+            step="0.1"
+            min="0.1"
+            hint="Most disciplined traders stay around 1–2%."
+          />
+          <RiskWidgetField
+            label="Entry price"
+            value={riskEntry}
+            onChange={setRiskEntry}
+            placeholder="1.08500"
+            hint="Planned market entry."
+          />
+          <RiskWidgetField
+            label="Stop loss"
+            value={riskStop}
+            onChange={setRiskStop}
+            placeholder="1.08000"
+            hint="Invalidates the trade if reached."
+          />
+          <RiskWidgetField
+            label="Take profit"
+            value={riskTake}
+            onChange={setRiskTake}
+            placeholder="1.09500"
+            hint="Optional target for reward calculations."
+          />
+        </div>
+
+        <label className="block">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide mb-1.5"
+            style={{ color: 'var(--text-muted)' }}>
+            Instrument type
+          </span>
+          <select
+            value={riskPairType}
+            onChange={e => setRiskPairType(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
+            style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+          >
+            <option value="forex">Forex (non-JPY)</option>
+            <option value="jpy">Forex JPY pairs</option>
+          </select>
+        </label>
+
+        {riskResult ? (
+          <div className="rounded-xl p-3 border"
+            style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)' }}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Position summary
+              </span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full"
+                style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 14%, transparent)' }}>
+                Live estimate
+              </span>
+            </div>
+            <RiskWidgetResultRow
+              label="Account risk"
+              value={`$${riskResult.riskAmount.toFixed(2)}`}
+              tone="var(--sell)"
+            />
+            <RiskWidgetResultRow
+              label="Stop loss distance"
+              value={`${riskResult.slPips} pips`}
+            />
+            <RiskWidgetResultRow
+              label="Position size"
+              value={`${riskResult.positionSizeUnits.toLocaleString(undefined, { maximumFractionDigits: 0 })} units`}
+              tone="var(--accent)"
+            />
+            <RiskWidgetResultRow
+              label="Standard lots"
+              value={riskResult.positionSizeLots}
+              tone="var(--accent)"
+            />
+            {riskResult.rrRatio && (
+              <>
+                <RiskWidgetResultRow
+                  label="Risk to reward"
+                  value={`1:${riskResult.rrRatio}`}
+                  tone={getRiskRewardTone(riskResult.rrRatioValue)}
+                />
+                <RiskWidgetResultRow
+                  label="Take profit distance"
+                  value={`${riskResult.tpPips} pips`}
+                />
+              </>
+            )}
+            <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
+              Double-check the final size with your broker before placing a live trade.
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            Fill in the balance, risk %, entry, and stop loss to calculate a detailed position size.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function SignalCard({ signal }) {
   const prevKeyRef = useRef(null)
   const signalKey = signal ? `${signal.generated_at}-${signal.direction}` : null
@@ -781,18 +932,12 @@ export default function Forex() {
   // Popup state — analysis is only shown when user clicks Analyze Pair
   const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
   const [analyzedPair, setAnalyzedPair] = useState(null)
-  const [riskWidgetOpen, setRiskWidgetOpen] = useState(false)
-  const [riskWidgetMaximized, setRiskWidgetMaximized] = useState(false)
-  const [riskWidgetOffset, setRiskWidgetOffset] = useState({ x: 0, y: 0 })
   const [riskBalance, setRiskBalance] = useState('10000')
   const [riskPct, setRiskPct] = useState('1')
   const [riskEntry, setRiskEntry] = useState('')
   const [riskStop, setRiskStop] = useState('')
   const [riskTake, setRiskTake] = useState('')
   const [riskPairType, setRiskPairType] = useState('forex')
-  const [isMobileRiskLayout, setIsMobileRiskLayout] = useState(false)
-  const riskWidgetRef = useRef(null)
-  const dragRef = useRef({ pointerId: null, startX: 0, startY: 0, originX: 0, originY: 0 })
 
   useEffect(() => {
     api.get('/api/forex/pairs')
@@ -909,61 +1054,6 @@ export default function Forex() {
     setRiskStop(signalData.stop_loss != null ? String(signalData.stop_loss) : '')
     setRiskTake(signalData.take_profit != null ? String(signalData.take_profit) : '')
     setRiskPairType(getInstrumentTypeFromPair(pair))
-    setRiskWidgetOpen(true)
-  }, [])
-
-  const clampRiskWidgetOffset = useCallback((offset, rect) => {
-    if (typeof window === 'undefined' || isMobileRiskLayout) {
-      return { x: 0, y: 0 }
-    }
-
-    const nextRect = rect || riskWidgetRef.current?.getBoundingClientRect()
-    const fallbackWidth = riskWidgetOpen ? (riskWidgetMaximized ? 420 : 340) : 48
-    const fallbackHeight = riskWidgetOpen ? RISK_WIDGET_FALLBACK_HEIGHT : 48
-    const width = nextRect?.width || fallbackWidth
-    const height = nextRect?.height || fallbackHeight
-
-    const leftBoundary = width + RISK_WIDGET_BASE_INSET + RISK_WIDGET_EDGE_GAP - window.innerWidth
-    const rightBoundary = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
-    const topBoundary = height + RISK_WIDGET_BASE_INSET + RISK_WIDGET_TOP_GAP - window.innerHeight
-    const bottomBoundary = RISK_WIDGET_BASE_INSET - RISK_WIDGET_EDGE_GAP
-
-    return {
-      x: Math.min(rightBoundary, Math.max(leftBoundary, offset.x)),
-      y: Math.min(bottomBoundary, Math.max(topBoundary, offset.y)),
-    }
-  }, [isMobileRiskLayout, riskWidgetMaximized, riskWidgetOpen])
-
-  const handleRiskDragStart = useCallback((e) => {
-    if (isMobileRiskLayout) return
-    dragRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      originX: riskWidgetOffset.x,
-      originY: riskWidgetOffset.y,
-    }
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }, [isMobileRiskLayout, riskWidgetOffset.x, riskWidgetOffset.y])
-
-  const handleRiskDragMove = useCallback((e) => {
-    if (dragRef.current.pointerId !== e.pointerId) return
-    const dx = e.clientX - dragRef.current.startX
-    const dy = e.clientY - dragRef.current.startY
-    setRiskWidgetOffset(clampRiskWidgetOffset({
-      x: dragRef.current.originX + dx,
-      y: dragRef.current.originY + dy,
-    }))
-  }, [clampRiskWidgetOffset])
-
-  const handleRiskDragEnd = useCallback((e) => {
-    if (dragRef.current.pointerId !== e.pointerId) return
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch (err) {
-      // releasePointerCapture may throw DOMException if the capture was auto-released first.
-    }
-    dragRef.current.pointerId = null
   }, [])
 
   const closePopup = useCallback(() => {
@@ -978,55 +1068,21 @@ export default function Forex() {
     return () => window.removeEventListener('keydown', handler)
   }, [showAnalysisPopup, closePopup])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-    const media = window.matchMedia('(max-width: 767px)')
-    const syncLayout = () => setIsMobileRiskLayout(media.matches)
-    syncLayout()
-    if (media.addEventListener) media.addEventListener('change', syncLayout)
-    else media.addListener(syncLayout)
-    return () => {
-      if (media.removeEventListener) media.removeEventListener('change', syncLayout)
-      else media.removeListener(syncLayout)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isMobileRiskLayout) return
-    setRiskWidgetOffset({ x: 0, y: 0 })
-    setRiskWidgetOpen(true)
-  }, [isMobileRiskLayout])
-
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined' || isMobileRiskLayout) return undefined
-
-    const syncRiskWidgetBounds = () => {
-      setRiskWidgetOffset(prev => {
-        const clampedOffset = clampRiskWidgetOffset(prev)
-        return clampedOffset.x === prev.x && clampedOffset.y === prev.y ? prev : clampedOffset
-      })
-    }
-
-    syncRiskWidgetBounds()
-    window.addEventListener('resize', syncRiskWidgetBounds)
-    return () => window.removeEventListener('resize', syncRiskWidgetBounds)
-  }, [clampRiskWidgetOffset, isMobileRiskLayout, riskWidgetMaximized, riskWidgetOpen])
-
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-5">
       <TradingSessionBanner />
 
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="mb-6 rounded-xl border overflow-hidden"
+        className="mb-4 rounded-xl border overflow-hidden"
         style={{
           borderColor: 'color-mix(in srgb, var(--accent) 45%, var(--border))',
           background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)) 0%, var(--surface) 55%, color-mix(in srgb, var(--buy) 10%, var(--surface)) 100%)',
           boxShadow: '0 16px 48px color-mix(in srgb, var(--accent) 18%, transparent)',
         }}>
-        <div className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="px-4 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
           <div>
             <h1 className="text-xl font-bold">AI Trading Dashboard</h1>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -1055,14 +1111,14 @@ export default function Forex() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.08 }}
-        className="mb-6 rounded-xl border overflow-hidden"
+        className="mb-4 rounded-xl border overflow-hidden"
         style={{
           borderColor: 'color-mix(in srgb, var(--accent) 28%, var(--border))',
           background: 'var(--surface)',
           boxShadow: '0 10px 36px color-mix(in srgb, var(--accent) 12%, transparent)',
         }}>
         {/* Header bar */}
-        <div className="px-5 py-3 border-b flex items-center gap-2"
+        <div className="px-4 py-2.5 border-b flex items-center gap-2"
           style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
           <span className="text-base">🤖</span>
           <span className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>AI-Powered Pair Analysis</span>
@@ -1072,147 +1128,165 @@ export default function Forex() {
           </span>
         </div>
         {/* Search area */}
-        <div className="p-5">
-          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-            Enter any forex pair to get a full technical + fundamental AI analysis including signals, support/resistance, news, and market events.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base select-none">🔍</span>
-              <input
-                type="text"
-                value={pairInput}
-                onChange={e => {
-                  setPairInput(e.target.value)
-                  if (pairInputError) setPairInputError('')
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') runPairAnalysis()
-                }}
-                placeholder="e.g. EUR/USD, GBP/JPY, USD/JPY…"
-                className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-mono border-2 outline-none transition-colors"
-                style={{
-                  background: 'var(--bg)',
-                  borderColor: pairInputError ? 'var(--sell)' : 'color-mix(in srgb, var(--accent) 40%, var(--border))',
-                  color: 'var(--text)',
-                }}
-              />
-            </div>
-            <motion.button
-              onClick={runPairAnalysis}
-              whileTap={{ scale: 0.97 }}
-              className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-85 flex items-center gap-2 justify-center shrink-0"
-              style={{ background: 'var(--accent)', color: 'var(--bg)' }}
-            >
-              <span>Analyze Pair</span>
-              <span>→</span>
-            </motion.button>
-          </div>
-          {pairInputError && (
-            <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--sell)' }}>
-              <span>⚠</span> {pairInputError}
-            </p>
-          )}
-          <div className="mt-4 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                    Trading Pairs
-                  </h3>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    Tap any pair in the sections below to load it instantly from any supported category.
-                  </p>
-                </div>
-                <span className="text-xs px-2.5 py-1 rounded-full w-fit"
-                  style={{
-                    color: 'var(--accent)',
-                  background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-                }}>
-                  {availablePairs.length} supported pairs
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {pairCategoryStats.map((group, index) => (
-                  <motion.div
-                    key={`${group.label}-stat`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: 0.08 + index * 0.05 }}
-                    className="rounded-xl border p-3"
-                    style={{
-                      borderColor: `color-mix(in srgb, ${group.accent} 26%, var(--border))`,
-                      background: `color-mix(in srgb, ${group.accent} 10%, var(--surface))`,
+        <div className="p-4">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-4">
+            <div>
+              <p className="text-xs mb-2.5" style={{ color: 'var(--text-muted)' }}>
+                Enter any forex pair to get technical + fundamental AI analysis, then size risk in the built-in calculator.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base select-none">🔍</span>
+                  <input
+                    type="text"
+                    value={pairInput}
+                    onChange={e => {
+                      setPairInput(e.target.value)
+                      if (pairInputError) setPairInputError('')
                     }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                          {group.icon} {group.label}
-                        </div>
-                        <div className="mt-1 text-xl font-bold" style={{ color: group.accent }}>
-                          {group.pairs.length}
-                        </div>
-                      </div>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full"
-                        style={{
-                          color: group.accent,
-                          background: `color-mix(in srgb, ${group.accent} 14%, transparent)`,
-                        }}>
-                        {group.coverage}% of board
-                      </span>
-                    </div>
-                    <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--border) 75%, transparent)' }}>
-                      <motion.div
-                        className="h-full rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${group.coverage}%` }}
-                        transition={{ duration: 0.5, delay: 0.12 + index * 0.05, ease: 'easeOut' }}
-                        style={{ background: group.accent }}
-                      />
-                    </div>
-                  </motion.div>
-                ))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') runPairAnalysis()
+                    }}
+                    placeholder="e.g. EUR/USD, GBP/JPY, USD/JPY…"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm font-mono border-2 outline-none transition-colors"
+                    style={{
+                      background: 'var(--bg)',
+                      borderColor: pairInputError ? 'var(--sell)' : 'color-mix(in srgb, var(--accent) 40%, var(--border))',
+                      color: 'var(--text)',
+                    }}
+                  />
+                </div>
+                <motion.button
+                  onClick={runPairAnalysis}
+                  whileTap={{ scale: 0.97 }}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-85 flex items-center gap-2 justify-center shrink-0"
+                  style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+                >
+                  <span>Analyze Pair</span>
+                  <span>→</span>
+                </motion.button>
               </div>
-              {groupedPairs.map(({ label, pairs: groupItems }, groupIndex) => (
-                <motion.div
-                  key={label}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.12 + groupIndex * 0.06 }}
-                className="rounded-xl border p-3"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--accent) 18%, var(--border))',
-                  background: 'color-mix(in srgb, var(--bg) 65%, var(--surface))',
-                }}
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                    {label}
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                    {groupItems.length} pairs
+              {pairInputError && (
+                <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'var(--sell)' }}>
+                  <span>⚠</span> {pairInputError}
+                </p>
+              )}
+              <div className="mt-3 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      Trading Pairs
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      Tap any pair below to load it instantly.
+                    </p>
+                  </div>
+                  <span className="text-xs px-2.5 py-1 rounded-full w-fit"
+                    style={{
+                      color: 'var(--accent)',
+                      background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                    }}>
+                    {availablePairs.length} supported pairs
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {groupItems.map(p => (
-                    <motion.button
-                      key={p}
-                      whileHover={{ y: -1 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => { setPairInput(p); setPairInputError('') }}
-                      className="px-2.5 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                  {pairCategoryStats.map((group, index) => (
+                    <motion.div
+                      key={`${group.label}-stat`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: 0.08 + index * 0.05 }}
+                      className="rounded-xl border p-2.5"
                       style={{
-                        borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
-                        color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                        background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                        borderColor: `color-mix(in srgb, ${group.accent} 26%, var(--border))`,
+                        background: `color-mix(in srgb, ${group.accent} 10%, var(--surface))`,
                       }}
                     >
-                      {p}
-                    </motion.button>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                            {group.icon} {group.label}
+                          </div>
+                          <div className="mt-0.5 text-lg font-bold" style={{ color: group.accent }}>
+                            {group.pairs.length}
+                          </div>
+                        </div>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full"
+                          style={{
+                            color: group.accent,
+                            background: `color-mix(in srgb, ${group.accent} 14%, transparent)`,
+                          }}>
+                          {group.coverage}% coverage
+                        </span>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
-              </motion.div>
-            ))}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                  {groupedPairs.map(({ label, pairs: groupItems }, groupIndex) => (
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.12 + groupIndex * 0.06 }}
+                      className="rounded-xl border p-2.5"
+                      style={{
+                        borderColor: 'color-mix(in srgb, var(--accent) 18%, var(--border))',
+                        background: 'color-mix(in srgb, var(--bg) 65%, var(--surface))',
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          {label}
+                        </span>
+                        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                          {groupItems.length} pairs
+                        </span>
+                      </div>
+                      <div
+                        className="flex flex-wrap gap-1.5 overflow-y-auto pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-md"
+                        style={{ maxHeight: PAIR_CHIPS_MAX_HEIGHT }}
+                        tabIndex={0}
+                        role="region"
+                        aria-label={`${label} trading pairs`}
+                      >
+                        {groupItems.map(p => (
+                          <motion.button
+                            key={p}
+                            whileHover={{ y: -1 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => { setPairInput(p); setPairInputError('') }}
+                            className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                            style={{
+                              borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
+                              color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                              background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                            }}
+                          >
+                            {p}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DashboardRiskCalculator
+              riskBalance={riskBalance}
+              setRiskBalance={setRiskBalance}
+              riskPct={riskPct}
+              setRiskPct={setRiskPct}
+              riskEntry={riskEntry}
+              setRiskEntry={setRiskEntry}
+              riskStop={riskStop}
+              setRiskStop={setRiskStop}
+              riskTake={riskTake}
+              setRiskTake={setRiskTake}
+              riskPairType={riskPairType}
+              setRiskPairType={setRiskPairType}
+              riskResult={riskResult}
+            />
           </div>
         </div>
       </motion.div>
@@ -1421,216 +1495,6 @@ export default function Forex() {
         )}
       </AnimatePresence>
 
-      <div
-        ref={riskWidgetRef}
-        className={isMobileRiskLayout ? 'mt-8' : 'fixed z-40'}
-        style={isMobileRiskLayout ? undefined : {
-          right: 20,
-          bottom: 20,
-          transform: `translate(${riskWidgetOffset.x}px, ${riskWidgetOffset.y}px)`,
-        }}
-      >
-        {!riskWidgetOpen && (
-          <button
-            onClick={() => setRiskWidgetOpen(true)}
-            className={isMobileRiskLayout
-              ? 'w-full rounded-2xl border px-4 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.01]'
-              : 'w-12 h-12 rounded-full border text-lg shadow-lg transition-transform hover:scale-105'}
-            style={{
-              borderColor: 'color-mix(in srgb, var(--accent) 35%, var(--border))',
-              background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, var(--surface)) 0%, var(--surface) 100%)',
-            }}
-            aria-label="Open risk calculator widget"
-            title="Open risk calculator"
-          >
-            {isMobileRiskLayout ? (
-              <span>🧮 Open risk calculator</span>
-            ) : (
-              <>
-                <span aria-hidden="true">🧮</span>
-                <span className="sr-only">Open risk calculator</span>
-              </>
-            )}
-          </button>
-        )}
-        {riskWidgetOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="rounded-xl border overflow-hidden"
-            style={{
-              width: isMobileRiskLayout ? '100%' : riskWidgetMaximized ? 420 : 340,
-              borderColor: 'color-mix(in srgb, var(--accent) 30%, var(--border))',
-              background: 'var(--surface)',
-              boxShadow: '0 18px 48px rgba(0,0,0,0.45)',
-            }}
-          >
-            <div
-              className="px-3 py-2.5 border-b flex items-center justify-between gap-3"
-              style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 8%, transparent)' }}
-            >
-              <div
-                className={`min-w-0 ${isMobileRiskLayout ? '' : 'cursor-move select-none'}`}
-                onPointerDown={isMobileRiskLayout ? undefined : handleRiskDragStart}
-                onPointerMove={isMobileRiskLayout ? undefined : handleRiskDragMove}
-                onPointerUp={isMobileRiskLayout ? undefined : handleRiskDragEnd}
-                onPointerCancel={isMobileRiskLayout ? undefined : handleRiskDragEnd}
-              >
-                <div className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>🧮 Dashboard Risk Calculator</div>
-                <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {isMobileRiskLayout ? RISK_WIDGET_MOBILE_HELP : RISK_WIDGET_DESKTOP_HELP}
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                {!isMobileRiskLayout && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setRiskWidgetMaximized(v => !v)
-                    }}
-                    className="w-7 h-7 rounded text-xs border"
-                    style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-                    aria-label={riskWidgetMaximized ? 'Minimize risk calculator panel' : 'Maximize risk calculator panel'}
-                    title={riskWidgetMaximized ? 'Minimize' : 'Maximize'}
-                  >
-                    {riskWidgetMaximized ? '🗕' : '🗖'}
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setRiskWidgetOpen(false)
-                  }}
-                  className="w-7 h-7 rounded text-xs border"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-                  aria-label={isMobileRiskLayout ? 'Hide risk calculator' : 'Minimize risk calculator to icon'}
-                  title={isMobileRiskLayout ? 'Hide calculator' : 'Minimize to icon'}
-                >
-                  —
-                </button>
-              </div>
-            </div>
-
-            <div className="p-3 space-y-3">
-              <div className={`grid gap-3 ${isMobileRiskLayout ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <RiskWidgetField
-                  label="Account balance"
-                  value={riskBalance}
-                  onChange={setRiskBalance}
-                  placeholder="10000"
-                  suffix="USD"
-                  min="1"
-                  hint="Your available trading capital."
-                />
-                <RiskWidgetField
-                  label="Risk per trade"
-                  value={riskPct}
-                  onChange={setRiskPct}
-                  placeholder="1"
-                  suffix="%"
-                  step="0.1"
-                  min="0.1"
-                  hint="Most disciplined traders stay around 1–2%."
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                <RiskWidgetField
-                  label="Entry price"
-                  value={riskEntry}
-                  onChange={setRiskEntry}
-                  placeholder="1.08500"
-                  hint="Planned market entry."
-                />
-                <RiskWidgetField
-                  label="Stop loss"
-                  value={riskStop}
-                  onChange={setRiskStop}
-                  placeholder="1.08000"
-                  hint="Invalidates the trade if reached."
-                />
-                <RiskWidgetField
-                  label="Take profit"
-                  value={riskTake}
-                  onChange={setRiskTake}
-                  placeholder="1.09500"
-                  hint="Optional target for reward calculations."
-                />
-              </div>
-
-              <label className="block">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide mb-1.5"
-                  style={{ color: 'var(--text-muted)' }}>
-                  Instrument type
-                </span>
-                <select
-                  value={riskPairType}
-                  onChange={e => setRiskPairType(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
-                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                >
-                  <option value="forex">Forex (non-JPY)</option>
-                  <option value="jpy">Forex JPY pairs</option>
-                </select>
-              </label>
-
-              {riskResult ? (
-                <div className="rounded-xl p-3 border"
-                  style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)' }}>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      Position summary
-                    </span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 14%, transparent)' }}>
-                      Live estimate
-                    </span>
-                  </div>
-                  <RiskWidgetResultRow
-                    label="Account risk"
-                    value={`$${riskResult.riskAmount.toFixed(2)}`}
-                    tone="var(--sell)"
-                  />
-                  <RiskWidgetResultRow
-                    label="Stop loss distance"
-                    value={`${riskResult.slPips} pips`}
-                  />
-                  <RiskWidgetResultRow
-                    label="Position size"
-                    value={`${riskResult.positionSizeUnits.toLocaleString(undefined, { maximumFractionDigits: 0 })} units`}
-                    tone="var(--accent)"
-                  />
-                  <RiskWidgetResultRow
-                    label="Standard lots"
-                    value={riskResult.positionSizeLots}
-                    tone="var(--accent)"
-                  />
-                  {riskResult.rrRatio && (
-                    <>
-                      <RiskWidgetResultRow
-                        label="Risk to reward"
-                        value={`1:${riskResult.rrRatio}`}
-                        tone={getRiskRewardTone(riskResult.rrRatioValue)}
-                      />
-                      <RiskWidgetResultRow
-                        label="Take profit distance"
-                        value={`${riskResult.tpPips} pips`}
-                      />
-                    </>
-                  )}
-                  <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-                    Double-check the final size with your broker before placing a live trade.
-                  </p>
-                </div>
-              ) : (
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Fill in the balance, risk %, entry, and stop loss to calculate a detailed position size.
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </div>
     </div>
   )
 }
