@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -770,47 +770,352 @@ function EventsCalendar() {
   )
 }
 
-export default function Advance() {
-  const sectionSummaries = [
-    { key: 'events-calendar', label: 'Events Calendar', status: 'Live', desc: 'Clickable weekly macro events with impact clusters.', icon: '📅', accent: 'var(--accent)' },
-    { key: 'fvg-scanner', label: 'FVG Scanner', status: 'Unmitigated', desc: 'Track approaching, reached, and rejected imbalance zones.', icon: '🧲', accent: 'var(--hold)' },
-    { key: 'sr-breakouts', label: 'S/R Breakouts', status: 'Live', desc: 'Find pairs nearing support or resistance reaction levels.', icon: '🧱', accent: 'var(--buy)' },
-    { key: 'pattern-scanner', label: 'Pattern Scanner', status: 'Live', desc: 'Surface direction-ready structures by timeframe.', icon: '⚡', accent: 'var(--accent)' },
-    { key: 'economic-calendar', label: 'Economic Data', status: 'Live', desc: 'Filter data by date, impact, and currency relevance.', icon: '🌐', accent: 'var(--buy)' },
-  ]
+// ─── Relevancy engine ───────────────────────────────────────────────────────
 
-  const statCards = [
-    { label: 'Modules online', value: sectionSummaries.length, tone: 'var(--accent)', note: 'Every scanner is one tap away.' },
-    { label: 'Live feeds', value: sectionSummaries.filter(section => section.status === 'Live').length, tone: 'var(--buy)', note: 'Realtime context for fast execution.' },
-    { label: 'Action mode', value: 'Game on', tone: 'var(--hold)', note: 'Treat every section like a new level.' },
-  ]
+const SECTION_REGISTRY = [
+  {
+    key: 'fvg-scanner',
+    label: 'FVG Scanner',
+    icon: '🧲',
+    accent: 'var(--hold)',
+    status: 'Live',
+    desc: 'Track approaching, reached, and rejected Fair Value Gap imbalance zones in real-time.',
+    tags: ['fvg', 'fair value gap', 'imbalance', 'zone', 'gap', 'inefficiency', 'unmitigated', 'mitigation', 'approaching', 'rejected'],
+    Component: FVGScanner,
+  },
+  {
+    key: 'sr-breakouts',
+    label: 'S/R Breakouts',
+    icon: '🧱',
+    accent: 'var(--buy)',
+    status: 'Live',
+    desc: 'Find pairs nearing support or resistance reaction levels about to break or bounce.',
+    tags: ['sr', 's/r', 'support', 'resistance', 'breakout', 'level', 'structure', 'bounce', 'break', 'reaction'],
+    Component: SRBreakouts,
+  },
+  {
+    key: 'pattern-scanner',
+    label: 'Pattern Scanner',
+    icon: '⚡',
+    accent: 'var(--accent)',
+    status: 'Live',
+    desc: 'Surface direction-ready candlestick and chart patterns across all timeframes.',
+    tags: ['pattern', 'engulfing', 'doji', 'hammer', 'candlestick', 'formation', 'signal', 'timeframe', 'bullish', 'bearish', 'buy', 'sell', 'direction', 'momentum'],
+    Component: PatternScanner,
+  },
+  {
+    key: 'events-calendar',
+    label: 'Events Calendar',
+    icon: '📅',
+    accent: 'var(--accent)',
+    status: 'Live',
+    desc: 'Clickable weekly macro economic events grouped by day with impact clusters.',
+    tags: ['event', 'weekly', 'macro', 'catalyst', 'upcoming', 'calendar', 'schedule', 'economic event', 'cluster'],
+    Component: EventsCalendar,
+  },
+  {
+    key: 'economic-calendar',
+    label: 'Economic Data',
+    icon: '🌐',
+    accent: 'var(--buy)',
+    status: 'Live',
+    desc: 'Filter economic releases by date, impact level, and currency pair relevance.',
+    tags: ['economic', 'data', 'news', 'cpi', 'gdp', 'fomc', 'nfp', 'release', 'report', 'impact', 'forecast', 'actual', 'previous', 'high impact', 'calendar'],
+    Component: EconomicCalendar,
+  },
+]
 
-  const missionCards = [
-    {
-      title: 'Start with momentum',
-      desc: 'Open Pattern Scanner first, then confirm the move with S/R Breakouts.',
-      progress: 78,
-      tone: 'var(--accent)',
-      icon: '🎯',
-    },
-    {
-      title: 'Hunt inefficiencies',
-      desc: 'Use FVG Scanner to find clean zones before market structure shifts.',
-      progress: 64,
-      tone: 'var(--hold)',
-      icon: '🗺️',
-    },
-    {
-      title: 'Protect the setup',
-      desc: 'Cross-check Events Calendar so macro catalysts do not surprise the trade.',
-      progress: 91,
-      tone: 'var(--buy)',
-      icon: '🛡️',
-    },
+const CURRENCY_TOKENS = ['eur', 'gbp', 'usd', 'jpy', 'chf', 'aud', 'nzd', 'cad', 'xau', 'btc', 'eth', 'sgd', 'hkd', 'nok', 'sek', 'dkk', 'mxn', 'zar', 'try', 'pln']
+
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s/]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+function scoreSection(section, tokens) {
+  if (tokens.length === 0) return 100
+
+  let score = 0
+
+  // Currency tokens give a small boost to ALL sections
+  const currencyHits = tokens.filter(t => CURRENCY_TOKENS.includes(t) || t.includes('/'))
+  if (currencyHits.length > 0) score += 15
+
+  // Check multi-word tags first (phrases)
+  const queryLower = tokens.join(' ')
+  for (const tag of section.tags) {
+    if (tag.includes(' ') && queryLower.includes(tag)) {
+      score += 40
+    }
+  }
+
+  // Check single-word tags
+  for (const token of tokens) {
+    for (const tag of section.tags) {
+      if (!tag.includes(' ')) {
+        if (token === tag) score += 30
+        else if (tag.startsWith(token) && token.length >= 3) score += 15
+        else if (token.startsWith(tag) && tag.length >= 3) score += 12
+      }
+    }
+    // Label partial match
+    if (section.label.toLowerCase().includes(token) && token.length >= 3) score += 20
+  }
+
+  return Math.min(score, 100)
+}
+
+function analyzeQuery(query) {
+  const tokens = tokenize(query)
+  return SECTION_REGISTRY.map(section => ({
+    ...section,
+    score: scoreSection(section, tokens),
+  })).sort((a, b) => b.score - a.score)
+}
+
+// ─── SmartInput ─────────────────────────────────────────────────────────────
+
+function SmartInput({ value, onChange, onAnalyze, placeholder }) {
+  const inputRef = useRef(null)
+
+  const handleKey = (e) => {
+    if (e.key === 'Enter') onAnalyze()
+  }
+
+  const suggestions = [
+    'EUR/USD FVG zones',
+    'high impact events this week',
+    'pattern scanner 4h',
+    'GBP support resistance breakout',
+    'economic data releases',
   ]
 
   return (
+    <div className="relative">
+      <div
+        className="flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all"
+        style={{
+          background: 'var(--surface)',
+          borderColor: value ? 'var(--accent)' : 'var(--border)',
+          boxShadow: value ? '0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent)' : 'none',
+        }}
+      >
+        <span className="text-lg flex-shrink-0">🔍</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder={placeholder}
+          className="flex-1 bg-transparent outline-none text-sm"
+          style={{ color: 'var(--text)' }}
+        />
+        {value && (
+          <button
+            onClick={() => { onChange(''); inputRef.current?.focus() }}
+            className="text-xs px-2 py-0.5 rounded opacity-60 hover:opacity-100 transition-opacity"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            ✕
+          </button>
+        )}
+        <button
+          onClick={onAnalyze}
+          className="text-xs font-semibold px-4 py-1.5 rounded-xl transition-all"
+          style={{
+            background: value ? 'var(--accent)' : 'color-mix(in srgb, var(--border) 80%, transparent)',
+            color: value ? 'var(--bg)' : 'var(--text-muted)',
+          }}
+        >
+          Analyze
+        </button>
+      </div>
+      {!value && (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {suggestions.map(s => (
+            <button
+              key={s}
+              onClick={() => { onChange(s); onAnalyze(s) }}
+              className="text-xs px-3 py-1 rounded-full border transition-all hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── SectionCard ─────────────────────────────────────────────────────────────
+
+function SectionCard({ section, isExpanded, onToggle, showScore, isNew }) {
+  const { label, icon, accent, desc, score, Component } = section
+
+  const relevancyLabel =
+    score >= 80 ? 'High match' :
+    score >= 40 ? 'Relevant' :
+    score >= 15 ? 'Related' : 'Included'
+
+  const relevancyColor =
+    score >= 80 ? 'var(--buy)' :
+    score >= 40 ? 'var(--accent)' :
+    score >= 15 ? 'var(--hold)' : 'var(--text-muted)'
+
+  return (
+    <motion.div
+      layout
+      initial={isNew ? { opacity: 0, y: 14 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="rounded-2xl border overflow-hidden"
+      style={{
+        borderColor: isExpanded
+          ? `color-mix(in srgb, ${accent} 40%, var(--border))`
+          : 'var(--border)',
+        background: 'var(--surface)',
+        boxShadow: isExpanded
+          ? `0 4px 24px color-mix(in srgb, ${accent} 10%, transparent)`
+          : 'none',
+      }}
+    >
+      {/* Card header – always visible */}
+      <button
+        onClick={onToggle}
+        className="w-full text-left px-5 py-4 flex items-center gap-4 transition-colors hover:bg-[var(--border)]"
+      >
+        <span className="text-2xl flex-shrink-0">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-sm">{label}</span>
+            {showScore && (
+              <span
+                className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  color: relevancyColor,
+                  background: `color-mix(in srgb, ${relevancyColor} 14%, transparent)`,
+                }}
+              >
+                {relevancyLabel}
+              </span>
+            )}
+          </div>
+          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+            {desc}
+          </p>
+        </div>
+        <span
+          className="text-xs px-3 py-1 rounded-lg border transition-all flex-shrink-0"
+          style={{
+            borderColor: isExpanded ? accent : 'var(--border)',
+            color: isExpanded ? accent : 'var(--text-muted)',
+            background: isExpanded ? `color-mix(in srgb, ${accent} 10%, transparent)` : 'transparent',
+          }}
+        >
+          {isExpanded ? '▲ Close' : '▼ Open'}
+        </span>
+      </button>
+
+      {/* Expanded content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            key="body"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t px-1 pt-1 pb-1" style={{ borderColor: 'var(--border)' }}>
+              <Component />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// ─── AnalysisTab ─────────────────────────────────────────────────────────────
+
+let nextTabId = 1
+
+function createTab(query = '') {
+  return { id: nextTabId++, query, analyzedQuery: '', results: null, expanded: {} }
+}
+
+// ─── Main Advance page ───────────────────────────────────────────────────────
+
+export default function Advance() {
+  const [tabs, setTabs] = useState(() => [createTab()])
+  const [activeTabId, setActiveTabId] = useState(tabs[0].id)
+  const [draftQuery, setDraftQuery] = useState('')
+  const [analysisKey, setAnalysisKey] = useState(0) // triggers re-animation
+
+  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
+
+  const updateTab = useCallback((id, patch) => {
+    setTabs(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
+  }, [])
+
+  const runAnalysis = useCallback((queryOverride) => {
+    const q = typeof queryOverride === 'string' ? queryOverride : draftQuery
+    const results = analyzeQuery(q)
+    updateTab(activeTabId, { query: q, analyzedQuery: q, results, expanded: {} })
+    setAnalysisKey(k => k + 1)
+  }, [activeTabId, draftQuery, updateTab])
+
+  const addTab = () => {
+    const tab = createTab()
+    setTabs(prev => [...prev, tab])
+    setActiveTabId(tab.id)
+    setDraftQuery('')
+  }
+
+  const closeTab = (id) => {
+    setTabs(prev => {
+      const next = prev.filter(t => t.id !== id)
+      if (next.length === 0) {
+        const fresh = createTab()
+        if (id === activeTabId) setActiveTabId(fresh.id)
+        return [fresh]
+      }
+      if (id === activeTabId) {
+        setActiveTabId(next[next.length - 1].id)
+      }
+      return next
+    })
+  }
+
+  // Sync draft query when switching tabs
+  useEffect(() => {
+    setDraftQuery(activeTab?.query || '')
+  }, [activeTab])
+
+  const toggleSection = (key) => {
+    updateTab(activeTabId, {
+      expanded: { ...activeTab.expanded, [key]: !activeTab.expanded[key] },
+    })
+  }
+
+  // Sections to display: ranked results or default order
+  const displaySections = useMemo(() => {
+    if (!activeTab.results) return SECTION_REGISTRY.map(s => ({ ...s, score: 100 }))
+    return activeTab.results
+  }, [activeTab.results])
+
+  const hasQuery = !!activeTab.analyzedQuery
+
+  return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+
+      {/* ── Hero + Smart Input (always first) ───────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -826,9 +1131,9 @@ export default function Advance() {
         <div className="absolute -bottom-24 left-10 w-52 h-52 rounded-full opacity-30 blur-3xl"
           style={{ background: 'color-mix(in srgb, var(--buy) 22%, transparent)' }} />
 
-        <div className="relative grid grid-cols-1 xl:grid-cols-[1.3fr,0.9fr] gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full border mb-4"
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full border"
               style={{
                 borderColor: 'color-mix(in srgb, var(--accent) 28%, var(--border))',
                 background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
@@ -837,180 +1142,125 @@ export default function Advance() {
               <span>🎮</span>
               <span className="font-semibold uppercase tracking-wide">Advanced Command Deck</span>
             </div>
-            <h1 className="text-3xl font-bold leading-tight">Advanced Analysis</h1>
-            <p className="text-sm mt-3 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
-              Move through every live scanner like a trading runbook: scan the market, spot the best setup, and chain confirmations before execution.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {sectionSummaries.map(section => (
-                <a
-                  key={`${section.key}-hero`}
-                  href={`#${section.key}`}
-                  className="text-xs px-3 py-1.5 rounded-full border transition-transform hover:-translate-y-0.5"
-                  style={{
-                    borderColor: 'color-mix(in srgb, var(--border) 90%, transparent)',
-                    color: 'var(--text)',
-                    background: 'color-mix(in srgb, var(--bg) 45%, transparent)',
-                  }}
-                >
-                  {section.icon} {section.label}
-                </a>
-              ))}
-            </div>
           </div>
+          <h1 className="text-3xl font-bold leading-tight mb-1">Advanced Analysis</h1>
+          <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>
+            Describe what you want to analyse — any pair, pattern, or concept. The engine maps your input to the most relevant scanners and surfaces them instantly.
+          </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
-            {statCards.map((card, index) => (
-              <motion.div
-                key={card.label}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25, delay: 0.08 + index * 0.06 }}
-                className="rounded-2xl border p-4"
-                style={{
-                  borderColor: `color-mix(in srgb, ${card.tone} 28%, var(--border))`,
-                  background: `color-mix(in srgb, ${card.tone} 10%, var(--bg))`,
-                }}
-              >
-                <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                  {card.label}
-                </div>
-                <div className="mt-2 text-2xl font-bold" style={{ color: card.tone }}>
-                  {card.value}
-                </div>
-                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                  {card.note}
-                </p>
-              </motion.div>
-            ))}
-          </div>
+          {/* Smart search input */}
+          <SmartInput
+            value={draftQuery}
+            onChange={setDraftQuery}
+            onAnalyze={runAnalysis}
+            placeholder="e.g. EUR/USD FVG zones  ·  high impact events  ·  GBP breakout patterns…"
+          />
         </div>
       </motion.section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr,0.8fr] gap-6 mb-6">
-        <div className="card">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="font-semibold text-base">Quick Jump Board</h2>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                Everything is grouped so you can jump directly into the next confirmation step.
-              </p>
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full"
-              style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }}>
-              {sectionSummaries.length} sections
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {sectionSummaries.map((section, index) => (
-              <motion.a
-                key={section.key}
-                href={`#${section.key}`}
-                whileHover={{ y: -3 }}
-                className="rounded-2xl border p-4"
-                style={{
-                  borderColor: `color-mix(in srgb, ${section.accent} 22%, var(--border))`,
-                  background: `color-mix(in srgb, ${section.accent} 8%, var(--bg))`,
-                }}
+      {/* ── Multi-task Tabs ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {tabs.map(tab => (
+          <div
+            key={tab.id}
+            className="flex items-center gap-1 rounded-xl border transition-all"
+            style={{
+              borderColor: activeTabId === tab.id ? 'var(--accent)' : 'var(--border)',
+              background: activeTabId === tab.id
+                ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))'
+                : 'var(--surface)',
+            }}
+          >
+            <button
+              onClick={() => setActiveTabId(tab.id)}
+              className="text-xs px-3 py-1.5 font-medium max-w-[140px] truncate"
+              style={{ color: activeTabId === tab.id ? 'var(--accent)' : 'var(--text-muted)' }}
+            >
+              {tab.analyzedQuery ? `"${tab.analyzedQuery.slice(0, 20)}${tab.analyzedQuery.length > 20 ? '…' : ''}"` : `Analysis ${tab.id}`}
+            </button>
+            {tabs.length > 1 && (
+              <button
+                onClick={() => closeTab(tab.id)}
+                className="pr-2 text-xs opacity-50 hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-muted)' }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      Stage {String(index + 1).padStart(2, '0')}
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-sm font-semibold">
-                      <span>{section.icon}</span>
-                      <span>{section.label}</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full"
-                    style={{
-                      color: section.accent,
-                      background: `color-mix(in srgb, ${section.accent} 14%, transparent)`,
-                    }}>
-                    {section.status}
-                  </span>
-                </div>
-                <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
-                  {section.desc}
-                </p>
-              </motion.a>
-            ))}
+                ✕
+              </button>
+            )}
           </div>
-        </div>
+        ))}
+        <button
+          onClick={addTab}
+          className="text-xs px-3 py-1.5 rounded-xl border transition-all hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+        >
+          + New analysis
+        </button>
+      </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="font-semibold text-base">Today&apos;s Mission</h2>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                A gamified checklist to guide the next high-conviction setup.
-              </p>
+      {/* ── Analysis state header ───────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        {hasQuery ? (
+          <motion.div
+            key="analyzed"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center gap-3 mb-4 px-4 py-3 rounded-2xl border"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--accent) 25%, var(--border))',
+              background: 'color-mix(in srgb, var(--accent) 7%, var(--surface))',
+            }}
+          >
+            <span className="text-base">🧠</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Analyzed: </span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text)' }}>&ldquo;{activeTab.analyzedQuery}&rdquo;</span>
+              <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>
+                — {displaySections.filter(s => s.score >= 15).length} relevant sections found, ranked by match
+              </span>
             </div>
-            <span className="text-lg" aria-hidden="true">🏁</span>
-          </div>
-          <div className="space-y-3">
-            {missionCards.map((mission, index) => (
-              <motion.div
-                key={mission.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.1 + index * 0.06 }}
-                className="rounded-2xl border p-4"
-                style={{
-                  borderColor: `color-mix(in srgb, ${mission.tone} 24%, var(--border))`,
-                  background: `color-mix(in srgb, ${mission.tone} 8%, var(--bg))`,
-                }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">{mission.icon}</span>
-                    <div>
-                      <h3 className="text-sm font-semibold">{mission.title}</h3>
-                      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                        {mission.desc}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full"
-                    style={{
-                      color: mission.tone,
-                      background: `color-mix(in srgb, ${mission.tone} 14%, transparent)`,
-                    }}>
-                    {mission.progress}% ready
-                  </span>
-                </div>
-                <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--border) 75%, transparent)' }}>
-                  <motion.div
-                    className="h-full rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${mission.progress}%` }}
-                    transition={{ duration: 0.55, delay: 0.15 + index * 0.08, ease: 'easeOut' }}
-                    style={{ background: mission.tone }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-6">
-        <section id="events-calendar" className="scroll-mt-24">
-          <EventsCalendar />
-        </section>
-        <section id="fvg-scanner" className="scroll-mt-24">
-          <FVGScanner />
-        </section>
-        <section id="sr-breakouts" className="scroll-mt-24">
-          <SRBreakouts />
-        </section>
-        <section id="pattern-scanner" className="scroll-mt-24">
-          <PatternScanner />
-        </section>
-        <section id="economic-calendar" className="scroll-mt-24">
-          <EconomicCalendar />
-        </section>
-      </div>
+            <button
+              onClick={() => { setDraftQuery(''); updateTab(activeTabId, { query: '', analyzedQuery: '', results: null, expanded: {} }) }}
+              className="text-xs px-2 py-1 rounded-lg border hover:border-[var(--accent)] transition-colors"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+            >
+              Clear
+            </button>
+          </motion.div>
+        ) : (
+          <motion.p
+            key="idle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-xs mb-4 px-1"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            All {SECTION_REGISTRY.length} scanners shown below — run an analysis above to rank them by relevance.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* ── Section grid ────────────────────────────────────────────────── */}
+      <motion.div layout className="flex flex-col gap-3">
+        {displaySections.map((section, i) => {
+          const hidden = hasQuery && section.score === 0
+          if (hidden) return null
+          return (
+            <SectionCard
+              key={section.key}
+              section={section}
+              isExpanded={!!activeTab.expanded[section.key]}
+              onToggle={() => toggleSection(section.key)}
+              showScore={hasQuery}
+              isNew={analysisKey > 0 && i < 3}
+            />
+          )
+        })}
+      </motion.div>
+
     </div>
   )
 }
