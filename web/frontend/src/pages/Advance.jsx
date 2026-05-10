@@ -1083,22 +1083,20 @@ export default function Advance() {
       const next = prev.filter(t => t.id !== id)
       if (next.length === 0) {
         const fresh = createTab()
+        if (id === activeTabId) setActiveTabId(fresh.id)
         return [fresh]
       }
-      return next
-    })
-    setTabs(prev => {
-      if (activeTabId === id) {
-        setActiveTabId(prev[prev.length - 1]?.id ?? prev[0]?.id)
+      if (id === activeTabId) {
+        setActiveTabId(next[next.length - 1].id)
       }
-      return prev
+      return next
     })
   }
 
   // Sync draft query when switching tabs
   useEffect(() => {
     setDraftQuery(activeTab?.query || '')
-  }, [activeTabId])
+  }, [activeTab])
 
   const toggleSection = (key) => {
     updateTab(activeTabId, {
@@ -1217,7 +1215,7 @@ export default function Advance() {
           >
             <span className="text-base">🧠</span>
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Analysed: </span>
+              <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Analyzed: </span>
               <span className="text-xs font-mono" style={{ color: 'var(--text)' }}>&ldquo;{activeTab.analyzedQuery}&rdquo;</span>
               <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>
                 — {displaySections.filter(s => s.score >= 15).length} relevant sections found, ranked by match
