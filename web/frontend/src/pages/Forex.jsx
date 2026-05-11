@@ -14,6 +14,36 @@ const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD
 const MIN_FAVORABLE_RR_RATIO = 2
 const RISK_CALCULATOR_PANEL_WIDTH = 340
 const PAIR_CHIPS_MAX_HEIGHT = 112
+const ACTIVE_SIGNAL_CHIP_MAX_SCALE = 1.06
+const ACTIVE_SIGNAL_CHIP_ANIMATE = { scale: [1, ACTIVE_SIGNAL_CHIP_MAX_SCALE, 1] }
+const ACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 1.15, repeat: Infinity, ease: 'easeInOut' }
+const INACTIVE_SIGNAL_CHIP_ANIMATE = { scale: 1 }
+const INACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 0.15 }
+
+function getPairChipStyle(isActiveLoaded, isSelected) {
+  if (isActiveLoaded) {
+    return {
+      borderColor: 'var(--buy)',
+      color: 'var(--buy)',
+      background: 'color-mix(in srgb, var(--buy) 15%, transparent)',
+      boxShadow: '0 0 0 1px color-mix(in srgb, var(--buy) 45%, transparent), 0 0 16px color-mix(in srgb, var(--buy) 20%, transparent)',
+    }
+  }
+  if (isSelected) {
+    return {
+      borderColor: 'var(--accent)',
+      color: 'var(--accent)',
+      background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+      boxShadow: 'none',
+    }
+  }
+  return {
+    borderColor: 'var(--border)',
+    color: 'var(--text-muted)',
+    background: 'transparent',
+    boxShadow: 'none',
+  }
+}
 
 function getPairCategory(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
@@ -986,8 +1016,6 @@ export default function Forex() {
       grouped[category].add(normalized)
     }
 
-    ALL_FOREX_PAIRS.forEach(pair => addPair(pair))
-    ;(pairs.all || []).forEach(pair => addPair(pair))
     ;(pairs.major || []).forEach(pair => addPair(pair, 'Major'))
     ;(pairs.minor || []).forEach(pair => addPair(pair, 'Minor'))
     ;(pairs.exotic || []).forEach(pair => addPair(pair, 'Exotic'))
@@ -1027,6 +1055,11 @@ export default function Forex() {
     takeProfit: riskTake,
     pairType: riskPairType,
   }), [riskBalance, riskPct, riskEntry, riskStop, riskTake, riskPairType])
+
+  const activeLoadedSignalPair = useMemo(() => {
+    if (loadingSignal || !signal || !analyzedPair) return null
+    return signal.signal_state === 'open' ? analyzedPair : null
+  }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -1250,22 +1283,24 @@ export default function Forex() {
                         role="region"
                         aria-label={`${label} trading pairs`}
                       >
-                        {groupItems.map(p => (
-                          <motion.button
-                            key={p}
-                            whileHover={{ y: -1 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => { setPairInput(p); setPairInputError('') }}
-                            className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                            style={{
-                              borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
-                              color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                              background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                            }}
-                          >
-                            {p}
-                          </motion.button>
-                        ))}
+                        {groupItems.map(p => {
+                          const isActiveLoaded = activeLoadedSignalPair === p
+                          const isSelected = pairInput === p
+                          return (
+                            <motion.button
+                              key={p}
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => { setPairInput(p); setPairInputError('') }}
+                              className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                              animate={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_ANIMATE : INACTIVE_SIGNAL_CHIP_ANIMATE}
+                              transition={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_TRANSITION : INACTIVE_SIGNAL_CHIP_TRANSITION}
+                              style={getPairChipStyle(isActiveLoaded, isSelected)}
+                            >
+                              {p}
+                            </motion.button>
+                          )
+                        })}
                       </div>
                     </motion.div>
                   ))}
