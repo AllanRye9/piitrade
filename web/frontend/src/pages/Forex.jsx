@@ -1058,7 +1058,7 @@ export default function Forex() {
 
   const activeLoadedSignalPair = useMemo(() => {
     if (loadingSignal || !signal || !analyzedPair) return null
-    return signal.signal_state === 'open' && analyzedPair
+    return signal.signal_state === 'open' ? analyzedPair : null
   }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {
