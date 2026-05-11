@@ -986,8 +986,6 @@ export default function Forex() {
       grouped[category].add(normalized)
     }
 
-    ALL_FOREX_PAIRS.forEach(pair => addPair(pair))
-    ;(pairs.all || []).forEach(pair => addPair(pair))
     ;(pairs.major || []).forEach(pair => addPair(pair, 'Major'))
     ;(pairs.minor || []).forEach(pair => addPair(pair, 'Minor'))
     ;(pairs.exotic || []).forEach(pair => addPair(pair, 'Exotic'))
@@ -1027,6 +1025,11 @@ export default function Forex() {
     takeProfit: riskTake,
     pairType: riskPairType,
   }), [riskBalance, riskPct, riskEntry, riskStop, riskTake, riskPairType])
+
+  const activeLoadedSignalPair = useMemo(() => {
+    if (loadingSignal || !signal || !analyzedPair) return null
+    return signal.signal_state === 'open' ? analyzedPair : null
+  }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -1257,10 +1260,21 @@ export default function Forex() {
                             whileTap={{ scale: 0.97 }}
                             onClick={() => { setPairInput(p); setPairInputError('') }}
                             className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                            animate={activeLoadedSignalPair === p ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+                            transition={activeLoadedSignalPair === p ? { duration: 1.15, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }}
                             style={{
-                              borderColor: pairInput === p ? 'var(--accent)' : 'var(--border)',
-                              color: pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                              background: pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                              borderColor: activeLoadedSignalPair === p
+                                ? 'var(--buy)'
+                                : pairInput === p ? 'var(--accent)' : 'var(--border)',
+                              color: activeLoadedSignalPair === p
+                                ? 'var(--buy)'
+                                : pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
+                              background: activeLoadedSignalPair === p
+                                ? 'color-mix(in srgb, var(--buy) 15%, transparent)'
+                                : pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                              boxShadow: activeLoadedSignalPair === p
+                                ? '0 0 0 1px color-mix(in srgb, var(--buy) 45%, transparent), 0 0 16px color-mix(in srgb, var(--buy) 20%, transparent)'
+                                : 'none',
                             }}
                           >
                             {p}
