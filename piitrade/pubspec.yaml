@@ -1,7 +1,7 @@
-name: ort_marketplace
-description: Unified Commerce SaaS Marketplace for Properties, Agriculture & Local Manufacturing
+name: piitrade
+description: PiiTrade – AI Forex Signal Hub for Mobile
 publish_to: 'none'
-version: 2.0.0+1
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.7.0 <4.0.0'
@@ -9,64 +9,24 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
 
   # Navigation
   go_router: ^13.2.0
 
   # State management
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
 
   # HTTP client
   dio: ^5.4.3
-  pretty_dio_logger: ^1.3.1
-  http_parser: ^4.0.2
 
   # Local storage
-  flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.2.3
-
-  # UI helpers
-  cached_network_image: ^3.3.1
-  flutter_svg: ^2.0.10+1
-  shimmer: ^3.0.0
-  badges: ^3.1.2
-
-  # Forms & validation
-  flutter_form_builder: ^10.1.0
-  form_builder_validators: ^11.2.0
-
-  # Maps
-  flutter_map: ^6.1.0
-  latlong2: ^0.9.1
-
-  # Location
-  geolocator: ^13.0.1
-
-  # File handling
-  image_picker: ^1.1.1
-  file_picker: ^8.0.3
-  path_provider: ^2.1.5
 
   # Date & time
   intl: ^0.20.0
 
-  # JSON parsing
-  json_annotation: ^4.9.0
-  freezed_annotation: ^2.4.1
-
   # URL launching
   url_launcher: ^6.3.1
-
-  # Push notifications (Firebase Cloud Messaging)
-  # NOTE: To enable push notifications you must add:
-  #   - android/app/google-services.json  (Android)
-  #   - ios/Runner/GoogleService-Info.plist  (iOS)
-  # Generate these files in the Firebase console for your project.
-  firebase_core: ^3.8.0
-  firebase_messaging: ^15.1.5
 
   # Icons
   cupertino_icons: ^1.0.6
@@ -75,13 +35,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  build_runner: ^2.4.9
-  json_serializable: ^6.8.0
-  freezed: ^2.5.2
-  riverpod_generator: ^2.4.0
-  custom_lint: ^0.6.4
-  riverpod_lint: ^2.3.10
 
 flutter:
   uses-material-design: true
-  generate: true

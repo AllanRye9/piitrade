@@ -1,17 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required to reach the backend server -->
+    <!-- Required to reach the PiiTrade backend server -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    
-    <!-- Location Permissions: Required for distance-based sorting -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    
-    <!-- Notification Permission: Required for Android 13+ (API 33+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
-        android:label="Ort Marketplace"
+        android:label="PiiTrade"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
