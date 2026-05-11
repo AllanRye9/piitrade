@@ -14,7 +14,8 @@ const PRIMARY_MAJORS = new Set(['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD
 const MIN_FAVORABLE_RR_RATIO = 2
 const RISK_CALCULATOR_PANEL_WIDTH = 340
 const PAIR_CHIPS_MAX_HEIGHT = 112
-const ACTIVE_SIGNAL_CHIP_ANIMATE = { scale: [1, 1.06, 1] }
+const ACTIVE_SIGNAL_CHIP_MAX_SCALE = 1.06
+const ACTIVE_SIGNAL_CHIP_ANIMATE = { scale: [1, ACTIVE_SIGNAL_CHIP_MAX_SCALE, 1] }
 const ACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 1.15, repeat: Infinity, ease: 'easeInOut' }
 const INACTIVE_SIGNAL_CHIP_ANIMATE = { scale: 1 }
 const INACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 0.15 }
@@ -1057,7 +1058,7 @@ export default function Forex() {
 
   const activeLoadedSignalPair = useMemo(() => {
     if (loadingSignal || !signal || !analyzedPair) return null
-    return signal.signal_state === 'open' ? analyzedPair : null
+    return signal.signal_state === 'open' && analyzedPair
   }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {
