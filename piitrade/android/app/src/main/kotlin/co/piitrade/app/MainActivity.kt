@@ -1,4 +1,4 @@
-package com.example.ort_marketplace
+package co.piitrade.app
 
 import io.flutter.embedding.android.FlutterActivity
 
