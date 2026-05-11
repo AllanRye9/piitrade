@@ -62,9 +62,6 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   String _extractError(Object e) {
-    if (e.toString().contains('detail')) {
-      return e.toString();
-    }
     return 'Invalid credentials';
   }
 }
