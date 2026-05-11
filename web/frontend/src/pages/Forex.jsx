@@ -19,6 +19,31 @@ const ACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 1.15, repeat: Infinity, ease: 
 const INACTIVE_SIGNAL_CHIP_ANIMATE = { scale: 1 }
 const INACTIVE_SIGNAL_CHIP_TRANSITION = { duration: 0.15 }
 
+function getPairChipStyle(isActiveLoaded, isSelected) {
+  if (isActiveLoaded) {
+    return {
+      borderColor: 'var(--buy)',
+      color: 'var(--buy)',
+      background: 'color-mix(in srgb, var(--buy) 15%, transparent)',
+      boxShadow: '0 0 0 1px color-mix(in srgb, var(--buy) 45%, transparent), 0 0 16px color-mix(in srgb, var(--buy) 20%, transparent)',
+    }
+  }
+  if (isSelected) {
+    return {
+      borderColor: 'var(--accent)',
+      color: 'var(--accent)',
+      background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+      boxShadow: 'none',
+    }
+  }
+  return {
+    borderColor: 'var(--border)',
+    color: 'var(--text-muted)',
+    background: 'transparent',
+    boxShadow: 'none',
+  }
+}
+
 function getPairCategory(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
   if (!normalized) return 'Minor'
@@ -1259,6 +1284,7 @@ export default function Forex() {
                       >
                         {groupItems.map(p => {
                           const isActiveLoaded = activeLoadedSignalPair === p
+                          const isSelected = pairInput === p
                           return (
                             <motion.button
                               key={p}
@@ -1268,16 +1294,7 @@ export default function Forex() {
                               className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
                               animate={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_ANIMATE : INACTIVE_SIGNAL_CHIP_ANIMATE}
                               transition={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_TRANSITION : INACTIVE_SIGNAL_CHIP_TRANSITION}
-                              style={{
-                                borderColor: isActiveLoaded ? 'var(--buy)' : pairInput === p ? 'var(--accent)' : 'var(--border)',
-                                color: isActiveLoaded ? 'var(--buy)' : pairInput === p ? 'var(--accent)' : 'var(--text-muted)',
-                                background: isActiveLoaded
-                                  ? 'color-mix(in srgb, var(--buy) 15%, transparent)'
-                                  : pairInput === p ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                                boxShadow: isActiveLoaded
-                                  ? '0 0 0 1px color-mix(in srgb, var(--buy) 45%, transparent), 0 0 16px color-mix(in srgb, var(--buy) 20%, transparent)'
-                                  : 'none',
-                              }}
+                              style={getPairChipStyle(isActiveLoaded, isSelected)}
                             >
                               {p}
                             </motion.button>
