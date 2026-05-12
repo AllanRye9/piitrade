@@ -177,7 +177,8 @@ class _ForexScreenState extends State<ForexScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _pairsError = e.message ?? 'Failed to load live pairs');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Unexpected error loading live pairs: $e');
       if (!mounted) return;
       setState(() => _pairsError = 'Unexpected error loading live pairs');
     } finally {
