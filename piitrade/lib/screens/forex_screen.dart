@@ -109,8 +109,8 @@ class _ForexScreenState extends State<ForexScreen> {
   }
 
   Future<void> _loadInitial() async {
+    await _loadPairs();
     await Future.wait<void>([
-      _loadPairs(),
       _loadNews(),
       _loadCalendar(),
     ]);
@@ -145,8 +145,8 @@ class _ForexScreenState extends State<ForexScreen> {
               .map((pair) => pair.toString())
               .where(pairToCategory.containsKey)
               .toSet()
-              .toList()
-            ..sort();
+              .toList();
+      candidatePairs.sort();
 
       final livePairs = await _loadLivePairs(candidatePairs);
 
