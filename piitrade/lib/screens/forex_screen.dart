@@ -150,7 +150,7 @@ class _ForexScreenState extends State<ForexScreen> {
 
       final livePairs = await _loadLivePairs(candidatePairs);
 
-      for (final pair in livePairs.whereType<String>()) {
+      for (final pair in livePairs) {
         final category = pairToCategory[pair];
         if (category != null) {
           categorizedPairs[category]!.add(pair);
