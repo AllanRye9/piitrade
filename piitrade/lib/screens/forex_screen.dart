@@ -22,6 +22,7 @@ const _sessions = [
 ];
 
 const _pairCategories = ['major', 'minor', 'exotic'];
+const _pairSignalBatchSize = 6;
 
 String _categoryLabel(String category) {
   switch (category) {
@@ -147,16 +148,7 @@ class _ForexScreenState extends State<ForexScreen> {
               .toList()
             ..sort();
 
-      final livePairs = await Future.wait<String?>(
-        candidatePairs.map((pair) async {
-          try {
-            final signal = await ApiService.getSignal(pair);
-            return signal['is_live'] == true ? pair : null;
-          } on DioException {
-            return null;
-          }
-        }),
-      );
+      final livePairs = await _loadLivePairs(candidatePairs);
 
       for (final pair in livePairs.whereType<String>()) {
         final category = pairToCategory[pair];
@@ -205,6 +197,31 @@ class _ForexScreenState extends State<ForexScreen> {
       final cal = await ApiService.getEconomicCalendar();
       if (mounted) setState(() => _calendar = cal);
     } catch (_) {}
+  }
+
+  Future<List<String>> _loadLivePairs(List<String> candidatePairs) async {
+    final livePairs = <String>[];
+
+    for (var i = 0; i < candidatePairs.length; i += _pairSignalBatchSize) {
+      final batch = candidatePairs.skip(i).take(_pairSignalBatchSize).toList();
+      final batchResults = await Future.wait<String?>(
+        batch.map((pair) async {
+          try {
+            final signal = await ApiService.getSignal(pair);
+            return signal['is_live'] == true ? pair : null;
+          } on DioException catch (e) {
+            debugPrint(
+              'Live pair check failed for $pair: ${e.message ?? e.error}',
+            );
+            return null;
+          }
+        }),
+      );
+
+      livePairs.addAll(batchResults.whereType<String>());
+    }
+
+    return livePairs;
   }
 
   void _runAnalysis() {
