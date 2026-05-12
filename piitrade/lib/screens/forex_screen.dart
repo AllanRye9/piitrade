@@ -21,6 +21,21 @@ const _sessions = [
   _Session('New York', '🇺🇸', 13, 22, Color(0xFF3FB950)),
 ];
 
+const _pairCategories = ['major', 'minor', 'exotic'];
+
+String _categoryLabel(String category) {
+  switch (category) {
+    case 'major':
+      return 'Major Pairs';
+    case 'minor':
+      return 'Minor Pairs';
+    case 'exotic':
+      return 'Exotic Pairs';
+    default:
+      return category;
+  }
+}
+
 bool _isSessionActive(_Session s, int nowH) {
   if (s.startH > s.endH) {
     return nowH >= s.startH || nowH < s.endH;
@@ -38,10 +53,14 @@ class ForexScreen extends StatefulWidget {
 
 class _ForexScreenState extends State<ForexScreen> {
   // Pair state
-  Map<String, dynamic> _pairsData = {};
+  Map<String, List<String>> _livePairsByCategory = {
+    for (final category in _pairCategories) category: <String>[],
+  };
   String _selectedPair = 'EUR/USD';
   final TextEditingController _pairCtrl =
       TextEditingController(text: 'EUR/USD');
+  bool _loadingPairs = true;
+  String? _pairsError;
 
   // Signal / tech state
   Map<String, dynamic>? _signal;
@@ -89,14 +108,99 @@ class _ForexScreenState extends State<ForexScreen> {
   }
 
   Future<void> _loadInitial() async {
+    await Future.wait<void>([
+      _loadPairs(),
+      _loadNews(),
+      _loadCalendar(),
+    ]);
+  }
+
+  Future<void> _loadPairs() async {
+    if (mounted) {
+      setState(() {
+        _loadingPairs = true;
+        _pairsError = null;
+      });
+    }
+
     try {
       final pairs = await ApiService.getPairs();
-      if (mounted) setState(() => _pairsData = pairs);
-    } catch (_) {}
+      final categorizedPairs = <String, List<String>>{
+        for (final category in _pairCategories) category: <String>[],
+      };
+      final pairToCategory = <String, String>{};
+
+      for (final category in _pairCategories) {
+        final pairsInCategory = (pairs[category] as List<dynamic>? ?? [])
+            .map((pair) => pair.toString())
+            .toList();
+        for (final pair in pairsInCategory) {
+          pairToCategory[pair] = category;
+        }
+      }
+
+      final candidatePairs =
+          (pairs['all'] as List<dynamic>? ?? pairToCategory.keys.toList())
+              .map((pair) => pair.toString())
+              .where(pairToCategory.containsKey)
+              .toSet()
+              .toList()
+            ..sort();
+
+      final livePairs = await Future.wait<String?>(
+        candidatePairs.map((pair) async {
+          try {
+            final signal = await ApiService.getSignal(pair);
+            return signal['is_live'] == true ? pair : null;
+          } on DioException {
+            return null;
+          }
+        }),
+      );
+
+      for (final pair in livePairs.whereType<String>()) {
+        final category = pairToCategory[pair];
+        if (category != null) {
+          categorizedPairs[category]!.add(pair);
+        }
+      }
+
+      for (final category in _pairCategories) {
+        categorizedPairs[category]!.sort();
+      }
+
+      final livePairsFlat = _flattenPairs(categorizedPairs);
+      final nextSelectedPair = livePairsFlat.contains(_selectedPair)
+          ? _selectedPair
+          : livePairsFlat.isNotEmpty
+              ? livePairsFlat.first
+              : _selectedPair;
+
+      if (!mounted) return;
+      setState(() {
+        _livePairsByCategory = categorizedPairs;
+        _selectedPair = nextSelectedPair;
+        _pairCtrl.text = nextSelectedPair;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() => _pairsError = e.message ?? 'Failed to load live pairs');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _pairsError = 'Failed to load live pairs');
+    } finally {
+      if (mounted) setState(() => _loadingPairs = false);
+    }
+  }
+
+  Future<void> _loadNews() async {
     try {
       final news = await ApiService.getNews();
       if (mounted) setState(() => _news = news);
     } catch (_) {}
+  }
+
+  Future<void> _loadCalendar() async {
     try {
       final cal = await ApiService.getEconomicCalendar();
       if (mounted) setState(() => _calendar = cal);
@@ -193,14 +297,13 @@ class _ForexScreenState extends State<ForexScreen> {
     };
   }
 
-  List<dynamic> get _allPairs {
-    final all = <String>{};
-    for (final key in ['major', 'minor', 'exotic']) {
-      final list = _pairsData[key] as List<dynamic>? ?? [];
-      all.addAll(list.cast<String>());
-    }
-    return all.toList();
+  List<String> _flattenPairs(Map<String, List<String>> pairsByCategory) {
+    return [
+      for (final category in _pairCategories) ...pairsByCategory[category] ?? [],
+    ];
   }
+
+  List<String> get _allPairs => _flattenPairs(_livePairsByCategory);
 
   @override
   Widget build(BuildContext context) {
@@ -227,14 +330,23 @@ class _ForexScreenState extends State<ForexScreen> {
             // Pair analysis panel
             _PairAnalysisPanel(
               controller: _pairCtrl,
+              livePairCount: _allPairs.length,
               onAnalyze: _runAnalysis,
             ),
             const SizedBox(height: 16),
 
             // Pair chips
-            if (_allPairs.isNotEmpty) ...[
+            if (_loadingPairs)
+              const SectionCard(
+                child: PiiLoading(text: 'Checking live trading pairs…'),
+              )
+            else if (_pairsError != null)
+              SectionCard(
+                child: PiiError(message: _pairsError!, onRetry: _loadPairs),
+              )
+            else ...[
               _PairChipsSection(
-                pairs: _allPairs.cast<String>(),
+                pairsByCategory: _livePairsByCategory,
                 selected: _selectedPair,
                 onSelect: (p) {
                   _pairCtrl.text = p;
@@ -403,9 +515,12 @@ class _SessionBanner extends StatelessWidget {
 // ── Pair analysis panel ───────────────────────────────────────────────────────
 class _PairAnalysisPanel extends StatelessWidget {
   final TextEditingController controller;
+  final int livePairCount;
   final VoidCallback onAnalyze;
   const _PairAnalysisPanel(
-      {required this.controller, required this.onAnalyze});
+      {required this.controller,
+      required this.livePairCount,
+      required this.onAnalyze});
 
   @override
   Widget build(BuildContext context) {
@@ -431,8 +546,8 @@ class _PairAnalysisPanel extends StatelessWidget {
                   color: PiiColors.buy.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('● Live',
-                    style: TextStyle(
+                child: Text('● $livePairCount Live',
+                    style: const TextStyle(
                         color: PiiColors.buy, fontSize: 11)),
               ),
             ],
@@ -475,39 +590,84 @@ class _PairAnalysisPanel extends StatelessWidget {
 
 // ── Pair chips section ────────────────────────────────────────────────────────
 class _PairChipsSection extends StatelessWidget {
-  final List<String> pairs;
+  final Map<String, List<String>> pairsByCategory;
   final String selected;
   final ValueChanged<String> onSelect;
   const _PairChipsSection(
-      {required this.pairs,
+      {required this.pairsByCategory,
       required this.selected,
       required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
+    final visibleCategories = _pairCategories
+        .where((category) => (pairsByCategory[category] ?? []).isNotEmpty)
+        .toList();
+
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Available Pairs',
+          const Text('Live Pairs by Category',
               style: TextStyle(
                   color: PiiColors.textMuted,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5)),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: pairs
-                .map((p) => PairChip(
-                      pair: p,
-                      selected: p == selected,
-                      active: false,
-                      onTap: () => onSelect(p),
-                    ))
-                .toList(),
-          ),
+          if (visibleCategories.isEmpty)
+            const Text(
+              'No trading pairs currently have live data.',
+              style: TextStyle(color: PiiColors.textMuted, fontSize: 13),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: visibleCategories.map((category) {
+                final pairs = pairsByCategory[category] ?? [];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _categoryLabel(category),
+                            style: const TextStyle(
+                              color: PiiColors.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${pairs.length} live',
+                            style: const TextStyle(
+                              color: PiiColors.textMuted,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: pairs
+                            .map((p) => PairChip(
+                                  pair: p,
+                                  selected: p == selected,
+                                  active: true,
+                                  onTap: () => onSelect(p),
+                                ))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
