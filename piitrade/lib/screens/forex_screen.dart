@@ -179,7 +179,7 @@ class _ForexScreenState extends State<ForexScreen> {
       setState(() => _pairsError = e.message ?? 'Failed to load live pairs');
     } catch (_) {
       if (!mounted) return;
-      setState(() => _pairsError = 'Failed to load live pairs');
+      setState(() => _pairsError = 'Unexpected error loading live pairs');
     } finally {
       if (mounted) setState(() => _loadingPairs = false);
     }
@@ -202,8 +202,13 @@ class _ForexScreenState extends State<ForexScreen> {
   Future<List<String>> _loadLivePairs(List<String> candidatePairs) async {
     final livePairs = <String>[];
 
-    for (var i = 0; i < candidatePairs.length; i += _pairSignalBatchSize) {
-      final batch = candidatePairs.skip(i).take(_pairSignalBatchSize).toList();
+    for (var batchStartIndex = 0;
+        batchStartIndex < candidatePairs.length;
+        batchStartIndex += _pairSignalBatchSize) {
+      final batch = candidatePairs
+          .skip(batchStartIndex)
+          .take(_pairSignalBatchSize)
+          .toList();
       final batchResults = await Future.wait<String?>(
         batch.map((pair) async {
           try {
