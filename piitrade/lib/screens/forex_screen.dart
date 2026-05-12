@@ -221,6 +221,9 @@ class _ForexScreenState extends State<ForexScreen> {
               '${e.message ?? e.toString()}',
             );
             return null;
+          } catch (e) {
+            debugPrint('Unexpected live pair payload for $pair: $e');
+            return null;
           }
         }),
       );
