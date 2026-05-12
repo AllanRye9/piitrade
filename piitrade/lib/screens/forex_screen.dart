@@ -213,10 +213,12 @@ class _ForexScreenState extends State<ForexScreen> {
         batch.map((pair) async {
           try {
             final signal = await ApiService.getSignal(pair);
-            return signal['is_live'] == true ? pair : null;
+            final isLive = (signal['is_live'] as bool?) ?? false;
+            return isLive ? pair : null;
           } on DioException catch (e) {
             debugPrint(
-              'Live pair check failed for $pair: ${e.message ?? e.error}',
+              'Live pair check failed for $pair: '
+              '${e.message ?? e.toString()}',
             );
             return null;
           }
