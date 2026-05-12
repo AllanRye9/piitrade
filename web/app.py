@@ -900,8 +900,8 @@ _FOREX_HIST_SEQUENCES: dict[str, tuple[float, float, list[tuple[str, str, int]]]
     "USD/SEK": (10.020, 0.0001, _gen_seq("USD/SEK")),
     "USD/SGD": (1.3200, 0.0001, _gen_seq("USD/SGD")),
     "USD/HKD": (7.7820, 0.0001, _gen_seq("USD/HKD")),
-    "USD/TRY": (38.200, 0.0001, _gen_seq("USD/TRY")),
-    "USD/ZAR": (18.500, 0.0001, _gen_seq("USD/ZAR")),
+    "USD/TRY": (38.500, 0.0001, _gen_seq("USD/TRY")),
+    "USD/ZAR": (18.150, 0.0001, _gen_seq("USD/ZAR")),
     "USD/CNY": (7.2350, 0.0001, _gen_seq("USD/CNY")),
     # ── Commodities (static fallback – live prices come from Yahoo Finance) ───
     "XAU/USD": (3200.00, 0.01, _gen_seq("XAU/USD")),
