@@ -249,11 +249,11 @@ async def forex_pairs():
         minor: list[str] = []
         exotic: list[str] = []
 
-        open_signal_pairs: list[str] = []
+        eligible_pairs: list[str] = []
         for p in core._SUPPORTED_PAIRS:
-            if not _pair_has_open_signal(core, p):
+            if p not in core._FOREX_SIGNALS:
                 continue
-            open_signal_pairs.append(p)
+            eligible_pairs.append(p)
             base, quote = p.split("/")
             if "USD" in (base, quote):
                 other = base if quote == "USD" else quote
@@ -269,7 +269,7 @@ async def forex_pairs():
             "major": major,
             "minor": minor,
             "exotic": exotic,
-            "all": open_signal_pairs,
+            "all": eligible_pairs,
             "ecb_live": ecb_live,
         })
     except Exception as exc:
