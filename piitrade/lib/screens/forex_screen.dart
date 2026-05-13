@@ -291,7 +291,8 @@ class _ForexScreenState extends State<ForexScreen> {
 
   List<String> _flattenPairs(Map<String, List<String>> pairsByCategory) {
     return [
-      for (final category in _pairCategories) ...pairsByCategory[category] ?? [],
+      for (final category in _pairCategories)
+        ...pairsByCategory[category] ?? [],
     ];
   }
 
@@ -352,12 +353,12 @@ class _ForexScreenState extends State<ForexScreen> {
             // Analysis results (signal + tech)
             if (_showAnalysis) ...[
               if (_loadingSignal)
-                const SectionCard(
-                    child: PiiLoading(text: 'Loading signal…'))
+                const SectionCard(child: PiiLoading(text: 'Loading signal…'))
               else if (_signalError != null)
                 SectionCard(
-                    child:
-                        PiiError(message: _signalError!, onRetry: () => _fetchSignal(_selectedPair)))
+                    child: PiiError(
+                        message: _signalError!,
+                        onRetry: () => _fetchSignal(_selectedPair)))
               else if (_signal != null)
                 _SignalCard(
                   signal: _signal!,
@@ -369,17 +370,16 @@ class _ForexScreenState extends State<ForexScreen> {
                     child: PiiLoading(text: 'Loading technical data…'))
               else if (_techError != null)
                 SectionCard(
-                    child:
-                        PiiError(message: _techError!, onRetry: () => _fetchTech(_selectedPair)))
+                    child: PiiError(
+                        message: _techError!,
+                        onRetry: () => _fetchTech(_selectedPair)))
               else if (_tech != null)
                 _TechnicalCard(tech: _tech!),
               const SizedBox(height: 16),
 
               // News related to pair
               _PairNewsCard(
-                  pair: _selectedPair,
-                  news: _news,
-                  calendar: _calendar),
+                  pair: _selectedPair, news: _news, calendar: _calendar),
               const SizedBox(height: 16),
             ],
 
@@ -455,11 +455,11 @@ class _SessionBanner extends StatelessWidget {
                 children: _sessions.map((s) {
                   final active = _isSessionActive(s, h);
                   return Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: active
-                          ? s.color.withOpacity(0.12)
+                          ? s.color.withValues(alpha: 0.12)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
@@ -469,8 +469,7 @@ class _SessionBanner extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(s.flag,
-                            style: const TextStyle(fontSize: 13)),
+                        Text(s.flag, style: const TextStyle(fontSize: 13)),
                         const SizedBox(width: 4),
                         Text(s.name,
                             style: TextStyle(
@@ -487,8 +486,7 @@ class _SessionBanner extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                                color: s.color,
-                                shape: BoxShape.circle),
+                                color: s.color, shape: BoxShape.circle),
                           ),
                         ],
                       ],
@@ -532,15 +530,13 @@ class _PairAnalysisPanel extends StatelessWidget {
                       fontSize: 14)),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: PiiColors.buy.withOpacity(0.15),
+                  color: PiiColors.buy.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text('● $livePairCount Live',
-                    style: const TextStyle(
-                        color: PiiColors.buy, fontSize: 11)),
+                    style: const TextStyle(color: PiiColors.buy, fontSize: 11)),
               ),
             ],
           ),
@@ -556,8 +552,8 @@ class _PairAnalysisPanel extends StatelessWidget {
                       fontSize: 14),
                   decoration: const InputDecoration(
                     hintText: 'e.g. EUR/USD, GBP/JPY…',
-                    prefixIcon:
-                        Icon(Icons.search, color: PiiColors.textMuted, size: 18),
+                    prefixIcon: Icon(Icons.search,
+                        color: PiiColors.textMuted, size: 18),
                   ),
                   onSubmitted: (_) => onAnalyze(),
                   textCapitalization: TextCapitalization.characters,
@@ -687,7 +683,7 @@ class _SignalCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: PiiColors.buy.withOpacity(0.15),
+                    color: PiiColors.buy.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -697,8 +693,7 @@ class _SignalCard extends StatelessWidget {
                           width: 6,
                           height: 6,
                           decoration: const BoxDecoration(
-                              color: PiiColors.buy,
-                              shape: BoxShape.circle)),
+                              color: PiiColors.buy, shape: BoxShape.circle)),
                       const SizedBox(width: 4),
                       const Text('LIVE',
                           style: TextStyle(
@@ -713,8 +708,8 @@ class _SignalCard extends StatelessWidget {
           if (signal['ai_label'] != null) ...[
             const SizedBox(height: 6),
             Text('🤖 ${signal['ai_label']}',
-                style: const TextStyle(
-                    color: PiiColors.textMuted, fontSize: 12)),
+                style:
+                    const TextStyle(color: PiiColors.textMuted, fontSize: 12)),
           ],
           const SizedBox(height: 12),
           ConfidenceBar(value: (signal['confidence'] as num?)?.toDouble()),
@@ -739,17 +734,16 @@ class _SignalCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: PiiColors.accent.withOpacity(0.08),
+                color: PiiColors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text('30-day accuracy: ',
-                      style: TextStyle(
-                          color: PiiColors.textMuted, fontSize: 12)),
-                  Text(
-                      '${(signal['accuracy_30d'] as num).toStringAsFixed(1)}%',
+                      style:
+                          TextStyle(color: PiiColors.textMuted, fontSize: 12)),
+                  Text('${(signal['accuracy_30d'] as num).toStringAsFixed(1)}%',
                       style: const TextStyle(
                           color: PiiColors.accent,
                           fontWeight: FontWeight.bold,
@@ -762,8 +756,8 @@ class _SignalCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Generated: ${signal['generated_at']}',
                 textAlign: TextAlign.right,
-                style: const TextStyle(
-                    color: PiiColors.textMuted, fontSize: 11)),
+                style:
+                    const TextStyle(color: PiiColors.textMuted, fontSize: 11)),
           ],
           if (onCopyToRisk != null) ...[
             const SizedBox(height: 12),
@@ -817,8 +811,7 @@ class _TechnicalCard extends StatelessWidget {
                       fontSize: 15)),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: PiiColors.border,
                   borderRadius: BorderRadius.circular(6),
@@ -837,14 +830,14 @@ class _TechnicalCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: PiiColors.border.withOpacity(0.5),
+                color: PiiColors.border.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
                 children: [
                   const Text('Current Price',
-                      style: TextStyle(
-                          color: PiiColors.textMuted, fontSize: 11)),
+                      style:
+                          TextStyle(color: PiiColors.textMuted, fontSize: 11)),
                   const SizedBox(height: 4),
                   Text(tech['current_price'].toString(),
                       style: const TextStyle(
@@ -927,8 +920,7 @@ class _TechnicalCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                        '${f['fvg_type'] ?? f['type'] ?? 'FVG'}',
+                    Text('${f['fvg_type'] ?? f['type'] ?? 'FVG'}',
                         style: TextStyle(
                             color: isBullish ? PiiColors.buy : PiiColors.sell,
                             fontSize: 12)),
@@ -956,8 +948,7 @@ class _TechnicalCard extends StatelessWidget {
                                 color: PiiColors.accent,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600)),
-                        ...bos.map((b) => Text(
-                            (b['level'] ?? b).toString(),
+                        ...bos.map((b) => Text((b['level'] ?? b).toString(),
                             style: const TextStyle(
                                 color: PiiColors.textMuted,
                                 fontFamily: 'monospace',
@@ -975,8 +966,7 @@ class _TechnicalCard extends StatelessWidget {
                                 color: PiiColors.hold,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600)),
-                        ...choch.map((c) => Text(
-                            (c['level'] ?? c).toString(),
+                        ...choch.map((c) => Text((c['level'] ?? c).toString(),
                             style: const TextStyle(
                                 color: PiiColors.textMuted,
                                 fontFamily: 'monospace',
@@ -1005,18 +995,25 @@ class _PairNewsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencies = pair.split('/').where((c) => c.isNotEmpty).toList();
 
-    final relatedNews = news.where((n) {
-      final text =
-          '${n['headline'] ?? ''} ${n['summary'] ?? ''}'.toUpperCase();
-      return currencies.any((c) => text.contains(c));
-    }).take(4).toList();
+    final relatedNews = news
+        .where((n) {
+          final text =
+              '${n['headline'] ?? ''} ${n['summary'] ?? ''}'.toUpperCase();
+          return currencies.any((c) => text.contains(c));
+        })
+        .take(4)
+        .toList();
 
-    final relatedEvents = calendar.where((ev) {
-      final cur = (ev['currency'] ?? '').toString().toUpperCase();
-      return currencies.contains(cur);
-    }).take(6).toList();
+    final relatedEvents = calendar
+        .where((ev) {
+          final cur = (ev['currency'] ?? '').toString().toUpperCase();
+          return currencies.contains(cur);
+        })
+        .take(6)
+        .toList();
 
-    if (relatedNews.isEmpty && relatedEvents.isEmpty) return const SizedBox.shrink();
+    if (relatedNews.isEmpty && relatedEvents.isEmpty)
+      return const SizedBox.shrink();
 
     return SectionCard(
       child: Column(
@@ -1075,8 +1072,7 @@ class _PairNewsCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                          '${n['source'] ?? ''} · ${n['published_at'] ?? ''}',
+                      Text('${n['source'] ?? ''} · ${n['published_at'] ?? ''}',
                           style: const TextStyle(
                               color: PiiColors.textMuted, fontSize: 11)),
                     ],
@@ -1124,8 +1120,7 @@ class _PairNewsCard extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis),
                           ),
-                          Text(
-                              (ev['impact'] ?? '').toString().toUpperCase(),
+                          Text((ev['impact'] ?? '').toString().toUpperCase(),
                               style: TextStyle(
                                   color: impactColor,
                                   fontSize: 11,
@@ -1144,8 +1139,7 @@ class _PairNewsCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(ev['time']?.toString() ?? '',
                               style: const TextStyle(
-                                  color: PiiColors.textMuted,
-                                  fontSize: 12)),
+                                  color: PiiColors.textMuted, fontSize: 12)),
                         ],
                       ),
                     ],
@@ -1190,8 +1184,7 @@ class _RiskCalculatorCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('🧮',
-                  style: TextStyle(fontSize: 16)),
+              const Text('🧮', style: TextStyle(fontSize: 16)),
               const SizedBox(width: 6),
               const Text('Risk Calculator',
                   style: TextStyle(
@@ -1253,7 +1246,7 @@ class _RiskCalculatorCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: PiiColors.accent.withOpacity(0.07),
+                color: PiiColors.accent.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: PiiColors.border),
               ),
@@ -1273,7 +1266,7 @@ class _RiskCalculatorCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: PiiColors.accent.withOpacity(0.14),
+                          color: PiiColors.accent.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text('Live estimate',
@@ -1304,10 +1297,9 @@ class _RiskCalculatorCard extends StatelessWidget {
                     _RiskResultRow(
                         label: 'Risk : Reward',
                         value: '1:${riskResult!['rr']}',
-                        color:
-                            (riskResult!['rrValue'] as double) >= 2
-                                ? PiiColors.buy
-                                : PiiColors.hold),
+                        color: (riskResult!['rrValue'] as double) >= 2
+                            ? PiiColors.buy
+                            : PiiColors.hold),
                     _RiskResultRow(
                         label: 'TP distance',
                         value: '${riskResult!['tpPips']} pips'),
@@ -1315,8 +1307,8 @@ class _RiskCalculatorCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   const Text(
                       'Double-check the final size with your broker before placing a live trade.',
-                      style: TextStyle(
-                          color: PiiColors.textMuted, fontSize: 11)),
+                      style:
+                          TextStyle(color: PiiColors.textMuted, fontSize: 11)),
                 ],
               ),
             ),
@@ -1360,8 +1352,8 @@ class _RiskField extends StatelessWidget {
       controller: controller,
       style: const TextStyle(
           color: PiiColors.text, fontFamily: 'monospace', fontSize: 14),
-      keyboardType: keyboardType ??
-          const TextInputType.numberWithOptions(decimal: true),
+      keyboardType:
+          keyboardType ?? const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -1379,8 +1371,7 @@ class _RiskResultRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
-  const _RiskResultRow(
-      {required this.label, required this.value, this.color});
+  const _RiskResultRow({required this.label, required this.value, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1390,8 +1381,7 @@ class _RiskResultRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  color: PiiColors.textMuted, fontSize: 12)),
+              style: const TextStyle(color: PiiColors.textMuted, fontSize: 12)),
           Text(value,
               style: TextStyle(
                   color: color ?? PiiColors.text,

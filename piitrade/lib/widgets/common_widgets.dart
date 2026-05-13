@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+// Helper function to create color with opacity
+Color _withOpacity(Color color, double opacity) {
+  return Color.fromRGBO(
+    (color.r * 255.0).round(),
+    (color.g * 255.0).round(),
+    (color.b * 255.0).round(),
+    opacity,
+  );
+}
+
 // ── Direction badge (BUY / SELL / HOLD) ─────────────────────────────────────
 class DirectionBadge extends StatelessWidget {
   final String? direction;
@@ -24,14 +34,17 @@ class DirectionBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: _withOpacity(color, 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: _withOpacity(color, 0.5)),
       ),
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontWeight: FontWeight.bold, fontSize: 13),
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
       ),
     );
   }
@@ -56,10 +69,14 @@ class ConfidenceBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Confidence',
-                style: TextStyle(color: PiiColors.textMuted, fontSize: 12)),
-            Text('${pct.toStringAsFixed(1)}%',
-                style: TextStyle(color: color, fontSize: 12)),
+            const Text(
+              'Confidence',
+              style: TextStyle(color: PiiColors.textMuted, fontSize: 12),
+            ),
+            Text(
+              '${pct.toStringAsFixed(1)}%',
+              style: TextStyle(color: color, fontSize: 12),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -83,8 +100,12 @@ class PriceRow extends StatelessWidget {
   final dynamic value;
   final Color? color;
 
-  const PriceRow(
-      {super.key, required this.label, required this.value, this.color});
+  const PriceRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -93,9 +114,10 @@ class PriceRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  color: PiiColors.textMuted, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: PiiColors.textMuted, fontSize: 13),
+          ),
           Text(
             value?.toString() ?? '—',
             style: TextStyle(
@@ -151,10 +173,11 @@ class PiiLoading extends StatelessWidget {
           ),
           if (text != null) ...[
             const SizedBox(height: 12),
-            Text(text!,
-                style: const TextStyle(
-                    color: PiiColors.textMuted, fontSize: 13),
-                textAlign: TextAlign.center),
+            Text(
+              text!,
+              style: const TextStyle(color: PiiColors.textMuted, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
           ],
         ],
       ),
@@ -178,16 +201,19 @@ class PiiError extends StatelessWidget {
         children: [
           const Text('⚠️', style: TextStyle(fontSize: 28)),
           const SizedBox(height: 8),
-          Text(message,
-              style:
-                  const TextStyle(color: PiiColors.textMuted, fontSize: 13),
-              textAlign: TextAlign.center),
+          Text(
+            message,
+            style: const TextStyle(color: PiiColors.textMuted, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
           if (onRetry != null) ...[
             const SizedBox(height: 12),
             TextButton(
               onPressed: onRetry,
-              child: const Text('↻ Retry',
-                  style: TextStyle(color: PiiColors.accent)),
+              child: const Text(
+                '↻ Retry',
+                style: TextStyle(color: PiiColors.accent),
+              ),
             ),
           ],
         ],
@@ -224,9 +250,9 @@ class PairChip extends StatelessWidget {
             ? PiiColors.accent
             : PiiColors.textMuted;
     final Color bg = active
-        ? PiiColors.buy.withOpacity(0.12)
+        ? _withOpacity(PiiColors.buy, 0.12)
         : selected
-            ? PiiColors.accent.withOpacity(0.1)
+            ? _withOpacity(PiiColors.accent, 0.1)
             : Colors.transparent;
 
     return GestureDetector(
@@ -241,10 +267,11 @@ class PairChip extends StatelessWidget {
         child: Text(
           pair,
           style: TextStyle(
-              color: textColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'monospace'),
+            color: textColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'monospace',
+          ),
         ),
       ),
     );
@@ -280,7 +307,7 @@ class PiiTabBar extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
                   color: selected
-                      ? PiiColors.accent.withOpacity(0.15)
+                      ? _withOpacity(PiiColors.accent, 0.15)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
@@ -321,13 +348,16 @@ class ImpactBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: _withOpacity(color, 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         impact!.toUpperCase(),
         style: TextStyle(
-            color: color, fontSize: 11, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

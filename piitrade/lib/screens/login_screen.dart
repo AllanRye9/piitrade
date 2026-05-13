@@ -71,28 +71,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Access your account and settings',
-                style:
-                    TextStyle(color: PiiColors.textMuted, fontSize: 14)),
+                style: TextStyle(color: PiiColors.textMuted, fontSize: 14)),
             const SizedBox(height: 32),
-
             if (_error != null) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: PiiColors.sell.withOpacity(0.12),
+                  color: PiiColors.sell.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border:
-                      Border.all(color: PiiColors.sell.withOpacity(0.35)),
+                      Border.all(color: PiiColors.sell.withValues(alpha: 0.35)),
                 ),
                 child: Text(_error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: PiiColors.sell, fontSize: 13)),
+                    style:
+                        const TextStyle(color: PiiColors.sell, fontSize: 13)),
               ),
               const SizedBox(height: 16),
             ],
-
             TextField(
               controller: _usernameCtrl,
               style: const TextStyle(color: PiiColors.text),
@@ -113,9 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 hintText: '••••••••',
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
                     color: PiiColors.textMuted,
                     size: 20,
                   ),
@@ -126,7 +121,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               onSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -137,8 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation(PiiColors.bg),
+                          valueColor: AlwaysStoppedAnimation(PiiColors.bg),
                         ),
                       )
                     : const Text('Sign In'),

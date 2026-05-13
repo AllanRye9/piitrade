@@ -4,178 +4,179 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/common_widgets.dart';
 
-class MoversScreen extends StatefulWidget {
-  const MoversScreen({super.key});
+class AdvanceScreen extends StatefulWidget {
+  const AdvanceScreen({super.key});
 
   @override
-  State<MoversScreen> createState() => _MoversScreenState();
+  State<AdvanceScreen> createState() => _AdvanceScreenState();
 }
 
-class _MoversScreenState extends State<MoversScreen> {
-  Map<String, dynamic>? _volData;
-  Map<String, dynamic>? _reversalsData;
-  bool _loadingVol = true;
-  bool _loadingRev = true;
-  String? _volError;
-  String? _revError;
-  String _timeframe = '24h';
+class _AdvanceScreenState extends State<AdvanceScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadVolatility();
-    _loadReversals();
+    _tabController = TabController(length: 4, vsync: this);
   }
 
-  Future<void> _loadVolatility([String? tf]) async {
-    final timeframe = tf ?? _timeframe;
-    setState(() {
-      _loadingVol = true;
-      _volError = null;
-    });
-    try {
-      final data = await ApiService.getVolatile(timeframe);
-      if (mounted) setState(() => _volData = data);
-    } on DioException catch (e) {
-      if (mounted) setState(() => _volError = e.message ?? 'Failed to load');
-    } finally {
-      if (mounted) setState(() => _loadingVol = false);
-    }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadReversals() async {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Advanced Tools'),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: PiiColors.accent,
+          unselectedLabelColor: PiiColors.textMuted,
+          indicatorColor: PiiColors.accent,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: 'FVG Scanner'),
+            Tab(text: 'S/R Breakouts'),
+            Tab(text: 'Patterns'),
+            Tab(text: 'Calendar'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          _FvgScannerTab(),
+          _SrBreakoutsTab(),
+          _PatternScannerTab(),
+          _EconomicCalendarTab(),
+        ],
+      ),
+    );
+  }
+}
+
+// ── FVG Scanner ───────────────────────────────────────────────────────────────
+class _FvgScannerTab extends StatefulWidget {
+  const _FvgScannerTab();
+
+  @override
+  State<_FvgScannerTab> createState() => _FvgScannerTabState();
+}
+
+class _FvgScannerTabState extends State<_FvgScannerTab> {
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+  int _tabIdx = 0;
+  final _filterCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _filterCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _filterCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
     setState(() {
-      _loadingRev = true;
-      _revError = null;
+      _loading = true;
+      _error = null;
     });
     try {
-      final data = await ApiService.getReversals();
-      if (mounted) setState(() => _reversalsData = data);
+      final data = await ApiService.getFvgScanner();
+      if (mounted) setState(() => _data = data);
     } on DioException catch (e) {
-      if (mounted) setState(() => _revError = e.message ?? 'Failed to load');
+      if (mounted) setState(() => _error = e.message ?? 'Failed to load');
     } finally {
-      if (mounted) setState(() => _loadingRev = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final pairs =
-        (_volData?['pairs'] as List<dynamic>? ?? []);
-    final reversals =
-        (_reversalsData?['pairs'] as List<dynamic>? ?? []);
+    const tabs = ['approaching', 'reached', 'rejected'];
+    final grouped = _data?['grouped'] as Map<String, dynamic>? ?? {};
+    final items = ((grouped[tabs[_tabIdx]] as List<dynamic>? ?? []))
+        .where((item) =>
+            _filterCtrl.text.isEmpty ||
+            (item['pair']?.toString().toLowerCase() ?? '')
+                .contains(_filterCtrl.text.toLowerCase()))
+        .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Market Movers'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: PiiColors.accent),
-            onPressed: () {
-              _loadVolatility();
-              _loadReversals();
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        color: PiiColors.accent,
-        backgroundColor: PiiColors.surface,
-        onRefresh: () async {
-          await Future.wait([_loadVolatility(), _loadReversals()]);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Volatile pairs
-              SectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+    return _loading
+        ? const Center(child: PiiLoading())
+        : _error != null
+            ? Center(child: PiiError(message: _error!, onRetry: _load))
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              const Text('🌡️ Volatile Pairs',
-                                  style: TextStyle(
-                                      color: PiiColors.text,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16)),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                    color: PiiColors.border,
-                                    borderRadius: BorderRadius.circular(6)),
-                                child: Text('${pairs.length} pairs',
-                                    style: const TextStyle(
-                                        color: PiiColors.textMuted,
-                                        fontSize: 11)),
-                              ),
-                            ],
+                        PiiTabBar(
+                          tabs: tabs
+                              .map((t) =>
+                                  '${t[0].toUpperCase()}${t.substring(1)} '
+                                  '(${(grouped[t] as List?)?.length ?? 0})')
+                              .toList(),
+                          selectedIndex: _tabIdx,
+                          onTap: (i) => setState(() => _tabIdx = i),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _filterCtrl,
+                          style: const TextStyle(
+                              color: PiiColors.text,
+                              fontFamily: 'monospace',
+                              fontSize: 13),
+                          decoration: const InputDecoration(
+                            hintText: 'Filter pair, e.g. EUR/USD',
+                            prefixIcon: Icon(Icons.search,
+                                color: PiiColors.textMuted, size: 18),
                           ),
                         ),
-                        // Timeframe buttons
-                        ...['1h', '4h', '24h'].map((tf) => Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() => _timeframe = tf);
-                                  _loadVolatility(tf);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: tf == _timeframe
-                                        ? PiiColors.accent.withOpacity(0.15)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                        color: tf == _timeframe
-                                            ? PiiColors.accent
-                                            : PiiColors.border),
-                                  ),
-                                  child: Text(tf,
-                                      style: TextStyle(
-                                          color: tf == _timeframe
-                                              ? PiiColors.accent
-                                              : PiiColors.textMuted,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500)),
-                                ),
-                              ),
-                            )),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (_loadingVol)
-                      const PiiLoading()
-                    else if (_volError != null)
-                      PiiError(message: _volError!, onRetry: _loadVolatility)
-                    else if (pairs.isEmpty)
-                      const Text('No data',
-                          style: TextStyle(
-                              color: PiiColors.textMuted, fontSize: 13))
-                    else
-                      Column(
-                        children: pairs.map((p) {
-                          final vol = (p['volatility_pct'] as num?)?.toDouble() ?? 0;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Column(
-                              children: [
-                                Row(
+                  ),
+                  Expanded(
+                    child: items.isEmpty
+                        ? Center(
+                            child: Text('No ${tabs[_tabIdx]} FVG zones found',
+                                style: const TextStyle(
+                                    color: PiiColors.textMuted, fontSize: 13)))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: items.length,
+                            itemBuilder: (context, i) {
+                              final item = items[i];
+                              final isBullish =
+                                  (item['fvg_type']?.toString() ?? '')
+                                          .toLowerCase() ==
+                                      'bullish';
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: PiiColors.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: PiiColors.border),
+                                ),
+                                child: Row(
                                   children: [
-                                    SizedBox(
-                                      width: 80,
+                                    Expanded(
+                                      flex: 2,
                                       child: Text(
-                                          p['pair']?.toString() ?? '',
+                                          item['pair']?.toString() ?? '',
                                           style: const TextStyle(
                                               color: PiiColors.accent,
                                               fontFamily: 'monospace',
@@ -183,222 +184,640 @@ class _MoversScreenState extends State<MoversScreen> {
                                               fontSize: 13)),
                                     ),
                                     Expanded(
-                                        child: _VolatilityBar(value: vol)),
-                                    const SizedBox(width: 8),
-                                    DirectionBadge(
-                                        direction:
-                                            p['direction']?.toString()),
+                                      flex: 2,
+                                      child: Text(
+                                          item['fvg_type']?.toString() ?? '—',
+                                          style: TextStyle(
+                                              color: isBullish
+                                                  ? PiiColors.buy
+                                                  : PiiColors.sell,
+                                              fontSize: 12)),
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Text('T: ${item['top'] ?? '—'}',
+                                              style: const TextStyle(
+                                                  color: PiiColors.sell,
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 11)),
+                                          Text('B: ${item['bottom'] ?? '—'}',
+                                              style: const TextStyle(
+                                                  color: PiiColors.buy,
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 11)),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                const Divider(
-                                    color: PiiColors.border, height: 12),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Reversal signals
-              SectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('🔄 Reversal Signals',
-                            style: TextStyle(
-                                color: PiiColors.text,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                              color: PiiColors.border,
-                              borderRadius: BorderRadius.circular(6)),
-                          child: Text('${reversals.length} pairs',
-                              style: const TextStyle(
-                                  color: PiiColors.textMuted, fontSize: 11)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    if (_loadingRev)
-                      const PiiLoading()
-                    else if (_revError != null)
-                      PiiError(message: _revError!, onRetry: _loadReversals)
-                    else if (reversals.isEmpty)
-                      const Text('No reversal signals detected',
-                          style: TextStyle(
-                              color: PiiColors.textMuted, fontSize: 13))
-                    else
-                      Column(
-                        children: reversals.map((r) {
-                          final isBullish = (r['reversal_type']
-                                      ?.toString()
-                                      .toLowerCase() ??
-                                  '')
-                              .contains('bullish');
-                          final Color typeColor =
-                              isBullish ? PiiColors.buy : PiiColors.sell;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: PiiColors.bg,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: PiiColors.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                                r['pair']?.toString() ?? '',
-                                                style: const TextStyle(
-                                                    color: PiiColors.accent,
-                                                    fontFamily: 'monospace',
-                                                    fontWeight:
-                                                        FontWeight.bold,
-                                                    fontSize: 14)),
-                                            const Spacer(),
-                                            Text(
-                                                isBullish ? '📈' : '📉',
-                                                style: const TextStyle(
-                                                    fontSize: 16)),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: typeColor
-                                                    .withOpacity(0.15),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                  r['reversal_type']
-                                                          ?.toString() ??
-                                                      '',
-                                                  style: TextStyle(
-                                                      color: typeColor,
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w600)),
-                                            ),
-                                            if (r['strength'] != null) ...[
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                  'Strength: ${r['strength']}',
-                                                  style: const TextStyle(
-                                                      color:
-                                                          PiiColors.textMuted,
-                                                      fontSize: 11)),
-                                            ],
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Text('Entry ',
-                                                style: TextStyle(
-                                                    color:
-                                                        PiiColors.textMuted,
-                                                    fontSize: 12)),
-                                            Text(
-                                                r['entry_price']
-                                                        ?.toString() ??
-                                                    '—',
-                                                style: const TextStyle(
-                                                    fontFamily: 'monospace',
-                                                    color: PiiColors.text,
-                                                    fontSize: 12)),
-                                            if (r['confidence'] != null) ...[
-                                              const Spacer(),
-                                              Text(
-                                                  '${(r['confidence'] as num).toStringAsFixed(1)}% conf',
-                                                  style: const TextStyle(
-                                                      color:
-                                                          PiiColors.textMuted,
-                                                      fontSize: 11)),
-                                            ],
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
   }
 }
 
-class _VolatilityBar extends StatelessWidget {
-  final double value;
-  const _VolatilityBar({required this.value});
+// ── S/R Breakouts ─────────────────────────────────────────────────────────────
+class _SrBreakoutsTab extends StatefulWidget {
+  const _SrBreakoutsTab();
+
+  @override
+  State<_SrBreakoutsTab> createState() => _SrBreakoutsTabState();
+}
+
+class _SrBreakoutsTabState extends State<_SrBreakoutsTab> {
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+  final _filterCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _filterCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _filterCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await ApiService.getSrBreakouts();
+      if (mounted) setState(() => _data = data);
+    } on DioException catch (e) {
+      if (mounted) setState(() => _error = e.message ?? 'Failed to load');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    const double maxPct = 3.0;
-    final width = (value / maxPct).clamp(0.0, 1.0);
-    final Color color = value > 1.5
-        ? PiiColors.sell
-        : value > 0.8
-            ? PiiColors.hold
-            : PiiColors.buy;
-    return Row(
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: width,
-              backgroundColor: PiiColors.border,
-              color: color,
-              minHeight: 5,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 52,
-          child: Text('${value.toStringAsFixed(3)}%',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                  color: color,
-                  fontFamily: 'monospace',
-                  fontSize: 11)),
-        ),
-      ],
-    );
+    final groups = _data?['sr_groups'] as Map<String, dynamic>? ?? {};
+    final items = ((groups['soon_touching'] as List<dynamic>? ?? []))
+        .where((item) =>
+            _filterCtrl.text.isEmpty ||
+            (item['pair']?.toString().toLowerCase() ?? '')
+                .contains(_filterCtrl.text.toLowerCase()))
+        .toList();
+
+    return _loading
+        ? const Center(child: PiiLoading())
+        : _error != null
+            ? Center(child: PiiError(message: _error!, onRetry: _load))
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      PiiColors.accent.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: PiiColors.accent),
+                                ),
+                                child: const Text('Soon Touching',
+                                    style: TextStyle(
+                                        color: PiiColors.accent,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13)),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.refresh,
+                                  color: PiiColors.textMuted, size: 20),
+                              onPressed: _load,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _filterCtrl,
+                          style: const TextStyle(
+                              color: PiiColors.text,
+                              fontFamily: 'monospace',
+                              fontSize: 13),
+                          decoration: const InputDecoration(
+                            hintText: 'Filter pair, e.g. XAU/USD',
+                            prefixIcon: Icon(Icons.search,
+                                color: PiiColors.textMuted, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: items.isEmpty
+                        ? const Center(
+                            child: Text('No soon-touching breakouts found',
+                                style: TextStyle(
+                                    color: PiiColors.textMuted, fontSize: 13)))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: items.length,
+                            itemBuilder: (context, i) {
+                              final item = items[i];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: PiiColors.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: PiiColors.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(item['pair']?.toString() ?? '',
+                                            style: const TextStyle(
+                                                color: PiiColors.accent,
+                                                fontFamily: 'monospace',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13)),
+                                        const Spacer(),
+                                        Text(item['level']?.toString() ?? '—',
+                                            style: const TextStyle(
+                                                color: PiiColors.text,
+                                                fontFamily: 'monospace',
+                                                fontSize: 13)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(item['type']?.toString() ?? '—',
+                                        style: const TextStyle(
+                                            color: PiiColors.textMuted,
+                                            fontSize: 12)),
+                                    if (item['description'] != null)
+                                      Text(item['description'].toString(),
+                                          style: const TextStyle(
+                                              color: PiiColors.textMuted,
+                                              fontSize: 12)),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+  }
+}
+
+// ── Pattern Scanner ───────────────────────────────────────────────────────────
+class _PatternScannerTab extends StatefulWidget {
+  const _PatternScannerTab();
+
+  @override
+  State<_PatternScannerTab> createState() => _PatternScannerTabState();
+}
+
+class _PatternScannerTabState extends State<_PatternScannerTab> {
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+  String _timeframe = '1h';
+  final _filterCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _filterCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _filterCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load([String? tf]) async {
+    final timeframe = tf ?? _timeframe;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await ApiService.getPatternScanner(timeframe);
+      if (mounted) setState(() => _data = data);
+    } on DioException catch (e) {
+      if (mounted) setState(() => _error = e.message ?? 'Failed to load');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Color _dirColor(String? dir) {
+    final d = (dir ?? '').toUpperCase();
+    if (d == 'BUY') return PiiColors.buy;
+    if (d == 'SELL') return PiiColors.sell;
+    return PiiColors.textMuted;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final patterns = ((_data?['patterns'] as List<dynamic>? ?? []))
+        .where((p) =>
+            _filterCtrl.text.isEmpty ||
+            (p['pair']?.toString().toLowerCase() ?? '')
+                .contains(_filterCtrl.text.toLowerCase()))
+        .toList();
+
+    return _loading
+        ? const Center(child: PiiLoading())
+        : _error != null
+            ? Center(child: PiiError(message: _error!, onRetry: _load))
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            ...['30m', '1h', '4h', '1day'].map((tf) => Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() => _timeframe = tf);
+                                      _load(tf);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: tf == _timeframe
+                                            ? PiiColors.accent
+                                                .withValues(alpha: 0.15)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                            color: tf == _timeframe
+                                                ? PiiColors.accent
+                                                : PiiColors.border),
+                                      ),
+                                      child: Text(tf,
+                                          style: TextStyle(
+                                              color: tf == _timeframe
+                                                  ? PiiColors.accent
+                                                  : PiiColors.textMuted,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500)),
+                                    ),
+                                  ),
+                                )),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _filterCtrl,
+                          style: const TextStyle(
+                              color: PiiColors.text,
+                              fontFamily: 'monospace',
+                              fontSize: 13),
+                          decoration: const InputDecoration(
+                            hintText: 'Filter pair…',
+                            prefixIcon: Icon(Icons.search,
+                                color: PiiColors.textMuted, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: patterns.isEmpty
+                        ? Center(
+                            child: Text('No patterns found for $_timeframe',
+                                style: const TextStyle(
+                                    color: PiiColors.textMuted, fontSize: 13)))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: patterns.length,
+                            itemBuilder: (context, i) {
+                              final p = patterns[i];
+                              final dir = p['direction']?.toString() ?? '';
+                              final dirUp = dir.toUpperCase();
+                              final Color dColor = _dirColor(dir);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: PiiColors.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: PiiColors.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(p['pair']?.toString() ?? '',
+                                            style: const TextStyle(
+                                                color: PiiColors.accent,
+                                                fontFamily: 'monospace',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13)),
+                                        const SizedBox(width: 8),
+                                        Text(p['type'] ?? p['label'] ?? '—',
+                                            style: const TextStyle(
+                                                color: PiiColors.text,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 13)),
+                                        const Spacer(),
+                                        if (dir.isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: dColor.withValues(
+                                                  alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                                '${dirUp == 'BUY' ? '▲' : dirUp == 'SELL' ? '▼' : '◆'} $dirUp',
+                                                style: TextStyle(
+                                                    color: dColor,
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ),
+                                        if (p['impact'] != null) ...[
+                                          const SizedBox(width: 6),
+                                          ImpactBadge(
+                                              impact: p['impact']?.toString()),
+                                        ],
+                                      ],
+                                    ),
+                                    if (p['description'] != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(p['description'].toString(),
+                                          style: const TextStyle(
+                                              color: PiiColors.textMuted,
+                                              fontSize: 12)),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+  }
+}
+
+// ── Economic Calendar ────────────────────────────────────────────────────────
+class _EconomicCalendarTab extends StatefulWidget {
+  const _EconomicCalendarTab();
+
+  @override
+  State<_EconomicCalendarTab> createState() => _EconomicCalendarTabState();
+}
+
+class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
+  List<dynamic> _events = [];
+  bool _loading = true;
+  String? _error;
+  String _impactFilter = 'all';
+  final _pairFilterCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _pairFilterCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _pairFilterCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final events = await ApiService.getEconomicCalendar();
+      if (mounted) setState(() => _events = events);
+    } on DioException catch (e) {
+      if (mounted) setState(() => _error = e.message ?? 'Failed to load');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<dynamic> get _filtered {
+    return _events.where((ev) {
+      final impactMatches = _impactFilter == 'all' ||
+          (ev['impact'] ?? '').toString().toLowerCase() == _impactFilter;
+      final pf = _pairFilterCtrl.text.toUpperCase();
+      bool pairMatches = true;
+      if (pf.isNotEmpty) {
+        final cur = (ev['currency'] ?? '').toString().toUpperCase();
+        if (pf.contains('/')) {
+          final parts = pf.split('/');
+          pairMatches = parts.contains(cur);
+        } else {
+          pairMatches = cur.contains(pf);
+        }
+      }
+      return impactMatches && pairMatches;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filtered;
+    return _loading
+        ? const Center(child: PiiLoading())
+        : _error != null
+            ? Center(child: PiiError(message: _error!, onRetry: _load))
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _impactFilter,
+                                onChanged: (v) =>
+                                    setState(() => _impactFilter = v!),
+                                dropdownColor: PiiColors.surface,
+                                decoration: const InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8)),
+                                items: const [
+                                  DropdownMenuItem(
+                                      value: 'all',
+                                      child: Text('All impact',
+                                          style: TextStyle(
+                                              color: PiiColors.text,
+                                              fontSize: 13))),
+                                  DropdownMenuItem(
+                                      value: 'high',
+                                      child: Text('High impact',
+                                          style: TextStyle(
+                                              color: PiiColors.sell,
+                                              fontSize: 13))),
+                                  DropdownMenuItem(
+                                      value: 'medium',
+                                      child: Text('Medium impact',
+                                          style: TextStyle(
+                                              color: Color(0xFF3B82F6),
+                                              fontSize: 13))),
+                                  DropdownMenuItem(
+                                      value: 'low',
+                                      child: Text('Low impact',
+                                          style: TextStyle(
+                                              color: PiiColors.buy,
+                                              fontSize: 13))),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.refresh,
+                                  color: PiiColors.textMuted, size: 20),
+                              onPressed: _load,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _pairFilterCtrl,
+                          style: const TextStyle(
+                              color: PiiColors.text,
+                              fontFamily: 'monospace',
+                              fontSize: 13),
+                          decoration: const InputDecoration(
+                            hintText: 'Filter by pair, e.g. GBP/JPY',
+                            prefixIcon: Icon(Icons.search,
+                                color: PiiColors.textMuted, size: 18),
+                          ),
+                          textCapitalization: TextCapitalization.characters,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? const Center(
+                            child: Text('No events found',
+                                style: TextStyle(
+                                    color: PiiColors.textMuted, fontSize: 13)))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, i) {
+                              final ev = filtered[i];
+                              final impact =
+                                  (ev['impact'] ?? '').toString().toLowerCase();
+                              final Color impactColor = impact == 'high'
+                                  ? PiiColors.sell
+                                  : impact == 'medium'
+                                      ? const Color(0xFF3B82F6)
+                                      : PiiColors.textMuted;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: PiiColors.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: PiiColors.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                              ev['event']?.toString() ?? '',
+                                              style: const TextStyle(
+                                                  color: PiiColors.text,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                            (ev['impact'] ?? '')
+                                                .toString()
+                                                .toUpperCase(),
+                                            style: TextStyle(
+                                                color: impactColor,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Text(ev['currency']?.toString() ?? '',
+                                            style: const TextStyle(
+                                                color: PiiColors.accent,
+                                                fontFamily: 'monospace',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12)),
+                                        const SizedBox(width: 8),
+                                        Text(ev['time']?.toString() ?? '',
+                                            style: const TextStyle(
+                                                color: PiiColors.textMuted,
+                                                fontSize: 12)),
+                                        if (ev['forecast'] != null) ...[
+                                          const SizedBox(width: 8),
+                                          Text('Fcst: ${ev['forecast']}',
+                                              style: const TextStyle(
+                                                  color: PiiColors.textMuted,
+                                                  fontSize: 11)),
+                                        ],
+                                        if (ev['previous'] != null) ...[
+                                          const SizedBox(width: 8),
+                                          Text('Prev: ${ev['previous']}',
+                                              style: const TextStyle(
+                                                  color: PiiColors.textMuted,
+                                                  fontSize: 11)),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
   }
 }

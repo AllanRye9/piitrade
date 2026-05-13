@@ -1,132 +1,401 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../theme/app_theme.dart';
-import '../providers/auth_provider.dart';
-import 'home_screen.dart';
-import 'forex_screen.dart';
-import 'advance_screen.dart';
-import 'movers_screen.dart';
-import 'risk_calculator_screen.dart';
-import 'login_screen.dart';
-import 'profile_screen.dart';
+import '../services/api_service.dart';
+import '../widgets/common_widgets.dart';
 
-class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+class MoversScreen extends StatefulWidget {
+  const MoversScreen({super.key});
 
   @override
-  ConsumerState<MainShell> createState() => _MainShellState();
+  State<MoversScreen> createState() => _MoversScreenState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0;
+class _MoversScreenState extends State<MoversScreen> {
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+  String _period = '24h';
+  String _sortBy = 'volume';
+  final _filterCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _filterCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _filterCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await ApiService.getMovers(_period, _sortBy);
+      if (mounted) setState(() => _data = data);
+    } on DioException catch (e) {
+      if (mounted)
+        setState(() => _error = e.message ?? 'Failed to load movers');
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Failed to load movers data');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<dynamic> _getFilteredMovers() {
+    final movers = (_data?['movers'] as List<dynamic>? ?? []).where((item) {
+      if (_filterCtrl.text.isEmpty) return true;
+      final pair = (item['pair']?.toString() ?? '').toLowerCase();
+      return pair.contains(_filterCtrl.text.toLowerCase());
+    }).toList();
+
+    if (_sortBy == 'gainers') {
+      movers.sort((a, b) {
+        final aChange = (a['change_percent'] as num?)?.toDouble() ?? 0;
+        final bChange = (b['change_percent'] as num?)?.toDouble() ?? 0;
+        return bChange.compareTo(aChange);
+      });
+    } else if (_sortBy == 'losers') {
+      movers.sort((a, b) {
+        final aChange = (a['change_percent'] as num?)?.toDouble() ?? 0;
+        final bChange = (b['change_percent'] as num?)?.toDouble() ?? 0;
+        return aChange.compareTo(bChange);
+      });
+    } else if (_sortBy == 'volume') {
+      movers.sort((a, b) {
+        final aVol = (a['volume'] as num?)?.toDouble() ?? 0;
+        final bVol = (b['volume'] as num?)?.toDouble() ?? 0;
+        return bVol.compareTo(aVol);
+      });
+    }
+
+    return movers;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Each screen is its own Scaffold (with its own AppBar).
-    // MainShell contributes only the persistent BottomNavigationBar via a
-    // wrapping Scaffold that has no AppBar of its own.
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _HomeTab(
-            onSignIn: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const LoginScreen())),
-            onProfile: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen())),
-          ),
-          const ForexScreen(),
-          const AdvanceScreen(),
-          const MoversScreen(),
-          const RiskCalculatorScreen(),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: PiiColors.border)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.show_chart),
-                activeIcon: Icon(Icons.show_chart),
-                label: 'Dashboard'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart),
-                activeIcon: Icon(Icons.bar_chart),
-                label: 'Advanced'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up),
-                activeIcon: Icon(Icons.trending_up),
-                label: 'Movers'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.calculate_outlined),
-                activeIcon: Icon(Icons.calculate),
-                label: 'Risk'),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    final movers = _getFilteredMovers();
 
-/// A thin wrapper around HomeScreen that passes nav callbacks
-/// so the AppBar can show auth-aware actions.
-class _HomeTab extends ConsumerWidget {
-  final VoidCallback onSignIn;
-  final VoidCallback onProfile;
-  const _HomeTab({required this.onSignIn, required this.onProfile});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          children: [
-            Text('📈', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text('PiiTrade',
-                style: TextStyle(
-                    color: PiiColors.accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18)),
-          ],
-        ),
+        title: const Text('Market Movers'),
         actions: [
-          if (auth.isLoggedIn)
-            IconButton(
-              icon: CircleAvatar(
-                backgroundColor: PiiColors.accent,
-                radius: 14,
-                child: Text(
-                  auth.username.isNotEmpty
-                      ? auth.username[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                      color: PiiColors.bg,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-              onPressed: onProfile,
-            )
-          else
-            TextButton(
-              onPressed: onSignIn,
-              child: const Text('Sign In',
-                  style: TextStyle(color: PiiColors.accent)),
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: PiiColors.textMuted),
+            onPressed: _load,
+          ),
         ],
       ),
-      body: const HomeBody(),
+      body: _loading
+          ? const Center(child: PiiLoading(text: 'Loading market movers…'))
+          : _error != null
+              ? Center(child: PiiError(message: _error!, onRetry: _load))
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        children: [
+                          // Period selector
+                          Row(
+                            children: [
+                              ...[
+                                '1h',
+                                '4h',
+                                '24h',
+                                '7d'
+                              ].map((period) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() => _period = period);
+                                        _load();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: period == _period
+                                              ? PiiColors.accent
+                                                  .withValues(alpha: 0.15)
+                                              : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: period == _period
+                                                ? PiiColors.accent
+                                                : PiiColors.border,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          period,
+                                          style: TextStyle(
+                                            color: period == _period
+                                                ? PiiColors.accent
+                                                : PiiColors.textMuted,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Sort and filter row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _sortBy,
+                                  onChanged: (v) {
+                                    setState(() => _sortBy = v!);
+                                  },
+                                  dropdownColor: PiiColors.surface,
+                                  decoration: const InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    labelText: 'Sort by',
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'volume',
+                                      child: Text('Volume',
+                                          style: TextStyle(
+                                              color: PiiColors.text,
+                                              fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'gainers',
+                                      child: Text('Top Gainers',
+                                          style: TextStyle(
+                                              color: PiiColors.buy,
+                                              fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'losers',
+                                      child: Text('Top Losers',
+                                          style: TextStyle(
+                                              color: PiiColors.sell,
+                                              fontSize: 13)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.refresh,
+                                    color: PiiColors.textMuted, size: 20),
+                                onPressed: _load,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _filterCtrl,
+                            style: const TextStyle(
+                                color: PiiColors.text,
+                                fontFamily: 'monospace',
+                                fontSize: 13),
+                            decoration: const InputDecoration(
+                              hintText: 'Filter pair, e.g. EUR/USD',
+                              prefixIcon: Icon(Icons.search,
+                                  color: PiiColors.textMuted, size: 18),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Movers list
+                    Expanded(
+                      child: movers.isEmpty
+                          ? const Center(
+                              child: Text('No movers found',
+                                  style: TextStyle(
+                                      color: PiiColors.textMuted,
+                                      fontSize: 13)))
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              itemCount: movers.length,
+                              itemBuilder: (context, index) {
+                                final mover = movers[index];
+                                final changePercent =
+                                    (mover['change_percent'] as num?)
+                                            ?.toDouble() ??
+                                        0;
+                                final isPositive = changePercent >= 0;
+                                final changeColor =
+                                    isPositive ? PiiColors.buy : PiiColors.sell;
+                                final changeIcon = isPositive ? '▲' : '▼';
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: PiiColors.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: PiiColors.border),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          // Rank badge
+                                          Container(
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              color: index < 3
+                                                  ? PiiColors.accent
+                                                      .withValues(alpha: 0.15)
+                                                  : PiiColors.border,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                '${index + 1}',
+                                                style: TextStyle(
+                                                  color: index < 3
+                                                      ? PiiColors.accent
+                                                      : PiiColors.textMuted,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // Pair name
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  mover['pair']?.toString() ??
+                                                      '—',
+                                                  style: const TextStyle(
+                                                    color: PiiColors.text,
+                                                    fontFamily: 'monospace',
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                if (mover['name'] != null) ...[
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    mover['name'].toString(),
+                                                    style: const TextStyle(
+                                                      color:
+                                                          PiiColors.textMuted,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                          // Price and change
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                mover['price']?.toString() ??
+                                                    '—',
+                                                style: const TextStyle(
+                                                  color: PiiColors.text,
+                                                  fontFamily: 'monospace',
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: changeColor.withValues(
+                                                      alpha: 0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  '$changeIcon ${changePercent.abs().toStringAsFixed(2)}%',
+                                                  style: TextStyle(
+                                                    color: changeColor,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      if (mover['volume'] != null) ...[
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.bar_chart,
+                                                size: 14,
+                                                color: PiiColors.textMuted),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Vol: ${_formatVolume(mover['volume'])}',
+                                              style: const TextStyle(
+                                                color: PiiColors.textMuted,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            if (mover['high'] != null &&
+                                                mover['low'] != null)
+                                              Text(
+                                                'H: ${mover['high']} / L: ${mover['low']}',
+                                                style: const TextStyle(
+                                                  color: PiiColors.textMuted,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
     );
   }
-}
 
+  String _formatVolume(dynamic volume) {
+    final vol = (volume as num?)?.toDouble() ?? 0;
+    if (vol >= 1000000) {
+      return '${(vol / 1000000).toStringAsFixed(1)}M';
+    } else if (vol >= 1000) {
+      return '${(vol / 1000).toStringAsFixed(1)}K';
+    }
+    return vol.toStringAsFixed(0);
+  }
+}

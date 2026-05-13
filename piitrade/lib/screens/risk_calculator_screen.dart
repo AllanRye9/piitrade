@@ -112,8 +112,8 @@ class _RiskCalculatorScreenState extends State<RiskCalculatorScreen> {
                   const SizedBox(height: 4),
                   const Text(
                       'Calculate your optimal position size based on account risk.',
-                      style: TextStyle(
-                          color: PiiColors.textMuted, fontSize: 13)),
+                      style:
+                          TextStyle(color: PiiColors.textMuted, fontSize: 13)),
                   const SizedBox(height: 16),
 
                   // Risk meter
@@ -180,8 +180,8 @@ class _RiskCalculatorScreenState extends State<RiskCalculatorScreen> {
                     value: _pairType,
                     onChanged: (v) => setState(() => _pairType = v!),
                     dropdownColor: PiiColors.surface,
-                    decoration: const InputDecoration(
-                        labelText: 'Instrument Type'),
+                    decoration:
+                        const InputDecoration(labelText: 'Instrument Type'),
                     items: const [
                       DropdownMenuItem(
                           value: 'forex',
@@ -230,13 +230,13 @@ class _RiskCalculatorScreenState extends State<RiskCalculatorScreen> {
                         large: true),
                     _ResultRow(
                         label: 'Standard Lots',
-                        value:
-                            (result['lots'] as double).toStringAsFixed(2),
+                        value: (result['lots'] as double).toStringAsFixed(2),
                         color: PiiColors.accent),
                     if (result['rr'] != null) ...[
                       _ResultRow(
                           label: 'Risk : Reward',
-                          value: '1:${(result['rr'] as double).toStringAsFixed(2)}',
+                          value:
+                              '1:${(result['rr'] as double).toStringAsFixed(2)}',
                           color: (result['rr'] as double) >= 2
                               ? PiiColors.buy
                               : PiiColors.hold),
@@ -249,10 +249,10 @@ class _RiskCalculatorScreenState extends State<RiskCalculatorScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: PiiColors.hold.withOpacity(0.1),
+                        color: PiiColors.hold.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: PiiColors.hold.withOpacity(0.3)),
+                        border: Border.all(
+                            color: PiiColors.hold.withValues(alpha: 0.3)),
                       ),
                       child: const Text(
                           '⚠️ Always verify position size with your broker before placing a live trade.',
@@ -268,8 +268,7 @@ class _RiskCalculatorScreenState extends State<RiskCalculatorScreen> {
               SectionCard(
                 child: Column(
                   children: [
-                    const Text('📊',
-                        style: TextStyle(fontSize: 36)),
+                    const Text('📊', style: TextStyle(fontSize: 36)),
                     const SizedBox(height: 8),
                     const Text(
                         'Fill in your account balance, risk %, entry price, and stop loss above to calculate the optimal position size.',
@@ -318,8 +317,7 @@ class _InputRow extends StatelessWidget {
           controller: controller,
           style: const TextStyle(
               color: PiiColors.text, fontFamily: 'monospace', fontSize: 14),
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             hintText: hint,
             suffixText: suffix,
@@ -355,8 +353,7 @@ class _ResultRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  color: PiiColors.textMuted, fontSize: 13)),
+              style: const TextStyle(color: PiiColors.textMuted, fontSize: 13)),
           Text(value,
               style: TextStyle(
                   color: color ?? PiiColors.text,
