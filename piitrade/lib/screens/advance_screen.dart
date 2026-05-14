@@ -151,29 +151,25 @@ class _FvgScannerTabState extends State<_FvgScannerTab> {
                   Expanded(
                     child: items.isEmpty
                         ? Center(
-                            child: Text(
-                                'No ${tabs[_tabIdx]} FVG zones found',
+                            child: Text('No ${tabs[_tabIdx]} FVG zones found',
                                 style: const TextStyle(
-                                    color: PiiColors.textMuted,
-                                    fontSize: 13)))
+                                    color: PiiColors.textMuted, fontSize: 13)))
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: items.length,
                             itemBuilder: (context, i) {
                               final item = items[i];
-                              final isBullish = (item['fvg_type']
-                                          ?.toString() ??
-                                      '')
-                                  .toLowerCase() ==
-                                  'bullish';
+                              final isBullish =
+                                  (item['fvg_type']?.toString() ?? '')
+                                          .toLowerCase() ==
+                                      'bullish';
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: PiiColors.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: PiiColors.border),
+                                  border: Border.all(color: PiiColors.border),
                                 ),
                                 child: Row(
                                   children: [
@@ -190,8 +186,7 @@ class _FvgScannerTabState extends State<_FvgScannerTab> {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                          item['fvg_type']?.toString() ??
-                                              '—',
+                                          item['fvg_type']?.toString() ?? '—',
                                           style: TextStyle(
                                               color: isBullish
                                                   ? PiiColors.buy
@@ -204,14 +199,12 @@ class _FvgScannerTabState extends State<_FvgScannerTab> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
                                         children: [
-                                          Text(
-                                              'T: ${item['top'] ?? '—'}',
+                                          Text('T: ${item['top'] ?? '—'}',
                                               style: const TextStyle(
                                                   color: PiiColors.sell,
                                                   fontFamily: 'monospace',
                                                   fontSize: 11)),
-                                          Text(
-                                              'B: ${item['bottom'] ?? '—'}',
+                                          Text('B: ${item['bottom'] ?? '—'}',
                                               style: const TextStyle(
                                                   color: PiiColors.buy,
                                                   fontFamily: 'monospace',
@@ -299,13 +292,12 @@ class _SrBreakoutsTabState extends State<_SrBreakoutsTab> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: PiiColors.accent.withOpacity(0.12),
+                                  color:
+                                      PiiColors.accent.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: PiiColors.accent),
+                                  border: Border.all(color: PiiColors.accent),
                                 ),
-                                child: const Text(
-                                    'Soon Touching',
+                                child: const Text('Soon Touching',
                                     style: TextStyle(
                                         color: PiiColors.accent,
                                         fontWeight: FontWeight.w500,
@@ -340,11 +332,9 @@ class _SrBreakoutsTabState extends State<_SrBreakoutsTab> {
                         ? const Center(
                             child: Text('No soon-touching breakouts found',
                                 style: TextStyle(
-                                    color: PiiColors.textMuted,
-                                    fontSize: 13)))
+                                    color: PiiColors.textMuted, fontSize: 13)))
                         : ListView.builder(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: items.length,
                             itemBuilder: (context, i) {
                               final item = items[i];
@@ -354,25 +344,21 @@ class _SrBreakoutsTabState extends State<_SrBreakoutsTab> {
                                 decoration: BoxDecoration(
                                   color: PiiColors.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: PiiColors.border),
+                                  border: Border.all(color: PiiColors.border),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                            item['pair']?.toString() ?? '',
+                                        Text(item['pair']?.toString() ?? '',
                                             style: const TextStyle(
                                                 color: PiiColors.accent,
                                                 fontFamily: 'monospace',
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13)),
                                         const Spacer(),
-                                        Text(
-                                            item['level']?.toString() ?? '—',
+                                        Text(item['level']?.toString() ?? '—',
                                             style: const TextStyle(
                                                 color: PiiColors.text,
                                                 fontFamily: 'monospace',
@@ -485,10 +471,9 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                                       decoration: BoxDecoration(
                                         color: tf == _timeframe
                                             ? PiiColors.accent
-                                                .withOpacity(0.15)
+                                                .withValues(alpha: 0.15)
                                             : Colors.transparent,
-                                        borderRadius:
-                                            BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
                                             color: tf == _timeframe
                                                 ? PiiColors.accent
@@ -500,8 +485,7 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                                                   ? PiiColors.accent
                                                   : PiiColors.textMuted,
                                               fontSize: 12,
-                                              fontWeight:
-                                                  FontWeight.w500)),
+                                              fontWeight: FontWeight.w500)),
                                     ),
                                   ),
                                 )),
@@ -526,19 +510,15 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                   Expanded(
                     child: patterns.isEmpty
                         ? Center(
-                            child: Text(
-                                'No patterns found for $_timeframe',
+                            child: Text('No patterns found for $_timeframe',
                                 style: const TextStyle(
-                                    color: PiiColors.textMuted,
-                                    fontSize: 13)))
+                                    color: PiiColors.textMuted, fontSize: 13)))
                         : ListView.builder(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: patterns.length,
                             itemBuilder: (context, i) {
                               final p = patterns[i];
-                              final dir =
-                                  p['direction']?.toString() ?? '';
+                              final dir = p['direction']?.toString() ?? '';
                               final dirUp = dir.toUpperCase();
                               final Color dColor = _dirColor(dir);
                               return Container(
@@ -547,27 +527,21 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                                 decoration: BoxDecoration(
                                   color: PiiColors.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: PiiColors.border),
+                                  border: Border.all(color: PiiColors.border),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                            p['pair']?.toString() ?? '',
+                                        Text(p['pair']?.toString() ?? '',
                                             style: const TextStyle(
                                                 color: PiiColors.accent,
                                                 fontFamily: 'monospace',
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13)),
                                         const SizedBox(width: 8),
-                                        Text(
-                                            p['type'] ??
-                                                p['label'] ??
-                                                '—',
+                                        Text(p['type'] ?? p['label'] ?? '—',
                                             style: const TextStyle(
                                                 color: PiiColors.text,
                                                 fontWeight: FontWeight.w500,
@@ -575,16 +549,13 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                                         const Spacer(),
                                         if (dir.isNotEmpty)
                                           Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: dColor
-                                                  .withOpacity(0.15),
+                                              color: dColor.withValues(
+                                                  alpha: 0.15),
                                               borderRadius:
-                                                  BorderRadius.circular(
-                                                      10),
+                                                  BorderRadius.circular(10),
                                             ),
                                             child: Text(
                                                 '${dirUp == 'BUY' ? '▲' : dirUp == 'SELL' ? '▼' : '◆'} $dirUp',
@@ -597,8 +568,7 @@ class _PatternScannerTabState extends State<_PatternScannerTab> {
                                         if (p['impact'] != null) ...[
                                           const SizedBox(width: 6),
                                           ImpactBadge(
-                                              impact: p['impact']
-                                                  ?.toString()),
+                                              impact: p['impact']?.toString()),
                                         ],
                                       ],
                                     ),
@@ -704,10 +674,8 @@ class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
                                     setState(() => _impactFilter = v!),
                                 dropdownColor: PiiColors.surface,
                                 decoration: const InputDecoration(
-                                    contentPadding:
-                                        EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8)),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8)),
                                 items: const [
                                   DropdownMenuItem(
                                       value: 'all',
@@ -766,11 +734,9 @@ class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
                         ? const Center(
                             child: Text('No events found',
                                 style: TextStyle(
-                                    color: PiiColors.textMuted,
-                                    fontSize: 13)))
+                                    color: PiiColors.textMuted, fontSize: 13)))
                         : ListView.builder(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: filtered.length,
                             itemBuilder: (context, i) {
                               final ev = filtered[i];
@@ -787,12 +753,10 @@ class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
                                 decoration: BoxDecoration(
                                   color: PiiColors.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: PiiColors.border),
+                                  border: Border.all(color: PiiColors.border),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
@@ -801,12 +765,10 @@ class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
                                               ev['event']?.toString() ?? '',
                                               style: const TextStyle(
                                                   color: PiiColors.text,
-                                                  fontWeight:
-                                                      FontWeight.w500,
+                                                  fontWeight: FontWeight.w500,
                                                   fontSize: 13),
                                               maxLines: 2,
-                                              overflow:
-                                                  TextOverflow.ellipsis),
+                                              overflow: TextOverflow.ellipsis),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
@@ -816,43 +778,35 @@ class _EconomicCalendarTabState extends State<_EconomicCalendarTab> {
                                             style: TextStyle(
                                                 color: impactColor,
                                                 fontSize: 11,
-                                                fontWeight:
-                                                    FontWeight.bold)),
+                                                fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Text(
-                                            ev['currency']?.toString() ??
-                                                '',
+                                        Text(ev['currency']?.toString() ?? '',
                                             style: const TextStyle(
                                                 color: PiiColors.accent,
                                                 fontFamily: 'monospace',
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 12)),
                                         const SizedBox(width: 8),
-                                        Text(
-                                            ev['time']?.toString() ?? '',
+                                        Text(ev['time']?.toString() ?? '',
                                             style: const TextStyle(
                                                 color: PiiColors.textMuted,
                                                 fontSize: 12)),
                                         if (ev['forecast'] != null) ...[
                                           const SizedBox(width: 8),
-                                          Text(
-                                              'Fcst: ${ev['forecast']}',
+                                          Text('Fcst: ${ev['forecast']}',
                                               style: const TextStyle(
-                                                  color:
-                                                      PiiColors.textMuted,
+                                                  color: PiiColors.textMuted,
                                                   fontSize: 11)),
                                         ],
                                         if (ev['previous'] != null) ...[
                                           const SizedBox(width: 8),
-                                          Text(
-                                              'Prev: ${ev['previous']}',
+                                          Text('Prev: ${ev['previous']}',
                                               style: const TextStyle(
-                                                  color:
-                                                      PiiColors.textMuted,
+                                                  color: PiiColors.textMuted,
                                                   fontSize: 11)),
                                         ],
                                       ],

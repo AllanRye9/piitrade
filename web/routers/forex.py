@@ -253,6 +253,8 @@ async def forex_pairs():
         for p in core._SUPPORTED_PAIRS:
             if not _pair_has_open_signal(core, p):
                 continue
+            if core._fetch_live_rate(p) is None:
+                continue
             open_signal_pairs.append(p)
             base, quote = p.split("/")
             if "USD" in (base, quote):

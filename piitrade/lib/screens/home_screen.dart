@@ -35,192 +35,187 @@ class HomeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Live badge
-            Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: PiiColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: PiiColors.accent.withOpacity(0.4)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: PiiColors.buy,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: PiiColors.buy.withOpacity(0.5),
-                              blurRadius: 4)
-                        ],
-                      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Live badge
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: PiiColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border:
+                    Border.all(color: PiiColors.accent.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: PiiColors.buy,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: PiiColors.buy.withValues(alpha: 0.5),
+                            blurRadius: 4)
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    const Text('Live AI Signals Active',
-                        style: TextStyle(
-                            color: PiiColors.accent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500)),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text('Live AI Signals Active',
+                      style: TextStyle(
+                          color: PiiColors.accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 20),
 
-            // Hero
-            const Text(
-              'Free AI Forex Signals\nfor Every Trader',
+          // Hero
+          const Text(
+            'Free AI Forex Signals\nfor Every Trader',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: PiiColors.text,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'LightGBM machine learning model trained on 10+ years of data, '
+            'analyzing 40+ technical indicators across 35+ currency pairs — completely free.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: PiiColors.textMuted, fontSize: 14, height: 1.5),
+          ),
+          const SizedBox(height: 20),
+
+          // CTA buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const ForexScreen())),
+                  child: const Text('Open Dashboard →'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: PiiColors.textMuted,
+                    side: const BorderSide(color: PiiColors.border),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const MethodologyScreen())),
+                  child: const Text('How It Works'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Stats
+          const _StatsBar(),
+          const SizedBox(height: 24),
+
+          // Feature cards
+          const Text('Everything You Need to Trade Smarter',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: PiiColors.text,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'LightGBM machine learning model trained on 10+ years of data, '
-              'analyzing 40+ technical indicators across 35+ currency pairs — completely free.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: PiiColors.textMuted, fontSize: 14, height: 1.5),
-            ),
-            const SizedBox(height: 20),
+                  color: PiiColors.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ..._features.map((f) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _FeatureCard(
+                    icon: f['icon']!, title: f['title']!, desc: f['desc']!),
+              )),
+          const SizedBox(height: 24),
 
-            // CTA buttons
-            Row(
+          // How it helps
+          SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForexScreen())),
-                    child: const Text('Open Dashboard →'),
-                  ),
+                const Text('How this helps traders in practice',
+                    style: TextStyle(
+                        color: PiiColors.text,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
+                const SizedBox(height: 12),
+                ..._practices.map((p) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p['title']!,
+                              style: const TextStyle(
+                                  color: PiiColors.text,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14)),
+                          const SizedBox(height: 4),
+                          Text(p['desc']!,
+                              style: const TextStyle(
+                                  color: PiiColors.textMuted,
+                                  fontSize: 13,
+                                  height: 1.4)),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Final CTA
+          SectionCard(
+            child: Column(
+              children: [
+                const Text('Start Trading with AI Signals Today',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: PiiColors.text,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18)),
+                const SizedBox(height: 8),
+                const Text(
+                  'No subscription required. Access all signals, scanners, and analysis tools for free.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: PiiColors.textMuted, fontSize: 13),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: PiiColors.textMuted,
-                      side: const BorderSide(color: PiiColors.border),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const MethodologyScreen())),
-                    child: const Text('How It Works'),
-                  ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const ForexScreen())),
+                  child: const Text('Launch Dashboard →'),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Stats
-            _StatsBar(),
-            const SizedBox(height: 24),
-
-            // Feature cards
-            const Text('Everything You Need to Trade Smarter',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: PiiColors.text,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ..._features.map((f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _FeatureCard(
-                      icon: f['icon']!,
-                      title: f['title']!,
-                      desc: f['desc']!),
-                )),
-            const SizedBox(height: 24),
-
-            // How it helps
-            SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('How this helps traders in practice',
-                      style: TextStyle(
-                          color: PiiColors.text,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16)),
-                  const SizedBox(height: 12),
-                  ..._practices.map((p) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p['title']!,
-                                style: const TextStyle(
-                                    color: PiiColors.text,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14)),
-                            const SizedBox(height: 4),
-                            Text(p['desc']!,
-                                style: const TextStyle(
-                                    color: PiiColors.textMuted,
-                                    fontSize: 13,
-                                    height: 1.4)),
-                          ],
-                        ),
-                      )),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Final CTA
-            SectionCard(
-              child: Column(
-                children: [
-                  const Text('Start Trading with AI Signals Today',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: PiiColors.text,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'No subscription required. Access all signals, scanners, and analysis tools for free.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: PiiColors.textMuted, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForexScreen())),
-                    child: const Text('Launch Dashboard →'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
 }
 
 class _StatsBar extends StatelessWidget {
+  const _StatsBar();
+
   static const _stats = [
     {'label': 'Currency Pairs', 'value': '35+'},
     {'label': 'ML Accuracy (30d)', 'value': '~68%'},
@@ -288,9 +283,7 @@ class _FeatureCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(desc,
                     style: const TextStyle(
-                        color: PiiColors.textMuted,
-                        fontSize: 13,
-                        height: 1.4)),
+                        color: PiiColors.textMuted, fontSize: 13, height: 1.4)),
               ],
             ),
           ),
@@ -365,11 +358,11 @@ class MethodologyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Methodology')),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: const [
             Text('How PiiTrade Works',
                 style: TextStyle(
                     color: PiiColors.text,

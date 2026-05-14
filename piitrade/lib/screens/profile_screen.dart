@@ -48,8 +48,8 @@ class ProfileScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: auth.role == 'admin'
                           ? PiiColors.hold.withOpacity(0.15)
@@ -106,8 +106,7 @@ class ProfileScreen extends ConsumerWidget {
                     backgroundColor: PiiColors.surface,
                     title: const Text('Sign Out',
                         style: TextStyle(color: PiiColors.text)),
-                    content: const Text(
-                        'Are you sure you want to sign out?',
+                    content: const Text('Are you sure you want to sign out?',
                         style: TextStyle(color: PiiColors.textMuted)),
                     actions: [
                       TextButton(
@@ -151,8 +150,7 @@ class _ProfileRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  color: PiiColors.textMuted, fontSize: 13)),
+              style: const TextStyle(color: PiiColors.textMuted, fontSize: 13)),
           Text(value,
               style: TextStyle(
                   color: valueColor ?? PiiColors.text,
