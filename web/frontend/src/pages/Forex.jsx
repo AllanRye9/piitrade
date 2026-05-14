@@ -1292,8 +1292,8 @@ export default function Forex() {
                       >
                         {groupItems.map(p => {
                           const isActiveLoaded = activeLoadedSignalPair === p
-                          const isActiveData = activePairsSet.has(p)
-                          const isActive = isActiveLoaded || isActiveData
+                          const hasActiveSignal = activePairsSet.has(p)
+                          const isActive = isActiveLoaded || hasActiveSignal
                           const isSelected = pairInput === p
                           return (
                             <motion.button
