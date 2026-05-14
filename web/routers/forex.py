@@ -249,8 +249,8 @@ async def forex_pairs():
         minor: list[str] = []
         exotic: list[str] = []
 
-        all_supported_pairs: list[str] = []
-        for p in core._SUPPORTED_PAIRS:
+        all_supported_pairs: list[str] = list(core._SUPPORTED_PAIRS)
+        for p in all_supported_pairs:
             base, quote = p.split("/")
             if "USD" in (base, quote):
                 other = base if quote == "USD" else quote
@@ -260,7 +260,6 @@ async def forex_pairs():
                     exotic.append(p)
             else:
                 minor.append(p)
-            all_supported_pairs.append(p)
 
         ecb_live = core._fetch_live_rate("EUR/USD") is not None
         return JSONResponse({
