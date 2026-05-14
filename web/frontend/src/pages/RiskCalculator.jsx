@@ -109,10 +109,8 @@ export default function RiskCalculator() {
       pipSize = 0.01
       // JPY pairs: pip value ≈ 1,000 JPY / entryPrice → ~$6.67 at 150 JPY
       pipValuePerLot = 1000 / entry
-      lotSize = 100000
     } else if (pairType === 'usdBase') {
       pipValuePerLot = 10 / entry
-      lotSize = 100000
     } else if (pairType === 'us30') {
       pipSize = 1
       pipValuePerLot = 1  // $1 per point per mini-contract
