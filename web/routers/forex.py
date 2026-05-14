@@ -262,12 +262,20 @@ async def forex_pairs():
                 minor.append(p)
 
         ecb_live = core._fetch_live_rate("EUR/USD") is not None
+
+        active_pairs: list[str] = []
+        for p in all_supported_pairs:
+            live_rate = core._fetch_live_rate(p)
+            if live_rate is not None and _pair_has_open_signal(core, p, live_rate):
+                active_pairs.append(p)
+
         return JSONResponse({
             "major": major,
             "minor": minor,
             "exotic": exotic,
             "all": all_supported_pairs,
             "ecb_live": ecb_live,
+            "active_pairs": active_pairs,
         })
     except Exception as exc:
         logger.error("forex_pairs error: %s", exc)
