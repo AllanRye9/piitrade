@@ -68,6 +68,8 @@ function sortPairsByCoverageOrder(items) {
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
   if (normalized.endsWith('/JPY')) return 'jpy'
+  // Keep this after the JPY check so USD/JPY stays in the JPY instrument bucket.
+  if (normalized.startsWith('USD/')) return 'usdBase'
   return 'forex'
 }
 
@@ -367,6 +369,8 @@ function calcRiskPosition({ accountBalance, riskPct, entryPrice, stopLoss, takeP
   if (pairType === 'jpy') {
     pipSize = 0.01
     pipValuePerLot = 1000 / entry
+  } else if (pairType === 'usdBase') {
+    pipValuePerLot = 10 / entry
   }
 
   const slPips = priceDiffSL / pipSize
@@ -528,6 +532,7 @@ function DashboardRiskCalculator({
             style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
           >
             <option value="forex">Forex (non-JPY)</option>
+            <option value="usdBase">Forex USD-base pairs</option>
             <option value="jpy">Forex JPY pairs</option>
           </select>
         </label>
@@ -1058,7 +1063,7 @@ export default function Forex() {
 
   const activeLoadedSignalPair = useMemo(() => {
     if (loadingSignal || !signal || !analyzedPair) return null
-    return signal.signal_state === 'open' ? analyzedPair : null
+    return signal.signal_state === 'open' && signal.is_live ? analyzedPair : null
   }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {

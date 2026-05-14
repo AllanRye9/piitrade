@@ -100,7 +100,8 @@ export default function RiskCalculator() {
     // Pip size and pip value per standard lot in USD
     // For pairs where USD is the quote currency (EUR/USD, GBP/USD, AUD/USD, NZD/USD):
     //   pip value per lot = pipSize × 100,000 = $10 (non-JPY) or $1,000/entry (JPY)
-    // For USD-base pairs (USD/JPY etc.) we must divide by entry price to convert to USD.
+    // For USD-base pairs (USD/CAD, USD/CHF, etc.), standard pip value is 10 quote-currency units,
+    // and 1 quote-currency unit = 1/entryPrice USD, so pip value in USD is 10/entryPrice.
     let pipSize = 0.0001      // standard forex pip
     let pipValuePerLot = 10   // USD per pip per standard lot (USD-quoted pairs)
     let lotSize = 100000      // units per standard lot
@@ -109,7 +110,9 @@ export default function RiskCalculator() {
       pipSize = 0.01
       // JPY pairs: pip value ≈ 1,000 JPY / entryPrice → ~$6.67 at 150 JPY
       pipValuePerLot = 1000 / entry
-      lotSize = 100000
+    } else if (pairType === 'usdBase') {
+      // Standard lot size remains 100,000 units; only pip value conversion differs.
+      pipValuePerLot = 10 / entry
     } else if (pairType === 'us30') {
       pipSize = 1
       pipValuePerLot = 1  // $1 per point per mini-contract
@@ -184,6 +187,7 @@ export default function RiskCalculator() {
                   style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
                 >
                   <option value="forex">Forex (non-JPY)</option>
+                  <option value="usdBase">Forex (USD-base pairs)</option>
                   <option value="jpy">Forex JPY Pairs</option>
                   <option value="us30">US30 / Indices</option>
                   <option value="crypto">Crypto</option>
