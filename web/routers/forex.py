@@ -127,8 +127,6 @@ def _pair_has_open_signal(
     if not issued_signal:
         return False
 
-    runtime_signal = _build_runtime_signal(core, pair, issued_signal, live_rate=live_rate, hist_rates=hist_rates)
-
     if current_price is None:
         if live_rate is None:
             live_rate = core._fetch_live_rate(pair)
@@ -137,7 +135,20 @@ def _pair_has_open_signal(
         else:
             if hist_rates is None:
                 hist_rates = core._fetch_historical_rates(pair, 30)
-            current_price = next(reversed(hist_rates.values())) if hist_rates else runtime_signal.get("entry_price")
+            current_price = next(reversed(hist_rates.values())) if hist_rates else issued_signal.get("entry_price")
+
+    # Treat a pair as active only while the originally issued TP/SL has not been consumed.
+    issued_state, _issued_outcome = _get_signal_completion_status(issued_signal, current_price)
+    if issued_state != "open":
+        return False
+
+    # Fallback for legacy/incomplete seeds that may be missing direction or TP/SL.
+    direction = str(issued_signal.get("direction") or "").upper()
+    has_levels = issued_signal.get("take_profit") is not None and issued_signal.get("stop_loss") is not None
+    if direction in {"BUY", "SELL"} and has_levels:
+        return True
+
+    runtime_signal = _build_runtime_signal(core, pair, issued_signal, live_rate=live_rate, hist_rates=hist_rates)
 
     signal_state, _signal_outcome = _get_signal_completion_status(runtime_signal, current_price)
     return signal_state == "open"
@@ -202,7 +213,12 @@ async def forex_signals(pair: str = "EUR/USD"):
         if live_rate is not None:
             status_price = live_rate
 
-        signal_state, signal_outcome = _get_signal_completion_status(runtime_signal, status_price)
+        signal_state, signal_outcome = _get_signal_completion_status(issued_signal, status_price)
+        if signal_state == "open":
+            issued_direction = str(issued_signal.get("direction") or "").upper()
+            has_issued_levels = issued_signal.get("take_profit") is not None and issued_signal.get("stop_loss") is not None
+            if issued_direction not in {"BUY", "SELL"} or not has_issued_levels:
+                signal_state, signal_outcome = _get_signal_completion_status(runtime_signal, status_price)
         signal["issued_direction"] = issued_signal.get("direction")
         signal["issued_generated_at"] = issued_signal.get("generated_at")
         signal["issued_entry_price"] = issued_signal.get("entry_price")
