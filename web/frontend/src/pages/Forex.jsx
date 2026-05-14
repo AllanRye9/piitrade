@@ -68,7 +68,7 @@ function sortPairsByCoverageOrder(items) {
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
   if (normalized.endsWith('/JPY')) return 'jpy'
-  if (normalized.startsWith('USD/')) return 'usdBase'
+  if (normalized.startsWith('USD/') && !normalized.endsWith('/JPY')) return 'usdBase'
   return 'forex'
 }
 
