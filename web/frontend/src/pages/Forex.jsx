@@ -68,6 +68,7 @@ function sortPairsByCoverageOrder(items) {
 function getInstrumentTypeFromPair(pair) {
   const normalized = normalizeTradingPairInput(pair || '')
   if (normalized.endsWith('/JPY')) return 'jpy'
+  // Keep this after the JPY check so USD/JPY stays in the JPY instrument bucket.
   if (normalized.startsWith('USD/')) return 'usdBase'
   return 'forex'
 }
@@ -1062,7 +1063,7 @@ export default function Forex() {
 
   const activeLoadedSignalPair = useMemo(() => {
     if (loadingSignal || !signal || !analyzedPair) return null
-    return signal.signal_state === 'open' && signal.is_live === true ? analyzedPair : null
+    return signal.signal_state === 'open' && signal.is_live ? analyzedPair : null
   }, [analyzedPair, loadingSignal, signal])
 
   const runPairAnalysis = useCallback(() => {

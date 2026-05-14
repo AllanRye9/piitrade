@@ -100,7 +100,8 @@ export default function RiskCalculator() {
     // Pip size and pip value per standard lot in USD
     // For pairs where USD is the quote currency (EUR/USD, GBP/USD, AUD/USD, NZD/USD):
     //   pip value per lot = pipSize × 100,000 = $10 (non-JPY) or $1,000/entry (JPY)
-    // For USD-base pairs (USD/CAD, USD/CHF, etc.), pip value is in quote currency, so 10/entryPrice converts it to USD.
+    // For USD-base pairs (USD/CAD, USD/CHF, etc.), standard pip value is 10 quote-currency units,
+    // and 1 quote-currency unit = 1/entryPrice USD, so pip value in USD is 10/entryPrice.
     let pipSize = 0.0001      // standard forex pip
     let pipValuePerLot = 10   // USD per pip per standard lot (USD-quoted pairs)
     let lotSize = 100000      // units per standard lot
