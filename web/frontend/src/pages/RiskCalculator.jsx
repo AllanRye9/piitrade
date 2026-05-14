@@ -110,6 +110,7 @@ export default function RiskCalculator() {
       // JPY pairs: pip value ≈ 1,000 JPY / entryPrice → ~$6.67 at 150 JPY
       pipValuePerLot = 1000 / entry
     } else if (pairType === 'usdBase') {
+      // Standard lot size remains 100,000 units; only pip value conversion differs.
       pipValuePerLot = 10 / entry
     } else if (pairType === 'us30') {
       pipSize = 1
