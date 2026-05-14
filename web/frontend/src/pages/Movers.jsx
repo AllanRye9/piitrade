@@ -4,6 +4,16 @@ import api from '../utils/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 
+const EXCLUSION_REASON_LABELS = {
+  no_seed_signal: 'No seeded signal',
+  no_price_history: 'No price history',
+  insufficient_price_history: 'Insufficient price history',
+  invalid_open_price: 'Invalid open price',
+  below_threshold: 'Below threshold',
+  signal_not_open: 'Signal not open',
+  no_reversal_pattern: 'No reversal pattern',
+}
+
 function DirectionBadge({ direction }) {
   const d = direction?.toUpperCase()
   const cls = d === 'BUY' ? 'badge-buy' : d === 'SELL' ? 'badge-sell' : 'badge-hold'
@@ -26,14 +36,75 @@ function VolatilityBar({ value }) {
   )
 }
 
+function getExclusionReasonLabel(reason) {
+  if (!reason) return 'Filtered out'
+  return EXCLUSION_REASON_LABELS[reason] || reason.replace(/_/g, ' ')
+}
+
+function ExcludedPairsPanel({ excluded, label }) {
+  if (!excluded?.length) return null
+  const reasonCounts = excluded.reduce((acc, item) => {
+    const key = item?.reason || 'filtered_out'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const sortedReasons = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])
+
+  return (
+    <details className="mt-4 rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+      <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+        style={{ color: 'var(--text-muted)' }}>
+        Excluded Pairs ({excluded.length}) - {label}
+      </summary>
+      <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+        {sortedReasons.map(([reason, count]) => (
+          <span
+            key={reason}
+            className="text-[11px] px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--border)', color: 'var(--text-muted)' }}
+          >
+            {getExclusionReasonLabel(reason)}: {count}
+          </span>
+        ))}
+      </div>
+      <div className="px-3 pb-3 pt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+        {excluded.map((item, idx) => (
+          <div key={`${item.pair}-${item.reason}-${idx}`}
+            className="flex items-center justify-between rounded border px-2.5 py-1.5"
+            style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+            <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent)' }}>{item.pair}</span>
+            <span className="text-[11px] px-2 py-0.5 rounded"
+              style={{ color: 'var(--text-muted)', background: 'var(--border)' }}>
+              {getExclusionReasonLabel(item.reason)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </details>
+  )
+}
+
 export default function Movers() {
+  const [moversData, setMoversData] = useState(null)
   const [volData, setVolData] = useState(null)
   const [reversals, setReversals] = useState(null)
+  const [loadingMov, setLoadingMov] = useState(true)
   const [loadingVol, setLoadingVol] = useState(false)
   const [loadingRev, setLoadingRev] = useState(true)
+  const [errorMov, setErrorMov] = useState(null)
   const [errorVol, setErrorVol] = useState(null)
   const [errorRev, setErrorRev] = useState(null)
+  const [moversThreshold, setMoversThreshold] = useState(0.2)
   const [timeframe, setTimeframe] = useState('24h')
+
+  const loadMovers = (threshold = moversThreshold) => {
+    setLoadingMov(true)
+    setErrorMov(null)
+    api.get('/api/forex/movers', { params: { threshold } })
+      .then(res => setMoversData(res.data))
+      .catch(e => setErrorMov(e.message))
+      .finally(() => setLoadingMov(false))
+  }
 
   const loadVolatility = (tf = timeframe) => {
     setLoadingVol(true)
@@ -54,12 +125,17 @@ export default function Movers() {
   }
 
   useEffect(() => {
+    loadMovers()
     loadVolatility()
     loadReversals()
   }, [])
 
+  const moverPairs = moversData?.pairs || []
+  const moverExcluded = moversData?.excluded_pairs || []
   const pairs = volData?.pairs || []
+  const volatileExcluded = volData?.excluded_pairs || []
   const reversalPairs = reversals?.pairs || []
+  const reversalExcluded = reversals?.excluded_pairs || []
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -68,6 +144,73 @@ export default function Movers() {
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
           Volatile pairs and reversal opportunities
         </p>
+      </div>
+
+      {/* Session Movers */}
+      <div className="card mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="font-semibold text-lg">
+            ⚡ Session Movers
+            <span className="ml-2 text-xs px-2 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+              {moverPairs.length} pairs
+            </span>
+          </h2>
+          <div className="flex gap-2">
+            {[0.2, 0.5, 1.0].map(th => (
+              <button
+                key={th}
+                onClick={() => { setMoversThreshold(th); loadMovers(th) }}
+                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                  moversThreshold === th ? 'tab-active' : 'tab-inactive'
+                }`}
+              >
+                {th}%+
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loadingMov ? <LoadingSpinner /> : errorMov ? <ErrorMessage message={errorMov} onRetry={() => loadMovers()} /> : (
+          moverPairs.length === 0 ? (
+            <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No movers above threshold</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left" style={{ borderColor: 'var(--border)' }}>
+                    <th className="pb-2 pr-4 text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>Pair</th>
+                    <th className="pb-2 pr-4 text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>Change</th>
+                    <th className="pb-2 pr-4 text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>Pip Move</th>
+                    <th className="pb-2 pr-4 text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>Direction</th>
+                    <th className="pb-2 text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>Current</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {moverPairs.map((p, i) => (
+                    <motion.tr key={p.pair} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="border-b hover:bg-[var(--border)] transition-colors"
+                      style={{ borderColor: 'var(--border)' }}>
+                      <td className="py-2.5 pr-4 font-mono font-bold text-sm" style={{ color: 'var(--accent)' }}>
+                        {p.pair}
+                      </td>
+                      <td className="py-2.5 pr-4 font-mono text-xs">
+                        {p.pct_change != null ? `${p.pct_change > 0 ? '+' : ''}${p.pct_change.toFixed(3)}%` : '—'}
+                      </td>
+                      <td className="py-2.5 pr-4 font-mono text-xs">{p.pip_move != null ? p.pip_move.toFixed(1) : '—'}</td>
+                      <td className="py-2.5 pr-4">
+                        <DirectionBadge direction={p.direction} />
+                      </td>
+                      <td className="py-2.5 font-mono text-xs">{p.current ?? '—'}</td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        )}
+
+        <ExcludedPairsPanel excluded={moverExcluded} label="session movers" />
       </div>
 
       {/* Volatile Pairs */}
@@ -137,6 +280,8 @@ export default function Movers() {
             </div>
           )
         )}
+
+        <ExcludedPairsPanel excluded={volatileExcluded} label="volatile scanner" />
       </div>
 
       {/* Reversals */}
@@ -194,6 +339,8 @@ export default function Movers() {
             </div>
           )
         )}
+
+        <ExcludedPairsPanel excluded={reversalExcluded} label="reversal scanner" />
       </div>
     </div>
   )

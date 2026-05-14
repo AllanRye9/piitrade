@@ -783,6 +783,11 @@ function TechnicalCard({ tech }) {
 
 function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) {
   const currencies = pair ? pair.split('/').filter(Boolean) : []
+  const analysisModels = signal?.analysis_models || []
+  const analysisStance = signal?.analysis_stance || 'Balanced / Wait for Confirmation'
+  const analysisDirection = signal?.analysis_consensus_direction || signal?.direction || 'HOLD'
+  const analysisConfidence = Number(signal?.analysis_consensus_confidence ?? signal?.confidence ?? 50)
+  const analysisSplit = signal?.analysis_direction_split || {}
 
   const relatedNews = useMemo(() => {
     if (!news || !news.length) return []
@@ -802,8 +807,8 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
 
   const aiSummary = useMemo(() => {
     if (!signal) return null
-    const dir = (signal.direction || 'HOLD').toUpperCase()
-    const conf = Number(signal.confidence || 50).toFixed(1)
+    const dir = (analysisDirection || 'HOLD').toUpperCase()
+    const conf = Number(analysisConfidence || 50).toFixed(1)
     const sr = tech?.support_resistance || {}
     const supportLevels = (sr.support || []).slice(0, 2)
     const resistanceLevels = (sr.resistance || []).slice(0, 2)
@@ -812,11 +817,11 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
     let lines = []
 
     if (dir === 'BUY') {
-      lines.push(`📈 The AI model signals a BUY opportunity on ${pair} with ${conf}% confidence, indicating bullish momentum in current market conditions.`)
+      lines.push(`📈 The multi-model AI ensemble signals a BUY opportunity on ${pair} with ${conf}% confidence, indicating bullish momentum in current market conditions.`)
     } else if (dir === 'SELL') {
-      lines.push(`📉 The AI model signals a SELL setup on ${pair} with ${conf}% confidence, reflecting bearish pressure in the current structure.`)
+      lines.push(`📉 The multi-model AI ensemble signals a SELL setup on ${pair} with ${conf}% confidence, reflecting bearish pressure in the current structure.`)
     } else {
-      lines.push(`◆ The AI model is neutral on ${pair} (${conf}% confidence). The market lacks a clear directional bias at this time.`)
+      lines.push(`◆ The ensemble is neutral on ${pair} (${conf}% confidence). The market lacks a clear directional bias at this time.`)
     }
 
     if (supportLevels.length > 0) {
@@ -843,8 +848,12 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
       lines.push(`📰 News sentiment is mixed — monitor headlines closely before executing.`)
     }
 
+    if (signal?.analysis_summary) {
+      lines.push(`🧠 ${signal.analysis_summary}`)
+    }
+
     return lines
-  }, [signal, tech, relatedNews, relatedEvents, pair, currencies])
+  }, [signal, tech, relatedNews, relatedEvents, pair, currencies, analysisDirection, analysisConfidence])
 
   if (loading) return <div className="card"><LoadingSpinner /></div>
   if (!signal && !tech) return null
@@ -861,9 +870,39 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
         <h2 className="font-bold text-base">AI-Powered Analysis — {pair}</h2>
         <span className="text-xs px-2 py-0.5 rounded-full font-medium ml-auto"
           style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}>
-          Fundamental + Technical
+          Multi-model AI + Technical
         </span>
       </div>
+
+      {signal?.analysis_summary && (
+        <div className="mb-4 p-4 rounded-lg border"
+          style={{ borderColor: 'color-mix(in srgb, var(--accent) 28%, var(--border))', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold uppercase"
+              style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
+              {analysisStance}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold uppercase"
+              style={{ background: 'color-mix(in srgb, var(--buy) 15%, transparent)', color: 'var(--buy)' }}>
+              {analysisDirection}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold uppercase"
+              style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+              {analysisConfidence.toFixed(1)}% ensemble confidence
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold uppercase"
+              style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+              {signal.analysis_methodology_count || analysisModels.length || 0} methodologies
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed">{signal.analysis_summary}</p>
+          <div className="flex flex-wrap gap-2 mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span>BUY: {analysisSplit.BUY || 0}</span>
+            <span>SELL: {analysisSplit.SELL || 0}</span>
+            <span>HOLD: {analysisSplit.HOLD || 0}</span>
+          </div>
+        </div>
+      )}
 
       {/* AI Summary */}
       {aiSummary && (
@@ -880,6 +919,49 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Related News */}
         <div>
+
+        {analysisModels.length > 0 && (
+          <div className="mt-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wide mb-3"
+              style={{ color: 'var(--text-muted)' }}>
+              🧠 Model Stack
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {analysisModels.map((model, index) => {
+                const d = (model.direction || 'HOLD').toUpperCase()
+                const color = d === 'BUY' ? 'var(--buy)' : d === 'SELL' ? 'var(--sell)' : 'var(--hold)'
+                return (
+                  <div key={`${model.name}-${index}`}
+                    className="rounded-lg border p-3"
+                    style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <div className="text-sm font-semibold">{model.name}</div>
+                        <div className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          {model.family}
+                        </div>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold uppercase"
+                        style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
+                        {d}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span style={{ color: 'var(--text-muted)' }}>Confidence</span>
+                      <span className="font-mono" style={{ color }}>{Number(model.confidence || 0).toFixed(1)}%</span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden mb-2" style={{ background: 'var(--border)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, Number(model.confidence || 0))}%`, background: color }} />
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                      {model.reason}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
           <h3 className="text-xs font-semibold uppercase tracking-wide mb-3"
             style={{ color: 'var(--text-muted)' }}>
             📰 Fundamental News ({relatedNews.length})

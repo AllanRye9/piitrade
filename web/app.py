@@ -742,6 +742,166 @@ def _generate_ai_label(direction: str, confidence: float, prices: list[float], i
     return f"{prefix} {strength} · {action}{source}"
 
 
+def _direction_weight(direction: str) -> int:
+    d = direction.upper()
+    if d == "BUY":
+        return 1
+    if d == "SELL":
+        return -1
+    return 0
+
+
+def _direction_from_weight(score: float) -> str:
+    if score > 0.12:
+        return "BUY"
+    if score < -0.12:
+        return "SELL"
+    return "HOLD"
+
+
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def _build_multi_model_analysis(
+    pair: str,
+    issued_signal: dict[str, Any],
+    live_rate: float | None,
+    hist_rates: dict[str, float],
+) -> dict[str, Any]:
+    """Blend several free analysis methodologies into a single consensus view."""
+    prices = list(hist_rates.values())
+    if not prices:
+        prices = [float(issued_signal.get("entry_price") or 0.0)]
+    current_price = live_rate if live_rate is not None else prices[-1]
+
+    baseline_direction, baseline_confidence = _compute_signal_from_prices(prices)
+    technical = _build_technical_analysis(pair, current_price)
+
+    recent_window = prices[-10:] if len(prices) >= 10 else prices
+    recent_avg = sum(recent_window) / len(recent_window)
+    recent_trend = prices[-1] - prices[-5] if len(prices) >= 5 else prices[-1] - prices[0]
+    deviation = ((current_price - recent_avg) / recent_avg) if recent_avg else 0.0
+
+    support_levels = technical["support_resistance"]["support"]
+    resistance_levels = technical["support_resistance"]["resistance"]
+    nearest_support = max((lvl for lvl in support_levels if lvl <= current_price), default=min(support_levels))
+    nearest_resistance = min((lvl for lvl in resistance_levels if lvl >= current_price), default=max(resistance_levels))
+    support_gap = ((current_price - nearest_support) / current_price) if current_price else 0.0
+    resistance_gap = ((nearest_resistance - current_price) / current_price) if current_price else 0.0
+
+    bos_bullish = sum(1 for item in technical["bos"] if item["type"] == "bullish")
+    bos_bearish = sum(1 for item in technical["bos"] if item["type"] == "bearish")
+    choch_bullish = sum(1 for item in technical["choch"] if item["type"] == "bullish")
+    choch_bearish = sum(1 for item in technical["choch"] if item["type"] == "bearish")
+    fvg_bullish = sum(1 for item in technical["fvg"] if item["type"] == "bullish" and not item.get("filled", False))
+    fvg_bearish = sum(1 for item in technical["fvg"] if item["type"] == "bearish" and not item.get("filled", False))
+
+    structure_bias = (bos_bullish + choch_bullish + fvg_bullish) - (bos_bearish + choch_bearish + fvg_bearish)
+    structure_direction = "BUY" if structure_bias > 0 else ("SELL" if structure_bias < 0 else ("BUY" if recent_trend > 0 else "SELL" if recent_trend < 0 else "HOLD"))
+    structure_confidence = _clamp(56.0 + abs(structure_bias) * 6.0 + min(10.0, abs(recent_trend / current_price) * 400.0 if current_price else 0.0), 50.0, 90.0)
+    if structure_direction == "BUY":
+        structure_confidence = _clamp(structure_confidence + (resistance_gap * 40.0), 50.0, 92.0)
+    elif structure_direction == "SELL":
+        structure_confidence = _clamp(structure_confidence + (support_gap * 40.0), 50.0, 92.0)
+
+    trend_ratio = abs(recent_trend) / current_price if current_price else 0.0
+    if abs(deviation) > 0.0045:
+        mr_direction = "SELL" if deviation > 0 else "BUY"
+    elif trend_ratio > 0.0025:
+        mr_direction = "BUY" if recent_trend > 0 else "SELL"
+    else:
+        mr_direction = "HOLD"
+    mr_confidence = _clamp(55.0 + min(20.0, abs(deviation) * 1800.0) + min(10.0, trend_ratio * 900.0), 50.0, 88.0)
+
+    rolling = prices[-5:] if len(prices) >= 5 else prices
+    rolling_avg = sum(rolling) / len(rolling)
+    price_range = max(rolling) - min(rolling) if len(rolling) >= 2 else 0.0
+    volatility_pct = (price_range / rolling_avg * 100.0) if rolling_avg else 0.0
+    volatility_direction = baseline_direction if volatility_pct >= 0.18 else "HOLD"
+    volatility_confidence = _clamp(52.0 + min(18.0, volatility_pct * 12.0), 50.0, 86.0)
+
+    models = [
+        {
+            "name": "LightGBM Trend Model",
+            "family": "gradient boosting",
+            "direction": baseline_direction,
+            "confidence": round(float(baseline_confidence), 1),
+            "weight": 0.40,
+            "reason": f"Trend compression from recent closes implies {baseline_direction.lower()} bias.",
+        },
+        {
+            "name": "Momentum Classifier",
+            "family": "trend following",
+            "direction": "BUY" if recent_trend > 0 else ("SELL" if recent_trend < 0 else "HOLD"),
+            "confidence": round(_clamp(57.0 + min(18.0, abs(recent_trend / current_price) * 1200.0 if current_price else 0.0), 50.0, 88.0), 1),
+            "weight": 0.25,
+            "reason": f"Short-horizon price momentum is {'rising' if recent_trend > 0 else ('falling' if recent_trend < 0 else 'flat')}.",
+        },
+        {
+            "name": "Structure Scanner",
+            "family": "market structure",
+            "direction": structure_direction,
+            "confidence": round(structure_confidence, 1),
+            "weight": 0.20,
+            "reason": f"BOS/CHoCH/FVG structure leans {structure_direction.lower()}.",
+        },
+        {
+            "name": "Mean Reversion Model",
+            "family": "regime reversal",
+            "direction": mr_direction,
+            "confidence": round(mr_confidence, 1),
+            "weight": 0.15,
+            "reason": f"Price is {abs(deviation) * 100:.2f}% {'above' if deviation > 0 else 'below' if deviation < 0 else 'near'} its recent mean.",
+        },
+        {
+            "name": "Volatility Regime Model",
+            "family": "volatility filter",
+            "direction": volatility_direction,
+            "confidence": round(volatility_confidence, 1),
+            "weight": 0.10,
+            "reason": f"Recent volatility is {volatility_pct:.2f}% and does not yet invalidate the main directional bias.",
+        },
+    ]
+
+    weighted_votes = sum(_direction_weight(model["direction"]) * float(model["confidence"]) * float(model["weight"]) for model in models)
+    total_weight = sum(float(model["weight"]) for model in models) or 1.0
+    consensus_score = weighted_votes / total_weight / 100.0
+    consensus_direction = _direction_from_weight(consensus_score)
+    agreement_weight = sum(float(model["weight"]) for model in models if model["direction"] == consensus_direction)
+    average_confidence = sum(float(model["confidence"]) * float(model["weight"]) for model in models) / total_weight
+    consensus_confidence = _clamp(48.0 + abs(consensus_score) * 52.0 + agreement_weight * 10.0 + max(0.0, average_confidence - 55.0) * 0.35, 50.0, 94.0)
+    if consensus_direction == "HOLD":
+        consensus_confidence = _clamp(54.0 - abs(consensus_score) * 12.0, 50.0, 65.0)
+
+    stance = {
+        "BUY": "Strong Bullish Consensus" if consensus_confidence >= 70 else "Bullish Consensus",
+        "SELL": "Strong Bearish Consensus" if consensus_confidence >= 70 else "Bearish Consensus",
+        "HOLD": "Balanced / Wait for Confirmation",
+    }[consensus_direction]
+
+    directional_split = {
+        "BUY": sum(1 for model in models if model["direction"] == "BUY"),
+        "SELL": sum(1 for model in models if model["direction"] == "SELL"),
+        "HOLD": sum(1 for model in models if model["direction"] == "HOLD"),
+    }
+
+    return {
+        "models": models,
+        "consensus_direction": consensus_direction,
+        "consensus_confidence": round(float(consensus_confidence), 1),
+        "consensus_score": round(float(consensus_score), 4),
+        "stance": stance,
+        "direction_split": directional_split,
+        "best_model": max(models, key=lambda model: float(model["confidence"])),
+        "methodology_count": len(models),
+        "summary": (
+            f"{stance}: {consensus_direction} with {consensus_confidence:.1f}% ensemble confidence "
+            f"from {len(models)} free analysis methods."
+        ),
+    }
+
+
 def _build_forex_history_live(pair: str, hist_rates: dict[str, float]) -> list[dict[str, Any]]:
     _pip, dec = _pair_pip_dec(pair)
     dates = sorted(hist_rates.keys())

@@ -76,20 +76,70 @@ def _get_signal_completion_status(signal: dict[str, Any], current_price: float |
     return "open", None
 
 
-def _pair_has_open_signal(core: Any, pair: str, current_price: float | None = None) -> bool:
+def _build_runtime_signal(
+    core: Any,
+    pair: str,
+    issued_signal: dict[str, Any],
+    live_rate: float | None = None,
+    hist_rates: dict[str, float] | None = None,
+) -> dict[str, Any]:
+    """Return a signal snapshot recalculated from latest prices when available."""
+    runtime_signal: dict[str, Any] = dict(issued_signal)
+
+    if live_rate is None:
+        live_rate = core._fetch_live_rate(pair)
+    if hist_rates is None:
+        hist_rates = core._fetch_historical_rates(pair, 30)
+
+    if live_rate is None or not hist_rates:
+        return runtime_signal
+
+    prices = list(hist_rates.values())
+    direction, confidence = core._compute_signal_from_prices(prices)
+    pip, dec = core._pair_pip_dec(pair)
+    tp_pips, sl_pips = core._compute_tp_sl_pips(prices, pair)
+
+    runtime_signal["direction"] = direction
+    runtime_signal["confidence"] = confidence
+    runtime_signal["entry_price"] = live_rate
+
+    if direction == "BUY":
+        runtime_signal["take_profit"] = round(live_rate + tp_pips * pip, dec)
+        runtime_signal["stop_loss"] = round(live_rate - sl_pips * pip, dec)
+    elif direction == "SELL":
+        runtime_signal["take_profit"] = round(live_rate - tp_pips * pip, dec)
+        runtime_signal["stop_loss"] = round(live_rate + sl_pips * pip, dec)
+    else:
+        runtime_signal["take_profit"] = round(live_rate + tp_pips * pip, dec)
+        runtime_signal["stop_loss"] = round(live_rate - sl_pips * pip, dec)
+
+    return runtime_signal
+
+
+def _pair_has_open_signal(
+    core: Any,
+    pair: str,
+    current_price: float | None = None,
+    live_rate: float | None = None,
+    hist_rates: dict[str, float] | None = None,
+) -> bool:
     issued_signal = core._FOREX_SIGNALS.get(pair)
     if not issued_signal:
         return False
 
+    runtime_signal = _build_runtime_signal(core, pair, issued_signal, live_rate=live_rate, hist_rates=hist_rates)
+
     if current_price is None:
-        live_rate = core._fetch_live_rate(pair)
+        if live_rate is None:
+            live_rate = core._fetch_live_rate(pair)
         if live_rate is not None:
             current_price = live_rate
         else:
-            hist_rates = core._fetch_historical_rates(pair, 30)
-            current_price = next(reversed(hist_rates.values())) if hist_rates else issued_signal.get("entry_price")
+            if hist_rates is None:
+                hist_rates = core._fetch_historical_rates(pair, 30)
+            current_price = next(reversed(hist_rates.values())) if hist_rates else runtime_signal.get("entry_price")
 
-    signal_state, _signal_outcome = _get_signal_completion_status(issued_signal, current_price)
+    signal_state, _signal_outcome = _get_signal_completion_status(runtime_signal, current_price)
     return signal_state == "open"
 
 
@@ -142,6 +192,9 @@ async def forex_signals(pair: str = "EUR/USD"):
 
         live_rate = core._fetch_live_rate(pair)
         hist_rates = core._fetch_historical_rates(pair, 30)
+        runtime_signal = _build_runtime_signal(core, pair, issued_signal, live_rate=live_rate, hist_rates=hist_rates)
+        signal.update(runtime_signal)
+
         latest_hist_rate = next(reversed(hist_rates.values())) if hist_rates else None
         status_price = signal.get("entry_price")
         if latest_hist_rate is not None:
@@ -149,7 +202,7 @@ async def forex_signals(pair: str = "EUR/USD"):
         if live_rate is not None:
             status_price = live_rate
 
-        signal_state, signal_outcome = _get_signal_completion_status(issued_signal, status_price)
+        signal_state, signal_outcome = _get_signal_completion_status(runtime_signal, status_price)
         signal["issued_direction"] = issued_signal.get("direction")
         signal["issued_generated_at"] = issued_signal.get("generated_at")
         signal["issued_entry_price"] = issued_signal.get("entry_price")
@@ -159,8 +212,18 @@ async def forex_signals(pair: str = "EUR/USD"):
         signal["signal_state"] = signal_state
         signal["signal_outcome"] = signal_outcome
 
+        analysis = core._build_multi_model_analysis(pair, issued_signal, live_rate, hist_rates)
+        signal["analysis_models"] = analysis["models"]
+        signal["analysis_methodology_count"] = analysis["methodology_count"]
+        signal["analysis_consensus_direction"] = analysis["consensus_direction"]
+        signal["analysis_consensus_confidence"] = analysis["consensus_confidence"]
+        signal["analysis_consensus_score"] = analysis["consensus_score"]
+        signal["analysis_stance"] = analysis["stance"]
+        signal["analysis_direction_split"] = analysis["direction_split"]
+        signal["analysis_summary"] = analysis["summary"]
+        signal["analysis_best_model"] = analysis["best_model"]
+
         if live_rate is not None:
-            signal["entry_price"] = live_rate
             signal["generated_at"] = datetime.now(timezone.utc).isoformat()
             if pair in core._STOCK_TICKERS:
                 signal["data_source"] = "Yahoo Finance"
@@ -171,23 +234,6 @@ async def forex_signals(pair: str = "EUR/USD"):
             else:
                 signal["data_source"] = "Frankfurter API (ECB)"
             signal["is_live"] = True
-
-            if hist_rates:
-                prices = list(hist_rates.values())
-                direction, confidence = core._compute_signal_from_prices(prices)
-                signal["direction"] = direction
-                signal["confidence"] = confidence
-                pip, dec = core._pair_pip_dec(pair)
-                tp_pips, sl_pips = core._compute_tp_sl_pips(prices, pair)
-                if direction == "BUY":
-                    signal["take_profit"] = round(live_rate + tp_pips * pip, dec)
-                    signal["stop_loss"] = round(live_rate - sl_pips * pip, dec)
-                elif direction == "SELL":
-                    signal["take_profit"] = round(live_rate - tp_pips * pip, dec)
-                    signal["stop_loss"] = round(live_rate + sl_pips * pip, dec)
-                else:
-                    signal["take_profit"] = round(live_rate + tp_pips * pip, dec)
-                    signal["stop_loss"] = round(live_rate - sl_pips * pip, dec)
         else:
             signal["data_source"] = "static (live feed unavailable)"
             signal["is_live"] = False
@@ -204,8 +250,8 @@ async def forex_signals(pair: str = "EUR/USD"):
         label_prices = list(hist_rates.values()) if hist_rates else []
         is_live = signal.get("is_live", False)
         signal["ai_label"] = core._generate_ai_label(
-            signal.get("direction", "HOLD"),
-            float(signal.get("confidence", 50)),
+            analysis["consensus_direction"],
+            float(analysis["consensus_confidence"]),
             label_prices,
             is_live,
         )
@@ -266,7 +312,10 @@ async def forex_pairs():
         active_pairs: list[str] = []
         for p in all_supported_pairs:
             live_rate = core._fetch_live_rate(p)
-            if live_rate is not None and _pair_has_open_signal(core, p, live_rate):
+            if live_rate is None:
+                continue
+            hist_rates = core._fetch_historical_rates(p, 30)
+            if _pair_has_open_signal(core, p, current_price=live_rate, live_rate=live_rate, hist_rates=hist_rates):
                 active_pairs.append(p)
 
         return JSONResponse({
@@ -362,14 +411,20 @@ async def forex_volatile(timeframe: str = "24h"):
         window = window_map[timeframe]
 
         results: list[dict[str, Any]] = []
+        excluded_pairs: list[dict[str, str]] = []
         for pair in core._SUPPORTED_PAIRS:
             signal_info = core._FOREX_SIGNALS.get(pair)
             if not signal_info:
+                excluded_pairs.append({"pair": pair, "reason": "no_seed_signal"})
                 continue
             live_rate = core._fetch_live_rate(pair)
             prices = _get_prices_for_pair(pair, 30)
+            if not prices:
+                excluded_pairs.append({"pair": pair, "reason": "no_price_history"})
+                continue
             current_price = live_rate if live_rate is not None else (prices[-1] if prices else signal_info["entry_price"])
             if not _pair_has_open_signal(core, pair, current_price):
+                excluded_pairs.append({"pair": pair, "reason": "signal_not_open"})
                 continue
             vol = _compute_volatility(prices, window)
             results.append({
@@ -381,7 +436,13 @@ async def forex_volatile(timeframe: str = "24h"):
             })
 
         results.sort(key=lambda x: x["volatility_pct"], reverse=True)
-        return JSONResponse({"timeframe": timeframe, "pairs": results})
+        return JSONResponse({
+            "timeframe": timeframe,
+            "pairs": results,
+            "excluded_pairs": excluded_pairs,
+            "included_count": len(results),
+            "excluded_count": len(excluded_pairs),
+        })
     except Exception as exc:
         logger.error("forex_volatile error: %s", exc)
         return JSONResponse({"error": "Internal server error."}, status_code=500)
@@ -400,26 +461,32 @@ async def forex_movers(threshold: float = 0.2):
     try:
         core = _core()
         results: list[dict[str, Any]] = []
+        excluded_pairs: list[dict[str, str]] = []
         all_pairs = list(core._SUPPORTED_PAIRS) + list(_MOVERS_EXTRA_PAIRS)
         for pair in all_pairs:
             signal_info = core._FOREX_SIGNALS.get(pair)
             if not signal_info:
+                excluded_pairs.append({"pair": pair, "reason": "no_seed_signal"})
                 continue
             prices = _get_prices_for_pair(pair, SESSION_PRICE_WINDOW)
             if len(prices) < 2:
+                excluded_pairs.append({"pair": pair, "reason": "insufficient_price_history"})
                 continue
             open_price = prices[0]
             close_price = prices[-1]
             if open_price == 0:
+                excluded_pairs.append({"pair": pair, "reason": "invalid_open_price"})
                 continue
             pct_change = ((close_price - open_price) / open_price) * 100
             if abs(pct_change) < threshold:
+                excluded_pairs.append({"pair": pair, "reason": "below_threshold"})
                 continue
             _pip_size, dec = core._pair_pip_dec(pair)
             pip_move = abs(close_price - open_price) / _pip_size
             live_rate = core._fetch_live_rate(pair)
             current = live_rate if live_rate is not None else close_price
             if not _pair_has_open_signal(core, pair, current):
+                excluded_pairs.append({"pair": pair, "reason": "signal_not_open"})
                 continue
             results.append({
                 "pair": pair,
@@ -431,7 +498,13 @@ async def forex_movers(threshold: float = 0.2):
             })
 
         results.sort(key=lambda x: abs(x["pct_change"]), reverse=True)
-        return JSONResponse({"pairs": results, "threshold": threshold})
+        return JSONResponse({
+            "pairs": results,
+            "threshold": threshold,
+            "excluded_pairs": excluded_pairs,
+            "included_count": len(results),
+            "excluded_count": len(excluded_pairs),
+        })
     except Exception as exc:
         logger.error("forex_movers error: %s", exc)
         return JSONResponse({"error": "Internal server error."}, status_code=500)
@@ -443,17 +516,24 @@ async def forex_reversals():
     try:
         core = _core()
         results: list[dict[str, Any]] = []
+        excluded_pairs: list[dict[str, str]] = []
         for pair in core._SUPPORTED_PAIRS:
             signal_info = core._FOREX_SIGNALS.get(pair)
             if not signal_info:
+                excluded_pairs.append({"pair": pair, "reason": "no_seed_signal"})
                 continue
             live_rate = core._fetch_live_rate(pair)
             prices = _get_prices_for_pair(pair, 30)
+            if len(prices) < 10:
+                excluded_pairs.append({"pair": pair, "reason": "insufficient_price_history"})
+                continue
             current_price = live_rate if live_rate is not None else (prices[-1] if prices else signal_info["entry_price"])
             if not _pair_has_open_signal(core, pair, current_price):
+                excluded_pairs.append({"pair": pair, "reason": "signal_not_open"})
                 continue
             rev = _detect_reversal(prices)
             if rev["reversal"] == "none":
+                excluded_pairs.append({"pair": pair, "reason": "no_reversal_pattern"})
                 continue
             results.append({
                 "pair": pair,
@@ -465,7 +545,12 @@ async def forex_reversals():
             })
 
         results.sort(key=lambda x: x["strength"], reverse=True)
-        return JSONResponse({"pairs": results})
+        return JSONResponse({
+            "pairs": results,
+            "excluded_pairs": excluded_pairs,
+            "included_count": len(results),
+            "excluded_count": len(excluded_pairs),
+        })
     except Exception as exc:
         logger.error("forex_reversals error: %s", exc)
         return JSONResponse({"error": "Internal server error."}, status_code=500)
