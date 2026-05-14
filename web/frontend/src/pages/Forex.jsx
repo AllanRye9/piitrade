@@ -953,7 +953,7 @@ function AIAnalysisPanel({ pair, signal, tech, news, calendarEvents, loading }) 
 }
 
 export default function Forex() {
-  const [pairs, setPairs] = useState({ major: [], minor: [], exotic: [], all: [] })
+  const [pairs, setPairs] = useState({ major: [], minor: [], exotic: [], all: [], active_pairs: [] })
   const [pairInput, setPairInput] = useState('EUR/USD')
   const [pairInputError, setPairInputError] = useState('')
   const [signal, setSignal] = useState(null)
@@ -1065,6 +1065,8 @@ export default function Forex() {
     if (loadingSignal || !signal || !analyzedPair) return null
     return signal.signal_state === 'open' && signal.is_live ? analyzedPair : null
   }, [analyzedPair, loadingSignal, signal])
+
+  const activePairsSet = useMemo(() => new Set(pairs.active_pairs || []), [pairs.active_pairs])
 
   const runPairAnalysis = useCallback(() => {
     const normalizedPair = normalizeTradingPairInput(pairInput)
@@ -1290,6 +1292,8 @@ export default function Forex() {
                       >
                         {groupItems.map(p => {
                           const isActiveLoaded = activeLoadedSignalPair === p
+                          const isActiveData = activePairsSet.has(p)
+                          const isActive = isActiveLoaded || isActiveData
                           const isSelected = pairInput === p
                           return (
                             <motion.button
@@ -1298,9 +1302,9 @@ export default function Forex() {
                               whileTap={{ scale: 0.97 }}
                               onClick={() => { setPairInput(p); setPairInputError('') }}
                               className="px-2 py-1 rounded-full text-xs font-mono font-medium border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                              animate={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_ANIMATE : INACTIVE_SIGNAL_CHIP_ANIMATE}
-                              transition={isActiveLoaded ? ACTIVE_SIGNAL_CHIP_TRANSITION : INACTIVE_SIGNAL_CHIP_TRANSITION}
-                              style={getPairChipStyle(isActiveLoaded, isSelected)}
+                              animate={isActive ? ACTIVE_SIGNAL_CHIP_ANIMATE : INACTIVE_SIGNAL_CHIP_ANIMATE}
+                              transition={isActive ? ACTIVE_SIGNAL_CHIP_TRANSITION : INACTIVE_SIGNAL_CHIP_TRANSITION}
+                              style={getPairChipStyle(isActive, isSelected)}
                             >
                               {p}
                             </motion.button>
